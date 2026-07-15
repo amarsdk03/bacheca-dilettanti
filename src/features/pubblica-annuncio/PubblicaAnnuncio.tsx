@@ -1,6 +1,3 @@
-
-
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -26,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import {
+	LucideIcon,
 	User,
 	Users,
 	Briefcase,
@@ -81,31 +79,42 @@ const SOCIAL_OPTIONS = [
 // Funzioni gestione form (da implementare)
 // -----------------------------------------------------------------------------
 
-function handleSubmitGiocatore(event) {
+function handleSubmitGiocatore() {
 	// TODO: gestire l'invio dei dati del giocatore
 }
 
-function handleSubmitSquadra(event) {
+function handleSubmitSquadra() {
 	// TODO: gestire l'invio dei dati della squadra
 }
 
-function handleSubmitStaff(event) {
+function handleSubmitStaff() {
 	// TODO: gestire l'invio dei dati dello staff
 }
 
-function handleRegionToggle(regione) {
-	// TODO: gestire selezione/deselezione regione
+function handleRegionToggle(regione: string) {
+	// TODO
 }
 
-function handleFieldChange(field, value) {
-	// TODO: gestire aggiornamento singolo campo
+function handleFieldChange(field: string, value: string) {
+	// TODO
 }
 
 // -----------------------------------------------------------------------------
 // Sotto-componenti riutilizzabili
 // -----------------------------------------------------------------------------
 
-function SectionHeading({ icon: Icon, title, description }) {
+interface SectionHeadingProps {
+	icon: LucideIcon;
+	title: string;
+	description?: string;
+}
+
+function SectionHeading(
+	{
+		icon: Icon,
+		title,
+		description,
+	}: SectionHeadingProps) {
 	return (
 		<div className="flex items-start gap-3">
 			<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -128,12 +137,12 @@ function RegioneSelector() {
 				Regione/i di appartenenza <span className="text-destructive">*</span>
 			</Label>
 			<Popover>
-				<PopoverTrigger asChild>
+				<PopoverTrigger>
 					<Button
 						variant="outline"
 						role="combobox"
 						className="w-full justify-between font-normal text-muted-foreground"
-						onClick={handleFieldChange}
+						onClick={() => null}
 					>
 						Seleziona una o più regioni
 						<ChevronsUpDown className="h-4 w-4 opacity-50" />
@@ -223,7 +232,9 @@ function ContattiSection() {
 					Profilo social
 				</Label>
 				<div className="grid gap-3 sm:grid-cols-[180px_1fr]">
-					<Select onValueChange={(value) => handleFieldChange("socialPlatform", value)}>
+					<Select onValueChange={(value) =>
+						handleFieldChange("socialPlatform", value as string)
+					}>
 						<SelectTrigger>
 							<SelectValue placeholder="Piattaforma" />
 						</SelectTrigger>
