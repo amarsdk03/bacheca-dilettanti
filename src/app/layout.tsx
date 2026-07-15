@@ -1,18 +1,16 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import {dynamicMetadata} from "@/server/metadata";
 import React from "react";
+import "./globals.css";
+
+import type { Metadata } from "next";
+import {dynamicMetadata} from "@/server/metadata";
+import {Analytics} from "@vercel/analytics/next";
+
+import {Inter} from "next/font/google";
 import {Toaster} from "sonner";
 
-const geistSans = Geist({
-	variable: "--font-geist-sans",
+const interFont = Inter({
 	subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
+	variable: "--font-sans",
 });
 
 export const metadata: Metadata = dynamicMetadata();
@@ -23,14 +21,12 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html
-			lang="it"
-			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-		>
-		<body className="min-h-full flex flex-col">
-			<main>{children}</main>
-			<Toaster />
-		</body>
+		<html lang="it" className={`${interFont.variable} font-sans`}>
+			<body className="min-h-full flex flex-col">
+				<main>{children}</main>
+				<Toaster position="bottom-right" richColors />
+				<Analytics />
+			</body>
 		</html>
 	);
 }

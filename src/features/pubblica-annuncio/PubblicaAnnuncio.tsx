@@ -137,17 +137,19 @@ function RegioneSelector() {
 				Regione/i di appartenenza <span className="text-destructive">*</span>
 			</Label>
 			<Popover>
-				<PopoverTrigger>
-					<Button
-						variant="outline"
-						role="combobox"
-						className="w-full justify-between font-normal text-muted-foreground"
-						onClick={() => null}
-					>
-						Seleziona una o più regioni
-						<ChevronsUpDown className="h-4 w-4 opacity-50" />
-					</Button>
-				</PopoverTrigger>
+				<PopoverTrigger
+					render={
+						<Button
+							variant="outline"
+							role="combobox"
+							className="w-full justify-between font-normal text-muted-foreground"
+							onClick={() => null}
+						>
+							Seleziona una o più regioni
+							<ChevronsUpDown className="h-4 w-4 opacity-50" />
+						</Button>
+					}
+				/>
 				<PopoverContent className="w-[--radix-popover-trigger-width] p-0">
 					<div className="max-h-64 overflow-y-auto p-1">
 						{REGIONI_ITALIANE.map((regione) => (
