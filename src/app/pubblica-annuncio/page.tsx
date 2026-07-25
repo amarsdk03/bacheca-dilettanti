@@ -1,17 +1,17 @@
-import Homepage from "@/features/homepage/Homepage";
-
 import {Metadata} from "next";
 import {dynamicMetadata} from "@/server/metadata";
 import Navbar from "@/components/navbar/Navbar";
+import PubblicaAnnuncio from "@/features/pubblica-annuncio/PubblicaAnnuncio";
 
 export const metadata: Metadata = dynamicMetadata(
-	"Home"
+	"Pubblica annuncio"
 );
 
 export default function Page() {
 	return (
 		<>
-			<Homepage />
+			<Navbar backToHome={true} />
+			<PubblicaAnnuncio />
 		</>
 	);
 }

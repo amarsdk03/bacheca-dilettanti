@@ -6,6 +6,7 @@ import {dynamicMetadata} from "@/server/metadata";
 import {Analytics} from "@vercel/analytics/next";
 
 import {Inter} from "next/font/google";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {Toaster} from "sonner";
 
 const interFont = Inter({
@@ -23,7 +24,9 @@ export default function RootLayout({
 	return (
 		<html lang="it" className={`${interFont.variable} font-sans`}>
 			<body className="min-h-full flex flex-col">
-				<main>{children}</main>
+				<TooltipProvider>
+					<main>{children}</main>
+				</TooltipProvider>
 				<Toaster position="bottom-right" richColors />
 				<Analytics />
 			</body>

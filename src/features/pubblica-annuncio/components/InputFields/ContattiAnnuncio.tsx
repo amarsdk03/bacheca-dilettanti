@@ -1,0 +1,183 @@
+import {type Dispatch, type SetStateAction} from "react";
+
+import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
+import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {Input} from "@/components/ui/input";
+
+export type CanaleContattoAnnuncio =
+	| "Email"
+	| "Telefono"
+	| "Instagram"
+	| "Facebook"
+	| "Tiktok"
+	| "Youtube"
+	| "X (Twitter)"
+	| "Linkedin";
+
+export type ContattiAnnuncio = Record<CanaleContattoAnnuncio, string>;
+
+export const CONTATTI_ANNUNCIO_DEFAULT: ContattiAnnuncio = {
+	"Email": "",
+	"Telefono": "",
+	"Instagram": "",
+	"Facebook": "",
+	"Tiktok": "",
+	"Youtube": "",
+	"X (Twitter)": "",
+	"Linkedin": "",
+};
+
+export const SOCIAL_CONTACT_OPTIONS: {
+	valore: CanaleContattoAnnuncio;
+	etichetta: string;
+	placeholder: string;
+	tipoInput: "email" | "tel" | "url";
+	icona?: string;
+}[] = [
+	{
+		valore: "Email",
+		etichetta: "Email",
+		placeholder: "nome@email.it",
+		tipoInput: "email",
+		icona: "Mail",
+	},
+	{
+		valore: "Telefono",
+		etichetta: "Telefono",
+		placeholder: "+39 333 123 4567",
+		tipoInput: "tel",
+		icona: "Phone",
+	},
+	{
+		valore: "Instagram",
+		etichetta: "Instagram",
+		placeholder: "https://instagram.com/nomeutente",
+		tipoInput: "url",
+		icona: "Camera",
+	},
+	{
+		valore: "Facebook",
+		etichetta: "Facebook",
+		placeholder: "https://facebook.com/nomeutente",
+		tipoInput: "url",
+		icona: "Users",
+	},
+	{
+		valore: "Tiktok",
+		etichetta: "TikTok",
+		placeholder: "https://tiktok.com/@nomeutente",
+		tipoInput: "url",
+		icona: "Music2",
+	},
+	{
+		valore: "Youtube",
+		etichetta: "YouTube",
+		placeholder: "https://youtube.com/nomeutente",
+		tipoInput: "url",
+		icona: "Video",
+	},
+	{
+		valore: "X (Twitter)",
+		etichetta: "X (Twitter)",
+		placeholder: "https://x.com/nomeutente",
+		tipoInput: "url",
+		icona: "MessagesSquare",
+	},
+	{
+		valore: "Linkedin",
+		etichetta: "LinkedIn",
+		placeholder: "https://linkedin.com/in/nomeutente",
+		tipoInput: "url",
+		icona: "BriefcaseBusiness",
+	},
+];
+
+export function hasContattoPubblico(contatti: ContattiAnnuncio) {
+	return contatti.Email.trim() !== "" || contatti.Telefono.trim() !== "";
+}
+
+export function getCanaliContattoCompilati(contatti: ContattiAnnuncio) {
+	return SOCIAL_CONTACT_OPTIONS.filter((canale) => contatti[canale.valore].trim() !== "");
+}
+
+type ContattiAnnuncioFieldsProps = {
+	contatti: ContattiAnnuncio;
+	setContatti: Dispatch<SetStateAction<ContattiAnnuncio>>;
+};
+
+export default function ContattiAnnuncioFields({
+	contatti,
+	setContatti,
+}: ContattiAnnuncioFieldsProps) {
+	const contattoPubblicoPresente = hasContattoPubblico(contatti);
+
+	const handleContattoChange = (canale: CanaleContattoAnnuncio, valore: string) => {
+		setContatti((prev) => ({...prev, [canale]: valore}));
+	};
+
+	const renderContattoField = (canale: (typeof SOCIAL_CONTACT_OPTIONS)[number]) => (
+		<Field
+			key={canale.valore}
+			className="flex flex-col gap-1.5 space-y-0 sm:flex-row sm:items-center sm:gap-4 mb-2 sm:mb-0"
+		>
+			<FieldLabel
+				htmlFor={`contatto-${canale.valore}`}
+				className="flex items-center gap-2 text-sm font-medium sm:w-36 sm:shrink-0"
+			>
+				<DynamicLucideIcon
+					iconName={canale.icona}
+					className="size-4 shrink-0 text-muted-foreground"
+				/>
+				{canale.etichetta}:
+			</FieldLabel>
+			<Input
+				id={`contatto-${canale.valore}`}
+				type={canale.tipoInput}
+				value={contatti[canale.valore] ?? ""}
+				onChange={(event) => handleContattoChange(canale.valore, event.target.value)}
+				placeholder={canale.placeholder}
+				className="w-full flex-1"
+			/>
+		</Field>
+	);
+
+	return (
+		<FieldSet>
+			<div>
+				<FieldLegend variant="label" className="field-legend-title mb-0">
+					Contatti pubblici
+				</FieldLegend>
+				<FieldDescription
+					className="text-red-800 font-medium mb-2 pt-1.5"
+					hidden={contattoPubblicoPresente}
+				>
+					Inserisci almeno un contatto tra email e telefono.
+				</FieldDescription>
+				<FieldDescription>
+					Consigliamo un indirizzo email, in modo da associare questo annuncio a un tuo profilo in futuro
+				</FieldDescription>
+			</div>
+
+			<div className="grid gap-3">
+				{SOCIAL_CONTACT_OPTIONS.filter(
+					(canale) => canale.valore === "Email" || canale.valore === "Telefono"
+				).map(renderContattoField)}
+			</div>
+
+			<div className="mt-6">
+				<FieldLegend variant="label" className="field-legend-title mb-0">
+					Profili social
+				</FieldLegend>
+				<FieldDescription className="mt-2">
+					Lascia vuoti i canali che non vuoi mostrare
+				</FieldDescription>
+			</div>
+
+			<div className="grid gap-3">
+				{SOCIAL_CONTACT_OPTIONS.filter(
+					(canale) => canale.valore !== "Email" && canale.valore !== "Telefono"
+				).map(renderContattoField)}
+			</div>
+		</FieldSet>
+	);
+}
