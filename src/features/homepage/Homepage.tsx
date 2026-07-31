@@ -5,7 +5,7 @@ import type { CSSProperties } from 'react';
 import { Bricolage_Grotesque, Manrope, IBM_Plex_Mono } from 'next/font/google';
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import type { Variants } from "motion/react";
-import type { LucideIcon } from 'lucide-react';
+import {LucideIcon, SquarePenIcon} from 'lucide-react';
 import {
 	ArrowRight,
 	ArrowUpRight,
@@ -16,6 +16,10 @@ import {
 	ClipboardList,
 	Pin,
 } from 'lucide-react';
+import {Button} from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
+import {DEFAULT_LOGO_TRANSPARENT_PATH} from "@/const/defaultConstants";
 
 /**
  * Font setup — per un'app reale conviene spostare questi loader in app/layout.tsx
@@ -171,26 +175,24 @@ const stats: Stat[] = [
 	{ value: '1.240+', label: 'Annunci pubblicati' },
 	{ value: '310+', label: 'Società iscritte' },
 	{ value: '20', label: 'Regioni coperte' },
-	{ value: '48h', label: 'Tempo medio di risposta' },
+	{ value: '30 min', label: 'Tempo medio di risposta' },
 ];
 
 const steps: Step[] = [
 	{
 		number: '01',
-		title: 'Crea il tuo profilo',
-		description: 'Registrati come Giocatore, Squadra o Staff tecnico: bastano due minuti.',
+		title: 'Base',
+		description: '- Profilo verificato \n -Visibilità nella sezione Profili \n- Ricercabile dagli utenti \n-Aggiungi link e profili social',
 	},
 	{
 		number: '02',
-		title: 'Pubblica o cerca un annuncio',
-		description:
-			'Metti online la tua richiesta oppure filtra gli annunci attivi per ruolo, categoria e regione.',
+		title: 'Pro',
+		description: 'Descrizione qui',
 	},
 	{
 		number: '03',
-		title: 'Entra in contatto',
-		description:
-			'Scrivi direttamente a chi ha pubblicato l’annuncio e organizza il provino o il colloquio.',
+		title: 'Avanzato',
+		description: 'Descrizione qui',
 	},
 ];
 
@@ -276,7 +278,7 @@ function PinnedHeroCard({ listing, index, reduceMotion }: PinnedHeroCardProps) {
 		>
 			<Pin
 				aria-hidden="true"
-				className="absolute -top-3 left-6 h-6 w-6 -rotate-12 text-[var(--accent)] drop-shadow-sm"
+				className="absolute -top-3 left-6 h-6 w-6 -rotate-12 text-fuchsia-600 drop-shadow-sm"
 				fill="var(--accent-tint)"
 				strokeWidth={1.75}
 			/>
@@ -345,7 +347,7 @@ function ListingCard({ listing, reduceMotion }: ListingCardProps) {
 			<a
 				href="#"
 				aria-label={`Vedi annuncio: ${listing.title}`}
-				className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--accent)] transition-colors group-hover:text-[var(--accent-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 rounded"
+				className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-fuchsia-600 transition-colors group-hover:text-[var(--accent-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 rounded"
 			>
 				Vedi annuncio
 				<ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
@@ -368,7 +370,7 @@ function FilterPill({ label, active, onClick }: FilterPillProps) {
 			aria-pressed={active}
 			className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 ${
 				active
-					? 'border-[var(--accent)] bg-[var(--accent)] text-white'
+					? 'border-fuchsia-600 bg-fuchsia-600 text-white'
 					: 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900'
 			}`}
 		>
@@ -409,35 +411,44 @@ export default function Homepage() {
 			{/* ------------------------------ Header ------------------------------ */}
 			<header className="sticky top-0 z-40 border-b border-neutral-200/70 bg-neutral-50/80 backdrop-blur">
 				<div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-					<a href="#" className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight">
-						Bacheca <span className="text-[var(--accent)]">Dilettanti</span>
-					</a>
+					<Link href={"/"} className={"navbar-link"}>
+						<Image
+							src={DEFAULT_LOGO_TRANSPARENT_PATH}
+							alt={"Logo torneo"}
+							width={64*7/5}
+							height={40}
+							className={"navbar-logo"}
+							draggable={false}
+							loading={"eager"}
+						/>
+					</Link>
 
 					<nav aria-label="Principale" className="hidden items-center gap-8 md:flex">
 						<a href="#come-funziona" className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900">
-							Come funziona
-						</a>
-						<a href="#categorie" className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900">
-							Categorie
+							Sfoglia annunci
 						</a>
 						<a href="#annunci" className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900">
-							Annunci
+							Visibilità
+						</a>
+						<a href="#categorie" className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900">
+							Profili
+						</a>
+						<a href="#annunci" className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900">
+							Aggiornamenti
+						</a>
+						<a href="#annunci" className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900">
+							Contatti
 						</a>
 					</nav>
 
 					<div className="flex items-center gap-3">
-						<a
-							href="#"
-							className="hidden text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 sm:inline-flex"
-						>
-							Accedi
-						</a>
-						<a
-							href="/pubblica-annuncio"
-							className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
-						>
-							Pubblica annuncio
-						</a>
+						<Link href={"pubblica-annuncio"}>
+							<Button type={"button"} size={"lg"} className={"px-2.5 rounded-2xl"}>
+								<div className={"flex items-center justify-center mx-2 gap-1"}>
+									<SquarePenIcon data-icon="inline-start" /> Pubblica annuncio
+								</div>
+							</Button>
+						</Link>
 					</div>
 				</div>
 			</header>
@@ -452,7 +463,7 @@ export default function Homepage() {
 							variants={containerStagger}
 						>
 							<motion.div variants={fadeUp}>
-								<SectionEyebrow>La bacheca dello sport dilettantistico italiano</SectionEyebrow>
+								<SectionEyebrow>La bacheca del calcio dilettantistico italiano</SectionEyebrow>
 							</motion.div>
 
 							<motion.h1
@@ -463,7 +474,7 @@ export default function Homepage() {
 								<br />
 								Offresi maglie.
 								<br />
-								<span className="text-[var(--accent)]">Trovasi qui.</span>
+								<span className="text-fuchsia-600">Trovasi qui.</span>
 							</motion.h1>
 
 							<motion.p variants={fadeUp} className="mt-6 max-w-lg text-base leading-relaxed text-neutral-600 sm:text-lg">
@@ -475,7 +486,7 @@ export default function Homepage() {
 							<motion.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-4">
 								<a
 									href="#"
-									className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
+									className="inline-flex items-center gap-2 rounded-full bg-fuchsia-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
 								>
 									Pubblica un annuncio
 									<ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -521,26 +532,64 @@ export default function Homepage() {
 					</div>
 				</section>
 
-				{/* ------------------------------ Come funziona ------------------------------ */}
-				<section id="come-funziona" className="border-t border-neutral-200 bg-white">
+				{/* ------------------------------ Annunci ------------------------------ */}
+				<section id="annunci" className="border-t border-neutral-200 bg-white">
 					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-						<motion.div
-							initial="hidden"
-							whileInView="visible"
-							viewport={{ once: true, margin: '-80px' }}
-							variants={containerStagger}
-							className="max-w-xl"
-						>
-							<motion.div variants={fadeUp}>
-								<SectionEyebrow>Come funziona</SectionEyebrow>
-							</motion.div>
-							<motion.h2
-								variants={fadeUp}
-								className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
+						<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+							<motion.div
+								initial="hidden"
+								whileInView="visible"
+								viewport={{ once: true, margin: '-80px' }}
+								variants={containerStagger}
 							>
-								Dal profilo al provino, in tre passaggi.
-							</motion.h2>
-						</motion.div>
+								<motion.div variants={fadeUp}>
+									<SectionEyebrow>
+										Il primo hub italiano del calcio dilettantistico
+									</SectionEyebrow>
+								</motion.div>
+								<motion.h2
+									variants={fadeUp}
+									className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
+								>
+									Tutto ciò di cui hai bisogno, qui.
+								</motion.h2>
+							</motion.div>
+						</div>
+
+						<div className={"mt-16"}>
+							Lista categorie qui (sezione 3 del PDF)
+						</div>
+					</div>
+				</section>
+
+				{/* ------------------------------ Come funziona ------------------------------ */}
+				<section id="categorie" className="border-t border-neutral-200">
+					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+						<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+							<motion.div
+								initial="hidden"
+								whileInView="visible"
+								viewport={{ once: true, margin: '-80px' }}
+								variants={containerStagger}
+								className="max-w-xl"
+							>
+								<motion.div variants={fadeUp}>
+									<SectionEyebrow>
+										Fatti trovare
+									</SectionEyebrow>
+								</motion.div>
+								<motion.h2
+									variants={fadeUp}
+									className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
+								>
+									Prendi il tuo spazio nel calcio dilettantistico italiano
+								</motion.h2>
+							</motion.div>
+
+							<div role="group" aria-label="Filtra annunci per categoria" className="flex flex-wrap gap-2">
+								Pulsante "Scopri di più" qui
+							</div>
+						</div>
 
 						<motion.div
 							initial="hidden"
@@ -551,60 +600,13 @@ export default function Homepage() {
 						>
 							{steps.map((step) => (
 								<motion.div key={step.number} variants={fadeUp}>
-                  <span className="font-[family-name:var(--font-mono)] text-sm font-semibold text-[var(--accent)]">
+                  <span className="font-[family-name:var(--font-mono)] text-sm font-semibold text-fuchsia-600">
                     {step.number}
                   </span>
 									<h3 className="mt-3 font-[family-name:var(--font-display)] text-lg font-semibold text-neutral-900">
 										{step.title}
 									</h3>
 									<p className="mt-2 text-sm leading-relaxed text-neutral-600">{step.description}</p>
-								</motion.div>
-							))}
-						</motion.div>
-					</div>
-				</section>
-
-				{/* ------------------------------ Categorie ------------------------------ */}
-				<section id="categorie" className="border-t border-neutral-200">
-					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-						<motion.div
-							initial="hidden"
-							whileInView="visible"
-							viewport={{ once: true, margin: '-80px' }}
-							variants={containerStagger}
-							className="max-w-xl"
-						>
-							<motion.div variants={fadeUp}>
-								<SectionEyebrow>Per ogni ruolo</SectionEyebrow>
-							</motion.div>
-							<motion.h2
-								variants={fadeUp}
-								className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
-							>
-								Tre profili, un solo punto d’incontro.
-							</motion.h2>
-						</motion.div>
-
-						<motion.div
-							initial="hidden"
-							whileInView="visible"
-							viewport={{ once: true, margin: '-80px' }}
-							variants={containerStagger}
-							className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3"
-						>
-							{profileTypes.map((profile) => (
-								<motion.div
-									key={profile.title}
-									variants={fadeUp}
-									className="rounded-2xl border border-neutral-200 bg-white p-6"
-								>
-									<div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent-tint)]">
-										<profile.icon className="h-5 w-5 text-[var(--accent-dark)]" aria-hidden="true" />
-									</div>
-									<h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-semibold text-neutral-900">
-										{profile.title}
-									</h3>
-									<p className="mt-2 text-sm leading-relaxed text-neutral-600">{profile.description}</p>
 								</motion.div>
 							))}
 						</motion.div>
@@ -669,7 +671,7 @@ export default function Homepage() {
 							className="mx-auto max-w-xl"
 						>
 							<motion.div variants={fadeUp}>
-                <span className="font-[family-name:var(--font-mono)] text-xs font-medium uppercase tracking-[0.18em] text-[var(--accent)]">
+                <span className="font-[family-name:var(--font-mono)] text-xs font-medium uppercase tracking-[0.18em] text-fuchsia-600">
                   Inizia ora
                 </span>
 							</motion.div>
@@ -685,7 +687,7 @@ export default function Homepage() {
 							<motion.div variants={fadeUp} className="mt-8">
 								<a
 									href="#"
-									className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
+									className="inline-flex items-center gap-2 rounded-full bg-fuchsia-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
 								>
 									Pubblica un annuncio
 									<ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -702,7 +704,7 @@ export default function Homepage() {
 					<div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
 						<div className="col-span-2 sm:col-span-1">
 							<a href="#" className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight">
-								Bacheca <span className="text-[var(--accent)]">Dilettanti</span>
+								Bacheca <span className="text-fuchsia-600">Dilettanti</span>
 							</a>
 							<p className="mt-3 max-w-xs text-sm leading-relaxed text-neutral-500">
 								La bacheca dello sport dilettantistico italiano.
