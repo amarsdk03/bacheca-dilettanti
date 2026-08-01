@@ -1,20 +1,20 @@
 import {Metadata} from "next";
 import {dynamicMetadata} from "@/server/metadata";
 
-import Homepage from "@/features/homepage/Homepage";
+import Visibilita from "@/features/visibilita/Visibilita";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
 
 export const metadata: Metadata = dynamicMetadata(
-	"Home"
+	"Visibilità"
 );
 
 export default function Page() {
 	return (
 		<>
 			<Navbar />
-			<Homepage />
-			<Footer />
+			<Visibilita />
+			<Footer whiteBackground={true} />
 		</>
 	);
 }

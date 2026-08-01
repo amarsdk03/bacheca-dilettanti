@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/field";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
-import {Check, ShieldCheck} from "lucide-react";
+import {ArrowRight, Check, ClipboardPenIcon} from "lucide-react";
 import {useMemo, useState} from "react";
 import {
 	campiPerTipologia,
@@ -71,6 +71,7 @@ import {
 } from "@/features/pubblica-annuncio/components/opzioniAnnuncio";
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import useIsMobile from "@/lib/isMobile";
+import Link from "next/link";
 
 export default function PubblicaAnnuncio() {
 	const isMobile = useIsMobile();
@@ -443,15 +444,21 @@ export default function PubblicaAnnuncio() {
 	return (
 		<div className="min-h-screen bg-muted/30 py-10">
 			<div className="mx-auto max-w-3xl px-4">
-				<header className="mb-8">
-					<div className="flex items-center gap-2 sm:text-3xl text-2xl font-semibold tracking-tight">
-						<ShieldCheck className="size-6" />
-						<h1>Pubblica un annuncio</h1>
+				<section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mb-8 sm:mb-12">
+					<div className="flex flex-col items-center">
+						<div className="max-w-xl flex flex-col items-center text-center">
+							<div className="flex items-center gap-2 sm:text-3xl text-2xl font-semibold tracking-tight">
+								<ClipboardPenIcon className="size-6 sm:size-8" />
+								<h1 className="text-2xl sm:text-4xl font-semibold tracking-tight text-neutral-950">
+									Pubblica un annuncio
+								</h1>
+							</div>
+							<p className="mt-2 text-sm sm:text-lg leading-6 text-neutral-600">
+								Compila i campi richiesti per pubblicare il tuo annuncio
+							</p>
+						</div>
 					</div>
-					<p className="mt-2 text-muted-foreground">
-						Compila i campi richiesti per pubblicare il tuo annuncio
-					</p>
-				</header>
+				</section>
 
 				<Tabs value={`tab-${step}`} onValueChange={handleTabChange}>
 					<TabsList variant="line" className="grid w-full grid-cols-3">

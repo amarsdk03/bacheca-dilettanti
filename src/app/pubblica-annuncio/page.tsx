@@ -1,7 +1,9 @@
 import {Metadata} from "next";
 import {dynamicMetadata} from "@/server/metadata";
-import Navbar from "@/components/navbar/Navbar";
+
 import PubblicaAnnuncio from "@/features/pubblica-annuncio/PubblicaAnnuncio";
+import Navbar from "@/components/navigation/Navbar";
+import Footer from "@/components/navigation/Footer";
 
 export const metadata: Metadata = dynamicMetadata(
 	"Pubblica annuncio"
@@ -10,8 +12,9 @@ export const metadata: Metadata = dynamicMetadata(
 export default function Page() {
 	return (
 		<>
-			<Navbar backToHome={true} />
+			<Navbar minimal={true} backToHome={true} />
 			<PubblicaAnnuncio />
+			<Footer whiteBackground={true} />
 		</>
 	);
 }
