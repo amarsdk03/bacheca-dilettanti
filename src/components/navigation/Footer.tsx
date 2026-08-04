@@ -62,7 +62,7 @@ export default function Footer(
 						</h3>
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
 							<li><Link href="#" className="hover:text-neutral-900">Chi siamo</Link></li>
-							<li><Link href="#" className="hover:text-neutral-900">Aggiornamenti</Link></li>
+							<li><Link href="/aggiornamenti" className="hover:text-neutral-900">Aggiornamenti</Link></li>
 							<li><Link href="#" className="hover:text-neutral-900">Social e contatti</Link></li>
 						</ul>
 					</div>

@@ -44,7 +44,7 @@ export default function Navbar(
 					   className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900">
 						Profili
 					</Link>
-					<Link href="#"
+					<Link href="/aggiornamenti"
 					   className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900">
 						Aggiornamenti
 					</Link>
