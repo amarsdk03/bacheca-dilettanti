@@ -1,5 +1,4 @@
-// import InManutenzione from "@/components/redirects/InManutenzione";
-import ComingSoon from "@/components/redirects/ComingSoon";
+import InManutenzione from "@/components/redirects/InManutenzione";
 
 import {Metadata} from "next";
 import {dynamicMetadata} from "@/server/metadata";
@@ -10,8 +9,7 @@ export const metadata: Metadata = dynamicMetadata(
 );
 
 export default function Page() {
-	{ /* <InManutenzione /> */ }
 	return (
-		<ComingSoon />
+		<InManutenzione />
 	);
 }
