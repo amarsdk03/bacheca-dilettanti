@@ -5,6 +5,7 @@ import {Button} from "@/components/ui/button";
 import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
+import {Checkbox} from "@/components/ui/checkbox";
 
 export type EsperienzaAnnuncio = {
 	id: string;
@@ -41,7 +42,7 @@ export default function EsperienzeAnnuncioFields({
 	esperienze,
 	setEsperienze,
 	idPrefix,
-	titolo = "Esperienze",
+	titolo = "Qualifiche / Patentini",
 }: EsperienzeAnnuncioFieldsProps) {
 	const addEsperienza = () => {
 		setEsperienze((prev) => [...prev, createEsperienzaAnnuncio()]);
@@ -129,49 +130,14 @@ export default function EsperienzeAnnuncioFields({
 								</Field>
 							</div>
 
-							<div className="mt-4 grid gap-4 sm:grid-cols-2">
-								<Field>
-									<FieldLabel htmlFor={`${idPrefix}-periodo-da-${esperienza.id}`}>
-										Periodo dal
-									</FieldLabel>
-									<Input
-										id={`${idPrefix}-periodo-da-${esperienza.id}`}
-										type="date"
-										value={esperienza.periodoDa}
-										onChange={(event) =>
-											updateEsperienza(esperienza.id, "periodoDa", event.target.value)
-										}
-									/>
-								</Field>
-
-								<Field>
-									<FieldLabel htmlFor={`${idPrefix}-periodo-a-${esperienza.id}`}>
-										Periodo al
-									</FieldLabel>
-									<Input
-										id={`${idPrefix}-periodo-a-${esperienza.id}`}
-										type="date"
-										value={esperienza.periodoA}
-										onChange={(event) =>
-											updateEsperienza(esperienza.id, "periodoA", event.target.value)
-										}
-									/>
-								</Field>
-							</div>
-
-							<Field className="mt-4">
-								<FieldLabel htmlFor={`${idPrefix}-descrizione-${esperienza.id}`}>
-									Descrizione aggiuntiva
+							<Field className="mt-4" orientation="horizontal">
+								<Checkbox id={`${idPrefix}-descrizione-${esperienza.id}`} />
+								<FieldLabel
+									htmlFor={`${idPrefix}-descrizione-${esperienza.id}`}
+									className="font-normal"
+								>
+									Conseguito / Lo sto facendo
 								</FieldLabel>
-								<Textarea
-									id={`${idPrefix}-descrizione-${esperienza.id}`}
-									value={esperienza.descrizione}
-									onChange={(event) =>
-										updateEsperienza(esperienza.id, "descrizione", event.target.value)
-									}
-									className="min-h-24 resize-y"
-									placeholder="Responsabilità, contesto, risultati o dettagli utili..."
-								/>
 							</Field>
 						</div>
 					))}

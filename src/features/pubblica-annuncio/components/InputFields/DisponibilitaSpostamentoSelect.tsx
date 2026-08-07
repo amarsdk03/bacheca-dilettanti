@@ -8,7 +8,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {DISPONIBILITA_SPOSTAMENTO_OPTIONS} from "@/features/pubblica-annuncio/components/opzioniAnnuncio";
+
+export const DISPONIBILITA_SPOSTAMENTO_OPTIONS = ["Si", "No"] as const;
 
 type DisponibilitaSpostamentoSelectProps = {
 	value: string;
@@ -32,8 +33,8 @@ export default function DisponibilitaSpostamentoSelect({
 				</SelectTrigger>
 				<SelectContent>
 					{DISPONIBILITA_SPOSTAMENTO_OPTIONS.map((opzione) => (
-						<SelectItem key={opzione.etichetta} value={opzione.valore}>
-							{opzione.etichetta}
+						<SelectItem key={opzione} value={opzione}>
+							{opzione}
 						</SelectItem>
 					))}
 				</SelectContent>

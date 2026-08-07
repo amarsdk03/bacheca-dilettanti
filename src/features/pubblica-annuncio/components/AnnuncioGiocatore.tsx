@@ -1,5 +1,10 @@
-import {type Dispatch, type SetStateAction} from "react";
+"use client";
 
+import {useRef} from "react";
+import {Crown, X} from "lucide-react";
+
+import {Badge} from "@/components/ui/badge";
+import {Button} from "@/components/ui/button";
 import {
 	Field,
 	FieldDescription,
@@ -9,85 +14,39 @@ import {
 	FieldSet,
 } from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
-import ContattiAnnuncioFields, {
-	SOCIAL_CONTACT_OPTIONS,
-	type ContattiAnnuncio,
-} from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
+import {useAnnuncioGiocatoreStore} from "@/features/pubblica-annuncio/state/AnnuncioGiocatore.store";
+import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 import DataNascitaFields from "@/features/pubblica-annuncio/components/InputFields/DataNascitaFields";
-import RegioniInteresseField, {
-	type CittaComuniPerRegione,
-} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
-import {
-	RUOLO_PRINCIPALE_OPTIONS,
-	TIPOLOGIA_CALCIO_OPTIONS,
-} from "@/features/pubblica-annuncio/components/opzioniAnnuncio";
+import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
+import RuoloPrincipaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
+import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 
-export type ContattiGiocatore = ContattiAnnuncio;
+const optionalLabel = <span className="font-normal text-neutral-400 -translate-x-1">(facoltativo)</span>;
 
-export {RUOLO_PRINCIPALE_OPTIONS, SOCIAL_CONTACT_OPTIONS, TIPOLOGIA_CALCIO_OPTIONS};
-export type {CittaComuniPerRegione};
+export default function AnnuncioGiocatore() {
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const {
+		nome,
+		cognome,
+		giornoNascita,
+		meseNascita,
+		annoNascita,
+		regioniInteressate,
+		cittaComuniPerRegione,
+		contatti,
+		biografia,
+		tipologieCalcio,
+		ruoliPrincipali,
+		foto,
+		setField,
+	} = useAnnuncioGiocatoreStore();
 
-type AnnuncioGiocatoreProps = {
-	emailCollegamento: string;
-	setEmailCollegamento: Dispatch<SetStateAction<string>>;
-	nome: string;
-	setNome: Dispatch<SetStateAction<string>>;
-	cognome: string;
-	setCognome: Dispatch<SetStateAction<string>>;
-	giornoNascita: string;
-	setGiornoNascita: Dispatch<SetStateAction<string>>;
-	meseNascita: string;
-	setMeseNascita: Dispatch<SetStateAction<string>>;
-	annoNascita: string;
-	setAnnoNascita: Dispatch<SetStateAction<string>>;
-	regioniInteressate: string[];
-	setRegioniInteressate: Dispatch<SetStateAction<string[]>>;
-	cittaComuniPerRegione: CittaComuniPerRegione;
-	setCittaComuniPerRegione: Dispatch<SetStateAction<CittaComuniPerRegione>>;
-	linkFoto: string;
-	setLinkFoto: Dispatch<SetStateAction<string>>;
-	contatti: ContattiGiocatore;
-	setContatti: Dispatch<SetStateAction<ContattiGiocatore>>;
-	biografia: string;
-	setBiografia: Dispatch<SetStateAction<string>>;
-	tipologiaCalcio: string;
-	setTipologiaCalcio: Dispatch<SetStateAction<string>>;
-	ruoloPrincipale: string;
-	setRuoloPrincipale: Dispatch<SetStateAction<string>>;
-};
+	const removeFoto = () => {
+		setField("foto", null);
+		if (fileInputRef.current) fileInputRef.current.value = "";
+	};
 
-export default function AnnuncioGiocatore({
-	nome,
-	setNome,
-	cognome,
-	setCognome,
-	giornoNascita,
-	setGiornoNascita,
-	meseNascita,
-	setMeseNascita,
-	annoNascita,
-	setAnnoNascita,
-	regioniInteressate,
-	setRegioniInteressate,
-	cittaComuniPerRegione,
-	setCittaComuniPerRegione,
-	contatti,
-	setContatti,
-	biografia,
-	setBiografia,
-	tipologiaCalcio,
-	setTipologiaCalcio,
-	ruoloPrincipale,
-	setRuoloPrincipale,
-}: AnnuncioGiocatoreProps) {
 	return (
 		<FieldGroup className="w-full">
 			<FieldSet>
@@ -95,31 +54,27 @@ export default function AnnuncioGiocatore({
 					<FieldLegend variant="label" className="field-legend-title mb-0">
 						Dati giocatore
 					</FieldLegend>
-					<FieldDescription>
-						Inserisci le informazioni principali del profilo.
-					</FieldDescription>
+					<FieldDescription>Puoi lasciare anonimi i dati personali.</FieldDescription>
 				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<Field>
-						<FieldLabel htmlFor="giocatore-nome">Nome</FieldLabel>
+						<FieldLabel htmlFor="giocatore-nome">Nome {optionalLabel}</FieldLabel>
 						<Input
 							id="giocatore-nome"
 							value={nome}
-							onChange={(event) => setNome(event.target.value)}
+							onChange={(event) => setField("nome", event.target.value)}
 							placeholder="Mario"
-							required
 						/>
 					</Field>
 
 					<Field>
-						<FieldLabel htmlFor="giocatore-cognome">Cognome</FieldLabel>
+						<FieldLabel htmlFor="giocatore-cognome">Cognome {optionalLabel}</FieldLabel>
 						<Input
 							id="giocatore-cognome"
 							value={cognome}
-							onChange={(event) => setCognome(event.target.value)}
+							onChange={(event) => setField("cognome", event.target.value)}
 							placeholder="Rossi"
-							required
 						/>
 					</Field>
 				</div>
@@ -127,19 +82,26 @@ export default function AnnuncioGiocatore({
 				<DataNascitaFields
 					idPrefix="giocatore"
 					giornoNascita={giornoNascita}
-					setGiornoNascita={setGiornoNascita}
+					setGiornoNascita={(value) => setField("giornoNascita", value)}
 					meseNascita={meseNascita}
-					setMeseNascita={setMeseNascita}
+					setMeseNascita={(value) => setField("meseNascita", value)}
 					annoNascita={annoNascita}
-					setAnnoNascita={setAnnoNascita}
+					setAnnoNascita={(value) => setField("annoNascita", value)}
 				/>
 			</FieldSet>
 
+			<div className="mt-2">
+				<ContattiAnnuncioFields
+					contatti={contatti}
+					setContatti={(value) => setField("contatti", value)}
+				/>
+			</div>
+
 			<RegioniInteresseField
 				regioniInteressate={regioniInteressate}
-				setRegioniInteressate={setRegioniInteressate}
+				setRegioniInteressate={(value) => setField("regioniInteressate", value)}
 				cittaComuniPerRegione={cittaComuniPerRegione}
-				setCittaComuniPerRegione={setCittaComuniPerRegione}
+				setCittaComuniPerRegione={(value) => setField("cittaComuniPerRegione", value)}
 			/>
 
 			<FieldSet>
@@ -150,68 +112,58 @@ export default function AnnuncioGiocatore({
 				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2">
-					<Field>
-						<FieldLabel>Tipologia calcio</FieldLabel>
-						<Select
-							value={tipologiaCalcio || null}
-							onValueChange={(value) => setTipologiaCalcio(value ?? "")}
-						>
-							<SelectTrigger className="w-full">
-								<SelectValue placeholder="Non specificare" />
-							</SelectTrigger>
-							<SelectContent>
-								{TIPOLOGIA_CALCIO_OPTIONS.map((opzione) => (
-									<SelectItem key={opzione.etichetta} value={opzione.valore}>
-										{opzione.etichetta}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</Field>
-
-					<Field>
-						<FieldLabel>Ruolo principale</FieldLabel>
-						<Select
-							value={ruoloPrincipale || null}
-							onValueChange={(value) => setRuoloPrincipale(value ?? "")}
-						>
-							<SelectTrigger className="w-full">
-								<SelectValue placeholder="Non specificare" />
-							</SelectTrigger>
-							<SelectContent>
-								{RUOLO_PRINCIPALE_OPTIONS.map((opzione) => (
-									<SelectItem key={opzione.etichetta} value={opzione.valore}>
-										{opzione.etichetta}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</Field>
+					<TipologiaCalcioMultiselectField
+						value={tipologieCalcio}
+						onValueChange={(value) => setField("tipologieCalcio", value)}
+					/>
+					<RuoloPrincipaleMultiselectField
+						value={ruoliPrincipali}
+						onValueChange={(value) => setField("ruoliPrincipali", value)}
+					/>
 				</div>
 
 				<Field>
+					<div className="flex flex-wrap items-center justify-between gap-2">
+						<FieldLabel htmlFor="giocatore-foto">Immagine dell&apos;annuncio</FieldLabel>
+						<Badge className="border border-purple-200 bg-purple-100 text-purple-700 hover:bg-purple-100">
+							<Crown className="size-3.5" /> Premium only
+						</Badge>
+					</div>
+					<Input
+						ref={fileInputRef}
+						id="giocatore-foto"
+						type="file"
+						accept="image/png,image/jpeg,image/webp"
+						onChange={(event) => setField("foto", event.target.files?.[0] ?? null)}
+					/>
+					<FieldDescription>
+						L&apos;immagine sarà inclusa nell'annuncio, solo se si sceglie una pubblicazione a pagamento.
+					</FieldDescription>
+					{foto && (
+						<div className="flex items-center justify-between gap-3 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm text-purple-900">
+							<span className="min-w-0 truncate">{foto.name}</span>
+							<Button type="button" variant="ghost" size="icon-xs" onClick={removeFoto} aria-label="Rimuovi immagine">
+								<X />
+							</Button>
+						</div>
+					)}
+				</Field>
+
+				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="giocatore-biografia">Biografia</FieldLabel>
+						<FieldLabel htmlFor="giocatore-biografia">Breve descrizione</FieldLabel>
 						<span className="text-xs text-muted-foreground">{biografia.length}/2000</span>
 					</div>
 					<Textarea
 						id="giocatore-biografia"
 						value={biografia}
-						onChange={(event) => setBiografia(event.target.value.slice(0, 2000))}
+						onChange={(event) => setField("biografia", event.target.value.slice(0, 2000))}
 						maxLength={2000}
 						placeholder="Racconta esperienze, caratteristiche tecniche, disponibilità, obiettivi..."
 						className="min-h-32 resize-y"
 					/>
 				</Field>
 			</FieldSet>
-
-			<div className={"mt-2"}>
-				<ContattiAnnuncioFields
-					contatti={contatti}
-					setContatti={setContatti}
-				/>
-			</div>
-
 		</FieldGroup>
 	);
 }

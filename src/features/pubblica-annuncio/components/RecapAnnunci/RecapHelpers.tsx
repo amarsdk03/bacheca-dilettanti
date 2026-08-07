@@ -1,4 +1,10 @@
+import type {ReactNode} from "react";
+
 import {type EsperienzaAnnuncio} from "@/features/pubblica-annuncio/components/InputFields/EsperienzeAnnuncioFields";
+import {
+	getCanaliContattoCompilati,
+	type ContattiAnnuncio,
+} from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 
 export function formatDataNascita(giorno: string, mese: string, anno: string) {
 	return [giorno, mese, anno].filter(Boolean).join("/") || "—";
@@ -6,6 +12,47 @@ export function formatDataNascita(giorno: string, mese: string, anno: string) {
 
 export function formatPeriodo(periodoDa: string, periodoA: string) {
 	return [periodoDa, periodoA].filter(Boolean).join(" / ") || "—";
+}
+
+export function formatContatti(contatti: ContattiAnnuncio) {
+	return getCanaliContattoCompilati(contatti)
+		.map((canale) => `${canale.etichetta}: ${contatti[canale.valore]}`)
+		.join(" · ") || "—";
+}
+
+export function RecapField({label, children, wide = false}: {label: string; children: ReactNode; wide?: boolean}) {
+	return (
+		<div className={wide ? "sm:col-span-2" : undefined}>
+			<dt className="text-xs text-muted-foreground">{label}</dt>
+			<dd className="whitespace-pre-wrap font-medium">{children || "—"}</dd>
+		</div>
+	);
+}
+
+export function RegioniRecap({
+	regioni,
+	cittaComuniPerRegione,
+}: {
+	regioni: string[];
+	cittaComuniPerRegione: Record<string, string[]>;
+}) {
+	return (
+		<div className="sm:col-span-2">
+			<dt className="text-xs text-muted-foreground">Regioni d&apos;interesse</dt>
+			<dd className="mt-1 flex flex-wrap gap-1.5">
+				{regioni.length > 0
+					? regioni.map((regione) => {
+						const localita = cittaComuniPerRegione[regione] ?? [];
+						return (
+							<span key={regione} className="rounded-full bg-fuchsia-100 px-2 py-0.5 text-xs font-medium text-fuchsia-800">
+								{regione}{localita.length > 0 ? `: ${localita.join(", ")}` : ""}
+							</span>
+						);
+					})
+					: "—"}
+			</dd>
+		</div>
+	);
 }
 
 export function EsperienzeRecap({esperienze}: {esperienze: EsperienzaAnnuncio[]}) {

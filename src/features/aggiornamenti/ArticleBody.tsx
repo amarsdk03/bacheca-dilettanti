@@ -1,22 +1,53 @@
 import Link from "next/link";
+import {Children, isValidElement, type ReactNode} from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import {getArticleCover} from "@/lib/articles";
 import ArticleImage from "@/features/aggiornamenti/ArticleImage";
 
+function getNodeText(node: ReactNode): string {
+	return Children.toArray(node)
+		.map((child) => {
+			if (typeof child === "string" || typeof child === "number") return String(child);
+			if (isValidElement<{children?: ReactNode}>(child)) return getNodeText(child.props.children);
+			return "";
+		})
+		.join("");
+}
+
+function slugifyHeading(node: ReactNode) {
+	return getNodeText(node)
+		.normalize("NFC")
+		.toLocaleLowerCase("it")
+		.trim()
+		.replace(/[^\p{L}\p{N}\s-]/gu, "")
+		.replace(/\s+/g, "-")
+		.replace(/-+/g, "-");
+}
+
 export default function ArticleBody({content}: {content: string}) {
+	const headingOccurrences = new Map<string, number>();
+	const getHeadingId = (children: ReactNode) => {
+		const baseId = slugifyHeading(children);
+		const occurrence = headingOccurrences.get(baseId) ?? 0;
+		headingOccurrences.set(baseId, occurrence + 1);
+		return occurrence === 0 ? baseId : `${baseId}-${occurrence}`;
+	};
+
 	return (
 		<ReactMarkdown
 			remarkPlugins={[remarkGfm]}
 			components={{
-				h1: ({children}) => <h2 className="sr-only">{children}</h2>,
-				h2: ({children}) => <h2 className="mt-12 scroll-mt-24 font-bold text-3xl tracking-tight text-neutral-900">{children}</h2>,
-				h3: ({children}) => <h3 className="mt-9 scroll-mt-24 text-xl font-bold text-neutral-900">{children}</h3>,
+				h1: ({children}) => <h2 id={getHeadingId(children)} className="sr-only">{children}</h2>,
+				h2: ({children}) => <h2 id={getHeadingId(children)} className="mt-12 scroll-mt-24 font-bold text-3xl tracking-tight text-neutral-900">{children}</h2>,
+				h3: ({children}) => <h3 id={getHeadingId(children)} className="mt-9 scroll-mt-24 text-xl font-bold text-neutral-900">{children}</h3>,
 				p: ({children}) => <p className="mt-5 text-[1.05rem] leading-8 text-neutral-700">{children}</p>,
 				strong: ({children}) => <strong className="font-semibold text-neutral-950">{children}</strong>,
 				em: ({children}) => <em className="text-neutral-600">{children}</em>,
-				a: ({href = "", children}) => href.startsWith("/") ? (
+				a: ({href = "", children}) => href.startsWith("#") ? (
+					<a href={href} className="font-semibold text-fuchsia-600 underline decoration-fuchsia-200 underline-offset-4 hover:decoration-fuchsia-600">{children}</a>
+				) : href.startsWith("/") ? (
 					<Link href={href} className="font-semibold text-fuchsia-600 underline decoration-fuchsia-200 underline-offset-4 hover:decoration-fuchsia-600">{children}</Link>
 				) : (
 					<a href={href} target="_blank" rel="noopener noreferrer" className="font-semibold text-fuchsia-600 underline decoration-fuchsia-200 underline-offset-4 hover:decoration-fuchsia-600">{children}</a>

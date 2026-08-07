@@ -52,7 +52,9 @@ export default function DataNascitaFields({
 
 	return (
 		<Field>
-			<FieldLabel>Data di nascita</FieldLabel>
+			<FieldLabel>
+				Data di nascita <span className={"font-normal text-neutral-400 -translate-x-1"}>(facoltativo)</span>
+			</FieldLabel>
 			<div className="grid grid-cols-3 gap-3">
 				<Select
 					value={annoNascita || ANNO_PLACEHOLDER}

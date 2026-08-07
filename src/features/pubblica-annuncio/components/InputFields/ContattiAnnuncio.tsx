@@ -154,28 +154,13 @@ export default function ContattiAnnuncioFields({
 					Inserisci almeno un contatto tra email e telefono.
 				</FieldDescription>
 				<FieldDescription>
-					Consigliamo un indirizzo email, in modo da associare questo annuncio a un tuo profilo in futuro
+					Consigliamo di inserire un indirizzo email, per associare questo annuncio a un futuro profilo del sito
 				</FieldDescription>
 			</div>
 
 			<div className="grid gap-3">
 				{SOCIAL_CONTACT_OPTIONS.filter(
 					(canale) => canale.valore === "Email" || canale.valore === "Telefono"
-				).map(renderContattoField)}
-			</div>
-
-			<div className="mt-6">
-				<FieldLegend variant="label" className="field-legend-title mb-0">
-					Profili social
-				</FieldLegend>
-				<FieldDescription className="mt-2">
-					Lascia vuoti i canali che non vuoi mostrare
-				</FieldDescription>
-			</div>
-
-			<div className="grid gap-3">
-				{SOCIAL_CONTACT_OPTIONS.filter(
-					(canale) => canale.valore !== "Email" && canale.valore !== "Telefono"
 				).map(renderContattoField)}
 			</div>
 		</FieldSet>

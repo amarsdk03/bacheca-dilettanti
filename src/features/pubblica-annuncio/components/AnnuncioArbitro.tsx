@@ -1,4 +1,4 @@
-import {type Dispatch, type SetStateAction} from "react";
+"use client";
 
 import {
 	Field,
@@ -9,74 +9,31 @@ import {
 	FieldSet,
 } from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
+import {useAnnuncioArbitroStore} from "@/features/pubblica-annuncio/state/AnnuncioArbitro.store";
 import DataNascitaFields from "@/features/pubblica-annuncio/components/InputFields/DataNascitaFields";
 import DisponibilitaSpostamentoSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaSpostamentoSelect";
-import EsperienzeAnnuncioFields, {
-	type EsperienzaAnnuncio,
-} from "@/features/pubblica-annuncio/components/InputFields/EsperienzeAnnuncioFields";
-import RegioniInteresseField, {
-	type CittaComuniPerRegione,
-} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
-import {TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/components/opzioniAnnuncio";
+import EsperienzeAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/EsperienzeAnnuncioFields";
+import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
+import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 
-type AnnuncioArbitroProps = {
-	nome: string;
-	setNome: Dispatch<SetStateAction<string>>;
-	cognome: string;
-	setCognome: Dispatch<SetStateAction<string>>;
-	giornoNascita: string;
-	setGiornoNascita: Dispatch<SetStateAction<string>>;
-	meseNascita: string;
-	setMeseNascita: Dispatch<SetStateAction<string>>;
-	annoNascita: string;
-	setAnnoNascita: Dispatch<SetStateAction<string>>;
-	regioniInteressate: string[];
-	setRegioniInteressate: Dispatch<SetStateAction<string[]>>;
-	cittaComuniPerRegione: CittaComuniPerRegione;
-	setCittaComuniPerRegione: Dispatch<SetStateAction<CittaComuniPerRegione>>;
-	tipologiaCalcio: string;
-	setTipologiaCalcio: Dispatch<SetStateAction<string>>;
-	presentazione: string;
-	setPresentazione: Dispatch<SetStateAction<string>>;
-	esperienze: EsperienzaAnnuncio[];
-	setEsperienze: Dispatch<SetStateAction<EsperienzaAnnuncio[]>>;
-	disponibilitaSpostamento: string;
-	setDisponibilitaSpostamento: Dispatch<SetStateAction<string>>;
-};
+const optionalLabel = <span className="font-normal text-neutral-400 -translate-x-1">(facoltativo)</span>;
 
-export default function AnnuncioArbitro({
-	nome,
-	setNome,
-	cognome,
-	setCognome,
-	giornoNascita,
-	setGiornoNascita,
-	meseNascita,
-	setMeseNascita,
-	annoNascita,
-	setAnnoNascita,
-	regioniInteressate,
-	setRegioniInteressate,
-	cittaComuniPerRegione,
-	setCittaComuniPerRegione,
-	tipologiaCalcio,
-	setTipologiaCalcio,
-	presentazione,
-	setPresentazione,
-	esperienze,
-	setEsperienze,
-	disponibilitaSpostamento,
-	setDisponibilitaSpostamento,
-}: AnnuncioArbitroProps) {
-	const datiAnagraficiValidi = nome.trim() !== "" && cognome.trim() !== "";
+export default function AnnuncioArbitro() {
+	const {
+		nome,
+		cognome,
+		giornoNascita,
+		meseNascita,
+		annoNascita,
+		regioniInteressate,
+		cittaComuniPerRegione,
+		tipologieCalcio,
+		presentazione,
+		esperienze,
+		disponibilitaSpostamento,
+		setField,
+	} = useAnnuncioArbitroStore();
 
 	return (
 		<FieldGroup className="w-full">
@@ -85,34 +42,27 @@ export default function AnnuncioArbitro({
 					<FieldLegend variant="label" className="field-legend-title mb-0">
 						Dati arbitro
 					</FieldLegend>
-					<FieldDescription
-						className="text-red-800 font-medium"
-						hidden={datiAnagraficiValidi}
-					>
-						Nome e cognome sono obbligatori.
-					</FieldDescription>
+					<FieldDescription>Puoi lasciare anonimi i dati personali.</FieldDescription>
 				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<Field>
-						<FieldLabel htmlFor="arbitro-nome">Nome</FieldLabel>
+						<FieldLabel htmlFor="arbitro-nome">Nome {optionalLabel}</FieldLabel>
 						<Input
 							id="arbitro-nome"
 							value={nome}
-							onChange={(event) => setNome(event.target.value)}
+							onChange={(event) => setField("nome", event.target.value)}
 							placeholder="Mario"
-							required
 						/>
 					</Field>
 
 					<Field>
-						<FieldLabel htmlFor="arbitro-cognome">Cognome</FieldLabel>
+						<FieldLabel htmlFor="arbitro-cognome">Cognome {optionalLabel}</FieldLabel>
 						<Input
 							id="arbitro-cognome"
 							value={cognome}
-							onChange={(event) => setCognome(event.target.value)}
+							onChange={(event) => setField("cognome", event.target.value)}
 							placeholder="Rossi"
-							required
 						/>
 					</Field>
 				</div>
@@ -120,19 +70,19 @@ export default function AnnuncioArbitro({
 				<DataNascitaFields
 					idPrefix="arbitro"
 					giornoNascita={giornoNascita}
-					setGiornoNascita={setGiornoNascita}
+					setGiornoNascita={(value) => setField("giornoNascita", value)}
 					meseNascita={meseNascita}
-					setMeseNascita={setMeseNascita}
+					setMeseNascita={(value) => setField("meseNascita", value)}
 					annoNascita={annoNascita}
-					setAnnoNascita={setAnnoNascita}
+					setAnnoNascita={(value) => setField("annoNascita", value)}
 				/>
 			</FieldSet>
 
 			<RegioniInteresseField
 				regioniInteressate={regioniInteressate}
-				setRegioniInteressate={setRegioniInteressate}
+				setRegioniInteressate={(value) => setField("regioniInteressate", value)}
 				cittaComuniPerRegione={cittaComuniPerRegione}
-				setCittaComuniPerRegione={setCittaComuniPerRegione}
+				setCittaComuniPerRegione={(value) => setField("cittaComuniPerRegione", value)}
 			/>
 
 			<FieldSet>
@@ -143,29 +93,14 @@ export default function AnnuncioArbitro({
 				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2">
-					<Field>
-						<FieldLabel>Tipologia calcio</FieldLabel>
-						<Select
-							value={tipologiaCalcio || null}
-							onValueChange={(value) => setTipologiaCalcio(value ?? "")}
-						>
-							<SelectTrigger className="w-full">
-								<SelectValue placeholder="Non specificare" />
-							</SelectTrigger>
-							<SelectContent>
-								{TIPOLOGIA_CALCIO_OPTIONS.map((opzione) => (
-									<SelectItem key={opzione.etichetta} value={opzione.valore}>
-										{opzione.etichetta}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</Field>
-
+					<TipologiaCalcioMultiselectField
+						value={tipologieCalcio}
+						onValueChange={(value) => setField("tipologieCalcio", value)}
+					/>
 					<DisponibilitaSpostamentoSelect
 						id="arbitro-disponibilita-spostamento"
 						value={disponibilitaSpostamento}
-						setValue={setDisponibilitaSpostamento}
+						setValue={(value) => setField("disponibilitaSpostamento", value)}
 					/>
 				</div>
 
@@ -177,7 +112,7 @@ export default function AnnuncioArbitro({
 					<Textarea
 						id="arbitro-presentazione"
 						value={presentazione}
-						onChange={(event) => setPresentazione(event.target.value.slice(0, 2000))}
+						onChange={(event) => setField("presentazione", event.target.value.slice(0, 2000))}
 						maxLength={2000}
 						placeholder="Esperienza arbitrale, disponibilità, categorie seguite, approccio..."
 						className="min-h-32 resize-y"
@@ -188,7 +123,7 @@ export default function AnnuncioArbitro({
 			<EsperienzeAnnuncioFields
 				idPrefix="arbitro"
 				esperienze={esperienze}
-				setEsperienze={setEsperienze}
+				setEsperienze={(value) => setField("esperienze", value)}
 			/>
 		</FieldGroup>
 	);

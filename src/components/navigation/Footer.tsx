@@ -33,7 +33,7 @@ export default function Footer(
 					</Link>
 				</div>
 
-				<div className="grid grid-cols-2 sm:grid-cols-4 gap-10 sm:pt-4">
+				<div className="grid grid-cols-2 sm:grid-cols-4 gap-10 sm:pt-4" hidden={minimal}>
 					<div>
 						<h3 className="font-mono text-xs font-semibold uppercase tracking-wide text-neutral-400">
 							Piattaforma
@@ -88,7 +88,7 @@ export default function Footer(
 							href="https://www.instagram.com/bachecadilettanti/"
 							target="_blank"
 							aria-label="Instagram"
-							className="inline-flex size-12 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition-colors hover:border-neutral-300 hover:text-neutral-900"
+							className="inline-flex size-12 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:-translate-y-0.5 hover:border-fuchsia-300 hover:text-fuchsia-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500"
 						>
 							<SiInstagram title='Instagram' size={20} />
 						</Link>
@@ -96,7 +96,7 @@ export default function Footer(
 							href="https://whatsapp.com/channel/0029Vb8lng43AzNSP0YlRL3V"
 							target="_blank"
 							aria-label="Whatsapp"
-							className="inline-flex size-12 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition-colors hover:border-neutral-300 hover:text-neutral-900"
+							className="inline-flex size-12 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:-translate-y-0.5 hover:border-fuchsia-300 hover:text-fuchsia-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500"
 						>
 							<SiWhatsapp title='Whatsapp' size={20} />
 						</Link>

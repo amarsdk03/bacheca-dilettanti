@@ -1,4 +1,6 @@
-import {type Dispatch, type SetStateAction} from "react";
+"use client";
+
+import {type SetStateAction} from "react";
 
 import {
 	Field,
@@ -9,6 +11,13 @@ import {
 	FieldSet,
 } from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+	InputGroupText,
+	InputGroupTextarea,
+} from "@/components/ui/input-group";
 import {
 	Select,
 	SelectContent,
@@ -34,88 +43,23 @@ import {
 } from "@/components/ui/combobox";
 import {Textarea} from "@/components/ui/textarea";
 import AnnateMultiselectField from "@/features/pubblica-annuncio/components/InputFields/AnnateMultiselectField";
-import ContattiAnnuncioFields, {
-	type ContattiAnnuncio,
-} from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
+import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 import DateRangeFields from "@/features/pubblica-annuncio/components/InputFields/DateRangeFields";
-import {FIGURA_PROFESSIONALE_OPTIONS} from "@/features/pubblica-annuncio/components/opzioniAnnuncio";
-import * as React from "react";
+import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
+import RuoloPrincipaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
+import {FIGURA_PROFESSIONALE_OPTIONS} from "@/features/pubblica-annuncio/components/InputFields/FiguraProfessionaleMultiselectField";
+import {
+	type AnnuncioSquadraData,
+	useAnnuncioSquadraStore,
+} from "@/features/pubblica-annuncio/state/AnnuncioSquadra.store";
 
-export type SedePrincipaleSquadra = {
-	citta: string;
-	cap: string;
-	indirizzo: string;
-};
-
-export type CercaGiocatoreSquadra = {
-	ruoloPrincipale: string;
-	ruoloAvanzato: string;
-	annateCercate: string[];
-	requisiti: string;
-	periodoDa: string;
-	periodoA: string;
-};
-
-export type CercaStaffSquadra = {
-	figuraCercata: string;
-	settore: string;
-	compensoMensile: string;
-	requisiti: string;
-	periodoDa: string;
-	periodoA: string;
-};
-
-export type CercaAmichevoliSquadra = {
-	categorieAvversario: string[];
-	periodoDa: string;
-	periodoA: string;
-	campoIndirizzo: string;
-	disponibilitaTrasferta: string;
-};
-
-export type CercaSponsorSquadra = {
-	categoriaSettore: string;
-	supportoRicercato: string;
-	cosaOffrite: string;
-};
-
-export const SEDE_PRINCIPALE_SQUADRA_DEFAULT: SedePrincipaleSquadra = {
-	citta: "",
-	cap: "",
-	indirizzo: "",
-};
-
-export const CERCA_GIOCATORE_SQUADRA_DEFAULT: CercaGiocatoreSquadra = {
-	ruoloPrincipale: "",
-	ruoloAvanzato: "",
-	annateCercate: [],
-	requisiti: "",
-	periodoDa: "",
-	periodoA: "",
-};
-
-export const CERCA_STAFF_SQUADRA_DEFAULT: CercaStaffSquadra = {
-	figuraCercata: "",
-	settore: "",
-	compensoMensile: "",
-	requisiti: "",
-	periodoDa: "",
-	periodoA: "",
-};
-
-export const CERCA_AMICHEVOLI_SQUADRA_DEFAULT: CercaAmichevoliSquadra = {
-	categorieAvversario: [],
-	periodoDa: "",
-	periodoA: "",
-	campoIndirizzo: "",
-	disponibilitaTrasferta: "",
-};
-
-export const CERCA_SPONSOR_SQUADRA_DEFAULT: CercaSponsorSquadra = {
-	categoriaSettore: "",
-	supportoRicercato: "",
-	cosaOffrite: "",
-};
+export type {
+	CercaAmichevoliSquadra,
+	CercaGiocatoreSquadra,
+	CercaSponsorSquadra,
+	CercaStaffSquadra,
+	SedePrincipaleSquadra,
+} from "@/features/pubblica-annuncio/state/AnnuncioSquadra.store";
 
 export const TIPOLOGIA_SPORT_SQUADRA_OPTIONS = [
 	{valore: "Calcio a 11", etichetta: "Calcio a 11"},
@@ -123,15 +67,8 @@ export const TIPOLOGIA_SPORT_SQUADRA_OPTIONS = [
 	{valore: "Calcio a 5", etichetta: "Calcio a 5"},
 ];
 
-export const RUOLO_PRINCIPALE_RICERCA_OPTIONS = [
-	{valore: "Portiere", etichetta: "Portiere"},
-	{valore: "Difensore", etichetta: "Difensore"},
-	{valore: "Centrocampista", etichetta: "Centrocampista"},
-	{valore: "Attaccante", etichetta: "Attaccante"},
-];
-
 export const RUOLI_AVANZATI_PER_RUOLO: Record<string, string[]> = {
-	Portiere: ["Portiere"],
+	Portiere: [],
 	Difensore: [
 		"Libero",
 		"Terzino sinistro",
@@ -204,56 +141,37 @@ const DISPONIBILITA_TRASFERTA_OPTIONS = [
 	{valore: "No", etichetta: "No"},
 ];
 
-type AnnuncioSquadraProps = {
-	sottotipologia: string;
-	nomeSocieta: string;
-	setNomeSocieta: Dispatch<SetStateAction<string>>;
-	linkStemma: string;
-	setLinkStemma: Dispatch<SetStateAction<string>>;
-	contatti: ContattiAnnuncio;
-	setContatti: Dispatch<SetStateAction<ContattiAnnuncio>>;
-	sedePrincipale: SedePrincipaleSquadra;
-	setSedePrincipale: Dispatch<SetStateAction<SedePrincipaleSquadra>>;
-	descrizione: string;
-	setDescrizione: Dispatch<SetStateAction<string>>;
-	tipologiaSport: string;
-	setTipologiaSport: Dispatch<SetStateAction<string>>;
-	cercaGiocatore: CercaGiocatoreSquadra;
-	setCercaGiocatore: Dispatch<SetStateAction<CercaGiocatoreSquadra>>;
-	cercaStaff: CercaStaffSquadra;
-	setCercaStaff: Dispatch<SetStateAction<CercaStaffSquadra>>;
-	cercaAmichevoli: CercaAmichevoliSquadra;
-	setCercaAmichevoli: Dispatch<SetStateAction<CercaAmichevoliSquadra>>;
-	cercaSponsor: CercaSponsorSquadra;
-	setCercaSponsor: Dispatch<SetStateAction<CercaSponsorSquadra>>;
-};
-
-export default function AnnuncioSquadra({
-	sottotipologia,
-	nomeSocieta,
-	setNomeSocieta,
-	linkStemma,
-	setLinkStemma,
-	contatti,
-	setContatti,
-	sedePrincipale,
-	setSedePrincipale,
-	descrizione,
-	setDescrizione,
-	tipologiaSport,
-	setTipologiaSport,
-	cercaGiocatore,
-	setCercaGiocatore,
-	cercaStaff,
-	setCercaStaff,
-	cercaAmichevoli,
-	setCercaAmichevoli,
-	cercaSponsor,
-	setCercaSponsor,
-}: AnnuncioSquadraProps) {
+export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: string}) {
+	const {
+		nomeSocieta,
+		linkStemma,
+		contatti,
+		sedePrincipale,
+		descrizione,
+		tipologiaSport,
+		cercaGiocatore,
+		cercaStaff,
+		cercaAmichevoli,
+		cercaSponsor,
+		setField,
+	} = useAnnuncioSquadraStore();
+	const setStoreField = <K extends keyof AnnuncioSquadraData>(field: K) =>
+		(value: SetStateAction<AnnuncioSquadraData[K]>) => setField(field, value);
+	const setNomeSocieta = setStoreField("nomeSocieta");
+	const setLinkStemma = setStoreField("linkStemma");
+	const setContatti = setStoreField("contatti");
+	const setSedePrincipale = setStoreField("sedePrincipale");
+	const setDescrizione = setStoreField("descrizione");
+	const setTipologiaSport = setStoreField("tipologiaSport");
+	const setCercaGiocatore = setStoreField("cercaGiocatore");
+	const setCercaStaff = setStoreField("cercaStaff");
+	const setCercaAmichevoli = setStoreField("cercaAmichevoli");
+	const setCercaSponsor = setStoreField("cercaSponsor");
 	const anchor = useComboboxAnchor();
 
-	const ruoliAvanzatiDisponibili = RUOLI_AVANZATI_PER_RUOLO[cercaGiocatore.ruoloPrincipale] ?? [];
+	const ruoliAvanzatiDisponibili = Array.from(
+		new Set(cercaGiocatore.ruoliPrincipali.flatMap((ruolo) => RUOLI_AVANZATI_PER_RUOLO[ruolo] ?? []))
+	);
 
 	return (
 		<FieldGroup className="w-full gap-6">
@@ -363,7 +281,7 @@ export default function AnnuncioSquadra({
 
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="squadra-descrizione">Descrizione</FieldLabel>
+						<FieldLabel htmlFor="squadra-descrizione">Breve descrizione</FieldLabel>
 						<span className="text-xs text-muted-foreground">{descrizione.length}/5000</span>
 					</div>
 					<Textarea
@@ -387,61 +305,29 @@ export default function AnnuncioSquadra({
 					</div>
 
 					<div className="grid gap-4 sm:grid-cols-2">
-						<Field>
-							<FieldLabel>Ruolo principale</FieldLabel>
-							<Select
-								value={cercaGiocatore.ruoloPrincipale || null}
-								onValueChange={(value) =>
-									setCercaGiocatore((prev) => ({
-										...prev,
-										ruoloPrincipale: value ?? "",
-										ruoloAvanzato: "",
-									}))
-								}
-							>
-								<SelectTrigger className="w-full">
-									<SelectValue placeholder="Seleziona" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value={null}>
-										Non specificare
-									</SelectItem>
-									{RUOLO_PRINCIPALE_RICERCA_OPTIONS.map((opzione) => (
-										<SelectItem key={opzione.valore} value={opzione.valore}>
-											{opzione.etichetta}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</Field>
+						<RuoloPrincipaleMultiselectField
+							required
+							value={cercaGiocatore.ruoliPrincipali}
+							onValueChange={(value) => {
+								const opzioniDisponibili = new Set(
+									value.flatMap((ruolo) => RUOLI_AVANZATI_PER_RUOLO[ruolo] ?? [])
+								);
+								setCercaGiocatore((previous) => ({
+									...previous,
+									ruoliPrincipali: value,
+									ruoliSpecifici: previous.ruoliSpecifici.filter((ruolo) => opzioniDisponibili.has(ruolo)),
+								}));
+							}}
+						/>
 
-						<Field>
-							<FieldLabel>Ruolo specifico</FieldLabel>
-							<Select
-								value={
-									cercaGiocatore.ruoloPrincipale === "Portiere" ? "Portiere" : cercaGiocatore.ruoloAvanzato || null
-								}
-								onValueChange={(value) =>
-									setCercaGiocatore((prev) => ({...prev, ruoloAvanzato: value ?? ""}))
-								}
-							>
-								<SelectTrigger className="w-full" disabled={
-									!cercaGiocatore.ruoloPrincipale || cercaGiocatore.ruoloPrincipale === "Portiere"
-								}>
-									<SelectValue placeholder="Non specificato" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value={null}>
-										Non specificare
-									</SelectItem>
-									{ruoliAvanzatiDisponibili.map((opzione) => (
-										<SelectItem key={opzione} value={opzione}>
-											{opzione}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</Field>
+						<MultiselectField
+							label="Ruolo specifico"
+							options={ruoliAvanzatiDisponibili}
+							value={cercaGiocatore.ruoliSpecifici}
+							onValueChange={(value) => setCercaGiocatore((previous) => ({...previous, ruoliSpecifici: value}))}
+							placeholder={cercaGiocatore.ruoliPrincipali.length > 0 ? "Seleziona i ruoli specifici..." : "Prima seleziona un ruolo principale"}
+							description="Puoi scegliere più ruoli specifici tra quelli compatibili."
+						/>
 					</div>
 
 					<AnnateMultiselectField
@@ -526,17 +412,25 @@ export default function AnnuncioSquadra({
 							/>
 						</Field>
 						<Field>
-							<FieldLabel htmlFor="squadra-staff-compenso">Compenso mensile (in €)</FieldLabel>
-							<Input
-								id="squadra-staff-compenso"
-								type="number"
-								min={0}
-								value={cercaStaff.compensoMensile}
-								onChange={(event) =>
-									setCercaStaff((prev) => ({...prev, compensoMensile: event.target.value}))
-								}
-								placeholder="1800"
-							/>
+							<FieldLabel htmlFor="squadra-staff-compenso">Compenso mensile</FieldLabel>
+							<InputGroup>
+								<InputGroupAddon>
+									<InputGroupText>&euro;</InputGroupText>
+								</InputGroupAddon>
+								<InputGroupInput
+									id="squadra-staff-compenso"
+									type="number"
+									min={0}
+									value={cercaStaff.compensoMensile}
+									onChange={(event) =>
+										setCercaStaff((prev) => ({...prev, compensoMensile: event.target.value}))
+									}
+									placeholder="1800"
+								/>
+								<InputGroupAddon align="inline-end">
+									<InputGroupText>EUR</InputGroupText>
+								</InputGroupAddon>
+							</InputGroup>
 						</Field>
 					</div>
 

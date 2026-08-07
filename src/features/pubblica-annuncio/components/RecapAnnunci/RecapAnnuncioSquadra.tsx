@@ -1,172 +1,61 @@
+import {useAnnuncioSquadraStore} from "@/features/pubblica-annuncio/state/AnnuncioSquadra.store";
 import {
-	type CercaAmichevoliSquadra,
-	type CercaGiocatoreSquadra,
-	type CercaSponsorSquadra,
-	type CercaStaffSquadra,
-	type SedePrincipaleSquadra,
-} from "@/features/pubblica-annuncio/components/AnnuncioSquadra";
+	formatContatti,
+	formatPeriodo,
+	RecapField,
+} from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
 
-type RecapAnnuncioSquadraProps = {
-	sottotipologia: string;
-	nomeSocieta: string;
-	tipologiaSportLabel: string;
-	linkStemma: string;
-	sedePrincipale: SedePrincipaleSquadra;
-	contattiPubblici: string;
-	descrizione: string;
-	cercaGiocatore: CercaGiocatoreSquadra;
-	cercaStaff: CercaStaffSquadra;
-	cercaAmichevoli: CercaAmichevoliSquadra;
-	cercaSponsor: CercaSponsorSquadra;
-	figuraStaffLabel: string;
-	disponibilitaTrasfertaLabel: string;
-};
+export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: string}) {
+	const data = useAnnuncioSquadraStore();
+	const sede = [data.sedePrincipale.indirizzo, data.sedePrincipale.cap, data.sedePrincipale.citta]
+		.filter(Boolean)
+		.join(", ");
 
-export default function RecapAnnuncioSquadra({
-	sottotipologia,
-	nomeSocieta,
-	tipologiaSportLabel,
-	linkStemma,
-	sedePrincipale,
-	contattiPubblici,
-	descrizione,
-	cercaGiocatore,
-	cercaStaff,
-	cercaAmichevoli,
-	cercaSponsor,
-	figuraStaffLabel,
-	disponibilitaTrasfertaLabel,
-}: RecapAnnuncioSquadraProps) {
 	return (
 		<div>
-			<p className="text-muted-foreground mb-1">Dettagli squadra</p>
+			<p className="mb-1 text-muted-foreground">Dettagli squadra</p>
 			<dl className="grid gap-1 sm:grid-cols-2">
-				<div>
-					<dt className="text-xs text-muted-foreground">Nome societa</dt>
-					<dd className="font-medium">{nomeSocieta || "—"}</dd>
-				</div>
-				<div>
-					<dt className="text-xs text-muted-foreground">Tipologia sport</dt>
-					<dd className="font-medium">{tipologiaSportLabel || "—"}</dd>
-				</div>
-				{linkStemma.trim() !== "" && (
-					<div>
-						<dt className="text-xs text-muted-foreground">Link stemma</dt>
-						<dd className="font-medium break-all">{linkStemma}</dd>
-					</div>
-				)}
-				<div>
-					<dt className="text-xs text-muted-foreground">Sede principale</dt>
-					<dd className="font-medium">
-						{[sedePrincipale.indirizzo, sedePrincipale.cap, sedePrincipale.citta].filter(Boolean).join(", ") || "—"}
-					</dd>
-				</div>
-				<div className="sm:col-span-2">
-					<dt className="text-xs text-muted-foreground">Contatti pubblici</dt>
-					<dd className="font-medium">{contattiPubblici || "—"}</dd>
-				</div>
-				{descrizione.trim() !== "" && (
-					<div className="sm:col-span-2">
-						<dt className="text-xs text-muted-foreground">Descrizione</dt>
-						<dd className="font-medium whitespace-pre-wrap">{descrizione}</dd>
-					</div>
-				)}
+				<RecapField label="Nome società">{data.nomeSocieta || "—"}</RecapField>
+				<RecapField label="Tipologia sport">{data.tipologiaSport || "—"}</RecapField>
+				<RecapField label="Sede principale">{sede || "—"}</RecapField>
+				{data.linkStemma.trim() !== "" && <RecapField label="Link stemma">{data.linkStemma}</RecapField>}
+				<RecapField label="Contatti pubblici" wide>{formatContatti(data.contatti)}</RecapField>
+				{data.descrizione.trim() !== "" && <RecapField label="Descrizione" wide>{data.descrizione}</RecapField>}
 
 				{sottotipologia === "cerca-giocatore" && (
 					<>
-						<div>
-							<dt className="text-xs text-muted-foreground">Ruolo</dt>
-							<dd className="font-medium">
-								{[cercaGiocatore.ruoloPrincipale, cercaGiocatore.ruoloAvanzato].filter(Boolean).join(" · ") || "—"}
-							</dd>
-						</div>
-						<div>
-							<dt className="text-xs text-muted-foreground">Annate cercate</dt>
-							<dd className="font-medium">{cercaGiocatore.annateCercate.join(", ") || "—"}</dd>
-						</div>
-						<div>
-							<dt className="text-xs text-muted-foreground">Periodo</dt>
-							<dd className="font-medium">
-								{[cercaGiocatore.periodoDa, cercaGiocatore.periodoA].filter(Boolean).join(" / ") || "—"}
-							</dd>
-						</div>
-						{cercaGiocatore.requisiti.trim() !== "" && (
-							<div className="sm:col-span-2">
-								<dt className="text-xs text-muted-foreground">Requisiti</dt>
-								<dd className="font-medium whitespace-pre-wrap">{cercaGiocatore.requisiti}</dd>
-							</div>
-						)}
+						<RecapField label="Ruoli principali">{data.cercaGiocatore.ruoliPrincipali.join(", ") || "—"}</RecapField>
+						<RecapField label="Ruoli specifici">{data.cercaGiocatore.ruoliSpecifici.join(", ") || "—"}</RecapField>
+						<RecapField label="Annate cercate">{data.cercaGiocatore.annateCercate.join(", ") || "—"}</RecapField>
+						<RecapField label="Periodo">{formatPeriodo(data.cercaGiocatore.periodoDa, data.cercaGiocatore.periodoA)}</RecapField>
+						{data.cercaGiocatore.requisiti.trim() !== "" && <RecapField label="Requisiti" wide>{data.cercaGiocatore.requisiti}</RecapField>}
 					</>
 				)}
 
 				{sottotipologia === "cerca-staff" && (
 					<>
-						<div>
-							<dt className="text-xs text-muted-foreground">Figura cercata</dt>
-							<dd className="font-medium">{figuraStaffLabel || "—"}</dd>
-						</div>
-						<div>
-							<dt className="text-xs text-muted-foreground">Settore</dt>
-							<dd className="font-medium">{cercaStaff.settore || "—"}</dd>
-						</div>
-						<div>
-							<dt className="text-xs text-muted-foreground">Compenso mensile</dt>
-							<dd className="font-medium">{cercaStaff.compensoMensile ? `${cercaStaff.compensoMensile} €` : "—"}</dd>
-						</div>
-						<div>
-							<dt className="text-xs text-muted-foreground">Periodo</dt>
-							<dd className="font-medium">
-								{[cercaStaff.periodoDa, cercaStaff.periodoA].filter(Boolean).join(" / ") || "—"}
-							</dd>
-						</div>
-						{cercaStaff.requisiti.trim() !== "" && (
-							<div className="sm:col-span-2">
-								<dt className="text-xs text-muted-foreground">Requisiti</dt>
-								<dd className="font-medium whitespace-pre-wrap">{cercaStaff.requisiti}</dd>
-							</div>
-						)}
+						<RecapField label="Figura cercata">{data.cercaStaff.figuraCercata || "—"}</RecapField>
+						<RecapField label="Settore">{data.cercaStaff.settore || "—"}</RecapField>
+						<RecapField label="Compenso mensile">{data.cercaStaff.compensoMensile ? `${data.cercaStaff.compensoMensile} €` : "—"}</RecapField>
+						<RecapField label="Periodo">{formatPeriodo(data.cercaStaff.periodoDa, data.cercaStaff.periodoA)}</RecapField>
+						{data.cercaStaff.requisiti.trim() !== "" && <RecapField label="Requisiti" wide>{data.cercaStaff.requisiti}</RecapField>}
 					</>
 				)}
 
 				{sottotipologia === "cerca-partite-amichevoli" && (
 					<>
-						<div className="sm:col-span-2">
-							<dt className="text-xs text-muted-foreground">Categorie avversario</dt>
-							<dd className="font-medium">{cercaAmichevoli.categorieAvversario.join(", ") || "—"}</dd>
-						</div>
-						<div>
-							<dt className="text-xs text-muted-foreground">Periodo</dt>
-							<dd className="font-medium">
-								{[cercaAmichevoli.periodoDa, cercaAmichevoli.periodoA].filter(Boolean).join(" / ") || "—"}
-							</dd>
-						</div>
-						<div>
-							<dt className="text-xs text-muted-foreground">Disponibilita trasferta</dt>
-							<dd className="font-medium">{disponibilitaTrasfertaLabel}</dd>
-						</div>
-						{cercaAmichevoli.campoIndirizzo.trim() !== "" && (
-							<div className="sm:col-span-2">
-								<dt className="text-xs text-muted-foreground">Campo scelto</dt>
-								<dd className="font-medium">{cercaAmichevoli.campoIndirizzo}</dd>
-							</div>
-						)}
+						<RecapField label="Categorie avversario" wide>{data.cercaAmichevoli.categorieAvversario.join(", ") || "—"}</RecapField>
+						<RecapField label="Periodo">{formatPeriodo(data.cercaAmichevoli.periodoDa, data.cercaAmichevoli.periodoA)}</RecapField>
+						<RecapField label="Disponibilità trasferta">{data.cercaAmichevoli.disponibilitaTrasferta || "Non specificata"}</RecapField>
+						{data.cercaAmichevoli.campoIndirizzo.trim() !== "" && <RecapField label="Campo scelto" wide>{data.cercaAmichevoli.campoIndirizzo}</RecapField>}
 					</>
 				)}
 
 				{sottotipologia === "cerca-sponsor" && (
 					<>
-						<div>
-							<dt className="text-xs text-muted-foreground">Categoria / settore</dt>
-							<dd className="font-medium">{cercaSponsor.categoriaSettore || "—"}</dd>
-						</div>
-						<div>
-							<dt className="text-xs text-muted-foreground">Supporto ricercato</dt>
-							<dd className="font-medium">{cercaSponsor.supportoRicercato || "—"}</dd>
-						</div>
-						<div className="sm:col-span-2">
-							<dt className="text-xs text-muted-foreground">Cosa offrite</dt>
-							<dd className="font-medium">{cercaSponsor.cosaOffrite || "—"}</dd>
-						</div>
+						<RecapField label="Categoria / settore">{data.cercaSponsor.categoriaSettore || "—"}</RecapField>
+						<RecapField label="Supporto ricercato">{data.cercaSponsor.supportoRicercato || "—"}</RecapField>
+						<RecapField label="Cosa offrite" wide>{data.cercaSponsor.cosaOffrite || "—"}</RecapField>
 					</>
 				)}
 			</dl>

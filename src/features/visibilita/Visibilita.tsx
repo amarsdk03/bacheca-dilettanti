@@ -482,7 +482,7 @@ export default function Visibilita() {
 				</section>
 
 				{/* ------------------------------ Selettore categoria + piani ------------------------------ */}
-				<section className="border-b border-neutral-200 bg-white">
+				<section className="border-b border-neutral-200 bg-white" hidden>
 					<div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
 						<div className="max-w-2xl">
 							<p className="inline-flex items-center gap-2 text-sm font-semibold text-fuchsia-700">

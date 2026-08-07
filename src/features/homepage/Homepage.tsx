@@ -249,9 +249,9 @@ const filters: { label: string; value: FilterValue }[] = [
 ];
 
 const categoryBadgeStyles: Record<ListingCategory, string> = {
-	Giocatore: 'bg-[var(--accent-tint)] text-[var(--accent-dark)]',
+	Giocatore: 'bg-neutral-900 text-white',
 	Squadra: 'bg-neutral-900 text-white',
-	Staff: 'bg-neutral-100 text-neutral-700',
+	Staff: 'bg-neutral-900 text-white',
 };
 
 
@@ -295,8 +295,8 @@ function PinnedHeroCard({listing, index, reduceMotion}: PinnedHeroCardProps) {
 		>
 			<Pin
 				aria-hidden="true"
-				className="absolute -top-3 left-6 h-6 w-6 -rotate-12 text-accent drop-shadow-sm"
-				fill="var(--accent-tint)"
+				className="absolute -top-3 left-6 h-6 w-6 -rotate-12 text-black drop-shadow-sm"
+				fill="white"
 				strokeWidth={1.75}
 			/>
 			<span
@@ -436,7 +436,7 @@ export default function Homepage() {
 						fill
 						priority
 						className="-z-20 object-cover object-center"
-						style={{filter: 'blur(7px)'}}
+						style={{filter: 'blur(0px)'}}
 					/>
 					<div aria-hidden="true" className="absolute inset-0 -z-10 bg-black/75" />
 
@@ -448,7 +448,7 @@ export default function Homepage() {
 								variants={containerStagger}
 							>
 								<motion.div variants={fadeUp}>
-									<span className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-(--accent-tint)">
+									<span className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-white">
 										La bacheca del calcio dilettantistico italiano
 								    </span>
 								</motion.div>
@@ -461,9 +461,7 @@ export default function Homepage() {
 									<br/>
 									Trova opportunità.
 									<br/>
-									<span className="text-accent">
                                     Fatti conoscere.
-                                </span>
 								</motion.h1>
 
 								<motion.p variants={fadeUp}
@@ -476,7 +474,7 @@ export default function Homepage() {
 								<motion.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-4">
 								<Link
 									href="/pubblica-annuncio"
-									className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-(--accent-dark) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+									className="inline-flex items-center gap-2 rounded-full text-black bg-white hover:bg-neutral-200 px-6 py-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
 								>
 										Pubblica un annuncio
 										<ArrowRight className="size-4" aria-hidden="true"/>
@@ -503,7 +501,7 @@ export default function Homepage() {
 								</motion.dl>
 							</motion.div>
 
-							<div className="relative">
+							<div className="hidden sm:block relative">
 								<div
 									aria-hidden="true"
 									className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle,rgba(255,255,255,0.25)_1px,transparent_1px)] bg-size-[18px_18px]"
@@ -523,8 +521,56 @@ export default function Homepage() {
 					</div>
 				</section>
 
-				{/* ------------------------------ Annunci (intro) ------------------------------ */}
-				<section id="annunci" className="border-t border-neutral-200 bg-white">
+				{/* ------------------------------ Annunci ------------------------------ */}
+				<section id="annunci-lista" className="border-t border-neutral-200 bg-white">
+					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+						<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+							<motion.div
+								initial="hidden"
+								whileInView="visible"
+								viewport={{once: true, margin: '-80px'}}
+								variants={containerStagger}
+							>
+								<motion.div variants={fadeUp}>
+									<SectionEyebrow>
+										Ultimi annunci
+									</SectionEyebrow>
+								</motion.div>
+								<motion.h2
+									variants={fadeUp}
+									className="mt-3 font-(family-name:--font-display) text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
+								>
+									Nuove opportunità pubblicate
+								</motion.h2>
+							</motion.div>
+
+							<div role="group" aria-label="Filtra annunci per categoria"
+							     className="flex flex-wrap gap-2">
+								{filters.map((filter) => (
+									<FilterPill
+										key={filter.value}
+										label={filter.label}
+										active={activeFilter === filter.value}
+										onClick={() => setActiveFilter(filter.value)}
+									/>
+								))}
+							</div>
+						</div>
+
+						<motion.div layout={!shouldReduceMotion}
+						            className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+							<AnimatePresence mode="popLayout">
+								{filteredListings.map((listing) => (
+									<ListingCard key={listing.id} listing={listing}
+									             reduceMotion={Boolean(shouldReduceMotion)}/>
+								))}
+							</AnimatePresence>
+						</motion.div>
+					</div>
+				</section>
+
+				{/* ------------------------------ Annunci  ------------------------------ */}
+				<section id="annunci" className="border-t border-neutral-200 bg-neutral-50">
 					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
 						<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
 							<motion.div
@@ -583,8 +629,8 @@ export default function Homepage() {
 					</div>
 				</section>
 
-				{/* ------------------------------ Come funziona ------------------------------ */}
-				<section id="categorie" className="border-t border-neutral-200 bg-neutral-50">
+				{/* -------------------- Fai crescere il tuo percorso o la tua realtà -------------------- */}
+				<section id="categorie" className="border-t border-neutral-200 bg-white">
 					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
 						<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 							<motion.div
@@ -605,6 +651,11 @@ export default function Homepage() {
 								>
 									Fai crescere il tuo percorso o la tua realtà
 								</motion.h2>
+								<motion.p variants={fadeUp} className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-600">
+									Valorizza il tuo profilo, pubblica contenuti e presenta giocate, analisi, progetti
+									o servizi. Inserisciti in uno spazio consultato ogni giorno da giocatori, membri
+									dello staff e società.
+								</motion.p>
 							</motion.div>
 
 							<Link
@@ -622,6 +673,7 @@ export default function Homepage() {
 							viewport={{once: true, margin: '-80px'}}
 							variants={fadeUp}
 							className="mt-12"
+							hidden={true}
 						>
 							<Card className="rounded-3xl border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-[0_16px_36px_-24px_rgba(0,0,0,0.2)]">
 								<CardContent className="p-6 sm:p-8">
@@ -653,54 +705,6 @@ export default function Homepage() {
 									</div>
 								</CardContent>
 							</Card>
-						</motion.div>
-					</div>
-				</section>
-
-				{/* ------------------------------ Annunci ------------------------------ */}
-				<section id="annunci-lista" className="border-t border-neutral-200 bg-white">
-					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-						<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-							<motion.div
-								initial="hidden"
-								whileInView="visible"
-								viewport={{once: true, margin: '-80px'}}
-								variants={containerStagger}
-							>
-								<motion.div variants={fadeUp}>
-									<SectionEyebrow>
-										Ultimi annunci
-									</SectionEyebrow>
-								</motion.div>
-								<motion.h2
-									variants={fadeUp}
-									className="mt-3 font-(family-name:--font-display) text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
-								>
-									Nuove opportunità pubblicate
-								</motion.h2>
-							</motion.div>
-
-							<div role="group" aria-label="Filtra annunci per categoria"
-							     className="flex flex-wrap gap-2">
-								{filters.map((filter) => (
-									<FilterPill
-										key={filter.value}
-										label={filter.label}
-										active={activeFilter === filter.value}
-										onClick={() => setActiveFilter(filter.value)}
-									/>
-								))}
-							</div>
-						</div>
-
-						<motion.div layout={!shouldReduceMotion}
-						            className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-							<AnimatePresence mode="popLayout">
-								{filteredListings.map((listing) => (
-									<ListingCard key={listing.id} listing={listing}
-									             reduceMotion={Boolean(shouldReduceMotion)}/>
-								))}
-							</AnimatePresence>
 						</motion.div>
 					</div>
 				</section>

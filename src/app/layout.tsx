@@ -7,7 +7,7 @@ import {Analytics} from "@vercel/analytics/next";
 
 import {Inter} from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import {Toaster} from "sonner";
+import {Toaster} from "@/components/ui/toast";
 
 const interFont = Inter({
 	subsets: ["latin"],
@@ -27,7 +27,7 @@ export default function RootLayout({
 				<TooltipProvider>
 					<main>{children}</main>
 				</TooltipProvider>
-				<Toaster position="bottom-right" richColors />
+				<Toaster />
 				<Analytics />
 			</body>
 		</html>
