@@ -4,8 +4,10 @@ import {Plus, Trash2} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
-import {Textarea} from "@/components/ui/textarea";
-import {Checkbox} from "@/components/ui/checkbox";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
+
+export type StatoEsperienza = "non-specificare" | "in-corso" | "conseguito";
 
 export type EsperienzaAnnuncio = {
 	id: string;
@@ -14,6 +16,7 @@ export type EsperienzaAnnuncio = {
 	periodoDa: string;
 	periodoA: string;
 	descrizione: string;
+	stato: StatoEsperienza;
 };
 
 export function createEsperienzaAnnuncio(): EsperienzaAnnuncio {
@@ -28,6 +31,7 @@ export function createEsperienzaAnnuncio(): EsperienzaAnnuncio {
 		periodoDa: "",
 		periodoA: "",
 		descrizione: "",
+		stato: "non-specificare",
 	};
 }
 
@@ -38,20 +42,26 @@ type EsperienzeAnnuncioFieldsProps = {
 	titolo?: string;
 };
 
+const STATO_OPTIONS: {value: StatoEsperienza; label: string}[] = [
+	{value: "non-specificare", label: "Non specificare"},
+	{value: "in-corso", label: "In corso"},
+	{value: "conseguito", label: "Conseguito"},
+];
+
 export default function EsperienzeAnnuncioFields({
-	esperienze,
-	setEsperienze,
-	idPrefix,
-	titolo = "Qualifiche / Patentini",
-}: EsperienzeAnnuncioFieldsProps) {
+	                                                 esperienze,
+	                                                 setEsperienze,
+	                                                 idPrefix,
+	                                                 titolo = "Qualifiche / Patentini",
+                                                 }: EsperienzeAnnuncioFieldsProps) {
 	const addEsperienza = () => {
 		setEsperienze((prev) => [...prev, createEsperienzaAnnuncio()]);
 	};
 
-	const updateEsperienza = (
+	const updateEsperienza = <K extends keyof Omit<EsperienzaAnnuncio, "id">>(
 		id: string,
-		campo: keyof Omit<EsperienzaAnnuncio, "id">,
-		valore: string
+		campo: K,
+		valore: EsperienzaAnnuncio[K]
 	) => {
 		setEsperienze((prev) =>
 			prev.map((esperienza) =>
@@ -88,7 +98,7 @@ export default function EsperienzeAnnuncioFields({
 					{esperienze.map((esperienza, index) => (
 						<div key={esperienza.id} className="rounded-lg border bg-background p-4">
 							<div className="mb-4 flex items-center justify-between gap-3">
-								<p className="text-sm font-medium">Esperienza {index + 1}</p>
+								<p className="text-base font-semibold">Esperienza #{index + 1}</p>
 								<Button
 									type="button"
 									variant="ghost"
@@ -103,7 +113,7 @@ export default function EsperienzeAnnuncioFields({
 							<div className="grid gap-4 sm:grid-cols-2">
 								<Field>
 									<FieldLabel htmlFor={`${idPrefix}-esperienza-${esperienza.id}`}>
-										Esperienza / patentino / licenza
+										Esperienza / patentino / licenza <OptionalLabel />
 									</FieldLabel>
 									<Input
 										id={`${idPrefix}-esperienza-${esperienza.id}`}
@@ -117,7 +127,7 @@ export default function EsperienzeAnnuncioFields({
 
 								<Field>
 									<FieldLabel htmlFor={`${idPrefix}-ente-${esperienza.id}`}>
-										Ente di origine / rilascio
+										Ente di origine / rilascio <OptionalLabel />
 									</FieldLabel>
 									<Input
 										id={`${idPrefix}-ente-${esperienza.id}`}
@@ -130,15 +140,26 @@ export default function EsperienzeAnnuncioFields({
 								</Field>
 							</div>
 
-							<Field className="mt-4" orientation="horizontal">
-								<Checkbox id={`${idPrefix}-descrizione-${esperienza.id}`} />
-								<FieldLabel
-									htmlFor={`${idPrefix}-descrizione-${esperienza.id}`}
-									className="font-normal"
-								>
-									Conseguito / Lo sto facendo
-								</FieldLabel>
-							</Field>
+							<RadioGroup
+								className="mt-4"
+								value={esperienza.stato}
+								onValueChange={(value) => updateEsperienza(esperienza.id, "stato", value as StatoEsperienza)}
+							>
+								{STATO_OPTIONS.map((opzione) => (
+									<Field key={opzione.value} orientation="horizontal">
+										<RadioGroupItem
+											value={opzione.value}
+											id={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
+										/>
+										<FieldLabel
+											htmlFor={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
+											className="font-normal"
+										>
+											{opzione.label}
+										</FieldLabel>
+									</Field>
+								))}
+							</RadioGroup>
 						</div>
 					))}
 				</div>

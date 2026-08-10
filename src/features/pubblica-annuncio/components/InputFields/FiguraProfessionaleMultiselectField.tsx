@@ -33,6 +33,7 @@ export default function FiguraProfessionaleMultiselectField({
 			onValueChange={onValueChange}
 			placeholder="Seleziona le figure..."
 			emptyText="Nessuna figura trovata."
+			required={required}
 		/>
 	);
 }

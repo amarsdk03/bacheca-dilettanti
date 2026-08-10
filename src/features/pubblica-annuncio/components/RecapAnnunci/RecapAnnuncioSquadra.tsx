@@ -2,14 +2,17 @@ import {useAnnuncioSquadraStore} from "@/features/pubblica-annuncio/state/Annunc
 import {
 	formatContatti,
 	formatPeriodo,
+	PremiumLinkRecap,
 	RecapField,
+	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
 
 export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: string}) {
 	const data = useAnnuncioSquadraStore();
-	const sede = [data.sedePrincipale.indirizzo, data.sedePrincipale.cap, data.sedePrincipale.citta]
-		.filter(Boolean)
-		.join(", ");
+	const stagioneGiocatore =
+		data.cercaGiocatore.stagione === "altro"
+			? data.cercaGiocatore.stagionePersonalizzata
+			: data.cercaGiocatore.stagione;
 
 	return (
 		<div>
@@ -17,7 +20,11 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 			<dl className="grid gap-1 sm:grid-cols-2">
 				<RecapField label="Nome società">{data.nomeSocieta || "—"}</RecapField>
 				<RecapField label="Tipologia sport">{data.tipologiaSport || "—"}</RecapField>
-				<RecapField label="Sede principale">{sede || "—"}</RecapField>
+				<RegioniRecap
+					titolo="Sede principale"
+					regioni={data.sedePrincipale.regioniInteressate}
+					cittaComuniPerRegione={data.sedePrincipale.cittaComuniPerRegione}
+				/>
 				{data.linkStemma.trim() !== "" && <RecapField label="Link stemma">{data.linkStemma}</RecapField>}
 				<RecapField label="Contatti pubblici" wide>{formatContatti(data.contatti)}</RecapField>
 				{data.descrizione.trim() !== "" && <RecapField label="Descrizione" wide>{data.descrizione}</RecapField>}
@@ -27,7 +34,7 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 						<RecapField label="Ruoli principali">{data.cercaGiocatore.ruoliPrincipali.join(", ") || "—"}</RecapField>
 						<RecapField label="Ruoli specifici">{data.cercaGiocatore.ruoliSpecifici.join(", ") || "—"}</RecapField>
 						<RecapField label="Annate cercate">{data.cercaGiocatore.annateCercate.join(", ") || "—"}</RecapField>
-						<RecapField label="Periodo">{formatPeriodo(data.cercaGiocatore.periodoDa, data.cercaGiocatore.periodoA)}</RecapField>
+						<RecapField label="Stagione">{stagioneGiocatore || "—"}</RecapField>
 						{data.cercaGiocatore.requisiti.trim() !== "" && <RecapField label="Requisiti" wide>{data.cercaGiocatore.requisiti}</RecapField>}
 					</>
 				)}
@@ -47,7 +54,11 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 						<RecapField label="Categorie avversario" wide>{data.cercaAmichevoli.categorieAvversario.join(", ") || "—"}</RecapField>
 						<RecapField label="Periodo">{formatPeriodo(data.cercaAmichevoli.periodoDa, data.cercaAmichevoli.periodoA)}</RecapField>
 						<RecapField label="Disponibilità trasferta">{data.cercaAmichevoli.disponibilitaTrasferta || "Non specificata"}</RecapField>
-						{data.cercaAmichevoli.campoIndirizzo.trim() !== "" && <RecapField label="Campo scelto" wide>{data.cercaAmichevoli.campoIndirizzo}</RecapField>}
+						<RegioniRecap
+							titolo="Regioni e località del campo"
+							regioni={data.cercaAmichevoli.regioniInteressate}
+							cittaComuniPerRegione={data.cercaAmichevoli.cittaComuniPerRegione}
+						/>
 					</>
 				)}
 
@@ -58,6 +69,7 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 						<RecapField label="Cosa offrite" wide>{data.cercaSponsor.cosaOffrite || "—"}</RecapField>
 					</>
 				)}
+				<PremiumLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>
 	);

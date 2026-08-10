@@ -13,7 +13,7 @@ interface NavbarLink {
 const navbarLinks: NavbarLink[] = [
 	{
 		label: "Sfoglia annunci",
-		href: "#"
+		href: "/#"
 	},
 	{
 		label: "Visibilità",
@@ -21,7 +21,7 @@ const navbarLinks: NavbarLink[] = [
 	},
 	{
 		label: "Profili 🔥",
-		href: "#"
+		href: "/#"
 	},
 	{
 		label: "Aggiornamenti",
@@ -29,7 +29,7 @@ const navbarLinks: NavbarLink[] = [
 	},
 	{
 		label: "Contatti",
-		href: "#"
+		href: "/contatti"
 	},
 ]
 
@@ -90,7 +90,7 @@ export default function Navbar(
 								</Button>
 							</Link>
 						) : (
-							<Link href={"pubblica-annuncio"}>
+							<Link href={"/pubblica-annuncio"}>
 								<Button
 									type={"button"}
 									variant={"outline"}

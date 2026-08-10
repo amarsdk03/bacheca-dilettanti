@@ -2,6 +2,7 @@ import {useAnnuncioStaffStore} from "@/features/pubblica-annuncio/state/Annuncio
 import {
 	EsperienzeRecap,
 	formatDataNascita,
+	PremiumLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
@@ -22,6 +23,7 @@ export default function RecapAnnuncioStaff() {
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
 				{data.presentazione.trim() !== "" && <RecapField label="Presentazione personale" wide>{data.presentazione}</RecapField>}
 				<EsperienzeRecap esperienze={data.esperienze} />
+				<PremiumLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>
 	);

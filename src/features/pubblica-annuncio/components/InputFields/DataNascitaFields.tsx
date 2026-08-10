@@ -8,6 +8,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 
 const ANNO_PLACEHOLDER = "Anno";
 const MESE_PLACEHOLDER = "Mese";
@@ -53,7 +54,7 @@ export default function DataNascitaFields({
 	return (
 		<Field>
 			<FieldLabel>
-				Data di nascita <span className={"font-normal text-neutral-400 -translate-x-1"}>(facoltativo)</span>
+				Data di nascita <OptionalLabel />
 			</FieldLabel>
 			<div className="grid grid-cols-3 gap-3">
 				<Select

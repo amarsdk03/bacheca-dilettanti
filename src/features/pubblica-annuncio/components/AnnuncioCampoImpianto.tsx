@@ -2,7 +2,6 @@
 
 import {
 	Field,
-	FieldDescription,
 	FieldGroup,
 	FieldLabel,
 	FieldLegend,
@@ -15,11 +14,12 @@ import {
 	useAnnuncioCampoImpiantoStore,
 } from "@/features/pubblica-annuncio/state/AnnuncioCampoImpianto.store";
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
-import DateRangeFields from "@/features/pubblica-annuncio/components/InputFields/DateRangeFields";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/components/ui/input-group";
+import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
 
 export default function AnnuncioCampoImpianto() {
-	const {nomeImpianto, indirizzo, presentazione, contatti, disponibilita, setField} = useAnnuncioCampoImpiantoStore();
+	const {nomeImpianto, indirizzo, presentazione, contatti, disponibilita, linkAnnuncio, setField} = useAnnuncioCampoImpiantoStore();
 
 	const updateDisponibilita = <K extends keyof DisponibilitaCampoImpianto>(field: K, value: DisponibilitaCampoImpianto[K]) => {
 		setField("disponibilita", (previous) => ({...previous, [field]: value}));
@@ -30,20 +30,19 @@ export default function AnnuncioCampoImpianto() {
 			<FieldSet>
 				<div className="mt-4">
 					<FieldLegend variant="label" className="field-legend-title mb-0">Dati campo / impianto</FieldLegend>
-					{nomeImpianto.trim() === "" && <FieldDescription className="font-medium text-red-800">Il nome dell&apos;impianto è obbligatorio.</FieldDescription>}
 				</div>
 
 				<Field>
-					<FieldLabel htmlFor="campo-impianto-nome">Nome campo / impianto</FieldLabel>
-					<Input id="campo-impianto-nome" value={nomeImpianto} onChange={(event) => setField("nomeImpianto", event.target.value)} placeholder="Centro Sportivo Esempio" required />
+					<FieldLabel htmlFor="campo-impianto-nome">Nome campo / impianto <OptionalLabel /></FieldLabel>
+					<Input id="campo-impianto-nome" value={nomeImpianto} onChange={(event) => setField("nomeImpianto", event.target.value)} placeholder="Centro Sportivo Esempio" />
 				</Field>
 				<Field>
-					<FieldLabel htmlFor="campo-impianto-indirizzo">Indirizzo</FieldLabel>
+					<FieldLabel htmlFor="campo-impianto-indirizzo">Indirizzo <OptionalLabel /></FieldLabel>
 					<Input id="campo-impianto-indirizzo" value={indirizzo} onChange={(event) => setField("indirizzo", event.target.value)} placeholder="Via Roma 1, Milano" />
 				</Field>
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="campo-impianto-presentazione">Breve presentazione</FieldLabel>
+						<FieldLabel htmlFor="campo-impianto-presentazione">Breve presentazione <OptionalLabel /></FieldLabel>
 						<span className="text-xs text-muted-foreground">{presentazione.length}/5000</span>
 					</div>
 					<Textarea
@@ -63,21 +62,14 @@ export default function AnnuncioCampoImpianto() {
 				<div className="mt-4">
 					<FieldLegend variant="label" className="field-legend-title mb-0">Disponibilità campo / struttura</FieldLegend>
 				</div>
-				<DateRangeFields
-					idPrefix="campo-impianto-periodo"
-					from={disponibilita.periodoDa}
-					setFrom={(value) => updateDisponibilita("periodoDa", value)}
-					to={disponibilita.periodoA}
-					setTo={(value) => updateDisponibilita("periodoA", value)}
-				/>
 				<div className="grid gap-4 sm:grid-cols-2">
 					<Field>
-						<FieldLabel htmlFor="campo-impianto-orario">Orario</FieldLabel>
+						<FieldLabel htmlFor="campo-impianto-orario">Orario <OptionalLabel /></FieldLabel>
 						<Input id="campo-impianto-orario" value={disponibilita.orario} onChange={(event) => updateDisponibilita("orario", event.target.value)} placeholder="Es. Lun-Ven 18:00-23:00" />
 					</Field>
 					<Field>
 
-						<FieldLabel htmlFor="campo-impianto-costo">Costo orario</FieldLabel>
+						<FieldLabel htmlFor="campo-impianto-costo">Costo orario <OptionalLabel /></FieldLabel>
 						<InputGroup>
 							<InputGroupAddon>
 								<InputGroupText>&euro;</InputGroupText>
@@ -93,14 +85,14 @@ export default function AnnuncioCampoImpianto() {
 								placeholder="50"
 							/>
 							<InputGroupAddon align="inline-end">
-								<InputGroupText>EUR / 1h</InputGroupText>
+								<InputGroupText>/ 1h</InputGroupText>
 							</InputGroupAddon>
 						</InputGroup>
 					</Field>
 				</div>
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="campo-impianto-servizi">Servizi inclusi</FieldLabel>
+						<FieldLabel htmlFor="campo-impianto-servizi">Servizi inclusi <OptionalLabel /></FieldLabel>
 						<span className="text-xs text-muted-foreground">{disponibilita.serviziInclusi.length}/2000</span>
 					</div>
 					<Textarea
@@ -113,6 +105,12 @@ export default function AnnuncioCampoImpianto() {
 					/>
 				</Field>
 			</FieldSet>
+			<LinkAnnuncioPremiumField
+				idPrefix="campo-impianto"
+				tipologia="campo-impianto-sportivo"
+				value={linkAnnuncio}
+				onValueChange={(value) => setField("linkAnnuncio", value)}
+			/>
 		</FieldGroup>
 	);
 }

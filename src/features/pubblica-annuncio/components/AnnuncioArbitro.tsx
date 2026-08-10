@@ -16,8 +16,8 @@ import DisponibilitaSpostamentoSelect from "@/features/pubblica-annuncio/compone
 import EsperienzeAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/EsperienzeAnnuncioFields";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
-
-const optionalLabel = <span className="font-normal text-neutral-400 -translate-x-1">(facoltativo)</span>;
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
 
 export default function AnnuncioArbitro() {
 	const {
@@ -32,6 +32,7 @@ export default function AnnuncioArbitro() {
 		presentazione,
 		esperienze,
 		disponibilitaSpostamento,
+		linkAnnuncio,
 		setField,
 	} = useAnnuncioArbitroStore();
 
@@ -47,7 +48,7 @@ export default function AnnuncioArbitro() {
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<Field>
-						<FieldLabel htmlFor="arbitro-nome">Nome {optionalLabel}</FieldLabel>
+						<FieldLabel htmlFor="arbitro-nome">Nome <OptionalLabel /></FieldLabel>
 						<Input
 							id="arbitro-nome"
 							value={nome}
@@ -57,7 +58,7 @@ export default function AnnuncioArbitro() {
 					</Field>
 
 					<Field>
-						<FieldLabel htmlFor="arbitro-cognome">Cognome {optionalLabel}</FieldLabel>
+						<FieldLabel htmlFor="arbitro-cognome">Cognome <OptionalLabel /></FieldLabel>
 						<Input
 							id="arbitro-cognome"
 							value={cognome}
@@ -99,6 +100,7 @@ export default function AnnuncioArbitro() {
 					/>
 					<DisponibilitaSpostamentoSelect
 						id="arbitro-disponibilita-spostamento"
+						label={"Automunito?"}
 						value={disponibilitaSpostamento}
 						setValue={(value) => setField("disponibilitaSpostamento", value)}
 					/>
@@ -106,7 +108,7 @@ export default function AnnuncioArbitro() {
 
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="arbitro-presentazione">Presentazione personale</FieldLabel>
+						<FieldLabel htmlFor="arbitro-presentazione">Presentazione personale / informazioni aggiuntive<OptionalLabel /></FieldLabel>
 						<span className="text-xs text-muted-foreground">{presentazione.length}/2000</span>
 					</div>
 					<Textarea
@@ -124,6 +126,12 @@ export default function AnnuncioArbitro() {
 				idPrefix="arbitro"
 				esperienze={esperienze}
 				setEsperienze={(value) => setField("esperienze", value)}
+			/>
+			<LinkAnnuncioPremiumField
+				idPrefix="arbitro"
+				tipologia="arbitro"
+				value={linkAnnuncio}
+				onValueChange={(value) => setField("linkAnnuncio", value)}
 			/>
 		</FieldGroup>
 	);

@@ -1,5 +1,6 @@
 import {Field, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 
 type DateRangeFieldsProps = {
 	from: string;
@@ -7,6 +8,8 @@ type DateRangeFieldsProps = {
 	to: string;
 	setTo: (value: string) => void;
 	idPrefix: string;
+	required?: boolean;
+	indicativo?: boolean;
 };
 
 export default function DateRangeFields({
@@ -15,11 +18,15 @@ export default function DateRangeFields({
 	to,
 	setTo,
 	idPrefix,
+	required = false,
+	indicativo = false,
 }: DateRangeFieldsProps) {
 	return (
 		<div className="grid gap-4 sm:grid-cols-2">
 			<Field>
-				<FieldLabel htmlFor={`${idPrefix}-dal`}>Periodo dal</FieldLabel>
+				<FieldLabel htmlFor={`${idPrefix}-dal`}>
+					Periodo dal {indicativo && (" (indicativo)")} {!required && <OptionalLabel />}
+				</FieldLabel>
 				<Input
 					id={`${idPrefix}-dal`}
 					type="date"
@@ -28,7 +35,9 @@ export default function DateRangeFields({
 				/>
 			</Field>
 			<Field>
-				<FieldLabel htmlFor={`${idPrefix}-al`}>Periodo al</FieldLabel>
+				<FieldLabel htmlFor={`${idPrefix}-al`}>
+					Periodo al {indicativo && (" (indicativo)")} {!required && <OptionalLabel />}
+				</FieldLabel>
 				<Input
 					id={`${idPrefix}-al`}
 					type="date"

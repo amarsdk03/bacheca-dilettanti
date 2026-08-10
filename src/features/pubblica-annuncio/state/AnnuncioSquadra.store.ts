@@ -4,11 +4,12 @@ import {
 	hasContattoPubblico,
 	type ContattiAnnuncio,
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
+import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
 
 export type SedePrincipaleSquadra = {
-	citta: string;
-	cap: string;
-	indirizzo: string;
+	regioniInteressate: string[];
+	cittaComuniPerRegione: CittaComuniPerRegione;
 };
 
 export type CercaGiocatoreSquadra = {
@@ -16,8 +17,8 @@ export type CercaGiocatoreSquadra = {
 	ruoliSpecifici: string[];
 	annateCercate: string[];
 	requisiti: string;
-	periodoDa: string;
-	periodoA: string;
+	stagione: string;
+	stagionePersonalizzata: string;
 };
 
 export type CercaStaffSquadra = {
@@ -33,7 +34,8 @@ export type CercaAmichevoliSquadra = {
 	categorieAvversario: string[];
 	periodoDa: string;
 	periodoA: string;
-	campoIndirizzo: string;
+	regioniInteressate: string[];
+	cittaComuniPerRegione: CittaComuniPerRegione;
 	disponibilitaTrasferta: string;
 };
 
@@ -54,12 +56,12 @@ export type AnnuncioSquadraData = {
 	cercaStaff: CercaStaffSquadra;
 	cercaAmichevoli: CercaAmichevoliSquadra;
 	cercaSponsor: CercaSponsorSquadra;
+	linkAnnuncio: string;
 };
 
 export const SEDE_PRINCIPALE_SQUADRA_DEFAULT: SedePrincipaleSquadra = {
-	citta: "",
-	cap: "",
-	indirizzo: "",
+	regioniInteressate: [],
+	cittaComuniPerRegione: {},
 };
 
 export const CERCA_GIOCATORE_SQUADRA_DEFAULT: CercaGiocatoreSquadra = {
@@ -67,8 +69,8 @@ export const CERCA_GIOCATORE_SQUADRA_DEFAULT: CercaGiocatoreSquadra = {
 	ruoliSpecifici: [],
 	annateCercate: [],
 	requisiti: "",
-	periodoDa: "",
-	periodoA: "",
+	stagione: "",
+	stagionePersonalizzata: "",
 };
 
 export const CERCA_STAFF_SQUADRA_DEFAULT: CercaStaffSquadra = {
@@ -84,7 +86,8 @@ export const CERCA_AMICHEVOLI_SQUADRA_DEFAULT: CercaAmichevoliSquadra = {
 	categorieAvversario: [],
 	periodoDa: "",
 	periodoA: "",
-	campoIndirizzo: "",
+	regioniInteressate: [],
+	cittaComuniPerRegione: {},
 	disponibilitaTrasferta: "",
 };
 
@@ -98,29 +101,44 @@ const createInitialState = (): AnnuncioSquadraData => ({
 	nomeSocieta: "",
 	linkStemma: "",
 	contatti: {...CONTATTI_ANNUNCIO_DEFAULT},
-	sedePrincipale: {...SEDE_PRINCIPALE_SQUADRA_DEFAULT},
+	sedePrincipale: {
+		...SEDE_PRINCIPALE_SQUADRA_DEFAULT,
+		regioniInteressate: [],
+		cittaComuniPerRegione: {},
+	},
 	descrizione: "",
 	tipologiaSport: "",
 	cercaGiocatore: {...CERCA_GIOCATORE_SQUADRA_DEFAULT},
 	cercaStaff: {...CERCA_STAFF_SQUADRA_DEFAULT},
-	cercaAmichevoli: {...CERCA_AMICHEVOLI_SQUADRA_DEFAULT},
+	cercaAmichevoli: {
+		...CERCA_AMICHEVOLI_SQUADRA_DEFAULT,
+		categorieAvversario: [],
+		regioniInteressate: [],
+		cittaComuniPerRegione: {},
+	},
 	cercaSponsor: {...CERCA_SPONSOR_SQUADRA_DEFAULT},
+	linkAnnuncio: "",
 });
 
 export const useAnnuncioSquadraStore = createAnnuncioStore(createInitialState);
 
 export function isAnnuncioSquadraValid(data: AnnuncioSquadraData, sottotipologia: string) {
 	const profiloValido =
-		data.nomeSocieta.trim() !== "" &&
 		hasContattoPubblico(data.contatti) &&
 		data.tipologiaSport !== "" &&
-		data.descrizione.length <= 5000;
+		data.descrizione.length <= 5000 &&
+		isLinkAnnuncioValid(data.linkAnnuncio);
 
 	if (!profiloValido) return false;
 
 	switch (sottotipologia) {
 		case "cerca-giocatore":
-			return data.cercaGiocatore.ruoliPrincipali.length > 0 && data.cercaGiocatore.requisiti.length <= 2000;
+			return (
+				data.cercaGiocatore.ruoliPrincipali.length > 0 &&
+				data.cercaGiocatore.requisiti.length <= 2000 &&
+				(data.cercaGiocatore.stagione !== "altro" ||
+					data.cercaGiocatore.stagionePersonalizzata.trim().length > 0)
+			);
 		case "cerca-staff":
 			return data.cercaStaff.figuraCercata !== "" && data.cercaStaff.requisiti.length <= 2000;
 		case "cerca-partite-amichevoli":

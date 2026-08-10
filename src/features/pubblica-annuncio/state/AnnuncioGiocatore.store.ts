@@ -5,6 +5,7 @@ import {
 	type ContattiAnnuncio,
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
 
 export type AnnuncioGiocatoreData = {
 	nome: string;
@@ -15,10 +16,12 @@ export type AnnuncioGiocatoreData = {
 	regioniInteressate: string[];
 	cittaComuniPerRegione: CittaComuniPerRegione;
 	contatti: ContattiAnnuncio;
-	biografia: string;
+	descrizione: string;
 	tipologieCalcio: string[];
 	ruoliPrincipali: string[];
+	ruoliSpecifici: string[];
 	foto: File | null;
+	linkAnnuncio: string;
 };
 
 const createInitialState = (): AnnuncioGiocatoreData => ({
@@ -30,10 +33,12 @@ const createInitialState = (): AnnuncioGiocatoreData => ({
 	regioniInteressate: [],
 	cittaComuniPerRegione: {},
 	contatti: {...CONTATTI_ANNUNCIO_DEFAULT},
-	biografia: "",
+	descrizione: "",
 	tipologieCalcio: [],
 	ruoliPrincipali: [],
+	ruoliSpecifici: [],
 	foto: null,
+	linkAnnuncio: "",
 });
 
 export const useAnnuncioGiocatoreStore = createAnnuncioStore(createInitialState);
@@ -42,6 +47,7 @@ export function isAnnuncioGiocatoreValid(data: AnnuncioGiocatoreData) {
 	return (
 		data.regioniInteressate.length > 0 &&
 		hasContattoPubblico(data.contatti) &&
-		data.biografia.length <= 2000
+		data.descrizione.length <= 2000 &&
+		isLinkAnnuncioValid(data.linkAnnuncio)
 	);
 }

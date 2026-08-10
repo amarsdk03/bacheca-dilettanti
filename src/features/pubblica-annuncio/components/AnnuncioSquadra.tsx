@@ -16,8 +16,8 @@ import {
 	InputGroupAddon,
 	InputGroupInput,
 	InputGroupText,
-	InputGroupTextarea,
 } from "@/components/ui/input-group";
+import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import {
 	Select,
 	SelectContent,
@@ -25,33 +25,21 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	Combobox,
-	ComboboxChip,
-	ComboboxChips,
-	ComboboxChipsInput,
-	ComboboxCollection,
-	ComboboxContent,
-	ComboboxEmpty,
-	ComboboxGroup,
-	ComboboxItem,
-	ComboboxLabel,
-	ComboboxList,
-	ComboboxSeparator,
-	ComboboxValue,
-	useComboboxAnchor,
-} from "@/components/ui/combobox";
 import {Textarea} from "@/components/ui/textarea";
 import AnnateMultiselectField from "@/features/pubblica-annuncio/components/InputFields/AnnateMultiselectField";
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 import DateRangeFields from "@/features/pubblica-annuncio/components/InputFields/DateRangeFields";
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import RuoloPrincipaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
 import {FIGURA_PROFESSIONALE_OPTIONS} from "@/features/pubblica-annuncio/components/InputFields/FiguraProfessionaleMultiselectField";
 import {
 	type AnnuncioSquadraData,
 	useAnnuncioSquadraStore,
 } from "@/features/pubblica-annuncio/state/AnnuncioSquadra.store";
+import CategorieAvversarioField from "@/features/pubblica-annuncio/components/InputFields/CategorieAvversarioField";
+import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
 
 export type {
 	CercaAmichevoliSquadra,
@@ -141,10 +129,18 @@ const DISPONIBILITA_TRASFERTA_OPTIONS = [
 	{valore: "No", etichetta: "No"},
 ];
 
+export function getStagioniDisponibili(date = new Date()): [string, string] {
+	const annoInizio = date.getMonth() >= 6 ? date.getFullYear() : date.getFullYear() - 1;
+
+	return [
+		`${annoInizio}/${annoInizio + 1}`,
+		`${annoInizio + 1}/${annoInizio + 2}`,
+	];
+}
+
 export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: string}) {
 	const {
 		nomeSocieta,
-		linkStemma,
 		contatti,
 		sedePrincipale,
 		descrizione,
@@ -153,12 +149,12 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 		cercaStaff,
 		cercaAmichevoli,
 		cercaSponsor,
+		linkAnnuncio,
 		setField,
 	} = useAnnuncioSquadraStore();
 	const setStoreField = <K extends keyof AnnuncioSquadraData>(field: K) =>
 		(value: SetStateAction<AnnuncioSquadraData[K]>) => setField(field, value);
 	const setNomeSocieta = setStoreField("nomeSocieta");
-	const setLinkStemma = setStoreField("linkStemma");
 	const setContatti = setStoreField("contatti");
 	const setSedePrincipale = setStoreField("sedePrincipale");
 	const setDescrizione = setStoreField("descrizione");
@@ -167,7 +163,9 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 	const setCercaStaff = setStoreField("cercaStaff");
 	const setCercaAmichevoli = setStoreField("cercaAmichevoli");
 	const setCercaSponsor = setStoreField("cercaSponsor");
-	const anchor = useComboboxAnchor();
+	const [stagioneCorrente, stagioneSuccessiva] = getStagioniDisponibili();
+	const stagionePersonalizzataRichiesta =
+		cercaGiocatore.stagione === "altro" && cercaGiocatore.stagionePersonalizzata.trim().length === 0;
 
 	const ruoliAvanzatiDisponibili = Array.from(
 		new Set(cercaGiocatore.ruoliPrincipali.flatMap((ruolo) => RUOLI_AVANZATI_PER_RUOLO[ruolo] ?? []))
@@ -180,25 +178,18 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 					<FieldLegend variant="label" className="field-legend-title mb-0">
 						Dati squadra
 					</FieldLegend>
-					<FieldDescription
-						className="text-red-800 font-medium"
-						hidden={nomeSocieta.length > 0}
-					>
-						Il nome della società è obbligatorio.
-					</FieldDescription>
 				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<Field>
 						<FieldLabel htmlFor="squadra-nome-societa">
-							Nome società
+							Nome società <OptionalLabel />
 						</FieldLabel>
 						<Input
 							id="squadra-nome-societa"
 							value={nomeSocieta}
 							onChange={(event) => setNomeSocieta(event.target.value)}
 							placeholder="A.S.D. Esempio Calcio"
-							required
 						/>
 					</Field>
 
@@ -221,67 +212,29 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 						</Select>
 					</Field>
 				</div>
-
-				<Field>
-					<FieldLabel htmlFor="squadra-link-stemma">Link foto stemma</FieldLabel>
-					<Input
-						id="squadra-link-stemma"
-						type="url"
-						value={linkStemma}
-						onChange={(event) => setLinkStemma(event.target.value)}
-						placeholder="https://..."
-					/>
-				</Field>
 			</FieldSet>
 
 			<ContattiAnnuncioFields contatti={contatti} setContatti={setContatti} />
 
-			<FieldSet>
-				<div className="mt-4">
-					<FieldLegend variant="label" className="field-legend-title mb-0">
-						Sede principale
-					</FieldLegend>
-				</div>
+			<RegioniInteresseField
+				idPrefix="squadra-sede"
+				titolo="Sede principale"
+				required={false}
+				regioniInteressate={sedePrincipale.regioniInteressate}
+				setRegioniInteressate={(value) =>
+					setSedePrincipale((prev) => ({...prev, regioniInteressate: typeof value === "function" ? value(prev.regioniInteressate) : value}))
+				}
+				cittaComuniPerRegione={sedePrincipale.cittaComuniPerRegione}
+				setCittaComuniPerRegione={(value) =>
+					setSedePrincipale((prev) => ({...prev, cittaComuniPerRegione: typeof value === "function" ? value(prev.cittaComuniPerRegione) : value}))
+				}
+			/>
 
-				<div className="grid gap-4 sm:grid-cols-4">
-					<Field className="col-span-2">
-						<FieldLabel htmlFor="squadra-sede-indirizzo">Indirizzo</FieldLabel>
-						<Input
-							id="squadra-sede-indirizzo"
-							value={sedePrincipale.indirizzo}
-							onChange={(event) =>
-								setSedePrincipale((prev) => ({...prev, indirizzo: event.target.value}))
-							}
-							placeholder="Via Roma 1"
-						/>
-					</Field>
-					<Field>
-						<FieldLabel htmlFor="squadra-sede-citta">Citta</FieldLabel>
-						<Input
-							id="squadra-sede-citta"
-							value={sedePrincipale.citta}
-							onChange={(event) =>
-								setSedePrincipale((prev) => ({...prev, citta: event.target.value}))
-							}
-							placeholder="Milano"
-						/>
-					</Field>
-					<Field>
-						<FieldLabel htmlFor="squadra-sede-cap">CAP</FieldLabel>
-						<Input
-							id="squadra-sede-cap"
-							value={sedePrincipale.cap}
-							onChange={(event) =>
-								setSedePrincipale((prev) => ({...prev, cap: event.target.value}))
-							}
-							placeholder="20100"
-						/>
-					</Field>
-				</div>
+			<FieldSet>
 
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="squadra-descrizione">Breve descrizione</FieldLabel>
+						<FieldLabel htmlFor="squadra-descrizione">Breve presentazione aggiuntiva <OptionalLabel /></FieldLabel>
 						<span className="text-xs text-muted-foreground">{descrizione.length}/5000</span>
 					</div>
 					<Textarea
@@ -301,7 +254,12 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 						<FieldLegend variant="label" className="field-legend-title mb-0">
 							Ricerca giocatore
 						</FieldLegend>
-						<FieldDescription>Specifica ruolo, annate e requisiti richiesti.</FieldDescription>
+						<FieldDescription
+							className="text-red-800 font-medium"
+							hidden={cercaGiocatore.ruoliPrincipali.length > 0}
+						>
+							Seleziona almeno un ruolo principale.
+						</FieldDescription>
 					</div>
 
 					<div className="grid gap-4 sm:grid-cols-2">
@@ -326,7 +284,6 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 							value={cercaGiocatore.ruoliSpecifici}
 							onValueChange={(value) => setCercaGiocatore((previous) => ({...previous, ruoliSpecifici: value}))}
 							placeholder={cercaGiocatore.ruoliPrincipali.length > 0 ? "Seleziona i ruoli specifici..." : "Prima seleziona un ruolo principale"}
-							description="Puoi scegliere più ruoli specifici tra quelli compatibili."
 						/>
 					</div>
 
@@ -340,7 +297,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 
 					<Field>
 						<div className="flex items-center justify-between gap-3">
-							<FieldLabel htmlFor="squadra-requisiti-giocatore">Requisiti</FieldLabel>
+							<FieldLabel htmlFor="squadra-requisiti-giocatore">Requisiti <OptionalLabel /></FieldLabel>
 							<span className="text-xs text-muted-foreground">
 								{cercaGiocatore.requisiti.length}/2000
 							</span>
@@ -360,13 +317,60 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 						/>
 					</Field>
 
-					<DateRangeFields
-						idPrefix="squadra-cerca-giocatore-periodo"
-						from={cercaGiocatore.periodoDa}
-						setFrom={(value) => setCercaGiocatore((prev) => ({...prev, periodoDa: value}))}
-						to={cercaGiocatore.periodoA}
-						setTo={(value) => setCercaGiocatore((prev) => ({...prev, periodoA: value}))}
-					/>
+					<Field>
+						<FieldLabel>Stagione <OptionalLabel /></FieldLabel>
+						<RadioGroup
+							aria-label="Stagione"
+							value={cercaGiocatore.stagione}
+							onValueChange={(value) =>
+								setCercaGiocatore((prev) => ({
+									...prev,
+									stagione: value ?? "",
+									stagionePersonalizzata: value === "altro" ? prev.stagionePersonalizzata : "",
+								}))
+							}
+							className="gap-3"
+						>
+							{[stagioneCorrente, stagioneSuccessiva].map((stagione) => (
+								<Field key={stagione} orientation="horizontal">
+									<RadioGroupItem id={`squadra-cerca-giocatore-${stagione}`} value={stagione} />
+									<FieldLabel htmlFor={`squadra-cerca-giocatore-${stagione}`} className="font-normal">
+										{stagione}
+									</FieldLabel>
+								</Field>
+							))}
+							<Field orientation="horizontal">
+								<RadioGroupItem id="squadra-cerca-giocatore-stagione-altro" value="altro" />
+								<FieldLabel htmlFor="squadra-cerca-giocatore-stagione-altro" className="font-normal">
+									Altro
+								</FieldLabel>
+							</Field>
+						</RadioGroup>
+					</Field>
+
+					{cercaGiocatore.stagione === "altro" && (
+						<Field data-invalid={stagionePersonalizzataRichiesta || undefined}>
+							<FieldLabel htmlFor="squadra-cerca-giocatore-stagione-personalizzata">
+								Specifica la stagione
+							</FieldLabel>
+							<Input
+								id="squadra-cerca-giocatore-stagione-personalizzata"
+								value={cercaGiocatore.stagionePersonalizzata}
+								onChange={(event) =>
+									setCercaGiocatore((prev) => ({...prev, stagionePersonalizzata: event.target.value}))
+								}
+								maxLength={80}
+								required
+								aria-invalid={stagionePersonalizzataRichiesta}
+								placeholder="Es. Stagione estiva 2027"
+							/>
+							{stagionePersonalizzataRichiesta && (
+								<FieldDescription className="text-destructive">
+									Inserisci la stagione personalizzata.
+								</FieldDescription>
+							)}
+						</Field>
+					)}
 				</FieldSet>
 			)}
 
@@ -401,7 +405,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 
 					<div className="grid gap-4 sm:grid-cols-2">
 						<Field>
-							<FieldLabel htmlFor="squadra-staff-settore">Settore</FieldLabel>
+							<FieldLabel htmlFor="squadra-staff-settore">Settore <OptionalLabel /></FieldLabel>
 							<Input
 								id="squadra-staff-settore"
 								value={cercaStaff.settore}
@@ -412,7 +416,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 							/>
 						</Field>
 						<Field>
-							<FieldLabel htmlFor="squadra-staff-compenso">Compenso mensile</FieldLabel>
+							<FieldLabel htmlFor="squadra-staff-compenso">Compenso mensile <OptionalLabel /></FieldLabel>
 							<InputGroup>
 								<InputGroupAddon>
 									<InputGroupText>&euro;</InputGroupText>
@@ -436,7 +440,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 
 					<Field>
 						<div className="flex items-center justify-between gap-3">
-							<FieldLabel htmlFor="squadra-staff-requisiti">Requisiti</FieldLabel>
+							<FieldLabel htmlFor="squadra-staff-requisiti">Requisiti <OptionalLabel /></FieldLabel>
 							<span className="text-xs text-muted-foreground">
 								{cercaStaff.requisiti.length}/2000
 							</span>
@@ -474,58 +478,18 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 						</FieldLegend>
 					</div>
 
-					<div className={"grid gap-4 sm:grid-cols-4"}>
-						<Field className="sm:col-span-3">
-							<FieldLabel>Categoria avversario</FieldLabel>
-							<Combobox
-								multiple
-								autoHighlight
-								items={CATEGORIE_AVVERSARIO_GROUPS}
-								value={cercaAmichevoli.categorieAvversario}
-								onValueChange={(value) =>
-									setCercaAmichevoli((prev) => ({ ...prev, categorieAvversario: value }))
-								}
-							>
-								<ComboboxChips ref={anchor} className="w-full">
-									<ComboboxValue>
-										{cercaAmichevoli.categorieAvversario.map((item) => (
-											<ComboboxChip key={item}>{item}</ComboboxChip>
-										))}
-										<ComboboxChipsInput
-											placeholder={
-												cercaAmichevoli.categorieAvversario.length === 0
-													? "Seleziona categorie..."
-													: ""
-											}
-										/>
-									</ComboboxValue>
-								</ComboboxChips>
+					<div className={"grid gap-4 sm:grid-cols-5"}>
+						<CategorieAvversarioField
+							className="sm:col-span-3"
+							items={CATEGORIE_AVVERSARIO_GROUPS}
+							value={cercaAmichevoli.categorieAvversario}
+							action={(value) =>
+								setCercaAmichevoli((prev) => ({ ...prev, categorieAvversario: value }))
+							}
+						/>
 
-								<ComboboxContent anchor={anchor}>
-									<ComboboxEmpty>Nessuna categoria trovata.</ComboboxEmpty>
-									<ComboboxList>
-										{(group, index) => (
-											<ComboboxGroup key={group.gruppo} items={group.opzioni}>
-												<ComboboxLabel>{group.gruppo}</ComboboxLabel>
-												<ComboboxCollection>
-													{(item) => (
-														<ComboboxItem key={item} value={item}>
-															{item}
-														</ComboboxItem>
-													)}
-												</ComboboxCollection>
-												{index < CATEGORIE_AVVERSARIO_GROUPS.length - 1 && (
-													<ComboboxSeparator />
-												)}
-											</ComboboxGroup>
-										)}
-									</ComboboxList>
-								</ComboboxContent>
-							</Combobox>
-						</Field>
-
-						<Field>
-							<FieldLabel>Disponibilità trasferta</FieldLabel>
+						<Field className="sm:col-span-2">
+							<FieldLabel>Disponibilità trasferta <OptionalLabel /></FieldLabel>
 							<Select
 								value={cercaAmichevoli.disponibilitaTrasferta || null}
 								onValueChange={(value) =>
@@ -552,17 +516,19 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 						</Field>
 					</div>
 
-					<Field>
-						<FieldLabel htmlFor="squadra-amichevoli-campo">Indirizzo campo</FieldLabel>
-						<Input
-							id="squadra-amichevoli-campo"
-							value={cercaAmichevoli.campoIndirizzo}
-							onChange={(event) =>
-								setCercaAmichevoli((prev) => ({...prev, campoIndirizzo: event.target.value}))
-							}
-							placeholder="Lasciare vuoto se non fornito"
-						/>
-					</Field>
+					<RegioniInteresseField
+						idPrefix="squadra-amichevoli-campo"
+						titolo="Regioni e località del campo"
+						required={false}
+						regioniInteressate={cercaAmichevoli.regioniInteressate}
+						setRegioniInteressate={(value) =>
+							setCercaAmichevoli((prev) => ({...prev, regioniInteressate: typeof value === "function" ? value(prev.regioniInteressate) : value}))
+						}
+						cittaComuniPerRegione={cercaAmichevoli.cittaComuniPerRegione}
+						setCittaComuniPerRegione={(value) =>
+							setCercaAmichevoli((prev) => ({...prev, cittaComuniPerRegione: typeof value === "function" ? value(prev.cittaComuniPerRegione) : value}))
+						}
+					/>
 
 					<DateRangeFields
 						idPrefix="squadra-amichevoli-periodo"
@@ -572,6 +538,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 						}
 						to={cercaAmichevoli.periodoA}
 						setTo={(value) => setCercaAmichevoli((prev) => ({...prev, periodoA: value}))}
+						indicativo
 					/>
 				</FieldSet>
 			)}
@@ -585,7 +552,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 					</div>
 
 					<Field>
-						<FieldLabel htmlFor="squadra-sponsor-offerta">Cosa offrite</FieldLabel>
+						<FieldLabel htmlFor="squadra-sponsor-categoria">Categoria / settore</FieldLabel>
 						<Textarea
 							id="squadra-sponsor-categoria"
 							value={cercaSponsor.categoriaSettore}
@@ -627,6 +594,13 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 					</Field>
 				</FieldSet>
 			)}
+
+			<LinkAnnuncioPremiumField
+				idPrefix="squadra"
+				tipologia="squadra"
+				value={linkAnnuncio}
+				onValueChange={(value) => setField("linkAnnuncio", value)}
+			/>
 		</FieldGroup>
 	);
 }

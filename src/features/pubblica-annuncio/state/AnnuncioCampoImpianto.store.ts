@@ -4,6 +4,7 @@ import {
 	hasContattoPubblico,
 	type ContattiAnnuncio,
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
 
 export type DisponibilitaCampoImpianto = {
 	periodoDa: string;
@@ -19,6 +20,7 @@ export type AnnuncioCampoImpiantoData = {
 	presentazione: string;
 	contatti: ContattiAnnuncio;
 	disponibilita: DisponibilitaCampoImpianto;
+	linkAnnuncio: string;
 };
 
 export const DISPONIBILITA_CAMPO_IMPIANTO_DEFAULT: DisponibilitaCampoImpianto = {
@@ -35,15 +37,16 @@ const createInitialState = (): AnnuncioCampoImpiantoData => ({
 	presentazione: "",
 	contatti: {...CONTATTI_ANNUNCIO_DEFAULT},
 	disponibilita: {...DISPONIBILITA_CAMPO_IMPIANTO_DEFAULT},
+	linkAnnuncio: "",
 });
 
 export const useAnnuncioCampoImpiantoStore = createAnnuncioStore(createInitialState);
 
 export function isAnnuncioCampoImpiantoValid(data: AnnuncioCampoImpiantoData) {
 	return (
-		data.nomeImpianto.trim() !== "" &&
 		hasContattoPubblico(data.contatti) &&
 		data.presentazione.length <= 5000 &&
-		data.disponibilita.serviziInclusi.length <= 2000
+		data.disponibilita.serviziInclusi.length <= 2000 &&
+		isLinkAnnuncioValid(data.linkAnnuncio)
 	);
 }

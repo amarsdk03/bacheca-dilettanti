@@ -13,6 +13,7 @@ import {
 	ComboboxValue,
 	useComboboxAnchor,
 } from "@/components/ui/combobox";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 
 type MultiselectFieldProps = {
 	label: ReactNode;
@@ -23,6 +24,7 @@ type MultiselectFieldProps = {
 	emptyText?: string;
 	description?: ReactNode;
 	error?: ReactNode;
+	required?: boolean;
 };
 
 export default function MultiselectField({
@@ -34,12 +36,15 @@ export default function MultiselectField({
 	emptyText = "Nessuna opzione trovata.",
 	description,
 	error,
+	required = false,
 }: MultiselectFieldProps) {
 	const anchor = useComboboxAnchor();
 
 	return (
 		<Field>
-			<FieldLabel>{label}</FieldLabel>
+			<FieldLabel>
+				{label} {!required && <OptionalLabel />}
+			</FieldLabel>
 			{error && <FieldDescription className="font-medium text-red-800">{error}</FieldDescription>}
 			<Combobox
 				multiple

@@ -20,10 +20,6 @@ import {
 	useAnnuncioGiocatoreStore,
 } from "@/features/pubblica-annuncio/state/AnnuncioGiocatore.store";
 import {
-	isAnnuncioSocietaEnteValid,
-	useAnnuncioSocietaEnteStore,
-} from "@/features/pubblica-annuncio/state/AnnuncioSocietaEnte.store";
-import {
 	isAnnuncioSquadraValid,
 	useAnnuncioSquadraStore,
 } from "@/features/pubblica-annuncio/state/AnnuncioSquadra.store";
@@ -31,10 +27,24 @@ import {
 	isAnnuncioStaffValid,
 	useAnnuncioStaffStore,
 } from "@/features/pubblica-annuncio/state/AnnuncioStaff.store";
+import {
+	isAnnuncioAziendeEntiValid,
+	isAnnuncioProfessionistiStudiValid,
+	isAnnuncioTorneoEventoValid,
+	useAnnuncioAziendeEntiStore,
+	useAnnuncioProfessionistiStudiStore,
+	useAnnuncioTorneoEventoStore,
+} from "@/features/pubblica-annuncio/state/AnnuncioNuoveTipologie.store";
 import ConfermaInvioAnnuncio from "@/features/pubblica-annuncio/components/ConfermaInvioAnnuncio";
 import DettagliAnnuncio from "@/features/pubblica-annuncio/components/DettagliAnnuncio";
 import SelezionaTipologiaAnnuncio from "@/features/pubblica-annuncio/components/SelezionaTipologiaAnnuncio";
-import {getTipologia} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import SelezionaVisibilitaAnnuncio from "@/features/pubblica-annuncio/components/SelezionaVisibilitaAnnuncio";
+import {
+	getPianiPubblicazione,
+	getTipologia,
+	isPianoPagamento,
+	PUBBLICAZIONE_GRATUITA,
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import useIsMobile from "@/lib/isMobile";
 
 export default function PubblicaAnnuncio() {
@@ -42,13 +52,28 @@ export default function PubblicaAnnuncio() {
 	const [step, setStep] = useState(1);
 	const [tipologia, setTipologia] = useState("");
 	const [sottotipologia, setSottotipologia] = useState("");
+	const [pianoSelezionato, setPianoSelezionato] = useState(PUBBLICAZIONE_GRATUITA.valore);
+	const [emailPagamento, setEmailPagamento] = useState("");
+	const [emailVerificata, setEmailVerificata] = useState<string | null>(null);
+	const [visibilitaConfermata, setVisibilitaConfermata] = useState(false);
 
 	const giocatoreValido = useAnnuncioGiocatoreStore((state) => isAnnuncioGiocatoreValid(state));
 	const squadraValida = useAnnuncioSquadraStore((state) => isAnnuncioSquadraValid(state, sottotipologia));
 	const arbitroValido = useAnnuncioArbitroStore((state) => isAnnuncioArbitroValid(state));
 	const staffValido = useAnnuncioStaffStore((state) => isAnnuncioStaffValid(state));
-	const societaEnteValida = useAnnuncioSocietaEnteStore((state) => isAnnuncioSocietaEnteValid(state));
+	const aziendeEntiValida = useAnnuncioAziendeEntiStore((state) => isAnnuncioAziendeEntiValid(state));
+	const professionistiStudiValida = useAnnuncioProfessionistiStudiStore((state) => isAnnuncioProfessionistiStudiValid(state));
+	const torneoEventoValido = useAnnuncioTorneoEventoStore((state) => isAnnuncioTorneoEventoValid(state));
 	const campoImpiantoValido = useAnnuncioCampoImpiantoStore((state) => isAnnuncioCampoImpiantoValid(state));
+	const fotoGiocatore = useAnnuncioGiocatoreStore((state) => state.foto);
+	const linkGiocatore = useAnnuncioGiocatoreStore((state) => state.linkAnnuncio);
+	const linkSquadra = useAnnuncioSquadraStore((state) => state.linkAnnuncio);
+	const linkArbitro = useAnnuncioArbitroStore((state) => state.linkAnnuncio);
+	const linkStaff = useAnnuncioStaffStore((state) => state.linkAnnuncio);
+	const linkAziendeEnti = useAnnuncioAziendeEntiStore((state) => state.linkAnnuncio);
+	const linkProfessionistiStudi = useAnnuncioProfessionistiStudiStore((state) => state.linkAnnuncio);
+	const linkTorneoEvento = useAnnuncioTorneoEventoStore((state) => state.linkAnnuncio);
+	const linkCampoImpianto = useAnnuncioCampoImpiantoStore((state) => state.linkAnnuncio);
 
 	const tipologiaSelezionata = getTipologia(tipologia);
 	const richiedeSottotipologia = Boolean(tipologiaSelezionata?.sottotipologie?.length);
@@ -57,10 +82,33 @@ export default function PubblicaAnnuncio() {
 		giocatore: giocatoreValido,
 		squadra: squadraValida,
 		arbitro: arbitroValido,
-		staff: staffValido,
-		"societa-ente-sportivo": societaEnteValida,
+		"staff-sportivo": staffValido,
+		"aziende-enti": aziendeEntiValida,
+		"professionisti-studi": professionistiStudiValida,
+		"torneo-evento": torneoEventoValido,
 		"campo-impianto-sportivo": campoImpiantoValido,
 	}[tipologia] ?? false;
+	const pianiPubblicazione = getPianiPubblicazione(tipologia);
+	const pianoScelto = pianiPubblicazione.find((piano) => piano.valore === pianoSelezionato)
+		?? PUBBLICAZIONE_GRATUITA;
+	const annuncioPagamento = isPianoPagamento(pianoScelto);
+	const linkAnnuncio = {
+		giocatore: linkGiocatore,
+		squadra: linkSquadra,
+		arbitro: linkArbitro,
+		"staff-sportivo": linkStaff,
+		"aziende-enti": linkAziendeEnti,
+		"professionisti-studi": linkProfessionistiStudi,
+		"torneo-evento": linkTorneoEvento,
+		"campo-impianto-sportivo": linkCampoImpianto,
+	}[tipologia] ?? "";
+	const funzioniPremium = [
+		...(tipologia === "giocatore" && fotoGiocatore !== null ? ["Immagine dell'annuncio"] : []),
+		...(linkAnnuncio.trim() !== "" ? ["Link annuncio"] : []),
+	];
+	const premiumValido = funzioniPremium.length === 0 || annuncioPagamento;
+	const emailNormalizzata = emailPagamento.trim().toLowerCase();
+	const step3Valid = premiumValido && (!annuncioPagamento || emailVerificata === emailNormalizzata);
 
 	const scrollToTop = () => window.scrollTo({top: 0, behavior: "smooth"});
 	const goToStep = (nextStep: number) => {
@@ -72,16 +120,37 @@ export default function PubblicaAnnuncio() {
 		const targetStep = Number(value.replace("tab-", ""));
 		if (targetStep === 2 && !step1Valid) return;
 		if (targetStep === 3 && (!step1Valid || !step2Valid)) return;
+		if (targetStep === 4 && (!step1Valid || !step2Valid || !step3Valid || !visibilitaConfermata)) return;
 		goToStep(targetStep);
 	};
 
 	const handleTipologiaChange = (value: string) => {
 		setTipologia(value);
 		setSottotipologia("");
+		setPianoSelezionato(PUBBLICAZIONE_GRATUITA.valore);
+		setEmailPagamento("");
+		setEmailVerificata(null);
+		setVisibilitaConfermata(false);
+	};
+
+	const handleEmailChange = (value: string) => {
+		setEmailPagamento(value);
+		if (emailVerificata !== value.trim().toLowerCase()) setEmailVerificata(null);
+		setVisibilitaConfermata(false);
+	};
+
+	const handlePianoChange = (value: string) => {
+		setPianoSelezionato(value);
+		setVisibilitaConfermata(false);
+	};
+
+	const handleEmailVerificata = (value: string | null) => {
+		setEmailVerificata(value);
+		setVisibilitaConfermata(false);
 	};
 
 	return (
-		<div className="min-h-screen bg-muted/30 py-10">
+		<div className="min-h-screen bg-muted/30 py-16">
 			<div className="mx-auto max-w-3xl px-4">
 				<section className="mx-auto mb-8 max-w-6xl px-4 sm:mb-12 sm:px-6 lg:px-8">
 					<div className="flex flex-col items-center">
@@ -96,7 +165,7 @@ export default function PubblicaAnnuncio() {
 				</section>
 
 				<Tabs value={`tab-${step}`} onValueChange={handleTabChange}>
-					<TabsList variant="line" className="grid w-full grid-cols-3">
+					<TabsList variant="line" className="grid w-full grid-cols-4">
 						<TabsTrigger value="tab-1" onClick={scrollToTop}>{isMobile ? "Profilo" : "1. Selezione profilo"}</TabsTrigger>
 
 						<Tooltip>
@@ -108,9 +177,20 @@ export default function PubblicaAnnuncio() {
 
 						<Tooltip>
 							<TooltipTrigger render={<span className="w-full" />}>
-								<TabsTrigger value="tab-3" disabled={!step1Valid || !step2Valid} className="w-full" onClick={scrollToTop}>{isMobile ? "Conferma" : "3. Conferma e invia"}</TabsTrigger>
+								<TabsTrigger value="tab-3" disabled={!step1Valid || !step2Valid} className="w-full" onClick={scrollToTop}>{isMobile ? "Visibilità" : "3. Visibilità"}</TabsTrigger>
 							</TooltipTrigger>
 							{!step2Valid && <TooltipContent><p>{step < 2 ? "Completa gli step precedenti prima di continuare" : "Campi obbligatori mancanti!"}</p></TooltipContent>}
+						</Tooltip>
+
+						<Tooltip>
+							<TooltipTrigger render={<span className="w-full" />}>
+								<TabsTrigger value="tab-4" disabled={!step1Valid || !step2Valid || !step3Valid || !visibilitaConfermata} className="w-full" onClick={scrollToTop}>{isMobile ? "Conferma" : "4. Conferma e invia"}</TabsTrigger>
+							</TooltipTrigger>
+							{(!step3Valid || !visibilitaConfermata) && (
+								<TooltipContent>
+									<p>{step < 3 ? "Completa gli step precedenti prima di continuare" : "Conferma il piano e, se richiesto, verifica l'email"}</p>
+								</TooltipContent>
+							)}
 						</Tooltip>
 					</TabsList>
 
@@ -141,7 +221,33 @@ export default function PubblicaAnnuncio() {
 
 					<TabsContent value="tab-3">
 						<Card className="my-4"><CardHeader><CardContent>
-							<ConfermaInvioAnnuncio tipologia={tipologia} sottotipologia={sottotipologia} onEditStep={goToStep} />
+							<SelezionaVisibilitaAnnuncio
+								tipologia={tipologia}
+								pianoSelezionato={pianoSelezionato}
+								funzioniPremium={funzioniPremium}
+								onPianoChange={handlePianoChange}
+								email={emailPagamento}
+								onEmailChange={handleEmailChange}
+								emailVerificata={emailVerificata}
+								onEmailVerificata={handleEmailVerificata}
+								onBack={() => goToStep(2)}
+								onContinue={() => {
+									setVisibilitaConfermata(true);
+									goToStep(4);
+								}}
+							/>
+						</CardContent></CardHeader></Card>
+					</TabsContent>
+
+					<TabsContent value="tab-4">
+						<Card className="my-4"><CardHeader><CardContent>
+							<ConfermaInvioAnnuncio
+								tipologia={tipologia}
+								sottotipologia={sottotipologia}
+								pianoScelto={pianoScelto}
+								emailVerificata={emailVerificata}
+								onEditStep={goToStep}
+							/>
 						</CardContent></CardHeader></Card>
 					</TabsContent>
 				</Tabs>

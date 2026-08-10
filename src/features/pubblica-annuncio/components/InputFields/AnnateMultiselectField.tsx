@@ -10,6 +10,7 @@ type AnnateMultiselectFieldProps = {
 	label: string;
 	placeholder?: string;
 	emptyText?: string;
+	required?: boolean;
 };
 
 export default function AnnateMultiselectField({
@@ -18,6 +19,7 @@ export default function AnnateMultiselectField({
 	label,
 	placeholder = "Seleziona annate...",
 	emptyText = "Nessuna annata trovata.",
+	required = false,
 }: AnnateMultiselectFieldProps) {
 	return (
 		<MultiselectField
@@ -27,6 +29,7 @@ export default function AnnateMultiselectField({
 			onValueChange={onValueChange}
 			placeholder={placeholder}
 			emptyText={emptyText}
+			required={required}
 		/>
 	);
 }

@@ -3,6 +3,7 @@ import {type Dispatch, type SetStateAction} from "react";
 import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 
 export type CanaleContattoAnnuncio =
 	| "Email"
@@ -103,11 +104,13 @@ export function getCanaliContattoCompilati(contatti: ContattiAnnuncio) {
 type ContattiAnnuncioFieldsProps = {
 	contatti: ContattiAnnuncio;
 	setContatti: Dispatch<SetStateAction<ContattiAnnuncio>>;
+	required?: boolean;
 };
 
 export default function ContattiAnnuncioFields({
 	contatti,
 	setContatti,
+	required = true,
 }: ContattiAnnuncioFieldsProps) {
 	const contattoPubblicoPresente = hasContattoPubblico(contatti);
 
@@ -145,11 +148,11 @@ export default function ContattiAnnuncioFields({
 		<FieldSet>
 			<div>
 				<FieldLegend variant="label" className="field-legend-title mb-0">
-					Contatti pubblici
+					Contatti pubblici {!required && <OptionalLabel />}
 				</FieldLegend>
 				<FieldDescription
 					className="text-red-800 font-medium mb-2 pt-1.5"
-					hidden={contattoPubblicoPresente}
+					hidden={!required || contattoPubblicoPresente}
 				>
 					Inserisci almeno un contatto tra email e telefono.
 				</FieldDescription>

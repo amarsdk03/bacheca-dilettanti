@@ -29,16 +29,35 @@ export function RecapField({label, children, wide = false}: {label: string; chil
 	);
 }
 
+export function PremiumLinkRecap({link}: {link: string}) {
+	if (link.trim() === "") return null;
+
+	return (
+		<RecapField label="Link annuncio (Premium)" wide>
+			<a
+				href={link}
+				target="_blank"
+				rel="noreferrer"
+				className="break-all text-fuchsia-700 underline underline-offset-2"
+			>
+				{link}
+			</a>
+		</RecapField>
+	);
+}
+
 export function RegioniRecap({
 	regioni,
 	cittaComuniPerRegione,
+	titolo = "Regioni d'interesse",
 }: {
 	regioni: string[];
 	cittaComuniPerRegione: Record<string, string[]>;
+	titolo?: string;
 }) {
 	return (
 		<div className="sm:col-span-2">
-			<dt className="text-xs text-muted-foreground">Regioni d&apos;interesse</dt>
+			<dt className="text-xs text-muted-foreground">{titolo}</dt>
 			<dd className="mt-1 flex flex-wrap gap-1.5">
 				{regioni.length > 0
 					? regioni.map((regione) => {

@@ -1,4 +1,4 @@
-import {useState, type Dispatch, type SetStateAction} from "react";
+import {useId, useState, type Dispatch, type SetStateAction} from "react";
 import {Check, Plus, X} from "lucide-react";
 
 import {Button} from "@/components/ui/button";
@@ -6,6 +6,7 @@ import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/comp
 import {Input} from "@/components/ui/input";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {Regione, REGIONI_ITALIANE} from "@/const/defaultConstants";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 
 export type CittaComuniPerRegione = Record<string, string[]>;
 
@@ -50,6 +51,8 @@ type RegioniInteresseFieldProps = {
 	cittaComuniPerRegione: CittaComuniPerRegione;
 	setCittaComuniPerRegione: Dispatch<SetStateAction<CittaComuniPerRegione>>;
 	titolo?: string;
+	required?: boolean;
+	idPrefix?: string;
 };
 
 export default function RegioniInteresseField({
@@ -58,8 +61,13 @@ export default function RegioniInteresseField({
 	cittaComuniPerRegione,
 	setCittaComuniPerRegione,
 	titolo = "Regioni d'interesse",
+	required = true,
+	idPrefix,
 }: RegioniInteresseFieldProps) {
 	const [bozzaCittaPerRegione, setBozzaCittaPerRegione] = useState<Record<string, string>>({});
+	const generatedId = useId();
+	const resolvedIdPrefix = idPrefix ?? `regioni-${generatedId}`;
+	const getCittaFieldId = (regione: string) => `${resolvedIdPrefix}-citta-${encodeURIComponent(regione)}`;
 
 	const handleRegioniChange = (prossimeRegioni: string[]) => {
 		setRegioniInteressate(prossimeRegioni);
@@ -101,12 +109,12 @@ export default function RegioniInteresseField({
 	return (
 		<FieldSet>
 			<div className="mt-4">
-				<FieldLegend variant="label" className="field-legend-title mb-0">
-					{titolo}
+				<FieldLegend variant="label" className="field-legend-title mb-0 inline-flex items-center gap-2">
+					{titolo} {!required && <OptionalLabel />}
 				</FieldLegend>
 				<FieldDescription
 					className="text-red-800 font-medium"
-					hidden={regioniInteressate.length > 0}
+					hidden={!required || regioniInteressate.length > 0}
 				>
 					Almeno una regione va selezionata
 				</FieldDescription>
@@ -114,8 +122,9 @@ export default function RegioniInteresseField({
 
 			{Object.entries(regioniPerArea).map(([area, regioni]) => (
 				<Field key={area}>
-					<FieldLabel htmlFor={`area-${area}`}>{area}</FieldLabel>
+					<FieldLabel htmlFor={`${resolvedIdPrefix}-area-${area}`}>{area}</FieldLabel>
 					<ToggleGroup
+						id={`${resolvedIdPrefix}-area-${area}`}
 						variant="outline"
 						spacing={2}
 						size="lg"
@@ -123,6 +132,7 @@ export default function RegioniInteresseField({
 						value={regioniInteressate}
 						onValueChange={handleRegioniChange}
 						multiple
+						aria-required={required}
 					>
 						{regioni.map((regione) => (
 							<ToggleGroupItem
@@ -149,12 +159,12 @@ export default function RegioniInteresseField({
 					{regioniInteressate.map((regione) => (
 						<div key={regione} className="rounded-lg border bg-background p-3">
 							<Field>
-								<FieldLabel htmlFor={`citta-${regione}`}>
-									{regione}: inserisci città e comuni
+								<FieldLabel htmlFor={getCittaFieldId(regione)}>
+									{regione}: inserisci città e comuni <OptionalLabel />
 								</FieldLabel>
 								<div className="flex gap-2">
 									<Input
-										id={`citta-${regione}`}
+										id={getCittaFieldId(regione)}
 										value={bozzaCittaPerRegione[regione] ?? ""}
 										onChange={(event) =>
 											setBozzaCittaPerRegione((prev) => ({

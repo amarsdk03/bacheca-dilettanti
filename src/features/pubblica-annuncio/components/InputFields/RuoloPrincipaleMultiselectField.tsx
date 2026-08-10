@@ -26,7 +26,7 @@ export default function RuoloPrincipaleMultiselectField({
 			onValueChange={onValueChange}
 			placeholder="Seleziona i ruoli..."
 			emptyText="Nessun ruolo trovato."
-			error={required && value.length === 0 ? "Seleziona almeno un ruolo." : undefined}
+			required={required}
 		/>
 	);
 }

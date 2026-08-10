@@ -4,9 +4,10 @@ import "./globals.css";
 import type { Metadata } from "next";
 import {dynamicMetadata} from "@/server/metadata";
 import {Analytics} from "@vercel/analytics/next";
+import {SpeedInsights} from "@vercel/speed-insights/next"
 
 import {Inter} from "next/font/google";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import {TooltipProvider} from "@/components/ui/tooltip";
 import {Toaster} from "@/components/ui/toast";
 
 const interFont = Inter({
@@ -16,11 +17,13 @@ const interFont = Inter({
 
 export const metadata: Metadata = dynamicMetadata();
 
-export default function RootLayout({
-	                                   children,
-                                   }: Readonly<{
-	children: React.ReactNode;
-}>) {
+export default function RootLayout(
+	{
+		children,
+	} : Readonly<{
+		children: React.ReactNode;
+	}>
+) {
 	return (
 		<html lang="it" className={`${interFont.variable} font-sans`}>
 			<body className="min-h-full flex flex-col">
@@ -29,6 +32,7 @@ export default function RootLayout({
 				</TooltipProvider>
 				<Toaster />
 				<Analytics />
+				<SpeedInsights />
 			</body>
 		</html>
 	);

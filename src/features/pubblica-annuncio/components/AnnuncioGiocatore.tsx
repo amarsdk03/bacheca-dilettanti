@@ -1,9 +1,8 @@
 "use client";
 
 import {useRef} from "react";
-import {Crown, X} from "lucide-react";
+import {X} from "lucide-react";
 
-import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {
 	Field,
@@ -21,8 +20,11 @@ import DataNascitaFields from "@/features/pubblica-annuncio/components/InputFiel
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import RuoloPrincipaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
 import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
-
-const optionalLabel = <span className="font-normal text-neutral-400 -translate-x-1">(facoltativo)</span>;
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
+import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
+import PremiumOnlyBadge from "@/features/pubblica-annuncio/components/InputFields/PremiumOnlyBadge";
+import {RUOLI_AVANZATI_PER_RUOLO} from "@/features/pubblica-annuncio/components/AnnuncioSquadra";
 
 export default function AnnuncioGiocatore() {
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,12 +37,18 @@ export default function AnnuncioGiocatore() {
 		regioniInteressate,
 		cittaComuniPerRegione,
 		contatti,
-		biografia,
+		descrizione,
 		tipologieCalcio,
 		ruoliPrincipali,
+		ruoliSpecifici,
 		foto,
+		linkAnnuncio,
 		setField,
 	} = useAnnuncioGiocatoreStore();
+
+	const ruoliAvanzatiDisponibili = Array.from(
+		new Set(ruoliPrincipali.flatMap((ruolo) => RUOLI_AVANZATI_PER_RUOLO[ruolo] ?? []))
+	);
 
 	const removeFoto = () => {
 		setField("foto", null);
@@ -59,7 +67,7 @@ export default function AnnuncioGiocatore() {
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<Field>
-						<FieldLabel htmlFor="giocatore-nome">Nome {optionalLabel}</FieldLabel>
+						<FieldLabel htmlFor="giocatore-nome">Nome <OptionalLabel /></FieldLabel>
 						<Input
 							id="giocatore-nome"
 							value={nome}
@@ -69,7 +77,7 @@ export default function AnnuncioGiocatore() {
 					</Field>
 
 					<Field>
-						<FieldLabel htmlFor="giocatore-cognome">Cognome {optionalLabel}</FieldLabel>
+						<FieldLabel htmlFor="giocatore-cognome">Cognome <OptionalLabel /></FieldLabel>
 						<Input
 							id="giocatore-cognome"
 							value={cognome}
@@ -116,18 +124,46 @@ export default function AnnuncioGiocatore() {
 						value={tipologieCalcio}
 						onValueChange={(value) => setField("tipologieCalcio", value)}
 					/>
+
 					<RuoloPrincipaleMultiselectField
 						value={ruoliPrincipali}
-						onValueChange={(value) => setField("ruoliPrincipali", value)}
+						onValueChange={(value) => {
+							const opzioniDisponibili = new Set(
+								value.flatMap((ruolo) => RUOLI_AVANZATI_PER_RUOLO[ruolo] ?? [])
+							);
+							setField("ruoliPrincipali", value);
+							setField("ruoliSpecifici", ruoliSpecifici.filter((ruolo) => opzioniDisponibili.has(ruolo)));
+						}}
 					/>
 				</div>
 
+				<MultiselectField
+					label="Ruolo specifico"
+					options={ruoliAvanzatiDisponibili}
+					value={ruoliSpecifici}
+					onValueChange={(value) => setField("ruoliSpecifici", value)}
+					placeholder={ruoliPrincipali.length > 0 ? "Seleziona i ruoli specifici..." : "Prima seleziona un ruolo principale"}
+				/>
+
+				<Field>
+					<div className="flex items-center justify-between gap-3">
+						<FieldLabel htmlFor="giocatore-descrizione">Breve descrizione aggiuntiva <OptionalLabel /></FieldLabel>
+						<span className="text-xs text-muted-foreground">{descrizione.length}/2000</span>
+					</div>
+					<Textarea
+						id="giocatore-descrizione"
+						value={descrizione}
+						onChange={(event) => setField("descrizione", event.target.value.slice(0, 2000))}
+						maxLength={2000}
+						placeholder="Racconta esperienze, caratteristiche tecniche, disponibilità, obiettivi..."
+						className="min-h-32 resize-y"
+					/>
+				</Field>
+
 				<Field>
 					<div className="flex flex-wrap items-center justify-between gap-2">
-						<FieldLabel htmlFor="giocatore-foto">Immagine dell&apos;annuncio</FieldLabel>
-						<Badge className="border border-purple-200 bg-purple-100 text-purple-700 hover:bg-purple-100">
-							<Crown className="size-3.5" /> Premium only
-						</Badge>
+						<FieldLabel htmlFor="giocatore-foto">Immagine dell&apos;annuncio <OptionalLabel /></FieldLabel>
+						<PremiumOnlyBadge tipologia="giocatore" funzione="Immagine dell'annuncio" />
 					</div>
 					<Input
 						ref={fileInputRef}
@@ -137,7 +173,7 @@ export default function AnnuncioGiocatore() {
 						onChange={(event) => setField("foto", event.target.files?.[0] ?? null)}
 					/>
 					<FieldDescription>
-						L&apos;immagine sarà inclusa nell'annuncio, solo se si sceglie una pubblicazione a pagamento.
+						L&apos;immagine sarà inclusa nell&apos;annuncio solo se si sceglie una pubblicazione a pagamento.
 					</FieldDescription>
 					{foto && (
 						<div className="flex items-center justify-between gap-3 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm text-purple-900">
@@ -149,20 +185,12 @@ export default function AnnuncioGiocatore() {
 					)}
 				</Field>
 
-				<Field>
-					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="giocatore-biografia">Breve descrizione</FieldLabel>
-						<span className="text-xs text-muted-foreground">{biografia.length}/2000</span>
-					</div>
-					<Textarea
-						id="giocatore-biografia"
-						value={biografia}
-						onChange={(event) => setField("biografia", event.target.value.slice(0, 2000))}
-						maxLength={2000}
-						placeholder="Racconta esperienze, caratteristiche tecniche, disponibilità, obiettivi..."
-						className="min-h-32 resize-y"
-					/>
-				</Field>
+				<LinkAnnuncioPremiumField
+					idPrefix="giocatore"
+					tipologia="giocatore"
+					value={linkAnnuncio}
+					onValueChange={(value) => setField("linkAnnuncio", value)}
+				/>
 			</FieldSet>
 		</FieldGroup>
 	);

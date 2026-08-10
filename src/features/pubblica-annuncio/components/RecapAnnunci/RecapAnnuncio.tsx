@@ -4,7 +4,7 @@ import {FieldGroup, FieldLegend, FieldSet} from "@/components/ui/field";
 import RecapAnnuncioArbitro from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioArbitro";
 import RecapAnnuncioCampoImpianto from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioCampoImpianto";
 import RecapAnnuncioGiocatore from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioGiocatore";
-import RecapAnnuncioSocietaEnte from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioSocietaEnte";
+import RecapAnnuncioNuovaTipologia from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioNuovaTipologia";
 import RecapAnnuncioSquadra from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioSquadra";
 import RecapAnnuncioStaff from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioStaff";
 import {getTipologia} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
@@ -29,10 +29,12 @@ export default function RecapAnnuncio({tipologia, sottotipologia, onEditStep}: R
 				return <RecapAnnuncioSquadra sottotipologia={sottotipologia} />;
 			case "arbitro":
 				return <RecapAnnuncioArbitro />;
-			case "staff":
+			case "staff-sportivo":
 				return <RecapAnnuncioStaff />;
-			case "societa-ente-sportivo":
-				return <RecapAnnuncioSocietaEnte />;
+			case "aziende-enti":
+			case "professionisti-studi":
+			case "torneo-evento":
+				return <RecapAnnuncioNuovaTipologia tipologia={tipologia} />;
 			case "campo-impianto-sportivo":
 				return <RecapAnnuncioCampoImpianto />;
 			default:
@@ -54,14 +56,10 @@ export default function RecapAnnuncio({tipologia, sottotipologia, onEditStep}: R
 								{sottotipologiaSelezionata && ` · ${sottotipologiaSelezionata.nome}`}
 							</p>
 						</div>
-						<Button variant="outline" size="sm" onClick={() => onEditStep(1)}>Modifica profilo</Button>
+						<Button variant="outline" size="sm" onClick={() => onEditStep(2)}>Modifica dati</Button>
 					</div>
 
 					{dettagli}
-
-					<div className="flex justify-end border-t pt-4">
-						<Button variant="outline" size="sm" onClick={() => onEditStep(2)}>Modifica dati</Button>
-					</div>
 				</div>
 			</FieldSet>
 		</FieldGroup>

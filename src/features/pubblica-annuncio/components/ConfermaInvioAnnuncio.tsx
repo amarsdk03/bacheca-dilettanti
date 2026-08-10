@@ -2,64 +2,44 @@
 
 import {useState} from "react";
 import {useRouter} from "next/navigation";
-import {Crown} from "lucide-react";
 
-import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import {Button} from "@/components/ui/button";
 import {Checkbox} from "@/components/ui/checkbox";
 import {
-	Field,
-	FieldContent,
-	FieldDescription,
 	FieldGroup,
 	FieldLabel,
 	FieldLegend,
 	FieldSet,
-	FieldTitle,
 } from "@/components/ui/field";
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import {toast} from "@/components/ui/toast";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
-import {useAnnuncioGiocatoreStore} from "@/features/pubblica-annuncio/state/AnnuncioGiocatore.store";
 import RecapAnnuncio from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncio";
-
-const METODI_PUBBLICAZIONE = [
-	{
-		valore: "gratuito",
-		nome: "Gratuito",
-		descrizione: "Pubblica il tuo annuncio senza alcun costo.",
-		icona: "Gift",
-	},
-	{
-		valore: "iban",
-		nome: "Premium con bonifico",
-		descrizione: "Aggiungi i contenuti premium e ricevi le coordinate per il bonifico.",
-		icona: "Landmark",
-	},
-] as const;
+import {isPianoPagamento, type PianoVisibilita} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type ConfermaInvioAnnuncioProps = {
 	tipologia: string;
 	sottotipologia: string;
+	pianoScelto: PianoVisibilita;
+	emailVerificata: string | null;
 	onEditStep: (step: number) => void;
 };
 
 export default function ConfermaInvioAnnuncio({
 	tipologia,
 	sottotipologia,
+	pianoScelto,
+	emailVerificata,
 	onEditStep,
 }: ConfermaInvioAnnuncioProps) {
 	const router = useRouter();
-	const fotoGiocatore = useAnnuncioGiocatoreStore((state) => state.foto);
-	const [metodoPagamento, setMetodoPagamento] = useState("gratuito");
 	const [datiConfermati, setDatiConfermati] = useState(false);
 	const [terminiAccettati, setTerminiAccettati] = useState(false);
 	const [privacyAccettata, setPrivacyAccettata] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const richiedePremium = tipologia === "giocatore" && fotoGiocatore !== null;
-	const premiumValido = !richiedePremium || metodoPagamento !== "gratuito";
-	const isValid = premiumValido && datiConfermati && terminiAccettati && privacyAccettata;
+	const annuncioPagamento = isPianoPagamento(pianoScelto);
+	const emailValida = !annuncioPagamento || emailVerificata !== null;
+	const isValid = emailValida && datiConfermati && terminiAccettati && privacyAccettata;
 
 	const submitAnnuncio = async () => {
 		if (!isValid || isSubmitting) return;
@@ -93,8 +73,8 @@ export default function ConfermaInvioAnnuncio({
 		}
 	};
 
-	const disabledMessage = !premiumValido
-		? "Scegli la pubblicazione Premium per includere l'immagine"
+	const disabledMessage = !emailValida
+		? "Verifica l'email prima di inviare l'annuncio"
 		: "Completa le conferme richieste";
 
 	return (
@@ -104,37 +84,27 @@ export default function ConfermaInvioAnnuncio({
 			<FieldGroup className="w-full">
 				<FieldSet>
 					<div className="mt-4">
-						<FieldLegend variant="label" className="field-legend-title mb-0">Vuoi maggiore visibilità?</FieldLegend>
+						<FieldLegend variant="label" className="field-legend-title mb-0">Pubblicazione scelta</FieldLegend>
 					</div>
-					<RadioGroup className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2" value={metodoPagamento} onValueChange={setMetodoPagamento}>
-						{METODI_PUBBLICAZIONE.map((metodo) => (
-							<FieldLabel key={metodo.valore} htmlFor={`pagamento-${metodo.valore}`} className="group/card">
-								<Field orientation="horizontal" className="rounded-lg transition-all group-has-[data-checked]/card:bg-fuchsia-100">
-									<FieldContent>
-										<FieldTitle className="field-content-title gap-1.5">
-											<DynamicLucideIcon iconName={metodo.icona} className="size-4" />
-											{metodo.nome}
-										</FieldTitle>
-										<FieldDescription>{metodo.descrizione}</FieldDescription>
-									</FieldContent>
-									<RadioGroupItem value={metodo.valore} id={`pagamento-${metodo.valore}`} />
-								</Field>
-							</FieldLabel>
-						))}
-					</RadioGroup>
-
-					{richiedePremium && metodoPagamento === "gratuito" && (
-						<div className="mt-3 flex gap-3 rounded-lg border border-purple-200 bg-purple-50 p-4 text-sm text-purple-900">
-							<Crown className="mt-0.5 size-4 shrink-0 text-purple-700" />
-							<p>L&apos;immagine selezionata è una funzione Premium. Scegli il bonifico oppure rimuovila tornando ai dati.</p>
+					<div className="rounded-lg border bg-background p-4 text-sm">
+						<div className="flex items-start justify-between gap-4">
+							<div>
+								<p className="font-medium">{pianoScelto.nome}</p>
+								<p className="mt-1 text-muted-foreground">{pianoScelto.descrizione}</p>
+								{pianoScelto.durata && <p className="mt-1 text-muted-foreground">Durata: {pianoScelto.durata}</p>}
+							</div>
+							<p className="shrink-0 font-semibold text-fuchsia-700">{pianoScelto.prezzo}</p>
 						</div>
-					)}
+						{pianoScelto.prezzoAnnuale && <p className="mt-2 text-muted-foreground">Oppure {pianoScelto.prezzoAnnuale}</p>}
+					</div>
 
-					{metodoPagamento === "iban" && (
+					{annuncioPagamento && (
 						<div className="mt-3 rounded-lg border border-fuchsia-200 bg-fuchsia-50 p-4 text-sm text-fuchsia-900">
 							<p className="font-medium">Coordinate per il bonifico</p>
 							<p className="mt-1">IBAN: <span className="font-mono">IT60X0542811101000000123456</span></p>
 							<p>Intestatario: Bacheca Dilettanti Srl</p>
+							<p>Piano: {pianoScelto.nome} — {pianoScelto.prezzo}</p>
+							<p>Email verificata: {emailVerificata}</p>
 							<p>Causale: annuncio-{tipologia}{sottotipologia ? `-${sottotipologia}` : ""}</p>
 							<p className="mt-2 text-fuchsia-700">Riceverai conferma della pubblicazione non appena il pagamento sarà verificato.</p>
 						</div>
@@ -160,7 +130,7 @@ export default function ConfermaInvioAnnuncio({
 			</FieldGroup>
 
 			<div className="flex justify-between">
-				<Button variant="outline" onClick={() => onEditStep(2)}>Indietro</Button>
+				<Button variant="outline" onClick={() => onEditStep(3)}>Indietro</Button>
 				<Tooltip>
 					<TooltipTrigger render={<span />}><Button disabled={!isValid || isSubmitting} onClick={submitAnnuncio}>{isSubmitting ? "Invio..." : "Invia annuncio"}</Button></TooltipTrigger>
 					{!isValid && <TooltipContent><p>{disabledMessage}</p></TooltipContent>}

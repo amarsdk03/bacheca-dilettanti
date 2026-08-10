@@ -39,9 +39,9 @@ export default function Footer(
 							Piattaforma
 						</h3>
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
-							<li><Link href="#" className="hover:text-neutral-900">Come funziona</Link></li>
-							<li><Link href="#" className="hover:text-neutral-900">Categorie</Link></li>
-							<li><Link href="#" className="hover:text-neutral-900">Annunci</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Come funziona</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Categorie</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Annunci</Link></li>
 						</ul>
 					</div>
 
@@ -50,9 +50,9 @@ export default function Footer(
 							Per chi cerca
 						</h3>
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
-							<li><Link href="#" className="hover:text-neutral-900">Giocatori</Link></li>
-							<li><Link href="#" className="hover:text-neutral-900">Squadre</Link></li>
-							<li><Link href="#" className="hover:text-neutral-900">Staff tecnico</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Giocatori</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Squadre</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Staff tecnico</Link></li>
 						</ul>
 					</div>
 
@@ -61,9 +61,9 @@ export default function Footer(
 							Altro
 						</h3>
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
-							<li><Link href="#" className="hover:text-neutral-900">Chi siamo</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Chi siamo</Link></li>
 							<li><Link href="/aggiornamenti" className="hover:text-neutral-900">Aggiornamenti</Link></li>
-							<li><Link href="#" className="hover:text-neutral-900">Social e contatti</Link></li>
+							<li><Link href="/contatti" className="hover:text-neutral-900">Social e contatti</Link></li>
 						</ul>
 					</div>
 
@@ -72,9 +72,9 @@ export default function Footer(
 							Legale
 						</h3>
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
-							<li><Link href="#" className="hover:text-neutral-900">Termini di servizio</Link></li>
-							<li><Link href="#" className="hover:text-neutral-900">Privacy</Link></li>
-							<li><Link href="#" className="hover:text-neutral-900">Cookie</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Termini di servizio</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Privacy</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Cookie</Link></li>
 						</ul>
 					</div>
 				</div>

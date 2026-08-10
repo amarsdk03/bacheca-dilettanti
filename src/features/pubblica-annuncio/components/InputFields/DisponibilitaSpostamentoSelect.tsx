@@ -8,14 +8,16 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 
-export const DISPONIBILITA_SPOSTAMENTO_OPTIONS = ["Si", "No"] as const;
+export const DISPONIBILITA_SPOSTAMENTO_OPTIONS = ["Non specificare", "Si", "No"] as const;
 
 type DisponibilitaSpostamentoSelectProps = {
 	value: string;
 	setValue: Dispatch<SetStateAction<string>>;
 	id?: string;
 	label?: string;
+	required?: boolean;
 };
 
 export default function DisponibilitaSpostamentoSelect({
@@ -23,11 +25,14 @@ export default function DisponibilitaSpostamentoSelect({
 	setValue,
 	id = "disponibilita-spostamento",
 	label = "Disponibilità spostamento",
+	required = false,
 }: DisponibilitaSpostamentoSelectProps) {
 	return (
 		<Field>
-			<FieldLabel htmlFor={id}>{label}</FieldLabel>
-			<Select value={value || null} onValueChange={(nextValue) => setValue(nextValue ?? "")}>
+			<FieldLabel htmlFor={id}>
+				{label} {!required && <OptionalLabel />}
+			</FieldLabel>
+			<Select value={value || "Non specificare"} onValueChange={(nextValue) => setValue(nextValue ?? "")}>
 				<SelectTrigger id={id} className="w-full">
 					<SelectValue placeholder="Non specificato" />
 				</SelectTrigger>

@@ -3,6 +3,7 @@ import {NextResponse} from 'next/server';
 
 const MAINTENANCE_MODE = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
 
+// TODO: cambiare URL '/coming-soon' in '/in-manutenzione'
 export default function proxy(request: NextRequest) {
 	if (MAINTENANCE_MODE) {
 		return NextResponse.rewrite(new URL('/coming-soon', request.url));

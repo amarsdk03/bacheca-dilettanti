@@ -9,7 +9,6 @@ import {
 	FieldSet,
 } from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
 import {useAnnuncioStaffStore} from "@/features/pubblica-annuncio/state/AnnuncioStaff.store";
 import DataNascitaFields from "@/features/pubblica-annuncio/components/InputFields/DataNascitaFields";
@@ -18,26 +17,49 @@ import EsperienzeAnnuncioFields from "@/features/pubblica-annuncio/components/In
 import FiguraProfessionaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/FiguraProfessionaleMultiselectField";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
+import CategorieAvversarioField from "@/features/pubblica-annuncio/components/InputFields/CategorieAvversarioField";
 
-export const CATEGORIA_RICERCATA_OPTIONS = [
-	"Calcio professionistico",
-	"Serie A",
-	"Serie B",
-	"Serie C",
-	"Serie D",
-	"Eccellenza",
-	"Promozione",
-	"Prima Categoria",
-	"Seconda Categoria",
-	"Terza Categoria",
-	"Settore giovanile",
-	"Calcio femminile",
-	"Calcio a 5",
-	"Calcio amatoriale",
-	"Altro",
-] as const;
-
-const optionalLabel = <span className="font-normal text-neutral-400 -translate-x-1">(facoltativo)</span>;
+const CATEGORIE_RICERCATE_GROUPS = [
+	{
+		gruppo: "Calcio professionistico",
+		opzioni: ["Serie A", "Serie B", "Serie C"],
+	},
+	{
+		gruppo: "Calcio dilettantistico",
+		opzioni: [
+			"Serie D",
+			"Eccellenza",
+			"Promozione",
+			"Prima Categoria",
+			"Seconda Categoria",
+			"Terza Categoria",
+		],
+	},
+	{
+		gruppo: "Calcio giovanile",
+		opzioni: ["Primavera 1", "Primavera 2", "Primavera 3", "Primavera 4"],
+	},
+	{
+		gruppo: "Calcio femminile",
+		opzioni: [
+			"Serie A Femminile",
+			"Serie B Femminile",
+			"Serie C Femminile",
+			"Eccellenza Femminile",
+			"Promozione Femminile",
+		],
+	},
+	{
+		gruppo: "Calcio a 5",
+		opzioni: ["Serie A C5", "Serie A2 Élite", "Serie A2", "Serie B C5", "Serie C C5"],
+	},
+	{
+		gruppo: "Calcio amatoriale",
+		opzioni: ["Calcio amatoriale"],
+	},
+];
 
 export default function AnnuncioStaff() {
 	const {
@@ -50,10 +72,11 @@ export default function AnnuncioStaff() {
 		cittaComuniPerRegione,
 		tipologieCalcio,
 		figureProfessionali,
+		categorieRicercate,
 		presentazione,
 		esperienze,
-		categoriaRicercata,
 		disponibilitaSpostamento,
+		linkAnnuncio,
 		setField,
 	} = useAnnuncioStaffStore();
 
@@ -67,11 +90,11 @@ export default function AnnuncioStaff() {
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<Field>
-						<FieldLabel htmlFor="staff-nome">Nome {optionalLabel}</FieldLabel>
+						<FieldLabel htmlFor="staff-nome">Nome <OptionalLabel /></FieldLabel>
 						<Input id="staff-nome" value={nome} onChange={(event) => setField("nome", event.target.value)} placeholder="Mario" />
 					</Field>
 					<Field>
-						<FieldLabel htmlFor="staff-cognome">Cognome {optionalLabel}</FieldLabel>
+						<FieldLabel htmlFor="staff-cognome">Cognome <OptionalLabel /></FieldLabel>
 						<Input id="staff-cognome" value={cognome} onChange={(event) => setField("cognome", event.target.value)} placeholder="Rossi" />
 					</Field>
 				</div>
@@ -94,42 +117,47 @@ export default function AnnuncioStaff() {
 				setCittaComuniPerRegione={(value) => setField("cittaComuniPerRegione", value)}
 			/>
 
-			<FieldSet>
+			<FieldSet className="grid gap-x-4 gap-y-6">
 				<div className="mt-4">
-					<FieldLegend variant="label" className="field-legend-title mb-0">Profilo professionale</FieldLegend>
+					<FieldLegend variant="label" className="field-legend-title mb-1">Profilo professionale</FieldLegend>
 					<FieldDescription
-						className="text-red-800 font-medium mb-2 pt-1.5"
+						className="text-red-800 font-medium"
 						hidden={figureProfessionali.length > 0}
 					>
 						Seleziona almeno una figura professionale.
 					</FieldDescription>
 				</div>
 
-				<div className="grid gap-4 sm:grid-cols-2">
-					<FiguraProfessionaleMultiselectField required value={figureProfessionali} onValueChange={(value) => setField("figureProfessionali", value)} />
-					<TipologiaCalcioMultiselectField value={tipologieCalcio} onValueChange={(value) => setField("tipologieCalcio", value)} />
-
-					<Field>
-						<FieldLabel>Categoria ricercata</FieldLabel>
-						<Select value={categoriaRicercata || null} onValueChange={(value) => setField("categoriaRicercata", value ?? "")}>
-							<SelectTrigger className="w-full"><SelectValue placeholder="Non specificare" /></SelectTrigger>
-							<SelectContent>
-								<SelectItem value={null}>Non specificare</SelectItem>
-								{CATEGORIA_RICERCATA_OPTIONS.map((opzione) => <SelectItem key={opzione} value={opzione}>{opzione}</SelectItem>)}
-							</SelectContent>
-						</Select>
-					</Field>
-
-					<DisponibilitaSpostamentoSelect
-						id="staff-disponibilita-spostamento"
-						value={disponibilitaSpostamento}
-						setValue={(value) => setField("disponibilitaSpostamento", value)}
+				<div className="grid gap-x-4 gap-y-6">
+					<FiguraProfessionaleMultiselectField
+						required
+						value={figureProfessionali}
+						onValueChange={(value) => setField("figureProfessionali", value)}
 					/>
+
+					<CategorieAvversarioField
+						items={CATEGORIE_RICERCATE_GROUPS}
+						value={categorieRicercate}
+						action={(value) => setField("categorieRicercate", value)}
+					/>
+
+					<div className="grid gap-x-4 sm:grid-cols-2">
+						<DisponibilitaSpostamentoSelect
+							id="staff-disponibilita-spostamento"
+							value={disponibilitaSpostamento}
+							setValue={(value) => setField("disponibilitaSpostamento", value)}
+						/>
+
+						<TipologiaCalcioMultiselectField
+							value={tipologieCalcio}
+							onValueChange={(value) => setField("tipologieCalcio", value)}
+						/>
+					</div>
 				</div>
 
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="staff-presentazione">Breve presentazione</FieldLabel>
+						<FieldLabel htmlFor="staff-presentazione">Breve presentazione / informazioni aggiuntive <OptionalLabel /></FieldLabel>
 						<span className="text-xs text-muted-foreground">{presentazione.length}/2000</span>
 					</div>
 					<Textarea
@@ -144,6 +172,12 @@ export default function AnnuncioStaff() {
 			</FieldSet>
 
 			<EsperienzeAnnuncioFields idPrefix="staff" esperienze={esperienze} setEsperienze={(value) => setField("esperienze", value)} />
+			<LinkAnnuncioPremiumField
+				idPrefix="staff"
+				tipologia="staff-sportivo"
+				value={linkAnnuncio}
+				onValueChange={(value) => setField("linkAnnuncio", value)}
+			/>
 		</FieldGroup>
 	);
 }
