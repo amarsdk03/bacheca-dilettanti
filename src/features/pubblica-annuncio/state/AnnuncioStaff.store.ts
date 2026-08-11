@@ -13,10 +13,9 @@ export type AnnuncioStaffData = {
 	cittaComuniPerRegione: CittaComuniPerRegione;
 	tipologieCalcio: string[];
 	figureProfessionali: string[];
-	categorieRicercate: string[],
-	presentazione: string;
+	categorieRicercate: string[];
+	presentazioneInformazioniAggiuntive: string;
 	esperienze: EsperienzaAnnuncio[];
-	categoriaRicercata: string;
 	disponibilitaSpostamento: string;
 	linkAnnuncio: string;
 };
@@ -32,9 +31,8 @@ const createInitialState = (): AnnuncioStaffData => ({
 	tipologieCalcio: [],
 	figureProfessionali: [],
 	categorieRicercate: [],
-	presentazione: "",
+	presentazioneInformazioniAggiuntive: "",
 	esperienze: [],
-	categoriaRicercata: "",
 	disponibilitaSpostamento: "",
 	linkAnnuncio: "",
 });
@@ -45,7 +43,7 @@ export function isAnnuncioStaffValid(data: AnnuncioStaffData) {
 	return (
 		data.regioniInteressate.length > 0 &&
 		data.figureProfessionali.length > 0 &&
-		data.presentazione.length <= 2000 &&
+		data.presentazioneInformazioniAggiuntive.length <= 2000 &&
 		isLinkAnnuncioValid(data.linkAnnuncio)
 	);
 }

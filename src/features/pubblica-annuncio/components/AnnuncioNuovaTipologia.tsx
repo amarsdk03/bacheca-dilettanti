@@ -22,26 +22,12 @@ import {
 	useAnnuncioProfessionistiStudiStore,
 	useAnnuncioTorneoEventoStore,
 } from "@/features/pubblica-annuncio/state/AnnuncioNuoveTipologie.store";
-
-const MODALITA_SERVIZIO_OPTIONS = [
-	{valore: "in-presenza", etichetta: "In presenza"},
-	{valore: "online", etichetta: "Online"},
-	{valore: "entrambe", etichetta: "Entrambe"},
-] as const;
-
-const DISPONIBILITA_SPOSTAMENTI_OPTIONS = [
-	{valore: "si", etichetta: "Sì"},
-	{valore: "no", etichetta: "No"},
-] as const;
-
-const MODALITA_ISCRIZIONE_OPTIONS = [
-	{valore: "libera", etichetta: "Libera"},
-	{valore: "posti-limitati", etichetta: "Posti limitati"},
-] as const;
-
-const ANNATE_TORNEO_OPTIONS = Array.from({length: 40}, (_, index) =>
-	String(new Date().getFullYear() - index)
-);
+import {
+	ANNATE_TORNEO_OPTIONS,
+	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
+	MODALITA_ISCRIZIONE_OPTIONS,
+	MODALITA_SERVIZIO_OPTIONS,
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type TextFieldProps = {
 	id: string;
@@ -349,7 +335,7 @@ function AnnuncioProfessionistiStudi() {
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value={null}>Non specificare</SelectItem>
-							{DISPONIBILITA_SPOSTAMENTI_OPTIONS.map((opzione) => (
+							{DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS.map((opzione) => (
 								<SelectItem key={opzione.valore} value={opzione.valore}>{opzione.etichetta}</SelectItem>
 							))}
 						</SelectContent>

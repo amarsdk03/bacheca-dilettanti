@@ -13,13 +13,108 @@ export interface TipologiaAnnuncio {
 	sottotipologie?: SottotipologiaAnnuncio[];
 }
 
+export type CanaleContattoAnnuncio =
+	| "Email"
+	| "Telefono"
+	| "Instagram"
+	| "Facebook"
+	| "Tiktok"
+	| "Youtube"
+	| "X (Twitter)"
+	| "Linkedin";
+
+export const TIPOLOGIA_CALCIO_OPTIONS = ["Calcio a 11", "Calcio a 7", "Calcio a 5"] as const;
+
+export const TIPOLOGIA_PRINCIPALE_SQUADRA_OPTIONS = TIPOLOGIA_CALCIO_OPTIONS.map((tipologia) => ({
+	valore: tipologia,
+	etichetta: tipologia,
+}));
+
+export const RUOLO_PRINCIPALE_OPTIONS = ["Portiere", "Difensore", "Centrocampista", "Attaccante"] as const;
+
+export const RUOLI_SPECIFICI_PER_RUOLO: Record<string, string[]> = {
+	Portiere: [],
+	Difensore: ["Libero", "Terzino sinistro", "Difensore centrale", "Terzino destro", "Esterno sinistro a tutta fascia", "Esterno destro a tutta fascia"],
+	Centrocampista: ["Mediano", "Centrocampista sinistro", "Centrocampista centrale", "Centrocampista destro", "Trequartista"],
+	Attaccante: ["Ala sinistra", "Ala destra", "Attaccante sinistro / Seconda punta sinistra", "Centravanti", "Attaccante destro / Seconda punta destra", "Seconda punta"],
+};
+
+export const FIGURA_PROFESSIONALE_OPTIONS = [
+	"Analisi", "Coaching/Preparatore", "Osservatore/Scouting", "Esecutivo/Amministrativo",
+	"Manutenzione/Infrastruttura", "HR", "Fisioterapia/Medicina sportiva", "Commerciale/Business",
+	"Educativo/Sociale", "Media/Design", "Altro",
+] as const;
+
+export const CATEGORIE_CALCIO_GROUPS = [
+	{gruppo: "Calcio professionistico", opzioni: ["Serie A", "Serie B", "Serie C"]},
+	{gruppo: "Calcio dilettantistico", opzioni: ["Serie D", "Eccellenza", "Promozione", "Prima Categoria", "Seconda Categoria", "Terza Categoria"]},
+	{gruppo: "Calcio giovanile", opzioni: ["Primavera 1", "Primavera 2", "Primavera 3", "Primavera 4"]},
+	{gruppo: "Calcio femminile", opzioni: ["Serie A Femminile", "Serie B Femminile", "Serie C Femminile", "Eccellenza Femminile", "Promozione Femminile"]},
+	{gruppo: "Calcio a 5", opzioni: ["Serie A C5", "Serie A2 Élite", "Serie A2", "Serie B C5", "Serie C C5"]},
+	{gruppo: "Calcio amatoriale", opzioni: ["Calcio amatoriale"]},
+] as const;
+
+export const DISPONIBILITA_SPOSTAMENTO_OPTIONS = ["Non specificare", "Si", "No"] as const;
+export const DISPONIBILITA_TRASFERTA_OPTIONS = [
+	{valore: "Si", etichetta: "Si"},
+	{valore: "No", etichetta: "No"},
+] as const;
+
+export const MESI_OPTIONS = [
+	"Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+	"Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
+] as const;
+export const ANNATE_OPTIONS = Array.from({length: 44}, (_, index) => String(new Date().getFullYear() - 17 - index));
+export const ANNATE_TORNEO_OPTIONS = Array.from({length: 40}, (_, index) => String(new Date().getFullYear() - index));
+
+export type StatoEsperienza = "non-specificare" | "in-corso" | "conseguito";
+export const STATO_ESPERIENZA_OPTIONS: {value: StatoEsperienza; label: string}[] = [
+	{value: "non-specificare", label: "Non specificare"},
+	{value: "in-corso", label: "In corso"},
+	{value: "conseguito", label: "Conseguito"},
+];
+
+export const MODALITA_SERVIZIO_OPTIONS = [
+	{valore: "in-presenza", etichetta: "In presenza"},
+	{valore: "online", etichetta: "Online"},
+	{valore: "entrambe", etichetta: "Entrambe"},
+] as const;
+export const DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS = [
+	{valore: "si", etichetta: "Sì"},
+	{valore: "no", etichetta: "No"},
+] as const;
+export const MODALITA_ISCRIZIONE_OPTIONS = [
+	{valore: "libera", etichetta: "Libera"},
+	{valore: "posti-limitati", etichetta: "Posti limitati"},
+] as const;
+
+export const SOCIAL_CONTACT_OPTIONS: {
+	valore: CanaleContattoAnnuncio;
+	etichetta: string;
+	placeholder: string;
+	tipoInput: "email" | "tel" | "url";
+	icona?: string;
+}[] = [
+	{valore: "Email", etichetta: "Email", placeholder: "nome@email.it", tipoInput: "email", icona: "Mail"},
+	{valore: "Telefono", etichetta: "Telefono", placeholder: "+39 333 123 4567", tipoInput: "tel", icona: "Phone"},
+	{valore: "Instagram", etichetta: "Instagram", placeholder: "https://instagram.com/nomeutente", tipoInput: "url", icona: "Camera"},
+	{valore: "Facebook", etichetta: "Facebook", placeholder: "https://facebook.com/nomeutente", tipoInput: "url", icona: "Users"},
+	{valore: "Tiktok", etichetta: "TikTok", placeholder: "https://tiktok.com/@nomeutente", tipoInput: "url", icona: "Music2"},
+	{valore: "Youtube", etichetta: "YouTube", placeholder: "https://youtube.com/nomeutente", tipoInput: "url", icona: "Video"},
+	{valore: "X (Twitter)", etichetta: "X (Twitter)", placeholder: "https://x.com/nomeutente", tipoInput: "url", icona: "MessagesSquare"},
+	{valore: "Linkedin", etichetta: "LinkedIn", placeholder: "https://linkedin.com/in/nomeutente", tipoInput: "url", icona: "BriefcaseBusiness"},
+];
+
+export function getOptionLabel(options: readonly {valore: string; etichetta: string}[], value: string) {
+	return options.find((option) => option.valore === value)?.etichetta;
+}
+
 export type PianoVisibilita = {
 	valore: string;
 	nome: string;
 	prezzo: string;
 	descrizione: string;
 	durata?: string;
-	prezzoAnnuale?: string;
 	caratteristiche?: readonly string[];
 };
 
@@ -28,20 +123,20 @@ export const PIANI_VISIBILITA = {
 	profili: {
 		giocatore: [
 			{valore: "giocatore-gratuito", nome: "Gratuito", prezzo: "0 EUR", descrizione: "Dati essenziali, zona, breve descrizione e un contatto.", caratteristiche: ["Dati essenziali, ruolo e anno di nascita", "Zona di appartenenza", "Breve presentazione", "Un contatto"]},
-			{valore: "giocatore-plus", nome: "Plus", prezzo: "4,90 EUR / mese", prezzoAnnuale: "49 EUR / anno", descrizione: "Profilo completo con esperienze, caratteristiche tecniche, video, social e curriculum sportivo.", caratteristiche: ["Profilo completo con esperienze", "Caratteristiche tecniche", "Fino a 5 video", "Social e curriculum sportivo"]},
-			{valore: "giocatore-pro", nome: "Pro", prezzo: "9,90 EUR / mese", prezzoAnnuale: "99 EUR / anno", descrizione: "Tutto il piano Plus, più video, evidenza nei risultati, descrizione estesa e statistiche.", caratteristiche: ["Tutto il piano Plus", "Fino a 15 video", "Evidenza nei risultati", "Descrizione estesa", "Aggiornamento disponibilità e statistiche essenziali"]},
+			{valore: "giocatore-plus", nome: "Plus", prezzo: "4,90 EUR / mese", descrizione: "Profilo completo con esperienze, caratteristiche tecniche, video, social e curriculum sportivo.", caratteristiche: ["Profilo completo con esperienze", "Caratteristiche tecniche", "Fino a 5 video", "Social e curriculum sportivo"]},
+			{valore: "giocatore-pro", nome: "Pro", prezzo: "9,90 EUR / mese", descrizione: "Tutto il piano Plus, più video, evidenza nei risultati, descrizione estesa e statistiche.", caratteristiche: ["Tutto il piano Plus", "Fino a 15 video", "Evidenza nei risultati", "Descrizione estesa", "Aggiornamento disponibilità e statistiche essenziali"]},
 		],
 		staff: [
-			{valore: "staff-base", nome: "Base", prezzo: "4,90 EUR / mese", prezzoAnnuale: "49 EUR / anno", descrizione: "Profilo professionale con qualifiche, esperienze, contatti, social e CV.", caratteristiche: ["Profilo professionale con foto e presentazione", "Qualifiche ed esperienze", "Contatti e social", "CV o documento allegato"]},
-			{valore: "staff-pro", nome: "Pro", prezzo: "9,90 EUR / mese", prezzoAnnuale: "99 EUR / anno", descrizione: "Tutto il piano Base, sezione dedicata, portfolio e contenuti professionali.", caratteristiche: ["Tutto il piano Base", "Presenza nella sezione dedicata", "Bacheca personale e piccolo portfolio", "Pubblicazione di analisi, video o lavori professionali", "Massimo 2 nuovi contenuti al mese nel feed"]},
+			{valore: "staff-base", nome: "Base", prezzo: "4,90 EUR / mese", descrizione: "Profilo professionale con qualifiche, esperienze, contatti, social e CV.", caratteristiche: ["Profilo professionale con foto e presentazione", "Qualifiche ed esperienze", "Contatti e social", "CV o documento allegato"]},
+			{valore: "staff-pro", nome: "Pro", prezzo: "9,90 EUR / mese", descrizione: "Tutto il piano Base, sezione dedicata, portfolio e contenuti professionali.", caratteristiche: ["Tutto il piano Base", "Presenza nella sezione dedicata", "Bacheca personale e piccolo portfolio", "Pubblicazione di analisi, video o lavori professionali", "Massimo 2 nuovi contenuti al mese nel feed"]},
 		],
 		club: [
-			{valore: "club-base", nome: "Base", prezzo: "4,90 EUR / mese", prezzoAnnuale: "49,90 EUR / anno", descrizione: "Pagina dedicata verificata con logo, descrizione, contatti, social e annunci.", caratteristiche: ["Pagina dedicata con logo, descrizione e contatti", "Link al sito e ai profili social", "Annunci e contenuti del club nella stessa pagina", "Profilo verificato"]},
-			{valore: "club-advanced", nome: "Advanced", prezzo: "14,90 EUR / mese", prezzoAnnuale: "149,90 EUR / anno", descrizione: "Tutto il piano Base, Club Pilota, feed e un annuncio prioritario al mese.", caratteristiche: ["Tutto il piano Base", "Spazio nella sezione Club Pilota della regione", "Pubblicazione di aggiornamenti nel feed", "Accesso anticipato a nuove funzioni", "Un annuncio prioritario di 7 giorni al mese, non cumulabile", "Possibile sconto su prodotti e servizi Club Pilota"]},
+			{valore: "club-base", nome: "Base", prezzo: "4,90 EUR / mese", descrizione: "Pagina dedicata verificata con logo, descrizione, contatti, social e annunci.", caratteristiche: ["Pagina dedicata con logo, descrizione e contatti", "Link al sito e ai profili social", "Annunci e contenuti del club nella stessa pagina", "Profilo verificato"]},
+			{valore: "club-advanced", nome: "Advanced", prezzo: "14,90 EUR / mese", descrizione: "Tutto il piano Base, Club Pilota, feed e un annuncio prioritario al mese.", caratteristiche: ["Tutto il piano Base", "Spazio nella sezione Club Pilota della regione", "Pubblicazione di aggiornamenti nel feed", "Accesso anticipato a nuove funzioni", "Un annuncio prioritario di 7 giorni al mese, non cumulabile", "Possibile sconto su prodotti e servizi Club Pilota"]},
 		],
-		professionisti: [{valore: "professionisti-base", nome: "Base professionisti e studi", prezzo: "34,90 EUR / mese", prezzoAnnuale: "349,90 EUR / anno", descrizione: "Pagina verificata con servizi, listino, promozioni, annunci e contenuti.", caratteristiche: ["Pagina dedicata con logo, descrizione e contatti", "Link al sito e ai social", "Listino prezzi e promozioni", "Annunci e contenuti raccolti nella pagina", "Profilo verificato", "Possibilità di proporre servizi ai club via e-mail o articoli dedicati"]}],
-		agenzie: [{valore: "agenzie-base", nome: "Base agenzie e agenti", prezzo: "34,90 EUR / mese", prezzoAnnuale: "349,90 EUR / anno", descrizione: "Pagina verificata con attività, opportunità e fino a 5 pubblicazioni mensili.", caratteristiche: ["Pagina dedicata con logo o foto, descrizione e contatti", "Link al sito e ai social", "Listino prezzi e promozioni, quando applicabile", "Annunci e contenuti raccolti nella pagina", "Profilo verificato e spazio dedicato", "Fino a 5 pubblicazioni al mese"]}],
-		campi: [{valore: "campi-base", nome: "Base gestori di campi", prezzo: "4,90 EUR / mese", prezzoAnnuale: "49 EUR / anno", descrizione: "Presenza nella ricerca locale con servizi, prezzi, prenotazioni e filtri.", caratteristiche: ["Presenza nella sezione Campi in affitto nella tua zona", "Servizi e prezzi del campo", "Link di prenotazione", "Filtri nella ricerca per tipologia e territorio", "Possibile pagina con disponibilità orarie e prenotazioni dirette"]}],
+		professionisti: [{valore: "professionisti-base", nome: "Base professionisti e studi", prezzo: "34,90 EUR / mese", descrizione: "Pagina verificata con servizi, listino, promozioni, annunci e contenuti.", caratteristiche: ["Pagina dedicata con logo, descrizione e contatti", "Link al sito e ai social", "Listino prezzi e promozioni", "Annunci e contenuti raccolti nella pagina", "Profilo verificato", "Possibilità di proporre servizi ai club via e-mail o articoli dedicati"]}],
+		agenzie: [{valore: "agenzie-base", nome: "Base agenzie e agenti", prezzo: "34,90 EUR / mese", descrizione: "Pagina verificata con attività, opportunità e fino a 5 pubblicazioni mensili.", caratteristiche: ["Pagina dedicata con logo o foto, descrizione e contatti", "Link al sito e ai social", "Listino prezzi e promozioni, quando applicabile", "Annunci e contenuti raccolti nella pagina", "Profilo verificato e spazio dedicato", "Fino a 5 pubblicazioni al mese"]}],
+		campi: [{valore: "campi-base", nome: "Base gestori di campi", prezzo: "4,90 EUR / mese", descrizione: "Presenza nella ricerca locale con servizi, prezzi, prenotazioni e filtri.", caratteristiche: ["Presenza nella sezione Campi in affitto nella tua zona", "Servizi e prezzi del campo", "Link di prenotazione", "Filtri nella ricerca per tipologia e territorio", "Possibile pagina con disponibilità orarie e prenotazioni dirette"]}],
 	},
 	annunciPrioritari: [
 		{valore: "prioritario-1-7", nome: "Annuncio prioritario", durata: "7 giorni", prezzo: "7,90 EUR", descrizione: "L'annuncio entra in rotazione con priorità rispetto alla lista standard."},
@@ -77,37 +172,66 @@ export const PUBBLICAZIONE_GRATUITA: PianoVisibilita = {
 	descrizione: "Pubblica senza priorità o promozione aggiuntiva.",
 };
 
-export function getPianiPubblicazione(tipologia: string): readonly PianoVisibilita[] {
-	let pianiSpecifici: readonly PianoVisibilita[] = [];
+export type CategoriaVisibilita = "gratis" | "plus" | "pro" | "prioritario";
+
+export const CATEGORIE_VISIBILITA_OPTIONS: readonly {
+	valore: CategoriaVisibilita;
+	nome: string;
+}[] = [
+	{valore: "gratis", nome: "Gratis"},
+	{valore: "plus", nome: "Plus"},
+	{valore: "pro", nome: "Pro"},
+	{valore: "prioritario", nome: "Prioritario"},
+];
+
+export type OpzioniVisibilita = {
+	gratis: PianoVisibilita;
+	plus?: PianoVisibilita;
+	pro?: PianoVisibilita;
+	prioritari: readonly PianoVisibilita[];
+};
+
+export function getOpzioniVisibilita(tipologia: string): OpzioniVisibilita {
+	let plus: PianoVisibilita | undefined;
+	let pro: PianoVisibilita | undefined;
+	let prioritari: readonly PianoVisibilita[] = PIANI_VISIBILITA.annunciPrioritari;
 
 	switch (tipologia) {
 		case "giocatore":
-			pianiSpecifici = PIANI_VISIBILITA.profili.giocatore.filter(
-				(piano) => piano.valore !== "giocatore-gratuito"
-			);
+			plus = PIANI_VISIBILITA.profili.giocatore[1];
+			pro = PIANI_VISIBILITA.profili.giocatore[2];
 			break;
 		case "staff-sportivo":
 		case "arbitro":
-			pianiSpecifici = PIANI_VISIBILITA.profili.staff;
+			plus = PIANI_VISIBILITA.profili.staff[0];
+			pro = PIANI_VISIBILITA.profili.staff[1];
 			break;
 		case "squadra":
-			pianiSpecifici = PIANI_VISIBILITA.profili.club;
-			break;
-		case "aziende-enti":
-			pianiSpecifici = PIANI_VISIBILITA.b2b;
+			plus = PIANI_VISIBILITA.profili.club[0];
+			pro = PIANI_VISIBILITA.profili.club[1];
 			break;
 		case "professionisti-studi":
-			pianiSpecifici = PIANI_VISIBILITA.profili.professionisti;
-			break;
-		case "torneo-evento":
-			pianiSpecifici = PIANI_VISIBILITA.tornei;
+			plus = PIANI_VISIBILITA.profili.professionisti[0];
 			break;
 		case "campo-impianto-sportivo":
-			pianiSpecifici = PIANI_VISIBILITA.profili.campi;
+			plus = PIANI_VISIBILITA.profili.campi[0];
+			break;
+		case "aziende-enti":
+			prioritari = [...PIANI_VISIBILITA.annunciPrioritari, ...PIANI_VISIBILITA.b2b];
+			break;
+		case "torneo-evento":
+			prioritari = [...PIANI_VISIBILITA.annunciPrioritari, ...PIANI_VISIBILITA.tornei];
 			break;
 	}
 
-	return [PUBBLICAZIONE_GRATUITA, ...pianiSpecifici, ...PIANI_VISIBILITA.annunciPrioritari];
+	return {gratis: PUBBLICAZIONE_GRATUITA, plus, pro, prioritari};
+}
+
+export function getPianiPubblicazione(tipologia: string): readonly PianoVisibilita[] {
+	const {gratis, plus, pro, prioritari} = getOpzioniVisibilita(tipologia);
+	return [gratis, plus, pro, ...prioritari].filter(
+		(piano): piano is PianoVisibilita => Boolean(piano)
+	);
 }
 
 export function isPianoPagamento(piano: PianoVisibilita) {

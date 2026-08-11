@@ -9,25 +9,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import {MESI_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 const ANNO_PLACEHOLDER = "Anno";
 const MESE_PLACEHOLDER = "Mese";
 const GIORNO_PLACEHOLDER = "Giorno";
-
-const MESI = [
-	"Gennaio",
-	"Febbraio",
-	"Marzo",
-	"Aprile",
-	"Maggio",
-	"Giugno",
-	"Luglio",
-	"Agosto",
-	"Settembre",
-	"Ottobre",
-	"Novembre",
-	"Dicembre",
-];
 
 type DataNascitaFieldsProps = {
 	idPrefix: string;
@@ -107,7 +93,7 @@ export default function DataNascitaFields({
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value={MESE_PLACEHOLDER}>Non specificare</SelectItem>
-						{MESI.map((mese) => (
+						{MESI_OPTIONS.map((mese) => (
 							<SelectItem key={mese} value={mese}>
 								{mese}
 							</SelectItem>

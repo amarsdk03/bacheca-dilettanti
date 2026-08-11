@@ -24,7 +24,7 @@ import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/O
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
 import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
 import PremiumOnlyBadge from "@/features/pubblica-annuncio/components/InputFields/PremiumOnlyBadge";
-import {RUOLI_AVANZATI_PER_RUOLO} from "@/features/pubblica-annuncio/components/AnnuncioSquadra";
+import {RUOLI_SPECIFICI_PER_RUOLO} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export default function AnnuncioGiocatore() {
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,7 +37,7 @@ export default function AnnuncioGiocatore() {
 		regioniInteressate,
 		cittaComuniPerRegione,
 		contatti,
-		descrizione,
+		descrizioneAggiuntiva,
 		tipologieCalcio,
 		ruoliPrincipali,
 		ruoliSpecifici,
@@ -47,7 +47,7 @@ export default function AnnuncioGiocatore() {
 	} = useAnnuncioGiocatoreStore();
 
 	const ruoliAvanzatiDisponibili = Array.from(
-		new Set(ruoliPrincipali.flatMap((ruolo) => RUOLI_AVANZATI_PER_RUOLO[ruolo] ?? []))
+		new Set(ruoliPrincipali.flatMap((ruolo) => RUOLI_SPECIFICI_PER_RUOLO[ruolo] ?? []))
 	);
 
 	const removeFoto = () => {
@@ -129,7 +129,7 @@ export default function AnnuncioGiocatore() {
 						value={ruoliPrincipali}
 						onValueChange={(value) => {
 							const opzioniDisponibili = new Set(
-								value.flatMap((ruolo) => RUOLI_AVANZATI_PER_RUOLO[ruolo] ?? [])
+								value.flatMap((ruolo) => RUOLI_SPECIFICI_PER_RUOLO[ruolo] ?? [])
 							);
 							setField("ruoliPrincipali", value);
 							setField("ruoliSpecifici", ruoliSpecifici.filter((ruolo) => opzioniDisponibili.has(ruolo)));
@@ -147,13 +147,13 @@ export default function AnnuncioGiocatore() {
 
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="giocatore-descrizione">Breve descrizione aggiuntiva <OptionalLabel /></FieldLabel>
-						<span className="text-xs text-muted-foreground">{descrizione.length}/2000</span>
+						<FieldLabel htmlFor="giocatore-descrizione-aggiuntiva">Breve descrizione aggiuntiva <OptionalLabel /></FieldLabel>
+						<span className="text-xs text-muted-foreground">{descrizioneAggiuntiva.length}/2000</span>
 					</div>
 					<Textarea
-						id="giocatore-descrizione"
-						value={descrizione}
-						onChange={(event) => setField("descrizione", event.target.value.slice(0, 2000))}
+						id="giocatore-descrizione-aggiuntiva"
+						value={descrizioneAggiuntiva}
+						onChange={(event) => setField("descrizioneAggiuntiva", event.target.value.slice(0, 2000))}
 						maxLength={2000}
 						placeholder="Racconta esperienze, caratteristiche tecniche, disponibilità, obiettivi..."
 						className="min-h-32 resize-y"

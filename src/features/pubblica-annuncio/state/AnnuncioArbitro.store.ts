@@ -12,9 +12,9 @@ export type AnnuncioArbitroData = {
 	regioniInteressate: string[];
 	cittaComuniPerRegione: CittaComuniPerRegione;
 	tipologieCalcio: string[];
-	presentazione: string;
+	presentazioneInformazioniAggiuntive: string;
 	esperienze: EsperienzaAnnuncio[];
-	disponibilitaSpostamento: string;
+	automunito: string;
 	linkAnnuncio: string;
 };
 
@@ -27,9 +27,9 @@ const createInitialState = (): AnnuncioArbitroData => ({
 	regioniInteressate: [],
 	cittaComuniPerRegione: {},
 	tipologieCalcio: [],
-	presentazione: "",
+	presentazioneInformazioniAggiuntive: "",
 	esperienze: [],
-	disponibilitaSpostamento: "",
+	automunito: "",
 	linkAnnuncio: "",
 });
 
@@ -38,7 +38,7 @@ export const useAnnuncioArbitroStore = createAnnuncioStore(createInitialState);
 export function isAnnuncioArbitroValid(data: AnnuncioArbitroData) {
 	return (
 		data.regioniInteressate.length > 0 &&
-		data.presentazione.length <= 2000 &&
+		data.presentazioneInformazioniAggiuntive.length <= 2000 &&
 		isLinkAnnuncioValid(data.linkAnnuncio)
 	);
 }

@@ -1,6 +1,5 @@
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
-
-export const TIPOLOGIA_CALCIO_OPTIONS = ["Calcio a 11", "Calcio a 7", "Calcio a 5"] as const;
+import {TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type TipologiaCalcioMultiselectFieldProps = {
 	value: string[];

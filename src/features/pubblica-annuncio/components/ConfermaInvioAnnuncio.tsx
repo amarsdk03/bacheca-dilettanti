@@ -95,7 +95,6 @@ export default function ConfermaInvioAnnuncio({
 							</div>
 							<p className="shrink-0 font-semibold text-fuchsia-700">{pianoScelto.prezzo}</p>
 						</div>
-						{pianoScelto.prezzoAnnuale && <p className="mt-2 text-muted-foreground">Oppure {pianoScelto.prezzoAnnuale}</p>}
 					</div>
 
 					{annuncioPagamento && (

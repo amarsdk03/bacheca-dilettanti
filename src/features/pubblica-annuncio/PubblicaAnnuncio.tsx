@@ -40,6 +40,8 @@ import DettagliAnnuncio from "@/features/pubblica-annuncio/components/DettagliAn
 import SelezionaTipologiaAnnuncio from "@/features/pubblica-annuncio/components/SelezionaTipologiaAnnuncio";
 import SelezionaVisibilitaAnnuncio from "@/features/pubblica-annuncio/components/SelezionaVisibilitaAnnuncio";
 import {
+	type CategoriaVisibilita,
+	getOpzioniVisibilita,
 	getPianiPubblicazione,
 	getTipologia,
 	isPianoPagamento,
@@ -52,6 +54,7 @@ export default function PubblicaAnnuncio() {
 	const [step, setStep] = useState(1);
 	const [tipologia, setTipologia] = useState("");
 	const [sottotipologia, setSottotipologia] = useState("");
+	const [categoriaVisibilita, setCategoriaVisibilita] = useState<CategoriaVisibilita>("gratis");
 	const [pianoSelezionato, setPianoSelezionato] = useState(PUBBLICAZIONE_GRATUITA.valore);
 	const [emailPagamento, setEmailPagamento] = useState("");
 	const [emailVerificata, setEmailVerificata] = useState<string | null>(null);
@@ -108,7 +111,7 @@ export default function PubblicaAnnuncio() {
 	];
 	const premiumValido = funzioniPremium.length === 0 || annuncioPagamento;
 	const emailNormalizzata = emailPagamento.trim().toLowerCase();
-	const step3Valid = premiumValido && (!annuncioPagamento || emailVerificata === emailNormalizzata);
+	const step3Valid = pianoSelezionato !== "" && premiumValido && (!annuncioPagamento || emailVerificata === emailNormalizzata);
 
 	const scrollToTop = () => window.scrollTo({top: 0, behavior: "smooth"});
 	const goToStep = (nextStep: number) => {
@@ -127,6 +130,7 @@ export default function PubblicaAnnuncio() {
 	const handleTipologiaChange = (value: string) => {
 		setTipologia(value);
 		setSottotipologia("");
+		setCategoriaVisibilita("gratis");
 		setPianoSelezionato(PUBBLICAZIONE_GRATUITA.valore);
 		setEmailPagamento("");
 		setEmailVerificata(null);
@@ -141,6 +145,21 @@ export default function PubblicaAnnuncio() {
 
 	const handlePianoChange = (value: string) => {
 		setPianoSelezionato(value);
+		setVisibilitaConfermata(false);
+	};
+
+	const handleCategoriaVisibilitaChange = (categoria: CategoriaVisibilita) => {
+		const opzioni = getOpzioniVisibilita(tipologia);
+		const piano = categoria === "gratis"
+			? opzioni.gratis
+			: categoria === "plus"
+				? opzioni.plus
+				: categoria === "pro"
+					? opzioni.pro
+					: undefined;
+
+		setCategoriaVisibilita(categoria);
+		setPianoSelezionato(piano?.valore ?? "");
 		setVisibilitaConfermata(false);
 	};
 
@@ -223,8 +242,10 @@ export default function PubblicaAnnuncio() {
 						<Card className="my-4"><CardHeader><CardContent>
 							<SelezionaVisibilitaAnnuncio
 								tipologia={tipologia}
+								categoriaSelezionata={categoriaVisibilita}
 								pianoSelezionato={pianoSelezionato}
 								funzioniPremium={funzioniPremium}
+								onCategoriaChange={handleCategoriaVisibilitaChange}
 								onPianoChange={handlePianoChange}
 								email={emailPagamento}
 								onEmailChange={handleEmailChange}

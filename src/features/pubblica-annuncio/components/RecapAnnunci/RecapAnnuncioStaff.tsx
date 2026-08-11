@@ -18,10 +18,14 @@ export default function RecapAnnuncioStaff() {
 				<RecapField label="Data di nascita">{formatDataNascita(data.giornoNascita, data.meseNascita, data.annoNascita)}</RecapField>
 				<RecapField label="Tipologia calcio">{data.tipologieCalcio.join(", ") || "—"}</RecapField>
 				<RecapField label="Figura professionale">{data.figureProfessionali.join(", ") || "—"}</RecapField>
-				<RecapField label="Categoria ricercata">{data.categoriaRicercata || "—"}</RecapField>
+				<RecapField label="Categorie ricercate">{data.categorieRicercate.join(", ") || "—"}</RecapField>
 				<RecapField label="Disponibilità spostamento">{data.disponibilitaSpostamento || "Non specificato"}</RecapField>
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
-				{data.presentazione.trim() !== "" && <RecapField label="Presentazione personale" wide>{data.presentazione}</RecapField>}
+				{data.presentazioneInformazioniAggiuntive.trim() !== "" && (
+					<RecapField label="Breve presentazione / informazioni aggiuntive" wide>
+						{data.presentazioneInformazioniAggiuntive}
+					</RecapField>
+				)}
 				<EsperienzeRecap esperienze={data.esperienze} />
 				<PremiumLinkRecap link={data.linkAnnuncio} />
 			</dl>

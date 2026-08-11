@@ -12,6 +12,12 @@ import {
 	useAnnuncioProfessionistiStudiStore,
 	useAnnuncioTorneoEventoStore,
 } from "@/features/pubblica-annuncio/state/AnnuncioNuoveTipologie.store";
+import {
+	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
+	getOptionLabel,
+	MODALITA_ISCRIZIONE_OPTIONS,
+	MODALITA_SERVIZIO_OPTIONS,
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 function OptionalRecapField({label, value}: {label: string; value: string}) {
 	if (value.trim() === "") return null;
@@ -45,17 +51,6 @@ function RecapAziendeEnti() {
 	);
 }
 
-const MODALITA_SERVIZIO_LABELS: Record<string, string> = {
-	"in-presenza": "In presenza",
-	online: "Online",
-	entrambe: "Entrambe",
-};
-
-const DISPONIBILITA_LABELS: Record<string, string> = {
-	si: "Sì",
-	no: "No",
-};
-
 function RecapProfessionistiStudi() {
 	const data = useAnnuncioProfessionistiStudiStore();
 
@@ -66,8 +61,8 @@ function RecapProfessionistiStudi() {
 				<RecapField label="Nome e cognome">{data.nomeCognome || "—"}</RecapField>
 				<RecapField label="Figura professionale">{data.figuraProfessionale || "—"}</RecapField>
 				<RecapField label="Specializzazione">{data.specializzazione || "—"}</RecapField>
-				<RecapField label="Modalità del servizio">{MODALITA_SERVIZIO_LABELS[data.modalitaServizio] || "Non specificata"}</RecapField>
-				<RecapField label="Disponibilità agli spostamenti">{DISPONIBILITA_LABELS[data.disponibilitaSpostamenti] || "Non specificata"}</RecapField>
+				<RecapField label="Modalità del servizio">{getOptionLabel(MODALITA_SERVIZIO_OPTIONS, data.modalitaServizio) || "Non specificata"}</RecapField>
+				<RecapField label="Disponibilità agli spostamenti">{getOptionLabel(DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS, data.disponibilitaSpostamenti) || "Non specificata"}</RecapField>
 				<RecapField label="Contatti" wide>{formatContatti(data.contatti)}</RecapField>
 				<OptionalRecapField label="Servizi offerti" value={data.serviziOfferti} />
 				<RegioniRecap
@@ -84,11 +79,6 @@ function RecapProfessionistiStudi() {
 		</div>
 	);
 }
-
-const MODALITA_ISCRIZIONE_LABELS: Record<string, string> = {
-	libera: "Libera",
-	"posti-limitati": "Posti limitati",
-};
 
 function RecapTorneoEvento() {
 	const data = useAnnuncioTorneoEventoStore();
@@ -107,7 +97,7 @@ function RecapTorneoEvento() {
 					regioni={data.regioniInteressate}
 					cittaComuniPerRegione={data.cittaComuniPerRegione}
 				/>
-				<RecapField label="Modalità di iscrizione">{MODALITA_ISCRIZIONE_LABELS[data.modalitaIscrizione] || "Non specificata"}</RecapField>
+				<RecapField label="Modalità di iscrizione">{getOptionLabel(MODALITA_ISCRIZIONE_OPTIONS, data.modalitaIscrizione) || "Non specificata"}</RecapField>
 				<RecapField label="Annate ammesse">{annate}</RecapField>
 				<RecapField label="Posti per squadre">{data.numeroPostiSquadre || "—"}</RecapField>
 				<RecapField label="Costo partecipazione">{data.costoPartecipazione ? `${data.costoPartecipazione} EUR ${costoPer}` : "—"}</RecapField>

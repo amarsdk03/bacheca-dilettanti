@@ -19,15 +19,16 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 			<p className="mb-1 text-muted-foreground">Dettagli squadra</p>
 			<dl className="grid gap-1 sm:grid-cols-2">
 				<RecapField label="Nome società">{data.nomeSocieta || "—"}</RecapField>
-				<RecapField label="Tipologia sport">{data.tipologiaSport || "—"}</RecapField>
+				<RecapField label="Tipologia principale">{data.tipologiaPrincipale || "—"}</RecapField>
 				<RegioniRecap
 					titolo="Sede principale"
 					regioni={data.sedePrincipale.regioniInteressate}
 					cittaComuniPerRegione={data.sedePrincipale.cittaComuniPerRegione}
 				/>
-				{data.linkStemma.trim() !== "" && <RecapField label="Link stemma">{data.linkStemma}</RecapField>}
 				<RecapField label="Contatti pubblici" wide>{formatContatti(data.contatti)}</RecapField>
-				{data.descrizione.trim() !== "" && <RecapField label="Descrizione" wide>{data.descrizione}</RecapField>}
+				{data.presentazioneAggiuntiva.trim() !== "" && (
+					<RecapField label="Breve presentazione aggiuntiva" wide>{data.presentazioneAggiuntiva}</RecapField>
+				)}
 
 				{sottotipologia === "cerca-giocatore" && (
 					<>

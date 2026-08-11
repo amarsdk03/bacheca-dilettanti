@@ -9,8 +9,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
-
-export const DISPONIBILITA_SPOSTAMENTO_OPTIONS = ["Non specificare", "Si", "No"] as const;
+import {DISPONIBILITA_SPOSTAMENTO_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type DisponibilitaSpostamentoSelectProps = {
 	value: string;

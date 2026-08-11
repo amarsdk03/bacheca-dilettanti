@@ -19,47 +19,8 @@ import RegioniInteresseField from "@/features/pubblica-annuncio/components/Input
 import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
-import CategorieAvversarioField from "@/features/pubblica-annuncio/components/InputFields/CategorieAvversarioField";
-
-const CATEGORIE_RICERCATE_GROUPS = [
-	{
-		gruppo: "Calcio professionistico",
-		opzioni: ["Serie A", "Serie B", "Serie C"],
-	},
-	{
-		gruppo: "Calcio dilettantistico",
-		opzioni: [
-			"Serie D",
-			"Eccellenza",
-			"Promozione",
-			"Prima Categoria",
-			"Seconda Categoria",
-			"Terza Categoria",
-		],
-	},
-	{
-		gruppo: "Calcio giovanile",
-		opzioni: ["Primavera 1", "Primavera 2", "Primavera 3", "Primavera 4"],
-	},
-	{
-		gruppo: "Calcio femminile",
-		opzioni: [
-			"Serie A Femminile",
-			"Serie B Femminile",
-			"Serie C Femminile",
-			"Eccellenza Femminile",
-			"Promozione Femminile",
-		],
-	},
-	{
-		gruppo: "Calcio a 5",
-		opzioni: ["Serie A C5", "Serie A2 Élite", "Serie A2", "Serie B C5", "Serie C C5"],
-	},
-	{
-		gruppo: "Calcio amatoriale",
-		opzioni: ["Calcio amatoriale"],
-	},
-];
+import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
+import {CATEGORIE_CALCIO_GROUPS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export default function AnnuncioStaff() {
 	const {
@@ -73,7 +34,7 @@ export default function AnnuncioStaff() {
 		tipologieCalcio,
 		figureProfessionali,
 		categorieRicercate,
-		presentazione,
+		presentazioneInformazioniAggiuntive,
 		esperienze,
 		disponibilitaSpostamento,
 		linkAnnuncio,
@@ -135,10 +96,11 @@ export default function AnnuncioStaff() {
 						onValueChange={(value) => setField("figureProfessionali", value)}
 					/>
 
-					<CategorieAvversarioField
-						items={CATEGORIE_RICERCATE_GROUPS}
+					<CategorieCalcioMultiselectField
+						label="Categorie ricercate"
+						items={CATEGORIE_CALCIO_GROUPS}
 						value={categorieRicercate}
-						action={(value) => setField("categorieRicercate", value)}
+						onValueChange={(value) => setField("categorieRicercate", value)}
 					/>
 
 					<div className="grid gap-x-4 sm:grid-cols-2">
@@ -157,13 +119,13 @@ export default function AnnuncioStaff() {
 
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="staff-presentazione">Breve presentazione / informazioni aggiuntive <OptionalLabel /></FieldLabel>
-						<span className="text-xs text-muted-foreground">{presentazione.length}/2000</span>
+						<FieldLabel htmlFor="staff-presentazione-informazioni-aggiuntive">Breve presentazione / informazioni aggiuntive <OptionalLabel /></FieldLabel>
+						<span className="text-xs text-muted-foreground">{presentazioneInformazioniAggiuntive.length}/2000</span>
 					</div>
 					<Textarea
-						id="staff-presentazione"
-						value={presentazione}
-						onChange={(event) => setField("presentazione", event.target.value.slice(0, 2000))}
+						id="staff-presentazione-informazioni-aggiuntive"
+						value={presentazioneInformazioniAggiuntive}
+						onChange={(event) => setField("presentazioneInformazioniAggiuntive", event.target.value.slice(0, 2000))}
 						maxLength={2000}
 						placeholder="Esperienze, competenze, disponibilità, metodo di lavoro..."
 						className="min-h-32 resize-y"

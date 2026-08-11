@@ -47,11 +47,10 @@ export type CercaSponsorSquadra = {
 
 export type AnnuncioSquadraData = {
 	nomeSocieta: string;
-	linkStemma: string;
 	contatti: ContattiAnnuncio;
 	sedePrincipale: SedePrincipaleSquadra;
-	descrizione: string;
-	tipologiaSport: string;
+	presentazioneAggiuntiva: string;
+	tipologiaPrincipale: string;
 	cercaGiocatore: CercaGiocatoreSquadra;
 	cercaStaff: CercaStaffSquadra;
 	cercaAmichevoli: CercaAmichevoliSquadra;
@@ -99,15 +98,14 @@ export const CERCA_SPONSOR_SQUADRA_DEFAULT: CercaSponsorSquadra = {
 
 const createInitialState = (): AnnuncioSquadraData => ({
 	nomeSocieta: "",
-	linkStemma: "",
 	contatti: {...CONTATTI_ANNUNCIO_DEFAULT},
 	sedePrincipale: {
 		...SEDE_PRINCIPALE_SQUADRA_DEFAULT,
 		regioniInteressate: [],
 		cittaComuniPerRegione: {},
 	},
-	descrizione: "",
-	tipologiaSport: "",
+	presentazioneAggiuntiva: "",
+	tipologiaPrincipale: "",
 	cercaGiocatore: {...CERCA_GIOCATORE_SQUADRA_DEFAULT},
 	cercaStaff: {...CERCA_STAFF_SQUADRA_DEFAULT},
 	cercaAmichevoli: {
@@ -125,8 +123,8 @@ export const useAnnuncioSquadraStore = createAnnuncioStore(createInitialState);
 export function isAnnuncioSquadraValid(data: AnnuncioSquadraData, sottotipologia: string) {
 	const profiloValido =
 		hasContattoPubblico(data.contatti) &&
-		data.tipologiaSport !== "" &&
-		data.descrizione.length <= 5000 &&
+		data.tipologiaPrincipale !== "" &&
+		data.presentazioneAggiuntiva.length <= 5000 &&
 		isLinkAnnuncioValid(data.linkAnnuncio);
 
 	if (!profiloValido) return false;

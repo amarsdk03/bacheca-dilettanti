@@ -29,9 +29,9 @@ export default function AnnuncioArbitro() {
 		regioniInteressate,
 		cittaComuniPerRegione,
 		tipologieCalcio,
-		presentazione,
+		presentazioneInformazioniAggiuntive,
 		esperienze,
-		disponibilitaSpostamento,
+		automunito,
 		linkAnnuncio,
 		setField,
 	} = useAnnuncioArbitroStore();
@@ -99,22 +99,22 @@ export default function AnnuncioArbitro() {
 						onValueChange={(value) => setField("tipologieCalcio", value)}
 					/>
 					<DisponibilitaSpostamentoSelect
-						id="arbitro-disponibilita-spostamento"
+						id="arbitro-automunito"
 						label={"Automunito?"}
-						value={disponibilitaSpostamento}
-						setValue={(value) => setField("disponibilitaSpostamento", value)}
+						value={automunito}
+						setValue={(value) => setField("automunito", value)}
 					/>
 				</div>
 
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="arbitro-presentazione">Presentazione personale / informazioni aggiuntive<OptionalLabel /></FieldLabel>
-						<span className="text-xs text-muted-foreground">{presentazione.length}/2000</span>
+						<FieldLabel htmlFor="arbitro-presentazione-informazioni-aggiuntive">Presentazione personale / informazioni aggiuntive<OptionalLabel /></FieldLabel>
+						<span className="text-xs text-muted-foreground">{presentazioneInformazioniAggiuntive.length}/2000</span>
 					</div>
 					<Textarea
-						id="arbitro-presentazione"
-						value={presentazione}
-						onChange={(event) => setField("presentazione", event.target.value.slice(0, 2000))}
+						id="arbitro-presentazione-informazioni-aggiuntive"
+						value={presentazioneInformazioniAggiuntive}
+						onChange={(event) => setField("presentazioneInformazioniAggiuntive", event.target.value.slice(0, 2000))}
 						maxLength={2000}
 						placeholder="Esperienza arbitrale, disponibilità, categorie seguite, approccio..."
 						className="min-h-32 resize-y"

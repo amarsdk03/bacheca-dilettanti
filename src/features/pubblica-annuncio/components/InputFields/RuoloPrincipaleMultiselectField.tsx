@@ -1,11 +1,5 @@
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
-
-export const RUOLO_PRINCIPALE_OPTIONS = [
-	"Portiere",
-	"Difensore",
-	"Centrocampista",
-	"Attaccante",
-] as const;
+import {RUOLO_PRINCIPALE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type RuoloPrincipaleMultiselectFieldProps = {
 	value: string[];

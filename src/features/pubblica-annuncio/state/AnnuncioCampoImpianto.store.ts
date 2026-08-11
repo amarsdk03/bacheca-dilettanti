@@ -7,8 +7,6 @@ import {
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
 
 export type DisponibilitaCampoImpianto = {
-	periodoDa: string;
-	periodoA: string;
 	orario: string;
 	costoOrario: string;
 	serviziInclusi: string;
@@ -24,8 +22,6 @@ export type AnnuncioCampoImpiantoData = {
 };
 
 export const DISPONIBILITA_CAMPO_IMPIANTO_DEFAULT: DisponibilitaCampoImpianto = {
-	periodoDa: "",
-	periodoA: "",
 	orario: "",
 	costoOrario: "",
 	serviziInclusi: "",

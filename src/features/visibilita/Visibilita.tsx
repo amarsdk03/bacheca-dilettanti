@@ -36,7 +36,6 @@ interface PlanTier {
 	name: string;
 	subtitle: string;
 	priceMonthly: string;
-	priceYearly?: string;
 	isFree?: boolean;
 	features: string[];
 	note?: string;
@@ -103,7 +102,6 @@ const profileCategories: ProfileCategory[] = [
 				name: 'Plus',
 				subtitle: 'Da decidere',
 				priceMonthly: '4,90 EUR / mese',
-				priceYearly: '49 EUR / anno',
 				features: [
 					'Profilo completo con esperienze',
 					'Caratteristiche tecniche',
@@ -115,7 +113,6 @@ const profileCategories: ProfileCategory[] = [
 				name: 'Pro',
 				subtitle: 'Da decidere',
 				priceMonthly: '9,90 EUR / mese',
-				priceYearly: '99 EUR / anno',
 				features: [
 					'Tutto il piano Plus',
 					'Fino a 15 video',
@@ -137,7 +134,6 @@ const profileCategories: ProfileCategory[] = [
 				name: 'Base',
 				subtitle: 'Da decidere',
 				priceMonthly: '4,90 EUR / mese',
-				priceYearly: '49 EUR / anno',
 				features: [
 					'Profilo professionale con foto e presentazione',
 					'Qualifiche ed esperienze',
@@ -149,7 +145,6 @@ const profileCategories: ProfileCategory[] = [
 				name: 'Pro',
 				subtitle: 'Da decidere',
 				priceMonthly: '9,90 EUR / mese',
-				priceYearly: '99 EUR / anno',
 				features: [
 					'Tutto il piano Base',
 					'Presenza nella sezione dedicata',
@@ -172,7 +167,6 @@ const profileCategories: ProfileCategory[] = [
 				name: 'Base',
 				subtitle: 'Da decidere',
 				priceMonthly: '4,90 EUR / mese',
-				priceYearly: '49,90 EUR / anno',
 				features: [
 					'Pagina dedicata con logo, descrizione e contatti',
 					'Link al sito e ai profili social',
@@ -184,7 +178,6 @@ const profileCategories: ProfileCategory[] = [
 				name: 'Advanced',
 				subtitle: 'Da decidere',
 				priceMonthly: '14,90 EUR / mese',
-				priceYearly: '149,90 EUR / anno',
 				features: [
 					'Tutto il piano Base',
 					'Spazio nella sezione Club Pilota della regione',
@@ -208,7 +201,6 @@ const profileCategories: ProfileCategory[] = [
 				name: 'Base',
 				subtitle: 'Da decidere',
 				priceMonthly: '34,90 EUR / mese',
-				priceYearly: '349,90 EUR / anno',
 				features: [
 					'Pagina dedicata con logo, descrizione e contatti',
 					'Link al sito e ai social',
@@ -231,7 +223,6 @@ const profileCategories: ProfileCategory[] = [
 				name: 'Base',
 				subtitle: 'Da decidere',
 				priceMonthly: '34,90 EUR / mese',
-				priceYearly: '349,90 EUR / anno',
 				features: [
 					'Pagina dedicata con logo o foto, descrizione e contatti',
 					'Link al sito e ai social',
@@ -255,7 +246,6 @@ const profileCategories: ProfileCategory[] = [
 				name: 'Base',
 				subtitle: 'Da decidere',
 				priceMonthly: '4,90 EUR / mese',
-				priceYearly: '49 EUR / anno',
 				features: [
 					'Presenza nella sezione "Campi in affitto nella tua zona"',
 					'Servizi e prezzi del campo',
@@ -376,9 +366,6 @@ function PlanCard({plan}: {plan: PlanTier}) {
 				<p className="text-2xl font-semibold tracking-tight text-neutral-950">
 					{plan.priceMonthly}
 				</p>
-				{plan.priceYearly && (
-					<p className="mt-0.5 text-sm text-neutral-500">{plan.priceYearly}</p>
-				)}
 			</div>
 
 			<ul className="mt-5 flex flex-1 flex-col gap-2.5">
@@ -457,7 +444,7 @@ export default function Visibilita() {
 									Visibilità
 								</h1>
 								<p className="mt-4 text-base leading-7 text-neutral-600 sm:text-lg">
-									La registrazione è sempre gratuita. L'abbonamento riguarda la presenza premium:
+									La registrazione è sempre gratuita. L&apos;abbonamento riguarda la presenza premium:
 									pagina vetrina, verifica, contenuti e strumenti aggiuntivi.
 								</p>
 							</div>

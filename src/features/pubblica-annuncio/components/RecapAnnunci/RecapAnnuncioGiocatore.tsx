@@ -21,7 +21,9 @@ export default function RecapAnnuncioGiocatore() {
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
 				<RecapField label="Contatti pubblici" wide>{formatContatti(data.contatti)}</RecapField>
 				{data.foto && <RecapField label="Immagine premium" wide>{data.foto.name}</RecapField>}
-				{data.descrizione.trim() !== "" && <RecapField label="Breve descrizione" wide>{data.descrizione}</RecapField>}
+				{data.descrizioneAggiuntiva.trim() !== "" && (
+					<RecapField label="Breve descrizione aggiuntiva" wide>{data.descrizioneAggiuntiva}</RecapField>
+				)}
 				<PremiumLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>

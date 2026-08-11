@@ -16,7 +16,7 @@ export type AnnuncioGiocatoreData = {
 	regioniInteressate: string[];
 	cittaComuniPerRegione: CittaComuniPerRegione;
 	contatti: ContattiAnnuncio;
-	descrizione: string;
+	descrizioneAggiuntiva: string;
 	tipologieCalcio: string[];
 	ruoliPrincipali: string[];
 	ruoliSpecifici: string[];
@@ -33,7 +33,7 @@ const createInitialState = (): AnnuncioGiocatoreData => ({
 	regioniInteressate: [],
 	cittaComuniPerRegione: {},
 	contatti: {...CONTATTI_ANNUNCIO_DEFAULT},
-	descrizione: "",
+	descrizioneAggiuntiva: "",
 	tipologieCalcio: [],
 	ruoliPrincipali: [],
 	ruoliSpecifici: [],
@@ -47,7 +47,7 @@ export function isAnnuncioGiocatoreValid(data: AnnuncioGiocatoreData) {
 	return (
 		data.regioniInteressate.length > 0 &&
 		hasContattoPubblico(data.contatti) &&
-		data.descrizione.length <= 2000 &&
+		data.descrizioneAggiuntiva.length <= 2000 &&
 		isLinkAnnuncioValid(data.linkAnnuncio)
 	);
 }
