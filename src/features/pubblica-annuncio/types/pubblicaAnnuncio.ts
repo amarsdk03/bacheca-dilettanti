@@ -23,6 +23,49 @@ export type CanaleContattoAnnuncio =
 	| "X (Twitter)"
 	| "Linkedin";
 
+export type ContattiAnnuncio = Record<CanaleContattoAnnuncio, string>;
+
+export const CONTATTI_ANNUNCIO_DEFAULT: ContattiAnnuncio = {
+	Email: "",
+	Telefono: "",
+	Instagram: "",
+	Facebook: "",
+	Tiktok: "",
+	Youtube: "",
+	"X (Twitter)": "",
+	Linkedin: "",
+};
+
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const DATA_NASCITA_PLACEHOLDERS = {
+	anno: "Anno",
+	mese: "Mese",
+	giorno: "Giorno",
+} as const;
+
+export const CITTA_ESEMPIO_PER_REGIONE: Record<string, string[]> = {
+	Abruzzo: ["Pescara", "L'Aquila", "Chieti"],
+	Basilicata: ["Potenza", "Matera", "Melfi"],
+	Calabria: ["Reggio Calabria", "Catanzaro", "Cosenza"],
+	Campania: ["Napoli", "Salerno", "Caserta"],
+	"Emilia-Romagna": ["Bologna", "Modena", "Parma"],
+	"Friuli-Venezia Giulia": ["Trieste", "Udine", "Pordenone"],
+	Lazio: ["Roma", "Latina", "Viterbo"],
+	Liguria: ["Genova", "La Spezia", "Savona"],
+	Lombardia: ["Milano", "Bergamo", "Brescia"],
+	Marche: ["Ancona", "Pesaro", "Ascoli Piceno"],
+	Molise: ["Campobasso", "Isernia", "Termoli"],
+	Piemonte: ["Torino", "Novara", "Alessandria"],
+	Puglia: ["Bari", "Lecce", "Taranto"],
+	Sardegna: ["Cagliari", "Sassari", "Nuoro"],
+	Sicilia: ["Palermo", "Catania", "Messina"],
+	Toscana: ["Firenze", "Pisa", "Siena"],
+	"Trentino-Alto Adige": ["Trento", "Bolzano", "Rovereto"],
+	Umbria: ["Perugia", "Terni", "Assisi"],
+	"Valle d'Aosta": ["Aosta", "Courmayeur", "Saint-Vincent"],
+	Veneto: ["Verona", "Venezia", "Padova"],
+};
+
 export const TIPOLOGIA_CALCIO_OPTIONS = ["Calcio a 11", "Calcio a 7", "Calcio a 5"] as const;
 
 export const TIPOLOGIA_PRINCIPALE_SQUADRA_OPTIONS = TIPOLOGIA_CALCIO_OPTIONS.map((tipologia) => ({
@@ -60,12 +103,22 @@ export const DISPONIBILITA_TRASFERTA_OPTIONS = [
 	{valore: "No", etichetta: "No"},
 ] as const;
 
+export const ORARIO_INDICATIVO_DA_OPTIONS = Array.from({length: 24}, (_, index) => {
+	const orario = `${String(index).padStart(2, "0")}:00`;
+	return {valore: orario, etichetta: `Dalle ${orario}`};
+});
+
+export const ORARIO_INDICATIVO_A_OPTIONS = Array.from({length: 24}, (_, index) => {
+	const orario = `${String((index + 1) % 24).padStart(2, "0")}:00`;
+	return {valore: orario, etichetta: `Alle ${orario}`};
+});
+
 export const MESI_OPTIONS = [
 	"Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
 	"Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
 ] as const;
-export const ANNATE_OPTIONS = Array.from({length: 44}, (_, index) => String(new Date().getFullYear() - 17 - index));
-export const ANNATE_TORNEO_OPTIONS = Array.from({length: 40}, (_, index) => String(new Date().getFullYear() - index));
+export const ANNATE_OPTIONS = Array.from({length: 101}, (_, index) => String(new Date().getFullYear() - index));
+export const ANNI_NASCITA_OPTIONS = Array.from({length: 84}, (_, index) => String(new Date().getFullYear() - 18 - index));
 
 export type StatoEsperienza = "non-specificare" | "in-corso" | "conseguito";
 export const STATO_ESPERIENZA_OPTIONS: {value: StatoEsperienza; label: string}[] = [
@@ -213,7 +266,7 @@ export function getOpzioniVisibilita(tipologia: string): OpzioniVisibilita {
 		case "professionisti-studi":
 			plus = PIANI_VISIBILITA.profili.professionisti[0];
 			break;
-		case "campo-impianto-sportivo":
+		case "campi-impianti-sportivi":
 			plus = PIANI_VISIBILITA.profili.campi[0];
 			break;
 		case "aziende-enti":
@@ -267,12 +320,12 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		nome: "Aziende ed enti",
 		valore: "aziende-enti",
 		icona: "Building2",
-		descrizione: "Organizza e promuovi i tuoi OpenDay, eventi o allenamenti sportivi",
+		descrizione: "Pubblicizzati a realtà sportive e persone in cerca di opportunità specifiche",
 	},
 	{
 		nome: "Staff sportivo",
 		valore: "staff-sportivo",
-		icona: "Stethoscope",
+		icona: "Search",
 		descrizione: "Cerca e applica per occupazioni retribuite nel settore sportivo",
 	},
 	{
@@ -288,8 +341,8 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		descrizione: "Organizza e promuovi il tuo torneo, evento o manifestazione sportiva",
 	},
 	{
-		nome: "Campo / impianto sportivo",
-		valore: "campo-impianto-sportivo",
+		nome: "Campi e impianti",
+		valore: "campi-impianti-sportivi",
 		icona: "TrafficCone",
 		descrizione: "Fornisci e pubblicizza l'uso dei tuoi campi e impianti sportivi",
 	},

@@ -18,11 +18,14 @@ import RegioniInteresseField from "@/features/pubblica-annuncio/components/Input
 import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
+import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
+import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
 
 export default function AnnuncioArbitro() {
 	const {
 		nome,
 		cognome,
+		contatti,
 		giornoNascita,
 		meseNascita,
 		annoNascita,
@@ -32,6 +35,7 @@ export default function AnnuncioArbitro() {
 		presentazioneInformazioniAggiuntive,
 		esperienze,
 		automunito,
+		immagineAnnuncio,
 		linkAnnuncio,
 		setField,
 	} = useAnnuncioArbitroStore();
@@ -78,6 +82,8 @@ export default function AnnuncioArbitro() {
 					setAnnoNascita={(value) => setField("annoNascita", value)}
 				/>
 			</FieldSet>
+
+			<ContattiAnnuncioFields contatti={contatti} setContatti={(value) => setField("contatti", value)} />
 
 			<RegioniInteresseField
 				regioniInteressate={regioniInteressate}
@@ -126,6 +132,12 @@ export default function AnnuncioArbitro() {
 				idPrefix="arbitro"
 				esperienze={esperienze}
 				setEsperienze={(value) => setField("esperienze", value)}
+			/>
+			<ImmagineAnnuncioPremiumField
+				idPrefix="arbitro"
+				tipologia="arbitro"
+				value={immagineAnnuncio}
+				onValueChange={(value) => setField("immagineAnnuncio", value)}
 			/>
 			<LinkAnnuncioPremiumField
 				idPrefix="arbitro"

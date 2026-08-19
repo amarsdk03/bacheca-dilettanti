@@ -29,12 +29,16 @@ import {
 } from "@/features/pubblica-annuncio/state/AnnuncioStaff.store";
 import {
 	isAnnuncioAziendeEntiValid,
-	isAnnuncioProfessionistiStudiValid,
-	isAnnuncioTorneoEventoValid,
 	useAnnuncioAziendeEntiStore,
+} from "@/features/pubblica-annuncio/state/AnnuncioAziendeEnti.store";
+import {
+	isAnnuncioProfessionistiStudiValid,
 	useAnnuncioProfessionistiStudiStore,
+} from "@/features/pubblica-annuncio/state/AnnuncioProfessionistiStudi.store";
+import {
+	isAnnuncioTorneoEventoValid,
 	useAnnuncioTorneoEventoStore,
-} from "@/features/pubblica-annuncio/state/AnnuncioNuoveTipologie.store";
+} from "@/features/pubblica-annuncio/state/AnnuncioTorneoEvento.store";
 import ConfermaInvioAnnuncio from "@/features/pubblica-annuncio/components/ConfermaInvioAnnuncio";
 import DettagliAnnuncio from "@/features/pubblica-annuncio/components/DettagliAnnuncio";
 import SelezionaTipologiaAnnuncio from "@/features/pubblica-annuncio/components/SelezionaTipologiaAnnuncio";
@@ -68,7 +72,14 @@ export default function PubblicaAnnuncio() {
 	const professionistiStudiValida = useAnnuncioProfessionistiStudiStore((state) => isAnnuncioProfessionistiStudiValid(state));
 	const torneoEventoValido = useAnnuncioTorneoEventoStore((state) => isAnnuncioTorneoEventoValid(state));
 	const campoImpiantoValido = useAnnuncioCampoImpiantoStore((state) => isAnnuncioCampoImpiantoValid(state));
-	const fotoGiocatore = useAnnuncioGiocatoreStore((state) => state.foto);
+	const immagineGiocatore = useAnnuncioGiocatoreStore((state) => state.immagineAnnuncio);
+	const immagineSquadra = useAnnuncioSquadraStore((state) => state.immagineAnnuncio);
+	const immagineArbitro = useAnnuncioArbitroStore((state) => state.immagineAnnuncio);
+	const immagineStaff = useAnnuncioStaffStore((state) => state.immagineAnnuncio);
+	const immagineAziendeEnti = useAnnuncioAziendeEntiStore((state) => state.immagineAnnuncio);
+	const immagineProfessionistiStudi = useAnnuncioProfessionistiStudiStore((state) => state.immagineAnnuncio);
+	const immagineTorneoEvento = useAnnuncioTorneoEventoStore((state) => state.immagineAnnuncio);
+	const immagineCampoImpianto = useAnnuncioCampoImpiantoStore((state) => state.immagineAnnuncio);
 	const linkGiocatore = useAnnuncioGiocatoreStore((state) => state.linkAnnuncio);
 	const linkSquadra = useAnnuncioSquadraStore((state) => state.linkAnnuncio);
 	const linkArbitro = useAnnuncioArbitroStore((state) => state.linkAnnuncio);
@@ -89,7 +100,7 @@ export default function PubblicaAnnuncio() {
 		"aziende-enti": aziendeEntiValida,
 		"professionisti-studi": professionistiStudiValida,
 		"torneo-evento": torneoEventoValido,
-		"campo-impianto-sportivo": campoImpiantoValido,
+		"campi-impianti-sportivi": campoImpiantoValido,
 	}[tipologia] ?? false;
 	const pianiPubblicazione = getPianiPubblicazione(tipologia);
 	const pianoScelto = pianiPubblicazione.find((piano) => piano.valore === pianoSelezionato)
@@ -103,10 +114,20 @@ export default function PubblicaAnnuncio() {
 		"aziende-enti": linkAziendeEnti,
 		"professionisti-studi": linkProfessionistiStudi,
 		"torneo-evento": linkTorneoEvento,
-		"campo-impianto-sportivo": linkCampoImpianto,
+		"campi-impianti-sportivi": linkCampoImpianto,
 	}[tipologia] ?? "";
+	const immagineAnnuncio = {
+		giocatore: immagineGiocatore,
+		squadra: immagineSquadra,
+		arbitro: immagineArbitro,
+		"staff-sportivo": immagineStaff,
+		"aziende-enti": immagineAziendeEnti,
+		"professionisti-studi": immagineProfessionistiStudi,
+		"torneo-evento": immagineTorneoEvento,
+		"campi-impianti-sportivi": immagineCampoImpianto,
+	}[tipologia] ?? null;
 	const funzioniPremium = [
-		...(tipologia === "giocatore" && fotoGiocatore !== null ? ["Immagine dell'annuncio"] : []),
+		...(immagineAnnuncio !== null ? ["Immagine dell'annuncio"] : []),
 		...(linkAnnuncio.trim() !== "" ? ["Link annuncio"] : []),
 	];
 	const premiumValido = funzioniPremium.length === 0 || annuncioPagamento;

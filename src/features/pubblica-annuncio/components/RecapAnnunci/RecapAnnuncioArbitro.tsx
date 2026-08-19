@@ -1,7 +1,9 @@
 import {useAnnuncioArbitroStore} from "@/features/pubblica-annuncio/state/AnnuncioArbitro.store";
 import {
 	EsperienzeRecap,
+	formatContatti,
 	formatDataNascita,
+	PremiumImageRecap,
 	PremiumLinkRecap,
 	RecapField,
 	RegioniRecap,
@@ -19,12 +21,14 @@ export default function RecapAnnuncioArbitro() {
 				<RecapField label="Tipologia calcio">{data.tipologieCalcio.join(", ") || "—"}</RecapField>
 				<RecapField label="Automunito?">{data.automunito || "Non specificato"}</RecapField>
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
+				<RecapField label="Contatti" wide>{formatContatti(data.contatti)}</RecapField>
 				{data.presentazioneInformazioniAggiuntive.trim() !== "" && (
 					<RecapField label="Presentazione personale / informazioni aggiuntive" wide>
 						{data.presentazioneInformazioniAggiuntive}
 					</RecapField>
 				)}
 				<EsperienzeRecap esperienze={data.esperienze} />
+				<PremiumImageRecap image={data.immagineAnnuncio} />
 				<PremiumLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>

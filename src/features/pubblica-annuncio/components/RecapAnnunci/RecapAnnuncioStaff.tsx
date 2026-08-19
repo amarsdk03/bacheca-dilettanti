@@ -1,7 +1,9 @@
 import {useAnnuncioStaffStore} from "@/features/pubblica-annuncio/state/AnnuncioStaff.store";
 import {
 	EsperienzeRecap,
+	formatContatti,
 	formatDataNascita,
+	PremiumImageRecap,
 	PremiumLinkRecap,
 	RecapField,
 	RegioniRecap,
@@ -21,12 +23,14 @@ export default function RecapAnnuncioStaff() {
 				<RecapField label="Categorie ricercate">{data.categorieRicercate.join(", ") || "—"}</RecapField>
 				<RecapField label="Disponibilità spostamento">{data.disponibilitaSpostamento || "Non specificato"}</RecapField>
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
+				<RecapField label="Contatti" wide>{formatContatti(data.contatti)}</RecapField>
 				{data.presentazioneInformazioniAggiuntive.trim() !== "" && (
 					<RecapField label="Breve presentazione / informazioni aggiuntive" wide>
 						{data.presentazioneInformazioniAggiuntive}
 					</RecapField>
 				)}
 				<EsperienzeRecap esperienze={data.esperienze} />
+				<PremiumImageRecap image={data.immagineAnnuncio} />
 				<PremiumLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>

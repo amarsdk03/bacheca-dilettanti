@@ -80,7 +80,7 @@ export default function Footer(
 				</div>
 
 				<div className={"mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row sm:justify-between"}>
-					<p className="text-sm sm:text-md text-neutral-500">
+					<p className="text-center text-sm sm:text-md text-neutral-500">
 						La piattaforma italiana dedicata ad annunci, opportunità e visibilità nel calcio dilettantistico.
 					</p>
 					<div className="flex items-center gap-3">

@@ -20,7 +20,7 @@ export type AnnuncioGiocatoreData = {
 	tipologieCalcio: string[];
 	ruoliPrincipali: string[];
 	ruoliSpecifici: string[];
-	foto: File | null;
+	immagineAnnuncio: File | null;
 	linkAnnuncio: string;
 };
 
@@ -37,7 +37,7 @@ const createInitialState = (): AnnuncioGiocatoreData => ({
 	tipologieCalcio: [],
 	ruoliPrincipali: [],
 	ruoliSpecifici: [],
-	foto: null,
+	immagineAnnuncio: null,
 	linkAnnuncio: "",
 });
 

@@ -4,7 +4,9 @@ import {FieldGroup, FieldLegend, FieldSet} from "@/components/ui/field";
 import RecapAnnuncioArbitro from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioArbitro";
 import RecapAnnuncioCampoImpianto from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioCampoImpianto";
 import RecapAnnuncioGiocatore from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioGiocatore";
-import RecapAnnuncioNuovaTipologia from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioNuovaTipologia";
+import RecapAnnuncioAziendeEnti from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioAziendeEnti";
+import RecapAnnuncioProfessionistiStudi from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioProfessionistiStudi";
+import RecapAnnuncioTorneoEvento from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioTorneoEvento";
 import RecapAnnuncioSquadra from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioSquadra";
 import RecapAnnuncioStaff from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioStaff";
 import {getTipologia} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
@@ -32,10 +34,12 @@ export default function RecapAnnuncio({tipologia, sottotipologia, onEditStep}: R
 			case "staff-sportivo":
 				return <RecapAnnuncioStaff />;
 			case "aziende-enti":
+				return <RecapAnnuncioAziendeEnti />;
 			case "professionisti-studi":
+				return <RecapAnnuncioProfessionistiStudi />;
 			case "torneo-evento":
-				return <RecapAnnuncioNuovaTipologia tipologia={tipologia} />;
-			case "campo-impianto-sportivo":
+				return <RecapAnnuncioTorneoEvento />;
+			case "campi-impianti-sportivi":
 				return <RecapAnnuncioCampoImpianto />;
 			default:
 				return null;

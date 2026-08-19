@@ -9,11 +9,13 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
-import {MESI_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {
+	ANNI_NASCITA_OPTIONS,
+	DATA_NASCITA_PLACEHOLDERS,
+	MESI_OPTIONS,
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
-const ANNO_PLACEHOLDER = "Anno";
-const MESE_PLACEHOLDER = "Mese";
-const GIORNO_PLACEHOLDER = "Giorno";
+const {anno: ANNO_PLACEHOLDER, mese: MESE_PLACEHOLDER, giorno: GIORNO_PLACEHOLDER} = DATA_NASCITA_PLACEHOLDERS;
 
 type DataNascitaFieldsProps = {
 	idPrefix: string;
@@ -61,14 +63,11 @@ export default function DataNascitaFields({
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value={ANNO_PLACEHOLDER}>Non specificare</SelectItem>
-						{Array.from({length: 100 - 17 + 1}, (_, index) => {
-							const anno = String(new Date().getFullYear() - 17 - index);
-							return (
+						{ANNI_NASCITA_OPTIONS.map((anno) => (
 								<SelectItem key={anno} value={anno}>
 									{anno}
 								</SelectItem>
-							);
-						})}
+						))}
 					</SelectContent>
 				</Select>
 

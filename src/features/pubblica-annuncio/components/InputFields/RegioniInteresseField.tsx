@@ -7,6 +7,7 @@ import {Input} from "@/components/ui/input";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {Regione, REGIONI_ITALIANE} from "@/const/defaultConstants";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import {CITTA_ESEMPIO_PER_REGIONE} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export type CittaComuniPerRegione = Record<string, string[]>;
 
@@ -22,36 +23,11 @@ const regioniPerArea = REGIONI_ITALIANE.reduce(
 	} as Record<"Nord" | "Centro" | "Sud", Regione[]>
 );
 
-const CITTA_ESEMPIO_PER_REGIONE: Record<string, string[]> = {
-	"Abruzzo": ["Pescara", "L'Aquila", "Chieti"],
-	"Basilicata": ["Potenza", "Matera", "Melfi"],
-	"Calabria": ["Reggio Calabria", "Catanzaro", "Cosenza"],
-	"Campania": ["Napoli", "Salerno", "Caserta"],
-	"Emilia-Romagna": ["Bologna", "Modena", "Parma"],
-	"Friuli-Venezia Giulia": ["Trieste", "Udine", "Pordenone"],
-	"Lazio": ["Roma", "Latina", "Viterbo"],
-	"Liguria": ["Genova", "La Spezia", "Savona"],
-	"Lombardia": ["Milano", "Bergamo", "Brescia"],
-	"Marche": ["Ancona", "Pesaro", "Ascoli Piceno"],
-	"Molise": ["Campobasso", "Isernia", "Termoli"],
-	"Piemonte": ["Torino", "Novara", "Alessandria"],
-	"Puglia": ["Bari", "Lecce", "Taranto"],
-	"Sardegna": ["Cagliari", "Sassari", "Nuoro"],
-	"Sicilia": ["Palermo", "Catania", "Messina"],
-	"Toscana": ["Firenze", "Pisa", "Siena"],
-	"Trentino-Alto Adige": ["Trento", "Bolzano", "Rovereto"],
-	"Umbria": ["Perugia", "Terni", "Assisi"],
-	"Valle d'Aosta": ["Aosta", "Courmayeur", "Saint-Vincent"],
-	"Veneto": ["Verona", "Venezia", "Padova"],
-};
-
 type RegioniInteresseFieldProps = {
 	regioniInteressate: string[];
 	setRegioniInteressate: Dispatch<SetStateAction<string[]>>;
 	cittaComuniPerRegione: CittaComuniPerRegione;
 	setCittaComuniPerRegione: Dispatch<SetStateAction<CittaComuniPerRegione>>;
-	titolo?: string;
-	required?: boolean;
 	idPrefix?: string;
 };
 
@@ -60,14 +36,14 @@ export default function RegioniInteresseField({
 	setRegioniInteressate,
 	cittaComuniPerRegione,
 	setCittaComuniPerRegione,
-	titolo = "Regioni d'interesse",
-	required = true,
 	idPrefix,
 }: RegioniInteresseFieldProps) {
 	const [bozzaCittaPerRegione, setBozzaCittaPerRegione] = useState<Record<string, string>>({});
 	const generatedId = useId();
 	const resolvedIdPrefix = idPrefix ?? `regioni-${generatedId}`;
 	const getCittaFieldId = (regione: string) => `${resolvedIdPrefix}-citta-${encodeURIComponent(regione)}`;
+	const tutteLeRegioni = REGIONI_ITALIANE.map((regione) => regione.nome);
+	const tutteSelezionate = regioniInteressate.length === tutteLeRegioni.length;
 
 	const handleRegioniChange = (prossimeRegioni: string[]) => {
 		setRegioniInteressate(prossimeRegioni);
@@ -109,12 +85,22 @@ export default function RegioniInteresseField({
 	return (
 		<FieldSet>
 			<div className="mt-4">
-				<FieldLegend variant="label" className="field-legend-title mb-0 inline-flex items-center gap-2">
-					{titolo} {!required && <OptionalLabel />}
-				</FieldLegend>
+				<div className="flex items-center justify-between gap-3">
+					<FieldLegend variant="label" className="field-legend-title mb-0">
+						Regioni interessate
+					</FieldLegend>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						onClick={() => handleRegioniChange(tutteSelezionate ? [] : tutteLeRegioni)}
+					>
+						{tutteSelezionate ? "Deseleziona tutte" : "Seleziona tutte"}
+					</Button>
+				</div>
 				<FieldDescription
 					className="text-red-800 font-medium"
-					hidden={!required || regioniInteressate.length > 0}
+					hidden={regioniInteressate.length > 0}
 				>
 					Almeno una regione va selezionata
 				</FieldDescription>
@@ -132,7 +118,7 @@ export default function RegioniInteresseField({
 						value={regioniInteressate}
 						onValueChange={handleRegioniChange}
 						multiple
-						aria-required={required}
+						aria-required
 					>
 						{regioni.map((regione) => (
 							<ToggleGroupItem

@@ -21,6 +21,7 @@ import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {
 	CATEGORIE_VISIBILITA_OPTIONS,
 	type CategoriaVisibilita,
+	EMAIL_PATTERN,
 	getOpzioniVisibilita,
 	getPianiPubblicazione,
 	isPianoPagamento,
@@ -28,8 +29,6 @@ import {
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {createClient} from "@/lib/client";
 import {cn} from "@/lib/utils";
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type SelezionaVisibilitaAnnuncioProps = {
 	tipologia: string;
