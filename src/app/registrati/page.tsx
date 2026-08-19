@@ -6,7 +6,7 @@ import {getCurrentViewer} from "@/features/auth/queries";
 import {sanitizeNextPath} from "@/features/auth/utils";
 import {dynamicMetadata} from "@/server/metadata";
 import Navbar from "@/components/navigation/Navbar";
-import Accedi from "@/features/auth/Accedi";
+import {CONTACT_EMAIL_FALLBACK} from "@/const/contactConstants";
 
 export const metadata: Metadata = dynamicMetadata("Registrati");
 
@@ -19,11 +19,12 @@ export default async function Page({searchParams}: PageProps) {
 
 	const params = await searchParams;
 	const nextPath = sanitizeNextPath(Array.isArray(params.next) ? params.next[0] : params.next);
+	const contactEmail = process.env.CONTACT_EMAIL ?? CONTACT_EMAIL_FALLBACK;
 
 	return (
 		<>
 			<Navbar minimal={true} backToHome={true} />
-			<Registrati nextPath={nextPath} />
+			<Registrati nextPath={nextPath} contactEmail={contactEmail} />
 		</>
 	);
 }

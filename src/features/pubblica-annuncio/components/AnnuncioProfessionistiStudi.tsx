@@ -26,9 +26,9 @@ export default function AnnuncioProfessionistiStudi() {
 					<FieldDescription>Descrivi la tua figura professionale e i servizi offerti al mondo sportivo.</FieldDescription>
 				</div>
 				<div className="grid gap-4 sm:grid-cols-2">
-					<AnnuncioTextField id="professionisti-studi-nome" label="Nome" value={data.nome} onValueChange={(value) => data.setField("nome", value)} placeholder="Mario" />
-					<AnnuncioTextField id="professionisti-studi-cognome" label="Cognome" value={data.cognome} onValueChange={(value) => data.setField("cognome", value)} placeholder="Rossi" />
-					<AnnuncioTextField id="professionisti-studi-figura-professionale" label="Figura professionale" value={data.figuraProfessionale} onValueChange={(value) => data.setField("figuraProfessionale", value)} placeholder="Nutrizionista, psicologo, consulente..." />
+					<AnnuncioTextField id="professionisti-studi-nome" label="Nome" value={data.nome} onValueChange={(value) => data.setField("nome", value)} placeholder="Mario" required />
+					<AnnuncioTextField id="professionisti-studi-cognome" label="Cognome" value={data.cognome} onValueChange={(value) => data.setField("cognome", value)} placeholder="Rossi" required />
+					<AnnuncioTextField id="professionisti-studi-figura-professionale" label="Figura professionale" value={data.figuraProfessionale} onValueChange={(value) => data.setField("figuraProfessionale", value)} placeholder="Nutrizionista, psicologo, consulente..." required />
 					<AnnuncioTextField id="professionisti-studi-specializzazione" label="Specializzazione" value={data.specializzazione} onValueChange={(value) => data.setField("specializzazione", value)} placeholder="Ambito o disciplina di specializzazione" />
 				</div>
 			</FieldSet>

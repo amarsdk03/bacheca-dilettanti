@@ -4,6 +4,7 @@ import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend
 import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
+import RegistrationRegionsField from "@/features/auth/RegistrationRegionsField";
 import type {RegistrationProfileDraft, RegistrationProfileType} from "@/features/auth/registration-profile";
 import {
 	FIGURA_PROFESSIONALE_OPTIONS,
@@ -19,8 +20,10 @@ type SelectOption = {value: string; label: string};
 interface RegistrationProfileDetailsProps {
 	type: RegistrationProfileType;
 	draft: RegistrationProfileDraft;
+	regions: string[];
 	showErrors: boolean;
 	onChange: (field: string, value: string) => void;
+	onRegionsChange: (regions: string[]) => void;
 }
 
 interface ProfileTextFieldProps {
@@ -184,8 +187,10 @@ const registrationModeOptions = MODALITA_ISCRIZIONE_OPTIONS.map((option) => ({va
 export default function RegistrationProfileDetails({
 	type,
 	draft,
+	regions,
 	showErrors,
 	onChange,
+	onRegionsChange,
 }: RegistrationProfileDetailsProps) {
 	const prefix = `registration-profile-${type}`;
 	const commonProps = {showErrors};
@@ -246,8 +251,10 @@ export default function RegistrationProfileDetails({
 
 				{type === "creators" && (
 					<>
-						<ProfileTextField id={`${prefix}-username`} label="Username" value={draft.username} onChange={(value) => onChange("username", value)} placeholder="@nomeutente" required {...commonProps} />
-						<ProfileTextareaField id={`${prefix}-description`} label="Descrizione" value={draft.description} onChange={(value) => onChange("description", value)} placeholder="Racconta chi sei e quali contenuti sportivi condividi..." required {...commonProps} />
+						<ProfileTextField id={`${prefix}-creator-name`} label="Nome creator" value={draft.creatorName} onChange={(value) => onChange("creatorName", value)} placeholder="Nome del creator o del progetto" required {...commonProps} />
+						<RegistrationRegionsField idPrefix={`${prefix}-regions`} value={regions} onValueChange={onRegionsChange} showErrors={showErrors} />
+						<ProfileTextField id={`${prefix}-content-type`} label="Tipologia di contenuti" value={draft.contentType} onChange={(value) => onChange("contentType", value)} placeholder="Video, podcast, analisi, interviste..." {...commonProps} />
+						<ProfileTextareaField id={`${prefix}-presentation`} label="Breve presentazione" value={draft.presentation} onChange={(value) => onChange("presentation", value)} placeholder="Racconta chi sei e quali contenuti sportivi condividi..." {...commonProps} />
 					</>
 				)}
 
@@ -268,6 +275,8 @@ export default function RegistrationProfileDetails({
 				{type === "professionisti-studi" && (
 					<>
 						<FieldGroup className="grid gap-4 sm:grid-cols-2">
+							<ProfileTextField id={`${prefix}-first-name`} label="Nome" value={draft.firstName} onChange={(value) => onChange("firstName", value)} placeholder="Mario" required {...commonProps} />
+							<ProfileTextField id={`${prefix}-last-name`} label="Cognome" value={draft.lastName} onChange={(value) => onChange("lastName", value)} placeholder="Rossi" required {...commonProps} />
 							<ProfileTextField id={`${prefix}-professional-role`} label="Figura professionale" value={draft.professionalRole} onChange={(value) => onChange("professionalRole", value)} placeholder="Nutrizionista, psicologo, consulente..." required {...commonProps} />
 							<ProfileTextField id={`${prefix}-specialization`} label="Specializzazione" value={draft.specialization} onChange={(value) => onChange("specialization", value)} placeholder="Ambito o disciplina" required {...commonProps} />
 							<ProfileSelectField id={`${prefix}-service-mode`} label="Modalità del servizio" value={draft.serviceMode} onChange={(value) => onChange("serviceMode", value)} options={serviceModeOptions} {...commonProps} />
@@ -304,6 +313,10 @@ export default function RegistrationProfileDetails({
 						<ProfileTextareaField id={`${prefix}-presentation`} label="Breve presentazione" value={draft.presentation} onChange={(value) => onChange("presentation", value)} placeholder="Descrivi gli spazi e le caratteristiche dell'impianto..." maxLength={5000} {...commonProps} />
 						<ProfileTextareaField id={`${prefix}-services`} label="Servizi inclusi" value={draft.services} onChange={(value) => onChange("services", value)} placeholder="Spogliatoi, illuminazione, parcheggio, bar..." {...commonProps} />
 					</>
+				)}
+
+				{type !== "creators" && (
+					<RegistrationRegionsField idPrefix={`${prefix}-regions`} value={regions} onValueChange={onRegionsChange} showErrors={showErrors} />
 				)}
 			</FieldGroup>
 		</FieldSet>

@@ -11,6 +11,7 @@ type AnnuncioTextFieldProps = {
 	type?: "text" | "number";
 	min?: number;
 	step?: number;
+	required?: boolean;
 };
 
 export default function AnnuncioTextField({
@@ -22,10 +23,13 @@ export default function AnnuncioTextField({
 	type = "text",
 	min,
 	step,
+	required = false,
 }: AnnuncioTextFieldProps) {
 	return (
 		<Field>
-			<FieldLabel htmlFor={id}>{label} <OptionalLabel /></FieldLabel>
+			<FieldLabel htmlFor={id}>
+				{label} {required ? <span aria-hidden="true" className="text-destructive">*</span> : <OptionalLabel />}
+			</FieldLabel>
 			<Input
 				id={id}
 				type={type}
@@ -34,6 +38,8 @@ export default function AnnuncioTextField({
 				value={value}
 				onChange={(event) => onValueChange(event.target.value)}
 				placeholder={placeholder}
+				required={required}
+				aria-required={required}
 			/>
 		</Field>
 	);

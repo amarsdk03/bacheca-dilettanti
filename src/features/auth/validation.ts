@@ -27,12 +27,7 @@ export function validateEmailPassword(formData: FormData) {
 
 export function validateRegistration(formData: FormData) {
 	const {email, password, fieldErrors} = validateEmailPassword(formData);
-	const name = getText(formData, "name").trim().replace(/\s+/g, " ");
 	const confirmPassword = getText(formData, "confirmPassword");
-
-	if (name.length < 2 || name.length > 80) {
-		fieldErrors.name = "Inserisci un nome compreso tra 2 e 80 caratteri.";
-	}
 
 	if (password && password.length < 8) {
 		fieldErrors.password = "La password deve contenere almeno 8 caratteri.";
@@ -42,7 +37,7 @@ export function validateRegistration(formData: FormData) {
 		fieldErrors.confirmPassword = "Le password non coincidono.";
 	}
 
-	return {name, email, password, fieldErrors};
+	return {email, password, fieldErrors};
 }
 
 export function validateNewPassword(formData: FormData) {

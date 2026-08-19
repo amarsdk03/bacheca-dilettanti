@@ -24,6 +24,7 @@ export const REGISTRATION_PROFILE_TYPES = [
 export type RegistrationProfileType = typeof REGISTRATION_PROFILE_TYPES[number];
 export type RegistrationProfileDraft = Record<string, string>;
 export type RegistrationProfileDrafts = Record<RegistrationProfileType, RegistrationProfileDraft>;
+export type RegistrationProfileRegions = Record<RegistrationProfileType, string[]>;
 
 interface RegistrationProfileOption {
 	value: RegistrationProfileType;
@@ -33,6 +34,19 @@ interface RegistrationProfileOption {
 }
 
 export const MAX_REGISTRATION_PROFILES = 5;
+
+export const LIMITED_REGISTRATION_PROFILE_TYPES = [
+	"professionisti-studi",
+	"creators",
+] as const satisfies readonly RegistrationProfileType[];
+
+export type LimitedRegistrationProfileType = typeof LIMITED_REGISTRATION_PROFILE_TYPES[number];
+
+export function isLimitedRegistrationProfileType(
+	type: RegistrationProfileType,
+): type is LimitedRegistrationProfileType {
+	return (LIMITED_REGISTRATION_PROFILE_TYPES as readonly RegistrationProfileType[]).includes(type);
+}
 
 export const REGISTRATION_PROFILE_OPTIONS: readonly RegistrationProfileOption[] = [
 	{
@@ -122,6 +136,8 @@ export function createRegistrationProfileDrafts(): RegistrationProfileDrafts {
 			presentation: "",
 		},
 		"professionisti-studi": {
+			firstName: "",
+			lastName: "",
 			professionalRole: "",
 			specialization: "",
 			services: "",
@@ -131,8 +147,9 @@ export function createRegistrationProfileDrafts(): RegistrationProfileDrafts {
 			experience: "",
 		},
 		creators: {
-			username: "",
-			description: "",
+			creatorName: "",
+			contentType: "",
+			presentation: "",
 		},
 		"torneo-evento": {
 			eventName: "",
@@ -154,13 +171,26 @@ export function createRegistrationProfileDrafts(): RegistrationProfileDrafts {
 	};
 }
 
+export function createRegistrationProfileRegions(): RegistrationProfileRegions {
+	return {
+		giocatore: [],
+		squadra: [],
+		"staff-sportivo": [],
+		"professionisti-studi": [],
+		arbitro: [],
+		creators: [],
+		"torneo-evento": [],
+		"campi-impianti-sportivi": [],
+	};
+}
+
 const REQUIRED_PROFILE_FIELDS: Record<RegistrationProfileType, readonly string[]> = {
 	giocatore: ["footballType", "primaryRole", "zone"],
 	squadra: ["clubName", "footballType", "headquarters"],
 	arbitro: ["footballType", "zone"],
 	"staff-sportivo": ["professionalRole", "footballType", "zone"],
-	"professionisti-studi": ["professionalRole", "specialization", "services"],
-	creators: ["username", "description"],
+	"professionisti-studi": ["firstName", "lastName", "professionalRole", "specialization", "services"],
+	creators: ["creatorName"],
 	"torneo-evento": ["eventName", "location"],
 	"campi-impianti-sportivi": ["venueName", "address"],
 };
@@ -168,6 +198,8 @@ const REQUIRED_PROFILE_FIELDS: Record<RegistrationProfileType, readonly string[]
 export function getMissingRegistrationProfileFields(
 	type: RegistrationProfileType,
 	draft: RegistrationProfileDraft,
+	regions: readonly string[],
 ) {
-	return REQUIRED_PROFILE_FIELDS[type].filter((field) => !draft[field]?.trim());
+	const missingFields = REQUIRED_PROFILE_FIELDS[type].filter((field) => !draft[field]?.trim());
+	return regions.length > 0 ? missingFields : [...missingFields, "regions"];
 }

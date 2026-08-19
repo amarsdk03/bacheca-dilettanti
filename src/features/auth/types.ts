@@ -1,7 +1,6 @@
 export type AuthActionStatus = "idle" | "error" | "success";
 
 export interface AuthFieldErrors {
-	name?: string;
 	email?: string;
 	password?: string;
 	confirmPassword?: string;

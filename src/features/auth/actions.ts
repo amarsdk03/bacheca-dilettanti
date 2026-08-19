@@ -39,7 +39,7 @@ export async function signUpWithPassword(
 	_previousState: AuthActionState,
 	formData: FormData,
 ): Promise<AuthActionState> {
-	const {name, email, password, fieldErrors} = validateRegistration(formData);
+	const {email, password, fieldErrors} = validateRegistration(formData);
 
 	if (hasFieldErrors(fieldErrors)) {
 		return {status: "error", message: "Controlla i dati inseriti.", fieldErrors};
@@ -49,9 +49,6 @@ export async function signUpWithPassword(
 	const {data, error} = await supabase.auth.signUp({
 		email,
 		password,
-		options: {
-			data: {full_name: name, name},
-		},
 	});
 
 	if (error?.code === "email_exists" || error?.code === "user_already_exists") {

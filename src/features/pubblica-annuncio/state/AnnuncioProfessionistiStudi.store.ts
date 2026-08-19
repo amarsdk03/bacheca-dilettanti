@@ -57,6 +57,9 @@ const TESTI_MAX = [
 
 export function isAnnuncioProfessionistiStudiValid(data: AnnuncioProfessionistiStudiData) {
 	return (
+		data.nome.trim() !== "" &&
+		data.cognome.trim() !== "" &&
+		data.figuraProfessionale.trim() !== "" &&
 		data.regioniInteressate.length > 0 &&
 		hasContattoPubblico(data.contatti) &&
 		TESTI_MAX.every((campo) => data[campo].length <= 2000) &&

@@ -9,9 +9,7 @@ import {Card, CardContent} from "@/components/ui/card";
 import {Field, FieldDescription, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
-
-const INSTAGRAM_URL = "https://www.instagram.com/bachecadilettanti/";
-const WHATSAPP_URL = "https://whatsapp.com/channel/0029Vb8lng43AzNSP0YlRL3V";
+import {INSTAGRAM_URL, WHATSAPP_URL} from "@/const/contactConstants";
 
 export default function Contatti({emailStaff}: {emailStaff: string}) {
 	const [nome, setNome] = useState("");

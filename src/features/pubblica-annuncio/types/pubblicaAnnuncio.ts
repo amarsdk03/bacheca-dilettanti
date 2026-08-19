@@ -317,12 +317,6 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		descrizione: "Cerca e applica per occupazioni retribuite full o part time nel settore sportivo",
 	},
 	{
-		nome: "Professionisti e studi",
-		valore: "professionisti-studi",
-		icona: "Briefcase",
-		descrizione: "Offri i tuoi servizi professionali occasionali a squadre, atleti e società sportive",
-	},
-	{
 		nome: "Arbitro",
 		valore: "arbitro",
 		icona: "ClipboardList",
