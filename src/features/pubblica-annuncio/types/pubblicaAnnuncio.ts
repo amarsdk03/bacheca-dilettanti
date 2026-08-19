@@ -329,12 +329,6 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		descrizione: "Renditi disponibile per arbitrare o gestire partite ed eventi sportivi vicino a te",
 	},
 	{
-		nome: "Content creators",
-		valore: "creators",
-		icona: "Sparkles",
-		descrizione: "Condividi il tuo profilo e i tuoi contenuti sportivi con la nostra community",
-	},
-	{
 		nome: "Torneo / Evento",
 		valore: "torneo-evento",
 		icona: "Trophy",

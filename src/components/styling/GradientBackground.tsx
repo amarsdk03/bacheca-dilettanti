@@ -2,7 +2,7 @@ import type {ComponentPropsWithoutRef} from "react";
 
 import {cn} from "@/lib/utils";
 
-export default function AuthBackground({className, children, ...props}: ComponentPropsWithoutRef<"div">) {
+export default function GradientBackground({className, children, ...props}: ComponentPropsWithoutRef<"div">) {
 	return (
 		<div
 			className={cn("relative overflow-hidden bg-linear-to-b from-fuchsia-50 via-white to-neutral-50", className)}

@@ -52,6 +52,7 @@ import {
 	PUBBLICAZIONE_GRATUITA,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import useIsMobile from "@/lib/isMobile";
+import GradientBackground from "@/components/styling/GradientBackground";
 
 export default function PubblicaAnnuncio() {
 	const isMobile = useIsMobile();
@@ -190,7 +191,7 @@ export default function PubblicaAnnuncio() {
 	};
 
 	return (
-		<div className="min-h-screen bg-muted/30 py-16">
+		<GradientBackground className="min-h-screen bg-muted/30 py-16">
 			<div className="mx-auto max-w-3xl px-4">
 				<section className="mx-auto mb-8 max-w-6xl px-4 sm:mb-12 sm:px-6 lg:px-8">
 					<div className="flex flex-col items-center">
@@ -294,6 +295,6 @@ export default function PubblicaAnnuncio() {
 					</TabsContent>
 				</Tabs>
 			</div>
-		</div>
+		</GradientBackground>
 	);
 }

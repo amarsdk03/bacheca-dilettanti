@@ -196,7 +196,7 @@ export default function RegistrationProfileDetails({
 			<FieldDescription>
 				I campi contrassegnati con * sono obbligatori. Queste informazioni servono soltanto a simulare il flusso e non saranno ancora salvate.
 			</FieldDescription>
-			<FieldGroup>
+			<FieldGroup className="grid gap-4 mt-4">
 				{type === "giocatore" && (
 					<>
 						<FieldGroup className="grid gap-4 sm:grid-cols-2">
@@ -244,14 +244,10 @@ export default function RegistrationProfileDetails({
 					</>
 				)}
 
-				{type === "aziende-enti" && (
+				{type === "creators" && (
 					<>
-						<FieldGroup className="grid gap-4 sm:grid-cols-2">
-							<ProfileTextField id={`${prefix}-business-name`} label="Nome / ragione sociale" value={draft.businessName} onChange={(value) => onChange("businessName", value)} placeholder="Azienda o ente" required {...commonProps} />
-							<ProfileTextField id={`${prefix}-activity-type`} label="Tipologia di attività" value={draft.activityType} onChange={(value) => onChange("activityType", value)} placeholder="Formazione, consulenza, servizi..." required {...commonProps} />
-							<ProfileTextField id={`${prefix}-headquarters`} label="Sede" value={draft.headquarters} onChange={(value) => onChange("headquarters", value)} placeholder="Città o indirizzo della sede" required {...commonProps} />
-						</FieldGroup>
-						<ProfileTextareaField id={`${prefix}-services`} label="Servizi offerti" value={draft.services} onChange={(value) => onChange("services", value)} placeholder="Descrivi i servizi disponibili..." required {...commonProps} />
+						<ProfileTextField id={`${prefix}-username`} label="Username" value={draft.username} onChange={(value) => onChange("username", value)} placeholder="@nomeutente" required {...commonProps} />
+						<ProfileTextareaField id={`${prefix}-description`} label="Descrizione" value={draft.description} onChange={(value) => onChange("description", value)} placeholder="Racconta chi sei e quali contenuti sportivi condividi..." required {...commonProps} />
 					</>
 				)}
 

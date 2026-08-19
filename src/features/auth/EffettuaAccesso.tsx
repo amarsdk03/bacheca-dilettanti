@@ -18,7 +18,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import AuthBackground from "@/features/auth/AuthBackground";
+import GradientBackground from "@/components/styling/GradientBackground";
 
 const choices = [
 	{
@@ -67,7 +67,7 @@ const choices = [
 
 export default function EffettuaAccesso() {
 	return (
-		<AuthBackground className="px-4 py-16 sm:px-6">
+		<GradientBackground className="px-4 py-16 sm:px-6">
 			<div className="relative mx-auto max-w-6xl">
 				<div className="pb-16 pt-8">
 					<section className="mx-auto max-w-3xl text-center" aria-labelledby="access-choice-title">
@@ -138,6 +138,6 @@ export default function EffettuaAccesso() {
 					</div>
 				</div>
 			</div>
-		</AuthBackground>
+		</GradientBackground>
 	);
 }

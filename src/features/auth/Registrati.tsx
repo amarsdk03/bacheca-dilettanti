@@ -2,25 +2,25 @@
 
 import {type FormEvent, useActionState, useState} from "react";
 import {useFormStatus} from "react-dom";
-import Image from "next/image";
 import Link from "next/link";
 import {ArrowLeftIcon, ArrowRightIcon, CheckIcon, EyeIcon, EyeOffIcon, UserPlusIcon} from "lucide-react";
 
 import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {Checkbox} from "@/components/ui/checkbox";
 import {Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet, FieldTitle} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
-import {DEFAULT_LOGO_TRANSPARENT_PATH} from "@/const/defaultConstants";
-import AuthBackground from "@/features/auth/AuthBackground";
+import GradientBackground from "@/components/styling/GradientBackground";
 import RegistrationProfileDetails from "@/features/auth/RegistrationProfileDetails";
 import {signUpWithPassword} from "@/features/auth/actions";
 import {
 	createRegistrationProfileDrafts,
 	getMissingRegistrationProfileFields,
 	isRegistrationProfileType,
+	MAX_REGISTRATION_PROFILES,
 	REGISTRATION_PROFILE_OPTIONS,
 	type RegistrationProfileType,
 } from "@/features/auth/registration-profile";
@@ -93,16 +93,26 @@ export default function Registrati({nextPath}: RegistratiProps) {
 	const [step, setStep] = useState<RegistrationStep>(1);
 	const [account, setAccount] = useState<AccountDraft>(INITIAL_ACCOUNT_DRAFT);
 	const [showPassword, setShowPassword] = useState(false);
-	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [clientFieldErrors, setClientFieldErrors] = useState<AuthFieldErrors>({});
-	const [profileType, setProfileType] = useState<RegistrationProfileType | "">("");
+	const [selectedProfileTypes, setSelectedProfileTypes] = useState<RegistrationProfileType[]>([]);
+	const [primaryProfileType, setPrimaryProfileType] = useState<RegistrationProfileType | "">("");
 	const [profileDrafts, setProfileDrafts] = useState(createRegistrationProfileDrafts);
-	const [showProfileTypeError, setShowProfileTypeError] = useState(false);
+	const [profileSelectionError, setProfileSelectionError] = useState<string>();
+	const [showPrimaryProfileError, setShowPrimaryProfileError] = useState(false);
 	const [showProfileDetailsErrors, setShowProfileDetailsErrors] = useState(false);
+	const [profileDetailIndex, setProfileDetailIndex] = useState(0);
 	const [handledServerError, setHandledServerError] = useState<AuthActionState | null>(null);
 	const visibleStep = state.status === "error" && state !== handledServerError ? 1 : step;
 
-	const selectedProfile = REGISTRATION_PROFILE_OPTIONS.find((option) => option.value === profileType);
+	const selectedProfilesInCatalogOrder = REGISTRATION_PROFILE_OPTIONS
+		.map((option) => option.value)
+		.filter((type) => selectedProfileTypes.includes(type));
+	const orderedSelectedProfileTypes = primaryProfileType
+		? [primaryProfileType, ...selectedProfilesInCatalogOrder.filter((type) => type !== primaryProfileType)]
+		: selectedProfilesInCatalogOrder;
+	const currentProfileType = orderedSelectedProfileTypes[profileDetailIndex];
+	const currentProfile = REGISTRATION_PROFILE_OPTIONS.find((option) => option.value === currentProfileType);
+	const isLastProfileDetail = profileDetailIndex === orderedSelectedProfileTypes.length - 1;
 	const fieldErrors = {...state.fieldErrors, ...clientFieldErrors};
 
 	const updateAccount = (field: keyof AccountDraft, value: string) => {
@@ -128,24 +138,71 @@ export default function Registrati({nextPath}: RegistratiProps) {
 		setStep(2);
 	};
 
-	const continueFromProfileType = () => {
-		if (!profileType) {
-			setShowProfileTypeError(true);
+	const toggleProfileType = (type: RegistrationProfileType, checked: boolean) => {
+		if (checked) {
+			if (selectedProfileTypes.includes(type)) return;
+
+			if (selectedProfileTypes.length >= MAX_REGISTRATION_PROFILES) {
+				setProfileSelectionError(`Puoi selezionare al massimo ${MAX_REGISTRATION_PROFILES} profili.`);
+				return;
+			}
+
+			setSelectedProfileTypes((previous) => [...previous, type]);
+		} else {
+			setSelectedProfileTypes((previous) => previous.filter((selectedType) => selectedType !== type));
+			if (primaryProfileType === type) setPrimaryProfileType("");
+		}
+
+		setProfileSelectionError(undefined);
+		setShowPrimaryProfileError(false);
+	};
+
+	const continueFromProfileTypes = () => {
+		if (selectedProfileTypes.length === 0) {
+			setProfileSelectionError("Seleziona almeno una tipologia di profilo per continuare.");
 			return;
 		}
 
-		setShowProfileTypeError(false);
+		if (!primaryProfileType || !selectedProfileTypes.includes(primaryProfileType)) {
+			setShowPrimaryProfileError(true);
+			return;
+		}
+
+		setProfileSelectionError(undefined);
+		setShowPrimaryProfileError(false);
 		setShowProfileDetailsErrors(false);
+		setProfileDetailIndex(0);
 		setStep(3);
 	};
 
-	const updateProfileDraft = (field: string, value: string) => {
-		if (!profileType) return;
-
+	const updateProfileDraft = (type: RegistrationProfileType, field: string, value: string) => {
 		setProfileDrafts((previous) => ({
 			...previous,
-			[profileType]: {...previous[profileType], [field]: value},
+			[type]: {...previous[type], [field]: value},
 		}));
+	};
+
+	const continueFromProfileDetails = () => {
+		if (!currentProfileType) return;
+
+		if (getMissingRegistrationProfileFields(currentProfileType, profileDrafts[currentProfileType]).length > 0) {
+			setShowProfileDetailsErrors(true);
+			return;
+		}
+
+		setShowProfileDetailsErrors(false);
+		setProfileDetailIndex((previous) => previous + 1);
+	};
+
+	const goBack = () => {
+		setShowProfileDetailsErrors(false);
+
+		if (visibleStep === 3 && profileDetailIndex > 0) {
+			setProfileDetailIndex((previous) => previous - 1);
+			return;
+		}
+
+		setStep(visibleStep === 3 ? 2 : 1);
 	};
 
 	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -155,39 +212,48 @@ export default function Registrati({nextPath}: RegistratiProps) {
 			return;
 		}
 
-		if (!profileType) {
+		if (selectedProfileTypes.length === 0) {
 			event.preventDefault();
-			setShowProfileTypeError(true);
+			setProfileSelectionError("Seleziona almeno una tipologia di profilo per continuare.");
 			setStep(2);
 			return;
 		}
 
-		if (getMissingRegistrationProfileFields(profileType, profileDrafts[profileType]).length > 0) {
+		if (!primaryProfileType || !selectedProfileTypes.includes(primaryProfileType)) {
+			event.preventDefault();
+			setShowPrimaryProfileError(true);
+			setStep(2);
+			return;
+		}
+
+		const firstInvalidProfileIndex = orderedSelectedProfileTypes.findIndex(
+			(type) => getMissingRegistrationProfileFields(type, profileDrafts[type]).length > 0,
+		);
+
+		if (firstInvalidProfileIndex >= 0) {
 			event.preventDefault();
 			setShowProfileDetailsErrors(true);
+			setProfileDetailIndex(firstInvalidProfileIndex);
+			setStep(3);
 		}
 	};
 
 	const title = visibleStep === 1
 		? "Crea il tuo account"
 		: visibleStep === 2
-			? "Scegli il tuo profilo"
-			: selectedProfile?.label ?? "Completa il profilo";
+			? "Scegli i tuoi profili"
+			: currentProfile?.label ?? "Completa i tuoi profili";
 	const description = visibleStep === 1
 		? "Registrati gratuitamente con email e password."
 		: visibleStep === 2
-			? "Seleziona la categoria che rappresenta meglio la tua attività nel calcio dilettantistico."
-			: "Aggiungi ora le informazioni essenziali; potrai gestirle davvero in una prossima versione.";
+			? "Seleziona le categorie che rappresentano meglio i tuoi interessi e obiettivi."
+			: "Personalizza il tuo profilo compilando i seguenti campi. Potrai modificarli in qualsiasi momento.";
 
 	return (
-		<AuthBackground className="min-h-svh px-4 py-8 sm:px-6 md:py-10">
+		<GradientBackground className="min-h-svh px-4 py-8 sm:px-6 md:py-10">
 			<div className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-5xl flex-col">
-				<Link href="/" className="flex w-fit self-center md:self-start">
-					<Image src={DEFAULT_LOGO_TRANSPARENT_PATH} alt="Bacheca Dilettanti" width={150} height={90} priority />
-				</Link>
-
 				<div className="flex flex-1 items-center justify-center py-6">
-					<form action={formAction} onSubmit={handleSubmit} className="w-full max-w-4xl">
+					<form action={formAction} onSubmit={handleSubmit} className="w-full max-w-3xl">
 						{visibleStep !== 1 && (
 							<>
 								<input type="hidden" name="name" value={account.name} />
@@ -198,20 +264,25 @@ export default function Registrati({nextPath}: RegistratiProps) {
 						)}
 
 						<Card className="bg-card/95 shadow-xl backdrop-blur-sm">
-							<CardHeader className="flex flex-col items-stretch gap-5">
+							<CardHeader className="flex flex-col items-stretch gap-8 py-4">
 								<RegistrationProgress step={visibleStep} />
-								<div className="flex flex-col gap-1 text-center">
-									<CardTitle className="text-2xl">{title}</CardTitle>
+								<div className="flex flex-col gap-1 text-center mb-4">
+									{visibleStep === 3 && currentProfileType && (
+										<div className="flex justify-center gap-2 mb-2">
+											<Badge variant="secondary">Profilo {profileDetailIndex + 1} di {orderedSelectedProfileTypes.length}</Badge>
+										</div>
+									)}
+									<CardTitle className="text-2xl font-medium">{title}</CardTitle>
 									<CardDescription>{description}</CardDescription>
 								</div>
 							</CardHeader>
 
-							<CardContent>
+							<CardContent className="px-12 pb-8">
 								{visibleStep === 1 && (
-									<FieldGroup className="mx-auto max-w-md">
+									<FieldGroup className="mx-auto max-w-xl">
 										<Field data-invalid={Boolean(fieldErrors.name)}>
-											<FieldLabel htmlFor="registration-name">Nome e cognome</FieldLabel>
-											<Input id="registration-name" name="name" value={account.name} onChange={(event) => updateAccount("name", event.target.value)} type="text" maxLength={80} placeholder="Mario Rossi" autoComplete="name" required aria-invalid={Boolean(fieldErrors.name)} />
+											<FieldLabel htmlFor="registration-name">Nome profilo</FieldLabel>
+											<Input id="registration-name" name="name" value={account.name} onChange={(event) => updateAccount("name", event.target.value)} type="text" maxLength={80} placeholder="Nome e cognome, nome squadra..." autoComplete="name" required aria-invalid={Boolean(fieldErrors.name)} />
 											<FieldError>{fieldErrors.name}</FieldError>
 										</Field>
 										<Field data-invalid={Boolean(fieldErrors.email)}>
@@ -236,25 +307,15 @@ export default function Registrati({nextPath}: RegistratiProps) {
 													</InputGroupButton>
 												</InputGroupAddon>
 											</InputGroup>
-											<FieldDescription>Usa almeno 8 caratteri.</FieldDescription>
+											<FieldDescription>
+												Utilizza una password sicura, composta da almeno 8 caratteri
+											</FieldDescription>
 											<FieldError>{fieldErrors.password}</FieldError>
 										</Field>
 										<Field data-invalid={Boolean(fieldErrors.confirmPassword)}>
 											<FieldLabel htmlFor="registration-confirm-password">Conferma password</FieldLabel>
 											<InputGroup>
-												<InputGroupInput id="registration-confirm-password" name="confirmPassword" value={account.confirmPassword} onChange={(event) => updateAccount("confirmPassword", event.target.value)} type={showConfirmPassword ? "text" : "password"} minLength={8} maxLength={128} autoComplete="new-password" required aria-invalid={Boolean(fieldErrors.confirmPassword)} />
-												<InputGroupAddon align="inline-end">
-													<InputGroupButton
-														type="button"
-														size="icon-xs"
-														aria-label={showConfirmPassword ? "Nascondi conferma password" : "Mostra conferma password"}
-														aria-pressed={showConfirmPassword}
-														title={showConfirmPassword ? "Nascondi conferma password" : "Mostra conferma password"}
-														onClick={() => setShowConfirmPassword((visible) => !visible)}
-													>
-														{showConfirmPassword ? <EyeOffIcon aria-hidden="true" /> : <EyeIcon aria-hidden="true" />}
-													</InputGroupButton>
-												</InputGroupAddon>
+												<InputGroupInput id="registration-confirm-password" name="confirmPassword" value={account.confirmPassword} onChange={(event) => updateAccount("confirmPassword", event.target.value)} type="password" minLength={8} maxLength={128} autoComplete="new-password" required aria-invalid={Boolean(fieldErrors.confirmPassword)} />
 											</InputGroup>
 											<FieldError>{fieldErrors.confirmPassword}</FieldError>
 										</Field>
@@ -266,49 +327,82 @@ export default function Registrati({nextPath}: RegistratiProps) {
 								)}
 
 								{visibleStep === 2 && (
-									<FieldSet>
-										<FieldLegend variant="label">Seleziona il tuo profilo</FieldLegend>
-										<FieldDescription>Questa scelta personalizza il prossimo passaggio.</FieldDescription>
-										<RadioGroup
-											value={profileType}
-											onValueChange={(value) => {
-												if (!isRegistrationProfileType(value)) return;
-												setProfileType(value);
-												setShowProfileTypeError(false);
-											}}
-											aria-invalid={showProfileTypeError}
-											className="grid gap-3 sm:grid-cols-2"
-										>
-											{REGISTRATION_PROFILE_OPTIONS.map(({value, label, description: optionDescription, icon: Icon}) => (
-												<FieldLabel key={value} htmlFor={`registration-type-${value}`}>
-													<Field orientation="horizontal">
-														<Icon aria-hidden="true" />
-														<FieldContent>
-															<FieldTitle>{label}</FieldTitle>
-															<FieldDescription>{optionDescription}</FieldDescription>
-														</FieldContent>
-														<RadioGroupItem id={`registration-type-${value}`} value={value} aria-invalid={showProfileTypeError} />
-													</Field>
-												</FieldLabel>
-											))}
-										</RadioGroup>
-										{showProfileTypeError && <FieldError>Seleziona una tipologia di profilo per continuare.</FieldError>}
-									</FieldSet>
+									<FieldGroup>
+										<FieldSet>
+											<FieldLegend variant="label">Seleziona i tuoi profili</FieldLegend>
+											<FieldDescription>Puoi scegliere fino a {MAX_REGISTRATION_PROFILES} profili. Potrai modificarli in seguito.</FieldDescription>
+											<Badge variant="secondary" className="w-fit">{selectedProfileTypes.length} di {MAX_REGISTRATION_PROFILES} selezionati</Badge>
+											<FieldGroup data-slot="checkbox-group" className="grid gap-3 sm:grid-cols-2">
+												{REGISTRATION_PROFILE_OPTIONS.map(({value, label, description: optionDescription, icon: Icon}) => {
+													const checked = selectedProfileTypes.includes(value);
+													const disabled = !checked && selectedProfileTypes.length >= MAX_REGISTRATION_PROFILES;
+
+													return (
+														<FieldLabel key={value} htmlFor={`registration-type-${value}`}>
+															<Field orientation="horizontal" data-disabled={disabled}>
+																<Icon aria-hidden="true" />
+																<FieldContent>
+																	<FieldTitle>{label}</FieldTitle>
+																	<FieldDescription>{optionDescription}</FieldDescription>
+																</FieldContent>
+																<Checkbox
+																	id={`registration-type-${value}`}
+																	checked={checked}
+																	onCheckedChange={(nextChecked) => toggleProfileType(value, Boolean(nextChecked))}
+																	disabled={disabled}
+																	aria-invalid={Boolean(profileSelectionError)}
+																/>
+															</Field>
+														</FieldLabel>
+													);
+												})}
+											</FieldGroup>
+											{profileSelectionError && <FieldError>{profileSelectionError}</FieldError>}
+										</FieldSet>
+
+										{selectedProfileTypes.length > 0 && (
+											<FieldSet className={"mt-4"}>
+												<FieldLegend variant="label">Scegli il profilo principale</FieldLegend>
+												<FieldDescription>È il profilo che rappresenterà per primo la tua presenza sulla piattaforma.</FieldDescription>
+												<RadioGroup
+													value={primaryProfileType}
+													onValueChange={(value) => {
+														if (!isRegistrationProfileType(value) || !selectedProfileTypes.includes(value)) return;
+														setPrimaryProfileType(value);
+														setShowPrimaryProfileError(false);
+													}}
+													aria-invalid={showPrimaryProfileError}
+													className="grid gap-3 sm:grid-cols-2"
+												>
+													{REGISTRATION_PROFILE_OPTIONS.filter(({value}) => selectedProfileTypes.includes(value)).map(({value, label, icon: Icon}) => (
+														<FieldLabel key={value} htmlFor={`registration-primary-${value}`}>
+															<Field orientation="horizontal">
+																<Icon aria-hidden="true" />
+																<FieldTitle>{label}</FieldTitle>
+																<RadioGroupItem id={`registration-primary-${value}`} value={value} aria-invalid={showPrimaryProfileError} />
+															</Field>
+														</FieldLabel>
+													))}
+												</RadioGroup>
+												{showPrimaryProfileError && <FieldError>Seleziona il profilo principale per continuare.</FieldError>}
+											</FieldSet>
+										)}
+									</FieldGroup>
 								)}
 
-								{visibleStep === 3 && profileType && (
+								{visibleStep === 3 && currentProfileType && (
 									<RegistrationProfileDetails
-										type={profileType}
-										draft={profileDrafts[profileType]}
+										type={currentProfileType}
+										draft={profileDrafts[currentProfileType]}
 										showErrors={showProfileDetailsErrors}
-										onChange={updateProfileDraft}
+										onChange={(field, value) => updateProfileDraft(currentProfileType, field, value)}
 									/>
 								)}
 							</CardContent>
 
 							<CardFooter className={cn("flex gap-3", visibleStep === 1 ? "justify-end" : "justify-between")}>
 								{visibleStep > 1 && (
-									<Button type="button" variant="outline" size="lg" onClick={() => setStep(visibleStep === 3 ? 2 : 1)}>
+									<Button type="button" variant="outline" size="lg" onClick={goBack}>
 										<ArrowLeftIcon data-icon="inline-start" />
 										Indietro
 									</Button>
@@ -320,17 +414,23 @@ export default function Registrati({nextPath}: RegistratiProps) {
 									</Button>
 								)}
 								{visibleStep === 2 && (
-									<Button type="button" size="lg" onClick={continueFromProfileType}>
+									<Button type="button" size="lg" onClick={continueFromProfileTypes}>
 										Continua
 										<ArrowRightIcon data-icon="inline-end" />
 									</Button>
 								)}
-								{visibleStep === 3 && <SubmitButton />}
+								{visibleStep === 3 && !isLastProfileDetail && (
+									<Button type="button" size="lg" onClick={continueFromProfileDetails}>
+										Continua
+										<ArrowRightIcon data-icon="inline-end" />
+									</Button>
+								)}
+								{visibleStep === 3 && isLastProfileDetail && <SubmitButton />}
 							</CardFooter>
 						</Card>
 					</form>
 				</div>
 			</div>
-		</AuthBackground>
+		</GradientBackground>
 	);
 }

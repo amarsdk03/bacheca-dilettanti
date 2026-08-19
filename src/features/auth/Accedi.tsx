@@ -10,7 +10,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group";
-import AuthBackground from "@/features/auth/AuthBackground";
+import GradientBackground from "@/components/styling/GradientBackground";
 import {signInWithPassword} from "@/features/auth/actions";
 import {INITIAL_AUTH_STATE} from "@/features/auth/types";
 
@@ -32,7 +32,7 @@ export default function Accedi({nextPath}: AccediProps) {
 	const [showPassword, setShowPassword] = useState(false);
 
 	return (
-		<AuthBackground className="flex min-h-[calc(100svh-4rem)] items-center justify-center px-6 py-10 md:px-10">
+		<GradientBackground className="flex min-h-[calc(100svh-4rem)] items-center justify-center px-6 py-10 md:px-10">
 			<div className="relative flex w-full max-w-sm flex-col gap-2">
 				<Card className="bg-card/95 shadow-xl backdrop-blur-sm">
 					<CardHeader className="text-center">
@@ -105,6 +105,6 @@ export default function Accedi({nextPath}: AccediProps) {
 					</CardContent>
 				</Card>
 			</div>
-		</AuthBackground>
+		</GradientBackground>
 	);
 }
