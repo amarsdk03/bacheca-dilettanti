@@ -296,13 +296,13 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		nome: "Giocatore",
 		valore: "giocatore",
 		icona: "User",
-		descrizione: "Inserisci i tuoi dati per farti scoprire da squadre e osservatori",
+		descrizione: "Crea il tuo profilo e fai scoprire il tuo talento a società sportive e osservatori",
 	},
 	{
 		nome: "Squadra",
 		valore: "squadra",
 		icona: "Award",
-		descrizione: "Fatti trovare da nuovi talenti sportivi, sponsor e professionisti",
+		descrizione: "Cerca nuove figure calcistiche, staff, partite o sponsor per la tua squadra",
 		sottotipologie: [
 			{valore: "cerca-giocatore", nome: "Cerca giocatore", icona: "UserSearch"},
 			{valore: "cerca-staff", nome: "Cerca staff sportivo", icona: "UsersRound"},
@@ -311,28 +311,28 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		],
 	},
 	{
-		nome: "Arbitro",
-		valore: "arbitro",
-		icona: "ClipboardList",
-		descrizione: "Renditi disponibile per arbitrare o gestire partite ed eventi sportivi",
-	},
-	{
-		nome: "Aziende ed enti",
-		valore: "aziende-enti",
-		icona: "Building2",
-		descrizione: "Pubblicizzati a realtà sportive e persone in cerca di opportunità specifiche",
-	},
-	{
 		nome: "Staff sportivo",
 		valore: "staff-sportivo",
 		icona: "Search",
-		descrizione: "Cerca e applica per occupazioni retribuite nel settore sportivo",
+		descrizione: "Cerca e applica per occupazioni retribuite full o part time nel settore sportivo",
 	},
 	{
 		nome: "Professionisti e studi",
 		valore: "professionisti-studi",
 		icona: "Briefcase",
-		descrizione: "Offri i tuoi servizi professionali a squadre, atleti e società sportive",
+		descrizione: "Offri i tuoi servizi professionali occasionali a squadre, atleti e società sportive",
+	},
+	{
+		nome: "Arbitro",
+		valore: "arbitro",
+		icona: "ClipboardList",
+		descrizione: "Renditi disponibile per arbitrare o gestire partite ed eventi sportivi vicino a te",
+	},
+	{
+		nome: "Content creators",
+		valore: "creators",
+		icona: "Sparkles",
+		descrizione: "Condividi il tuo profilo e i tuoi contenuti sportivi con la nostra community",
 	},
 	{
 		nome: "Torneo / Evento",
@@ -344,7 +344,7 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		nome: "Campi e impianti",
 		valore: "campi-impianti-sportivi",
 		icona: "TrafficCone",
-		descrizione: "Fornisci e pubblicizza l'uso dei tuoi campi e impianti sportivi",
+		descrizione: "Fornisci e pubblicizza i tuoi campi e impianti sportivi",
 	},
 ];
 
