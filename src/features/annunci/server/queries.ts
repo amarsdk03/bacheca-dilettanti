@@ -4,9 +4,9 @@ import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
 	ANNOUNCEMENTS_PER_PAGE,
-	ANNOUNCEMENT_TYPES,
 	announcementOption,
 	getAnnouncementFilterEntries,
+	getAnnouncementStorageTypes,
 	isAnnouncementType,
 	isValidAnnouncementId,
 	normalizeAnnouncementSearchText,
@@ -590,8 +590,9 @@ function normalizedIncludes(values: string[], selected: string) {
 function matchesDirectoryQuery(
 	announcement: MappedAnnouncement,
 	query: AnnouncementDirectoryQuery,
+	requestedTypes: readonly AnnouncementType[],
 ) {
-	if (query.types.length > 0 && !query.types.includes(announcement.item.type)) return false;
+	if (!requestedTypes.includes(announcement.item.type)) return false;
 	const tokens = normalizeAnnouncementSearchText(query.q).split(/\s+/).filter(Boolean);
 	if (tokens.some((token) => !announcement.searchText.includes(token))) return false;
 	if (query.types.length !== 1) return true;
@@ -794,11 +795,10 @@ export async function loadPublicAnnouncementDirectory(
 ): Promise<AnnouncementDirectoryResult> {
 	try {
 		const supabase = createAdminClient();
-		const requestedTypes = query.types.length > 0
-			? query.types
-			: [...ANNOUNCEMENT_TYPES];
+		const requestedTypes = getAnnouncementStorageTypes(query);
 		const requiresClientFiltering = Boolean(query.q)
-			|| getAnnouncementFilterEntries(query.filters).length > 0;
+			|| getAnnouncementFilterEntries(query.filters)
+				.some(([key]) => key !== "ricercaSquadra");
 
 		if (!requiresClientFiltering) {
 			async function fetchPage(page: number) {
@@ -866,7 +866,7 @@ export async function loadPublicAnnouncementDirectory(
 		const filtered = rows
 			.map(mapAnnouncement)
 			.filter((item): item is MappedAnnouncement => Boolean(item))
-			.filter((item) => matchesDirectoryQuery(item, query));
+			.filter((item) => matchesDirectoryQuery(item, query, requestedTypes));
 		const total = filtered.length;
 		const totalPages = Math.max(1, Math.ceil(total / ANNOUNCEMENTS_PER_PAGE));
 		const currentPage = Math.min(query.page, totalPages);

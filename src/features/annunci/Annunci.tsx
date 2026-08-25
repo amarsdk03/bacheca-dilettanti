@@ -59,19 +59,22 @@ import AnnouncementAuthorHoverCard from "@/features/annunci/AnnouncementAuthorHo
 import AnnouncementFiltersResetButton from "@/features/annunci/AnnouncementFiltersResetButton";
 import {
 	ANNOUNCEMENT_FILTER_OPTIONS,
-	ANNOUNCEMENT_FILTERS_BY_TYPE,
-	ANNOUNCEMENT_OPTIONS,
+	ANNOUNCEMENT_TEAM_SEARCH_OPTIONS,
+	announcementDirectoryOption,
+	announcementOption,
 	buildAnnouncementsHref,
 	createEmptyAnnouncementFilters,
 	getActiveAnnouncementFilterCount,
+	getAnnouncementFiltersForDirectoryType,
 	getAnnouncementFilterEntries,
 	type AnnouncementDirectoryItem,
 	type AnnouncementDirectoryQuery,
 	type AnnouncementDirectoryResult,
-	type AnnouncementType,
+	type AnnouncementDirectoryType,
 } from "@/features/annunci/announcement-model";
 import AnnouncementTypeSelector from "@/features/annunci/AnnouncementTypeSelector";
 import {cn} from "@/lib/utils";
+import Image from "next/image";
 
 interface AnnunciProps {
 	query: AnnouncementDirectoryQuery;
@@ -91,10 +94,6 @@ const ANNOUNCEMENT_DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {
 	timeZone: "Europe/Rome",
 	year: "numeric",
 });
-
-function announcementTypeOption(type: AnnouncementType) {
-	return ANNOUNCEMENT_OPTIONS.find(({value}) => value === type) ?? ANNOUNCEMENT_OPTIONS[0];
-}
 
 function formatAnnouncementDate(value: string | null) {
 	if (!value) return "Data non disponibile";
@@ -214,10 +213,10 @@ function AnnouncementFiltersForm({
 	idPrefix,
 }: {
 	query: AnnouncementDirectoryQuery;
-	type: AnnouncementType;
+	type: AnnouncementDirectoryType;
 	idPrefix: string;
 }) {
-	const availableFilters = ANNOUNCEMENT_FILTERS_BY_TYPE[type] as readonly AnnouncementFilterParam[];
+	const availableFilters = getAnnouncementFiltersForDirectoryType(type, query.filters.ricercaSquadra);
 	const resetHref = buildAnnouncementsHref(query, {
 		page: 1,
 		filters: createEmptyAnnouncementFilters(),
@@ -230,6 +229,17 @@ function AnnouncementFiltersForm({
 				includeQuery
 			/>
 			<FieldGroup className="gap-4">
+				{hasFilter(availableFilters, "ricercaSquadra") && (
+					<FilterSelect
+						id={`${idPrefix}-ricerca-squadra`}
+						name="ricercaSquadra"
+						label="Tipo di ricerca"
+						value={query.filters.ricercaSquadra}
+						allLabel="Tutte le ricerche"
+						options={ANNOUNCEMENT_TEAM_SEARCH_OPTIONS.map(({value, label}) => ({value, label}))}
+					/>
+				)}
+
 				{hasFilter(availableFilters, "regione") && (
 					<FilterSelect
 						id={`${idPrefix}-regione`}
@@ -394,7 +404,7 @@ function AnnouncementFiltersSheet({query}: {query: AnnouncementDirectoryQuery}) 
 					<SheetTitle>Filtra gli annunci</SheetTitle>
 					<SheetDescription>
 						{selectedType
-							? `Opzioni dedicate a “${announcementTypeOption(selectedType).label}”.`
+							? `Opzioni dedicate a “${announcementDirectoryOption(selectedType).label}”.`
 							: "I filtri specifici richiedono una sola tipologia selezionata."}
 					</SheetDescription>
 				</SheetHeader>
@@ -409,7 +419,7 @@ function AnnouncementFiltersSheet({query}: {query: AnnouncementDirectoryQuery}) 
 }
 
 function AnnouncementCard({announcement}: {announcement: AnnouncementDirectoryItem}) {
-	const option = announcementTypeOption(announcement.type);
+	const option = announcementOption(announcement.type);
 	const TypeIcon = option.icon;
 	const detailParams = new URLSearchParams({id: announcement.id});
 	const detailHref = `/dettagli-annuncio?${detailParams.toString()}`;
@@ -578,6 +588,27 @@ export default function Annunci({query, result}: AnnunciProps) {
 				</section>
 
 				<Separator className="mt-4" />
+
+				<div className={"w-full flex items-center justify-between mt-8"}>
+					<Image
+						src="/banner-pubblicita/placeholder.png"
+						width={3840/10}
+						height={1080/10}
+						alt="Pubblicita per sponsor qui!"
+					/>
+					<Image
+						src="/banner-pubblicita/placeholder.png"
+						width={3840/10}
+						height={1080/10}
+						alt="Pubblicita per sponsor qui!"
+					/>
+					<Image
+						src="/banner-pubblicita/placeholder.png"
+						width={3840/10}
+						height={1080/10}
+						alt="Pubblicita per sponsor qui!"
+					/>
+				</div>
 
 				<section aria-labelledby="announcements-results-title" className="mt-8 min-w-0">
 					<div className="mb-5 flex flex-wrap items-center justify-between gap-3">

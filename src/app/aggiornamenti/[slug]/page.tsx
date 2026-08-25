@@ -84,7 +84,7 @@ export default async function ArticlePage({params}: PageProps<"/aggiornamenti/[s
 							<p className="text-xs font-bold uppercase tracking-wider text-neutral-400">Argomenti</p>
 							<div className="mt-3 flex flex-wrap gap-2">{article.tags.map((tag) => <span key={tag} className="rounded-full bg-neutral-100 px-3 py-1.5 text-xs text-neutral-600">#{tag}</span>)}</div>
 						</div>
-						<div className="mt-8 border-t border-neutral-200 pt-6">
+						<div className="mt-8 border-t border-neutral-200 pt-6" hidden>
 							<div className="inline-flex items-center text-lg text-neutral-700 gap-1.5">
 								<Eye className="size-5" />
 								<span className={"font-medium"}>{viewCount}</span>

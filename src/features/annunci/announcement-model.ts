@@ -37,6 +37,44 @@ export const ANNOUNCEMENT_TYPES = [
 
 export type AnnouncementType = typeof ANNOUNCEMENT_TYPES[number];
 
+export const TEAM_ANNOUNCEMENT_TYPES = [
+	"annuncio_squadra_cerca_giocatore",
+	"annuncio_squadra_cerca_staff",
+	"annuncio_squadra_cerca_partita",
+	"annuncio_squadra_cerca_sponsor",
+] as const satisfies readonly AnnouncementType[];
+
+export const ANNOUNCEMENT_TEAM_SEARCHES = [
+	"giocatore",
+	"staff",
+	"partita",
+	"sponsor",
+] as const;
+
+export type AnnouncementTeamSearch = typeof ANNOUNCEMENT_TEAM_SEARCHES[number];
+
+export const TEAM_ANNOUNCEMENT_TYPE_BY_SEARCH = {
+	giocatore: "annuncio_squadra_cerca_giocatore",
+	staff: "annuncio_squadra_cerca_staff",
+	partita: "annuncio_squadra_cerca_partita",
+	sponsor: "annuncio_squadra_cerca_sponsor",
+} as const satisfies Record<AnnouncementTeamSearch, AnnouncementType>;
+
+const TEAM_SEARCH_BY_ANNOUNCEMENT_TYPE = Object.fromEntries(
+	Object.entries(TEAM_ANNOUNCEMENT_TYPE_BY_SEARCH).map(([search, type]) => [type, search]),
+) as Partial<Record<AnnouncementType, AnnouncementTeamSearch>>;
+
+export const ANNOUNCEMENT_DIRECTORY_TYPES = [
+	"annuncio_giocatore",
+	"annuncio_squadra",
+	"annuncio_staff_sportivo",
+	"annuncio_arbitro",
+	"annuncio_torneo_evento",
+	"annuncio_campo_impianto",
+] as const;
+
+export type AnnouncementDirectoryType = typeof ANNOUNCEMENT_DIRECTORY_TYPES[number];
+
 export interface AnnouncementOption {
 	value: AnnouncementType;
 	label: string;
@@ -111,7 +149,61 @@ export const ANNOUNCEMENT_OPTIONS: readonly AnnouncementOption[] = [
 	},
 ];
 
+export interface AnnouncementDirectoryOption {
+	value: AnnouncementDirectoryType;
+	label: string;
+	description: string;
+	icon: LucideIcon;
+}
+
+export const ANNOUNCEMENT_DIRECTORY_OPTIONS: readonly AnnouncementDirectoryOption[] = [
+	{
+		value: "annuncio_giocatore",
+		label: "Giocatore",
+		description: "Giocatori disponibili e in cerca di una nuova squadra",
+		icon: UserIcon,
+	},
+	{
+		value: "annuncio_squadra",
+		label: "Squadra",
+		description: "Squadre che cercano giocatori, staff, partite o sponsor",
+		icon: UserSearchIcon,
+	},
+	{
+		value: "annuncio_staff_sportivo",
+		label: "Staff sportivo",
+		description: "Professionisti dello sport disponibili per nuovi incarichi",
+		icon: UsersIcon,
+	},
+	{
+		value: "annuncio_arbitro",
+		label: "Arbitro",
+		description: "Arbitri disponibili per partite, tornei ed eventi",
+		icon: BadgeCheckIcon,
+	},
+	{
+		value: "annuncio_torneo_evento",
+		label: "Torneo / evento",
+		description: "Tornei, manifestazioni ed eventi a cui partecipare",
+		icon: TrophyIcon,
+	},
+	{
+		value: "annuncio_campo_impianto",
+		label: "Campo / impianto",
+		description: "Campi e impianti disponibili per attivitÃ  ed eventi",
+		icon: MapPinIcon,
+	},
+];
+
+export const ANNOUNCEMENT_TEAM_SEARCH_OPTIONS = [
+	{value: "giocatore", label: "Giocatore"},
+	{value: "staff", label: "Staff"},
+	{value: "partita", label: "Partita"},
+	{value: "sponsor", label: "Sponsor"},
+] as const satisfies readonly {value: AnnouncementTeamSearch; label: string}[];
+
 export const ANNOUNCEMENT_FILTER_PARAM_KEYS = [
+	"ricercaSquadra",
 	"regione",
 	"tipologia",
 	"ruolo",
@@ -152,6 +244,7 @@ export const ANNOUNCEMENT_FILTER_OPTIONS = {
 } as const;
 
 export interface AnnouncementDirectoryFilters {
+	ricercaSquadra: AnnouncementTeamSearch | "";
 	regione: string;
 	tipologia: string;
 	ruolo: string;
@@ -164,7 +257,7 @@ export interface AnnouncementDirectoryFilters {
 
 export interface AnnouncementDirectoryQuery {
 	q: string;
-	types: AnnouncementType[];
+	types: AnnouncementDirectoryType[];
 	filters: AnnouncementDirectoryFilters;
 	page: number;
 }
@@ -273,11 +366,26 @@ const ROLE_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.ruoli);
 const FIGURE_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.figure);
 const CATEGORY_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.categorie);
 const CAR_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.automunito.map(({value}) => value));
+const TEAM_SEARCH_SET = new Set<string>(ANNOUNCEMENT_TEAM_SEARCHES);
 const UUID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 
 export function isAnnouncementType(value: unknown): value is AnnouncementType {
 	return typeof value === "string"
 		&& (ANNOUNCEMENT_TYPES as readonly string[]).includes(value);
+}
+
+export function isAnnouncementDirectoryType(value: unknown): value is AnnouncementDirectoryType {
+	return typeof value === "string"
+		&& (ANNOUNCEMENT_DIRECTORY_TYPES as readonly string[]).includes(value);
+}
+
+export function isTeamAnnouncementType(value: unknown): value is typeof TEAM_ANNOUNCEMENT_TYPES[number] {
+	return typeof value === "string"
+		&& (TEAM_ANNOUNCEMENT_TYPES as readonly string[]).includes(value);
+}
+
+function isAnnouncementTeamSearch(value: unknown): value is AnnouncementTeamSearch {
+	return typeof value === "string" && TEAM_SEARCH_SET.has(value);
 }
 
 export function isValidAnnouncementId(value: unknown): value is string {
@@ -286,6 +394,7 @@ export function isValidAnnouncementId(value: unknown): value is string {
 
 export function createEmptyAnnouncementFilters(): AnnouncementDirectoryFilters {
 	return {
+		ricercaSquadra: "",
 		regione: "",
 		tipologia: "",
 		ruolo: "",
@@ -317,42 +426,80 @@ function parseAmount(value: string) {
 	return Math.round(parsed * 100) / 100;
 }
 
-function supportsFilter(type: AnnouncementType, filter: AnnouncementFilterParam) {
-	return (ANNOUNCEMENT_FILTERS_BY_TYPE[type] as readonly AnnouncementFilterParam[])
-		.includes(filter);
+export function getAnnouncementFiltersForDirectoryType(
+	type: AnnouncementDirectoryType,
+	teamSearch: AnnouncementTeamSearch | "",
+): readonly AnnouncementFilterParam[] {
+	if (type === "annuncio_squadra") {
+		if (!teamSearch) return ["ricercaSquadra", "regione"];
+		return [
+			"ricercaSquadra",
+			...ANNOUNCEMENT_FILTERS_BY_TYPE[TEAM_ANNOUNCEMENT_TYPE_BY_SEARCH[teamSearch]],
+		];
+	}
+
+	return ANNOUNCEMENT_FILTERS_BY_TYPE[type];
+}
+
+function supportsFilter(
+	type: AnnouncementDirectoryType,
+	teamSearch: AnnouncementTeamSearch | "",
+	filter: AnnouncementFilterParam,
+) {
+	return getAnnouncementFiltersForDirectoryType(type, teamSearch).includes(filter);
 }
 
 export function parseAnnouncementDirectoryQuery(
 	params: RawAnnouncementSearchParams,
 ): AnnouncementDirectoryQuery {
-	const requestedTypes = new Set(asValues(params.type).filter(isAnnouncementType));
-	const types = ANNOUNCEMENT_TYPES.filter((type) => requestedTypes.has(type));
+	const requestedTypes = new Set<AnnouncementDirectoryType>();
+	const legacyTeamTypes = new Set<typeof TEAM_ANNOUNCEMENT_TYPES[number]>();
+
+	for (const type of asValues(params.type)) {
+		if (isAnnouncementDirectoryType(type)) {
+			requestedTypes.add(type);
+		} else if (isTeamAnnouncementType(type)) {
+			requestedTypes.add("annuncio_squadra");
+			legacyTeamTypes.add(type);
+		}
+	}
+
+	const types = ANNOUNCEMENT_DIRECTORY_TYPES.filter((type) => requestedTypes.has(type));
 	const selectedType = types.length === 1 ? types[0] : null;
 	const filters = createEmptyAnnouncementFilters();
 
 	if (selectedType) {
-		if (supportsFilter(selectedType, "regione")) {
+		if (selectedType === "annuncio_squadra") {
+			const requestedTeamSearch = firstValue(params.ricercaSquadra);
+			if (isAnnouncementTeamSearch(requestedTeamSearch)) {
+				filters.ricercaSquadra = requestedTeamSearch;
+			} else if (legacyTeamTypes.size === 1) {
+				filters.ricercaSquadra = TEAM_SEARCH_BY_ANNOUNCEMENT_TYPE[[...legacyTeamTypes][0]] ?? "";
+			}
+		}
+
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "regione")) {
 			filters.regione = allowedValue(firstValue(params.regione), REGION_SET);
 		}
-		if (supportsFilter(selectedType, "tipologia")) {
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "tipologia")) {
 			filters.tipologia = allowedValue(firstValue(params.tipologia), TYPE_SET);
 		}
-		if (supportsFilter(selectedType, "ruolo")) {
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "ruolo")) {
 			filters.ruolo = allowedValue(firstValue(params.ruolo), ROLE_SET);
 		}
-		if (supportsFilter(selectedType, "figura")) {
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "figura")) {
 			filters.figura = allowedValue(firstValue(params.figura), FIGURE_SET);
 		}
-		if (supportsFilter(selectedType, "categoria")) {
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "categoria")) {
 			filters.categoria = allowedValue(firstValue(params.categoria), CATEGORY_SET);
 		}
-		if (supportsFilter(selectedType, "automunito")) {
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "automunito")) {
 			filters.automunito = allowedValue(firstValue(params.automunito), CAR_SET);
 		}
-		if (supportsFilter(selectedType, "costoMax")) {
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "costoMax")) {
 			filters.costoMax = parseAmount(firstValue(params.costoMax));
 		}
-		if (supportsFilter(selectedType, "compensoMin")) {
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "compensoMin")) {
 			filters.compensoMin = parseAmount(firstValue(params.compensoMin));
 		}
 	}
@@ -374,6 +521,7 @@ export function getAnnouncementFilterEntries(
 	filters: AnnouncementDirectoryFilters,
 ): Array<[string, string]> {
 	const entries: Array<[string, string]> = [];
+	if (filters.ricercaSquadra) entries.push(["ricercaSquadra", filters.ricercaSquadra]);
 	if (filters.regione) entries.push(["regione", filters.regione]);
 	if (filters.tipologia) entries.push(["tipologia", filters.tipologia]);
 	if (filters.ruolo) entries.push(["ruolo", filters.ruolo]);
@@ -394,7 +542,7 @@ export function buildAnnouncementsHref(
 	overrides: {
 		page?: number;
 		q?: string;
-		types?: AnnouncementType[];
+		types?: AnnouncementDirectoryType[];
 		filters?: AnnouncementDirectoryFilters;
 	} = {},
 ) {
@@ -416,6 +564,30 @@ export function buildAnnouncementsHref(
 export function announcementOption(type: AnnouncementType) {
 	return ANNOUNCEMENT_OPTIONS.find(({value}) => value === type)
 		?? ANNOUNCEMENT_OPTIONS[0];
+}
+
+export function announcementDirectoryOption(type: AnnouncementDirectoryType) {
+	return ANNOUNCEMENT_DIRECTORY_OPTIONS.find(({value}) => value === type)
+		?? ANNOUNCEMENT_DIRECTORY_OPTIONS[0];
+}
+
+export function getAnnouncementStorageTypes(query: AnnouncementDirectoryQuery): AnnouncementType[] {
+	if (query.types.length === 0) return [...ANNOUNCEMENT_TYPES];
+
+	const requestedTypes = new Set<AnnouncementType>();
+	for (const type of query.types) {
+		if (type === "annuncio_squadra") {
+			if (query.filters.ricercaSquadra) {
+				requestedTypes.add(TEAM_ANNOUNCEMENT_TYPE_BY_SEARCH[query.filters.ricercaSquadra]);
+			} else {
+				TEAM_ANNOUNCEMENT_TYPES.forEach((teamType) => requestedTypes.add(teamType));
+			}
+		} else {
+			requestedTypes.add(type);
+		}
+	}
+
+	return ANNOUNCEMENT_TYPES.filter((type) => requestedTypes.has(type));
 }
 
 export function normalizeAnnouncementSearchText(value: string) {

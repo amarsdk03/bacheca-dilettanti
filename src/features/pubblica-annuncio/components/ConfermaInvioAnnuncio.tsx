@@ -1,6 +1,6 @@
 "use client";
 
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {CheckCircle2Icon, Clock3Icon, ShieldCheckIcon} from "lucide-react";
@@ -43,6 +43,12 @@ interface ConfermaInvioAnnuncioProps {
 
 type OtpStatus = "idle" | "sending" | "sent" | "verifying" | "verified";
 
+interface OtpRetryState {
+	email: string;
+	limit: "cooldown" | "daily" | "provider";
+	retryAt: string;
+}
+
 function profileTitle(payload: PublishAnnouncementPayload, drafts: ProfileDrafts) {
 	if (payload.profileType === "giocatore") return [drafts.giocatore.nome, drafts.giocatore.cognome].filter(Boolean).join(" ") || "Giocatore";
 	if (payload.profileType === "squadra") return drafts.squadra.nome_societa || "Squadra";
@@ -57,7 +63,11 @@ function locationSummary(locations: ProfileLocationDraft[]) {
 }
 
 function formattedDate(value: string) {
-	return new Intl.DateTimeFormat("it-IT", {dateStyle: "medium", timeStyle: "short"}).format(new Date(value));
+	return new Intl.DateTimeFormat("it-IT", {
+		dateStyle: "medium",
+		timeStyle: "short",
+		timeZone: "Europe/Rome",
+	}).format(new Date(value));
 }
 
 export default function ConfermaInvioAnnuncio({
@@ -81,6 +91,8 @@ export default function ConfermaInvioAnnuncio({
 	const [otpError, setOtpError] = useState<string | null>(null);
 	const [otpFeedback, setOtpFeedback] = useState<string | null>(null);
 	const [otpServiceError, setOtpServiceError] = useState<string | null>(null);
+	const [otpRetry, setOtpRetry] = useState<OtpRetryState | null>(null);
+	const [otpNow, setOtpNow] = useState(() => Date.now());
 	const [registeredEmail, setRegisteredEmail] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [rateLimitRetryAt, setRateLimitRetryAt] = useState<string | null>(null);
@@ -91,6 +103,22 @@ export default function ConfermaInvioAnnuncio({
 	const challengeMatchesEmail = requestedEmail === normalizedEmail;
 	const emailVerified = authenticated || verifiedEmail === normalizedEmail;
 	const otpBusy = otpStatus === "sending" || otpStatus === "verifying";
+	const otpRetryAt = otpRetry ? Date.parse(otpRetry.retryAt) : Number.NaN;
+	const otpRetryActive = otpRetry?.email === normalizedEmail
+		&& Number.isFinite(otpRetryAt)
+		&& otpRetryAt > otpNow;
+	const otpRetrySeconds = otpRetryActive
+		? Math.max(1, Math.ceil((otpRetryAt - otpNow) / 1000))
+		: 0;
+	const otpRequestLabel = otpStatus === "sending"
+		? "Invio..."
+		: otpRetryActive && otpRetry?.limit === "daily"
+			? "Limite giornaliero raggiunto"
+			: otpRetryActive
+				? `Invia di nuovo tra ${otpRetrySeconds}s`
+				: challengeMatchesEmail
+					? "Invia di nuovo"
+					: "Invia codice";
 	const selectedType = getTipologia(payload.profileType);
 	const selectedSubtype = selectedType?.sottotipologie?.find(({valore}) => valore === payload.teamSubtype);
 	const consentErrors = {
@@ -113,6 +141,28 @@ export default function ConfermaInvioAnnuncio({
 	const displayedEmailError = emailError ?? validationEmailError;
 	const displayedOtpError = otpError ?? validationOtpError;
 
+	useEffect(() => {
+		if (!otpRetry) return;
+		const retryAt = Date.parse(otpRetry.retryAt);
+		if (!Number.isFinite(retryAt)) return;
+
+		if (otpRetry.limit === "daily") {
+			const timeoutId = window.setTimeout(
+				() => setOtpNow(Date.now()),
+				Math.max(0, retryAt - Date.now()),
+			);
+			return () => window.clearTimeout(timeoutId);
+		}
+
+		const intervalId = window.setInterval(() => {
+			const currentTime = Date.now();
+			setOtpNow(currentTime);
+			if (currentTime >= retryAt) window.clearInterval(intervalId);
+		}, 250);
+
+		return () => window.clearInterval(intervalId);
+	}, [otpRetry]);
+
 	const resetVerification = (value: string) => {
 		setVerificationEmail(value);
 		setRequestedEmail(null);
@@ -127,7 +177,7 @@ export default function ConfermaInvioAnnuncio({
 	};
 
 	const requestOtp = async () => {
-		if (otpBusy || registeredEmail) return;
+		if (otpBusy || otpRetryActive || registeredEmail) return;
 		if (!emailValid) {
 			setEmailError(normalizedEmail ? "Inserisci un indirizzo email valido." : "Inserisci l’indirizzo email da verificare.");
 			return;
@@ -143,6 +193,8 @@ export default function ConfermaInvioAnnuncio({
 		try {
 			const result = await requestPublishEmailOtp({submissionId: payload.submissionId, email: normalizedEmail});
 			if (result.status === "sent") {
+				setOtpNow(Date.now());
+				setOtpRetry({email: normalizedEmail, limit: "cooldown", retryAt: result.retryAt});
 				setRequestedEmail(normalizedEmail);
 				setVerifiedEmail(null);
 				setOtpCode("");
@@ -151,10 +203,26 @@ export default function ConfermaInvioAnnuncio({
 				return;
 			}
 			if (result.status === "already_registered") {
+				setOtpRetry(null);
 				setRegisteredEmail(true);
 				setRequestedEmail(null);
 				setVerifiedEmail(null);
 				setOtpStatus("idle");
+				return;
+			}
+			if (result.status === "rate_limited") {
+				if (result.retryAt) {
+					setOtpNow(Date.now());
+					setOtpRetry({email: normalizedEmail, limit: result.limit, retryAt: result.retryAt});
+				}
+				setRequestedEmail(normalizedEmail);
+				setVerifiedEmail(null);
+				setOtpStatus("sent");
+				setOtpServiceError(
+					result.limit === "daily" && result.retryAt
+						? `${result.message} Potrai riprovare dal ${formattedDate(result.retryAt)}.`
+						: result.message,
+				);
 				return;
 			}
 			setOtpStatus(hadCurrentChallenge ? "sent" : "idle");
@@ -306,8 +374,13 @@ export default function ConfermaInvioAnnuncio({
 									aria-required="true"
 									aria-invalid={Boolean(displayedEmailError || registeredEmail)}
 								/>
-								<Button type="button" variant="outline" onClick={requestOtp} disabled={otpBusy || emailVerified || registeredEmail}>
-									{otpStatus === "sending" ? "Invio..." : challengeMatchesEmail ? "Invia di nuovo" : "Invia codice"}
+								<Button
+									type="button"
+									variant="outline"
+									onClick={requestOtp}
+									disabled={otpBusy || otpRetryActive || emailVerified || registeredEmail}
+								>
+									{otpRequestLabel}
 								</Button>
 							</div>
 							{registeredEmail ? (

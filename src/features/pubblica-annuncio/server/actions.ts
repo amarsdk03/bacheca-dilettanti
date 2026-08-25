@@ -2,6 +2,7 @@
 
 import "server-only";
 
+import {createHash} from "node:crypto";
 import {revalidatePath} from "next/cache";
 
 import {getAuthErrorMessage} from "@/features/auth/errors";
@@ -36,6 +37,16 @@ interface PublishRpcResult {
 	idempotent?: unknown;
 }
 
+interface PublishOtpQuotaRpcResult {
+	status?: unknown;
+	limit?: unknown;
+	retryAt?: unknown;
+}
+
+type PublishOtpQuotaResult =
+	| {status: "allowed"; retryAt: string}
+	| {status: "rate_limited"; limit: "cooldown" | "daily"; retryAt: string};
+
 function normalizeEmail(value: unknown) {
 	if (typeof value !== "string") return null;
 	const email = value.trim().toLowerCase();
@@ -44,6 +55,41 @@ function normalizeEmail(value: unknown) {
 
 function validSubmissionId(value: unknown): value is string {
 	return typeof value === "string" && UUID_PATTERN.test(value);
+}
+
+function normalizedRetryAt(value: unknown) {
+	if (typeof value !== "string") return null;
+	const date = new Date(value);
+	return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+async function consumePublishOtpQuota(email: string): Promise<PublishOtpQuotaResult> {
+	const emailHash = createHash("sha256").update(email, "utf8").digest("hex");
+	const admin = createAdminClient();
+	const {data, error} = await admin.rpc("consume_publish_email_otp_request_v1", {
+		p_email_hash: emailHash,
+	});
+
+	if (error) {
+		console.error("[publish-otp] Quota RPC failed", {code: error.code});
+		throw new Error("PUBLISH_OTP_QUOTA_FAILED");
+	}
+
+	const result = data as PublishOtpQuotaRpcResult | null;
+	const retryAt = normalizedRetryAt(result?.retryAt);
+	if (result?.status === "allowed" && retryAt) {
+		return {status: "allowed", retryAt};
+	}
+	if (
+		result?.status === "rate_limited"
+		&& (result.limit === "cooldown" || result.limit === "daily")
+		&& retryAt
+	) {
+		return {status: "rate_limited", limit: result.limit, retryAt};
+	}
+
+	console.error("[publish-otp] Quota RPC returned an invalid payload");
+	throw new Error("PUBLISH_OTP_QUOTA_INVALID_RESPONSE");
 }
 
 async function isRegisteredEmail(email: string) {
@@ -100,6 +146,18 @@ export async function requestPublishEmailOtp(
 			return {status: "already_registered", message: REGISTERED_EMAIL_MESSAGE};
 		}
 
+		const quota = await consumePublishOtpQuota(email);
+		if (quota.status === "rate_limited") {
+			return {
+				status: "rate_limited",
+				limit: quota.limit,
+				retryAt: quota.retryAt,
+				message: quota.limit === "daily"
+					? "Hai raggiunto il limite di 5 richieste nelle ultime 24 ore."
+					: "Attendi 60 secondi prima di richiedere un nuovo codice.",
+			};
+		}
+
 		const {error} = await supabase.auth.signInWithOtp({
 			email,
 			options: {
@@ -108,7 +166,12 @@ export async function requestPublishEmailOtp(
 		});
 
 		if (error?.code === "over_email_send_rate_limit" || error?.code === "over_request_rate_limit") {
-			return {status: "rate_limited", message: getAuthErrorMessage(error)};
+			return {
+				status: "rate_limited",
+				limit: "provider",
+				retryAt: quota.retryAt,
+				message: getAuthErrorMessage(error),
+			};
 		}
 		if (error) {
 			return {status: "error", message: getAuthErrorMessage(error)};
@@ -117,6 +180,7 @@ export async function requestPublishEmailOtp(
 		return {
 			status: "sent",
 			message: "Ti abbiamo inviato un codice di verifica a 6 cifre.",
+			retryAt: quota.retryAt,
 		};
 	} catch (error) {
 		console.error("[publish-otp] OTP request failed", {

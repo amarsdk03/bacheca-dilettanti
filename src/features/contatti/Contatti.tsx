@@ -49,7 +49,7 @@ export default function Contatti({emailStaff}: {emailStaff: string}) {
 				</section>
 
 				<Card className="mt-8 bg-white shadow-sm">
-					<CardContent className="p-2 sm:p-4">
+					<CardContent className="p-2 sm:p-6">
 						<div className="mb-6 flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-xl bg-fuchsia-100 text-fuchsia-700"><Mail /></span><div><h2 className="font-semibold text-neutral-950">Scrivi allo staff</h2><p className="text-sm text-neutral-500">Si aprirà la tua app email con il messaggio già compilato.</p></div></div>
 						<form onSubmit={handleSubmit}>
 							<FieldGroup>

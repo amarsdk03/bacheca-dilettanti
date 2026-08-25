@@ -82,6 +82,7 @@ import ProfileFiltersResetButton from "@/features/profili/ProfileFiltersResetBut
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
 import {cn} from "@/lib/utils";
 import {Separator} from "@/components/ui/separator";
+import Image from "next/image";
 
 interface ProfiliProps {
 	query: ProfileDirectoryQuery;
@@ -519,6 +520,27 @@ export default function Profili({query, result}: ProfiliProps) {
 				</section>
 
 				<Separator className="mt-4" />
+
+				<div className={"w-full flex items-center justify-between mt-8"}>
+					<Image
+						src="/banner-pubblicita/placeholder.png"
+						width={3840/10}
+						height={1080/10}
+						alt="Pubblicita per sponsor qui!"
+					/>
+					<Image
+						src="/banner-pubblicita/placeholder.png"
+						width={3840/10}
+						height={1080/10}
+						alt="Pubblicita per sponsor qui!"
+					/>
+					<Image
+						src="/banner-pubblicita/placeholder.png"
+						width={3840/10}
+						height={1080/10}
+						alt="Pubblicita per sponsor qui!"
+					/>
+				</div>
 
 				<section aria-labelledby="profiles-results-title" className="mt-8 min-w-0">
 					<div className="mb-5 flex flex-wrap items-center justify-between gap-3">

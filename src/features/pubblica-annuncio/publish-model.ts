@@ -152,9 +152,10 @@ export interface PublishOtpActionInput {
 }
 
 export type RequestPublishEmailOtpResult =
-	| {status: "sent"; message: string}
+	| {status: "sent"; message: string; retryAt: string}
 	| {status: "already_registered"; message: string}
-	| {status: "rate_limited"; message: string; retryAt?: string}
+	| {status: "rate_limited"; limit: "cooldown" | "daily"; message: string; retryAt: string}
+	| {status: "rate_limited"; limit: "provider"; message: string; retryAt?: string}
 	| {status: "error"; message: string};
 
 export interface VerifyPublishOtpActionInput extends PublishOtpActionInput {
