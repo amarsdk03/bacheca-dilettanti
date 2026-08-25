@@ -46,18 +46,26 @@ export function PremiumLinkRecap({link}: {link: string}) {
 	);
 }
 
+export function PremiumImageRecap({image}: {image: File | null}) {
+	if (!image) return null;
+
+	return (
+		<RecapField label="Immagine dell'annuncio" wide>
+			{image.name}
+		</RecapField>
+	);
+}
+
 export function RegioniRecap({
 	regioni,
 	cittaComuniPerRegione,
-	titolo = "Regioni d'interesse",
 }: {
 	regioni: string[];
 	cittaComuniPerRegione: Record<string, string[]>;
-	titolo?: string;
 }) {
 	return (
 		<div className="sm:col-span-2">
-			<dt className="text-xs text-muted-foreground">{titolo}</dt>
+			<dt className="text-xs text-muted-foreground">Regioni interessate</dt>
 			<dd className="mt-1 flex flex-wrap gap-1.5">
 				{regioni.length > 0
 					? regioni.map((regione) => {

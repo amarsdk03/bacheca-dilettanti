@@ -34,6 +34,8 @@ export type CercaAmichevoliSquadra = {
 	categorieAvversario: string[];
 	periodoDa: string;
 	periodoA: string;
+	orarioIndicativoDa: string;
+	orarioIndicativoA: string;
 	regioniInteressate: string[];
 	cittaComuniPerRegione: CittaComuniPerRegione;
 	disponibilitaTrasferta: string;
@@ -47,15 +49,15 @@ export type CercaSponsorSquadra = {
 
 export type AnnuncioSquadraData = {
 	nomeSocieta: string;
-	linkStemma: string;
 	contatti: ContattiAnnuncio;
 	sedePrincipale: SedePrincipaleSquadra;
-	descrizione: string;
-	tipologiaSport: string;
+	presentazioneAggiuntiva: string;
+	tipologiaPrincipale: string;
 	cercaGiocatore: CercaGiocatoreSquadra;
 	cercaStaff: CercaStaffSquadra;
 	cercaAmichevoli: CercaAmichevoliSquadra;
 	cercaSponsor: CercaSponsorSquadra;
+	immagineAnnuncio: File | null;
 	linkAnnuncio: string;
 };
 
@@ -86,6 +88,8 @@ export const CERCA_AMICHEVOLI_SQUADRA_DEFAULT: CercaAmichevoliSquadra = {
 	categorieAvversario: [],
 	periodoDa: "",
 	periodoA: "",
+	orarioIndicativoDa: "",
+	orarioIndicativoA: "",
 	regioniInteressate: [],
 	cittaComuniPerRegione: {},
 	disponibilitaTrasferta: "",
@@ -99,15 +103,14 @@ export const CERCA_SPONSOR_SQUADRA_DEFAULT: CercaSponsorSquadra = {
 
 const createInitialState = (): AnnuncioSquadraData => ({
 	nomeSocieta: "",
-	linkStemma: "",
 	contatti: {...CONTATTI_ANNUNCIO_DEFAULT},
 	sedePrincipale: {
 		...SEDE_PRINCIPALE_SQUADRA_DEFAULT,
 		regioniInteressate: [],
 		cittaComuniPerRegione: {},
 	},
-	descrizione: "",
-	tipologiaSport: "",
+	presentazioneAggiuntiva: "",
+	tipologiaPrincipale: "",
 	cercaGiocatore: {...CERCA_GIOCATORE_SQUADRA_DEFAULT},
 	cercaStaff: {...CERCA_STAFF_SQUADRA_DEFAULT},
 	cercaAmichevoli: {
@@ -117,6 +120,7 @@ const createInitialState = (): AnnuncioSquadraData => ({
 		cittaComuniPerRegione: {},
 	},
 	cercaSponsor: {...CERCA_SPONSOR_SQUADRA_DEFAULT},
+	immagineAnnuncio: null,
 	linkAnnuncio: "",
 });
 
@@ -125,8 +129,9 @@ export const useAnnuncioSquadraStore = createAnnuncioStore(createInitialState);
 export function isAnnuncioSquadraValid(data: AnnuncioSquadraData, sottotipologia: string) {
 	const profiloValido =
 		hasContattoPubblico(data.contatti) &&
-		data.tipologiaSport !== "" &&
-		data.descrizione.length <= 5000 &&
+		data.sedePrincipale.regioniInteressate.length > 0 &&
+		data.tipologiaPrincipale !== "" &&
+		data.presentazioneAggiuntiva.length <= 5000 &&
 		isLinkAnnuncioValid(data.linkAnnuncio);
 
 	if (!profiloValido) return false;
@@ -142,7 +147,14 @@ export function isAnnuncioSquadraValid(data: AnnuncioSquadraData, sottotipologia
 		case "cerca-staff":
 			return data.cercaStaff.figuraCercata !== "" && data.cercaStaff.requisiti.length <= 2000;
 		case "cerca-partite-amichevoli":
-			return data.cercaAmichevoli.categorieAvversario.length > 0;
+			return (
+				data.cercaAmichevoli.categorieAvversario.length > 0 &&
+				data.cercaAmichevoli.regioniInteressate.length > 0 &&
+				(
+					(data.cercaAmichevoli.orarioIndicativoDa === "" && data.cercaAmichevoli.orarioIndicativoA === "") ||
+					(data.cercaAmichevoli.orarioIndicativoDa !== "" && data.cercaAmichevoli.orarioIndicativoA !== "")
+				)
+			);
 		case "cerca-sponsor":
 			return (
 				data.cercaSponsor.categoriaSettore.trim() !== "" &&

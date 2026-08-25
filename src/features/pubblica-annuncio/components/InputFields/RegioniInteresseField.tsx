@@ -1,12 +1,14 @@
-import {useId, useState, type Dispatch, type SetStateAction} from "react";
+import {useId, useState, type Dispatch, type ReactNode, type SetStateAction} from "react";
 import {Check, Plus, X} from "lucide-react";
 
 import {Button} from "@/components/ui/button";
-import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {Regione, REGIONI_ITALIANE} from "@/const/defaultConstants";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import {CITTA_ESEMPIO_PER_REGIONE} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {ScrollArea} from "@/components/ui/scroll-area";
 
 export type CittaComuniPerRegione = Record<string, string[]>;
 
@@ -22,52 +24,116 @@ const regioniPerArea = REGIONI_ITALIANE.reduce(
 	} as Record<"Nord" | "Centro" | "Sud", Regione[]>
 );
 
-const CITTA_ESEMPIO_PER_REGIONE: Record<string, string[]> = {
-	"Abruzzo": ["Pescara", "L'Aquila", "Chieti"],
-	"Basilicata": ["Potenza", "Matera", "Melfi"],
-	"Calabria": ["Reggio Calabria", "Catanzaro", "Cosenza"],
-	"Campania": ["Napoli", "Salerno", "Caserta"],
-	"Emilia-Romagna": ["Bologna", "Modena", "Parma"],
-	"Friuli-Venezia Giulia": ["Trieste", "Udine", "Pordenone"],
-	"Lazio": ["Roma", "Latina", "Viterbo"],
-	"Liguria": ["Genova", "La Spezia", "Savona"],
-	"Lombardia": ["Milano", "Bergamo", "Brescia"],
-	"Marche": ["Ancona", "Pesaro", "Ascoli Piceno"],
-	"Molise": ["Campobasso", "Isernia", "Termoli"],
-	"Piemonte": ["Torino", "Novara", "Alessandria"],
-	"Puglia": ["Bari", "Lecce", "Taranto"],
-	"Sardegna": ["Cagliari", "Sassari", "Nuoro"],
-	"Sicilia": ["Palermo", "Catania", "Messina"],
-	"Toscana": ["Firenze", "Pisa", "Siena"],
-	"Trentino-Alto Adige": ["Trento", "Bolzano", "Rovereto"],
-	"Umbria": ["Perugia", "Terni", "Assisi"],
-	"Valle d'Aosta": ["Aosta", "Courmayeur", "Saint-Vincent"],
-	"Veneto": ["Verona", "Venezia", "Padova"],
-};
-
 type RegioniInteresseFieldProps = {
 	regioniInteressate: string[];
 	setRegioniInteressate: Dispatch<SetStateAction<string[]>>;
 	cittaComuniPerRegione: CittaComuniPerRegione;
 	setCittaComuniPerRegione: Dispatch<SetStateAction<CittaComuniPerRegione>>;
-	titolo?: string;
-	required?: boolean;
 	idPrefix?: string;
+	required?: boolean;
+	error?: ReactNode | null;
 };
 
+// --- Sub-componente estratto: prima era duplicato 3 volte nel file originale ---
+type RegioneCittaCardProps = {
+	regione: string;
+	fieldId: string;
+	bozza: string;
+	onBozzaChange: (valore: string) => void;
+	onAddCittaComune: () => void;
+	citta: string[];
+	onRemoveCittaComune: (cittaComune: string) => void;
+};
+
+function RegioneCittaCard({
+	                          regione,
+	                          fieldId,
+	                          bozza,
+	                          onBozzaChange,
+	                          onAddCittaComune,
+	                          citta,
+	                          onRemoveCittaComune,
+                          }: RegioneCittaCardProps) {
+	return (
+		<div className="rounded-lg border bg-background p-3">
+			<Field>
+				<FieldLabel htmlFor={fieldId}>
+					{regione}: inserisci città e comuni <OptionalLabel />
+				</FieldLabel>
+				<div className="flex gap-2">
+					<Input
+						id={fieldId}
+						value={bozza}
+						onChange={(event) => onBozzaChange(event.target.value)}
+						onKeyDown={(event) => {
+							if (event.key === "Enter" || event.key === ",") {
+								event.preventDefault();
+								onAddCittaComune();
+							}
+						}}
+						placeholder={`${(CITTA_ESEMPIO_PER_REGIONE[regione] ?? []).join(", ")}...`}
+					/>
+					<Button
+						type="button"
+						size="icon"
+						variant="outline"
+						onClick={onAddCittaComune}
+						aria-label={`Aggiungi citta o comune per ${regione}`}
+					>
+						<Plus />
+					</Button>
+				</div>
+				<FieldDescription className="text-xs" hidden={citta.length > 0}>
+					Puoi lasciare vuoto questo dettaglio se l&apos;interesse vale per tutta la regione.
+				</FieldDescription>
+			</Field>
+
+			{citta.length > 0 && (
+				<div className="mt-3 flex flex-wrap gap-2">
+					{citta.map((cittaComune) => (
+						<span
+							key={cittaComune}
+							className="inline-flex items-center gap-1 rounded-full bg-fuchsia-100 px-2 py-1 text-xs font-medium text-fuchsia-800"
+						>
+							{cittaComune}
+							<Button
+								type="button"
+								size="icon-xs"
+								variant="ghost"
+								onClick={() => onRemoveCittaComune(cittaComune)}
+								aria-label={`Rimuovi ${cittaComune}`}
+								className="size-5 rounded-full text-fuchsia-800 hover:bg-fuchsia-200"
+							>
+								<X />
+							</Button>
+						</span>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+
 export default function RegioniInteresseField({
-	regioniInteressate,
-	setRegioniInteressate,
-	cittaComuniPerRegione,
-	setCittaComuniPerRegione,
-	titolo = "Regioni d'interesse",
-	required = true,
-	idPrefix,
-}: RegioniInteresseFieldProps) {
+	                                              regioniInteressate,
+	                                              setRegioniInteressate,
+	                                              cittaComuniPerRegione,
+	                                              setCittaComuniPerRegione,
+	                                              idPrefix,
+	                                              required = true,
+	                                              error,
+                                              }: RegioniInteresseFieldProps) {
 	const [bozzaCittaPerRegione, setBozzaCittaPerRegione] = useState<Record<string, string>>({});
 	const generatedId = useId();
 	const resolvedIdPrefix = idPrefix ?? `regioni-${generatedId}`;
 	const getCittaFieldId = (regione: string) => `${resolvedIdPrefix}-citta-${encodeURIComponent(regione)}`;
+	const tutteLeRegioni = REGIONI_ITALIANE.map((regione) => regione.nome);
+	const tutteSelezionate = regioniInteressate.length === tutteLeRegioni.length;
+	const resolvedError = error !== undefined
+		? error
+		: required && regioniInteressate.length === 0
+			? "Almeno una regione va selezionata"
+			: null;
 
 	const handleRegioniChange = (prossimeRegioni: string[]) => {
 		setRegioniInteressate(prossimeRegioni);
@@ -106,22 +172,47 @@ export default function RegioniInteresseField({
 		});
 	};
 
+	// Rendering condiviso tra ramo con ScrollArea e ramo senza: elimina la duplicazione del JSX
+	const listaCittaRegioni = (
+		<div className="grid gap-3 p-3">
+			{regioniInteressate.map((regione) => (
+				<RegioneCittaCard
+					key={regione}
+					regione={regione}
+					fieldId={getCittaFieldId(regione)}
+					bozza={bozzaCittaPerRegione[regione] ?? ""}
+					onBozzaChange={(valore) =>
+						setBozzaCittaPerRegione((prev) => ({...prev, [regione]: valore}))
+					}
+					onAddCittaComune={() => addCittaComune(regione)}
+					citta={cittaComuniPerRegione[regione] ?? []}
+					onRemoveCittaComune={(cittaComune) => removeCittaComune(regione, cittaComune)}
+				/>
+			))}
+		</div>
+	);
+
 	return (
 		<FieldSet>
-			<div className="mt-4">
-				<FieldLegend variant="label" className="field-legend-title mb-0 inline-flex items-center gap-2">
-					{titolo} {!required && <OptionalLabel />}
-				</FieldLegend>
-				<FieldDescription
-					className="text-red-800 font-medium"
-					hidden={!required || regioniInteressate.length > 0}
-				>
-					Almeno una regione va selezionata
-				</FieldDescription>
-			</div>
+			<Field data-invalid={Boolean(resolvedError)} className="mt-4">
+				<div className="flex items-center justify-between gap-3">
+					<FieldLegend variant="label" className="field-legend-title mb-0">
+						Regioni interessate {!required && <OptionalLabel />}
+					</FieldLegend>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						onClick={() => handleRegioniChange(tutteSelezionate ? [] : tutteLeRegioni)}
+					>
+						{tutteSelezionate ? "Deseleziona tutte" : "Seleziona tutte"}
+					</Button>
+				</div>
+				{resolvedError && <FieldError>{resolvedError}</FieldError>}
+			</Field>
 
 			{Object.entries(regioniPerArea).map(([area, regioni]) => (
-				<Field key={area}>
+				<Field key={area} data-invalid={Boolean(resolvedError)}>
 					<FieldLabel htmlFor={`${resolvedIdPrefix}-area-${area}`}>{area}</FieldLabel>
 					<ToggleGroup
 						id={`${resolvedIdPrefix}-area-${area}`}
@@ -133,6 +224,7 @@ export default function RegioniInteresseField({
 						onValueChange={handleRegioniChange}
 						multiple
 						aria-required={required}
+						aria-invalid={Boolean(resolvedError)}
 					>
 						{regioni.map((regione) => (
 							<ToggleGroupItem
@@ -154,77 +246,12 @@ export default function RegioniInteresseField({
 				</Field>
 			))}
 
-			{regioniInteressate.length > 0 && (
-				<div className="grid gap-3">
-					{regioniInteressate.map((regione) => (
-						<div key={regione} className="rounded-lg border bg-background p-3">
-							<Field>
-								<FieldLabel htmlFor={getCittaFieldId(regione)}>
-									{regione}: inserisci città e comuni <OptionalLabel />
-								</FieldLabel>
-								<div className="flex gap-2">
-									<Input
-										id={getCittaFieldId(regione)}
-										value={bozzaCittaPerRegione[regione] ?? ""}
-										onChange={(event) =>
-											setBozzaCittaPerRegione((prev) => ({
-												...prev,
-												[regione]: event.target.value,
-											}))
-										}
-										onKeyDown={(event) => {
-											if (event.key === "Enter" || event.key === ",") {
-												event.preventDefault();
-												addCittaComune(regione);
-											}
-										}}
-										placeholder={`${(CITTA_ESEMPIO_PER_REGIONE[regione] ?? []).join(", ")}...`}
-									/>
-									<Button
-										type="button"
-										size="icon"
-										variant="outline"
-										onClick={() => addCittaComune(regione)}
-										aria-label={`Aggiungi citta o comune per ${regione}`}
-									>
-										<Plus />
-									</Button>
-								</div>
-								<FieldDescription
-									className="text-xs"
-									hidden={(cittaComuniPerRegione?.[regione]?.length ?? 0) > 0}
-								>
-									Puoi lasciare vuoto questo dettaglio se l&apos;interesse vale per tutta la
-									regione.
-								</FieldDescription>
-							</Field>
-
-							{(cittaComuniPerRegione[regione] ?? []).length > 0 && (
-								<div className="mt-3 flex flex-wrap gap-2">
-									{cittaComuniPerRegione[regione].map((cittaComune) => (
-										<span
-											key={cittaComune}
-											className="inline-flex items-center gap-1 rounded-full bg-fuchsia-100 px-2 py-1 text-xs font-medium text-fuchsia-800"
-										>
-											{cittaComune}
-											<Button
-												type="button"
-												size="icon-xs"
-												variant="ghost"
-												onClick={() => removeCittaComune(regione, cittaComune)}
-												aria-label={`Rimuovi ${cittaComune}`}
-												className="size-5 rounded-full text-fuchsia-800 hover:bg-fuchsia-200"
-											>
-												<X />
-											</Button>
-										</span>
-									))}
-								</div>
-							)}
-						</div>
-					))}
-				</div>
-			)}
+			{regioniInteressate.length > 0 &&
+				(regioniInteressate.length > 4 ? (
+					<ScrollArea className="h-[520px] rounded-md border pe-1">{listaCittaRegioni}</ScrollArea>
+				) : (
+					listaCittaRegioni
+				))}
 		</FieldSet>
 	);
 }

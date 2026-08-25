@@ -12,6 +12,7 @@ import {
 import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import Image from "next/image";
 import {DEFAULT_LOGO_TRANSPARENT_PATH} from "@/const/defaultConstants";
+import AccessForm from "@/app/accesso/access-form";
 
 
 
@@ -103,13 +104,13 @@ const audienceCategories: AudienceCategory[] = [
 	},
 	{
 		icon: 'Briefcase',
-		title: 'Staff',
+		title: 'Staff sportivo',
 		description: 'Allenatori, preparatori e professionisti possono presentare qualifiche ed esperienza.',
 	},
 	{
-		icon: 'DoorOpen',
-		title: 'Società ed enti sportivi',
-		description: 'Le realtà sportive trovano risorse e si presentano al pubblico giusto.',
+		icon: 'Trophy',
+		title: 'Tornei ed eventi',
+		description: 'Organizza e promuovi tornei, eventi e manifestazioni alla community sportiva.',
 	},
 	{
 		icon: 'TrafficCone',
@@ -189,7 +190,7 @@ const statusStyles: Record<FeatureStatus, string> = {
 
 
 
-export default function ComingSoon() {
+export default function ComingSoon({ next }: { next?: string }) {
 	const shouldReduceMotion = useReducedMotion();
 
 	const accentVars = {
@@ -204,6 +205,23 @@ export default function ComingSoon() {
 			className={`${display.variable} ${body.variable} ${mono.variable} font-(family-name:--font-body) text-neutral-900 antialiased`}
 		>
 			<main id="main-content">
+				<main className="flex items-center justify-center bg-muted px-6 py-16">
+					<div className="w-full max-w-md rounded-2xl border bg-background p-8 shadow-sm">
+						<div className="mb-8">
+							<h1 className="text-2xl font-semibold">
+								Bacheca Dilettanti
+							</h1>
+
+							<p className="mt-2 text-sm text-muted-foreground">
+								Il sito è attualmente ad accesso riservato.
+								Inserisci la password per continuare.
+							</p>
+						</div>
+
+						<AccessForm next={next}/>
+					</div>
+				</main>
+
 				{/* ------------------------------ Hero ------------------------------ */}
 				<section className="relative overflow-hidden bg-[#131316]">
 					<div

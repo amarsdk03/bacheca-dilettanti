@@ -1,29 +1,18 @@
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
-
-export const FIGURA_PROFESSIONALE_OPTIONS = [
-	"Analisi",
-	"Coaching/Preparatore",
-	"Osservatore/Scouting",
-	"Esecutivo/Amministrativo",
-	"Manutenzione/Infrastruttura",
-	"HR",
-	"Fisioterapia/Medicina sportiva",
-	"Commerciale/Business",
-	"Educativo/Sociale",
-	"Media/Design",
-	"Altro",
-] as const;
+import {FIGURA_PROFESSIONALE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type FiguraProfessionaleMultiselectFieldProps = {
 	value: string[];
 	onValueChange: (value: string[]) => void;
 	required?: boolean;
+	error?: string;
 };
 
 export default function FiguraProfessionaleMultiselectField({
 	value,
 	onValueChange,
 	required = false,
+	error,
 }: FiguraProfessionaleMultiselectFieldProps) {
 	return (
 		<MultiselectField
@@ -34,6 +23,7 @@ export default function FiguraProfessionaleMultiselectField({
 			placeholder="Seleziona le figure..."
 			emptyText="Nessuna figura trovata."
 			required={required}
+			error={error}
 		/>
 	);
 }

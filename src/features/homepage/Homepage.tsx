@@ -183,52 +183,34 @@ const audienceCategories: AudienceCategory[] = [
 		opportunity: 'Profili Plus e Pro, video e annunci prioritari',
 	},
 	{
-		icon: 'ClipboardList',
-		title: 'Staff e professionisti',
-		need: 'Presentare qualifiche, CV, competenze professionali e operative.',
-		opportunity: 'Abbonamenti, portfolio e pubblicazioni nel feed',
-	},
-	{
-		icon: 'Shield',
-		title: 'Club dilettantistici',
-		need: 'Pubblicare annunci, presentare la società e trovare risorse.',
+		icon: 'Award',
+		title: 'Squadre',
+		need: 'Cercare giocatori, staff, partite o sponsor e presentare la squadra.',
 		opportunity: 'Profili vetrina, Club Pilota e promozione',
 	},
 	{
-		icon: 'Briefcase',
-		title: 'Professionisti e studi',
-		need: 'Proporre servizi a club, atleti e famiglie.',
-		opportunity: 'Abbonamenti dedicati, articoli e partnership',
+		icon: 'Search',
+		title: 'Staff sportivo',
+		need: 'Presentare qualifiche, esperienze e disponibilità per nuovi incarichi.',
+		opportunity: 'Abbonamenti, portfolio e pubblicazioni nel feed',
 	},
 	{
-		icon: 'GraduationCap',
-		title: 'Enti di formazione',
-		need: 'Promuovere corsi e raggiungere un pubblico verticale.',
-		opportunity: 'Offerte personalizzate ed esclusive merceologiche',
+		icon: 'ClipboardList',
+		title: 'Arbitri',
+		need: 'Mostrare esperienza e disponibilità per partite ed eventi sportivi.',
+		opportunity: 'Profilo dedicato e maggiore visibilità nelle ricerche',
 	},
 	{
-		icon: 'Handshake',
-		title: 'Agenzie e agenti',
-		need: 'Presentare attività, opportunità e contenuti.',
-		opportunity: 'Profili dedicati e pacchetti a numero di pubblicazioni',
-	},
-	{
-		icon: 'MapPin',
-		title: 'Gestori di campi',
-		need: 'Essere trovati e facilitare le prenotazioni.',
-		opportunity: 'Profili locali, listini, disponibilità e booking',
-	},
-	{
-		icon: 'CalendarDays',
-		title: 'Organizzatori di tornei',
-		need: 'Riempire le iscrizioni e comunicare le scadenze.',
+		icon: 'Trophy',
+		title: 'Tornei ed eventi',
+		need: 'Promuovere manifestazioni, raccogliere iscrizioni e comunicare le scadenze.',
 		opportunity: 'Pacchetti promozionali ad alto valore economico',
 	},
 	{
-		icon: 'Building2',
-		title: 'Aziende e partner',
-		need: 'Raggiungere una community calcistica profilata.',
-		opportunity: 'Spazi pubblicitari, sponsorizzazioni e pacchetti partner',
+		icon: 'TrafficCone',
+		title: 'Campi e impianti sportivi',
+		need: 'Presentare la struttura, essere trovati e facilitare le prenotazioni.',
+		opportunity: 'Profili locali, listini, disponibilità e booking',
 	},
 ];
 
@@ -431,7 +413,7 @@ export default function Homepage() {
 				{/* ------------------------------ Hero ------------------------------ */}
 				<section className="relative overflow-hidden">
 					<Image
-						src="/backgrounds/homepage-hero2.jpg"
+						src="/backgrounds/homepage-hero.jpg"
 						alt="Homepage hero background"
 						fill
 						priority
@@ -524,7 +506,7 @@ export default function Homepage() {
 				{/* ------------------------------ Annunci ------------------------------ */}
 				<section id="annunci-lista" className="border-t border-neutral-200 bg-white">
 					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-						<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+						<div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
 							<motion.div
 								initial="hidden"
 								whileInView="visible"
@@ -542,6 +524,10 @@ export default function Homepage() {
 								>
 									Nuove opportunità pubblicate
 								</motion.h2>
+								<motion.p variants={fadeUp} className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-600">
+									<b>Nota:</b> gli annunci mostrati qui sotto sono solo a scopo presentativo e non sono pubblicati da
+									individui o enti reali. Torneremo presto con i vostri ultimi annunci all'avvio del sito!
+								</motion.p>
 							</motion.div>
 
 							<div role="group" aria-label="Filtra annunci per categoria"
@@ -630,7 +616,7 @@ export default function Homepage() {
 				</section>
 
 				{/* -------------------- Fai crescere il tuo percorso o la tua realtà -------------------- */}
-				<section id="categorie" className="border-t border-neutral-200 bg-white">
+				<section id="categorie" className="border-t border-neutral-200 bg-white" hidden>
 					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
 						<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 							<motion.div

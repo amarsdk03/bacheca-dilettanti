@@ -1,6 +1,6 @@
 "use client";
 
-import {type FormEvent, useState} from "react";
+import {type SubmitEvent, useState} from "react";
 import {ExternalLink, Mail, Send} from "lucide-react";
 import {SiInstagram, SiWhatsapp} from "@icons-pack/react-simple-icons";
 
@@ -9,9 +9,7 @@ import {Card, CardContent} from "@/components/ui/card";
 import {Field, FieldDescription, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
-
-const INSTAGRAM_URL = "https://www.instagram.com/bachecadilettanti/";
-const WHATSAPP_URL = "https://whatsapp.com/channel/0029Vb8lng43AzNSP0YlRL3V";
+import {INSTAGRAM_URL, WHATSAPP_URL} from "@/const/contactConstants";
 
 export default function Contatti({emailStaff}: {emailStaff: string}) {
 	const [nome, setNome] = useState("");
@@ -19,7 +17,7 @@ export default function Contatti({emailStaff}: {emailStaff: string}) {
 	const [oggetto, setOggetto] = useState("");
 	const [messaggio, setMessaggio] = useState("");
 
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+	const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		const body = [`Nome: ${nome}`, `Email: ${email}`, "", messaggio].join("\n");
 		window.location.href = `mailto:${emailStaff}?subject=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(body)}`;
@@ -51,7 +49,7 @@ export default function Contatti({emailStaff}: {emailStaff: string}) {
 				</section>
 
 				<Card className="mt-8 bg-white shadow-sm">
-					<CardContent className="p-2 sm:p-4">
+					<CardContent className="p-2 sm:p-6">
 						<div className="mb-6 flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-xl bg-fuchsia-100 text-fuchsia-700"><Mail /></span><div><h2 className="font-semibold text-neutral-950">Scrivi allo staff</h2><p className="text-sm text-neutral-500">Si aprirà la tua app email con il messaggio già compilato.</p></div></div>
 						<form onSubmit={handleSubmit}>
 							<FieldGroup>

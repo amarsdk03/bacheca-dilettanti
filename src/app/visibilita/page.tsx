@@ -13,7 +13,9 @@ export default function Page() {
 	return (
 		<>
 			<Navbar />
-			<Visibilita />
+			<div hidden>
+				<Visibilita />
+			</div>
 			<Footer whiteBackground={true} />
 		</>
 	);

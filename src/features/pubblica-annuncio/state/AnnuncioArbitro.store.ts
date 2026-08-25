@@ -2,6 +2,11 @@ import {createAnnuncioStore} from "@/features/pubblica-annuncio/state/createAnnu
 import type {EsperienzaAnnuncio} from "@/features/pubblica-annuncio/components/InputFields/EsperienzeAnnuncioFields";
 import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import {
+	CONTATTI_ANNUNCIO_DEFAULT,
+	hasContattoPubblico,
+	type ContattiAnnuncio,
+} from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 
 export type AnnuncioArbitroData = {
 	nome: string;
@@ -11,10 +16,12 @@ export type AnnuncioArbitroData = {
 	annoNascita: string;
 	regioniInteressate: string[];
 	cittaComuniPerRegione: CittaComuniPerRegione;
+	contatti: ContattiAnnuncio;
 	tipologieCalcio: string[];
-	presentazione: string;
+	presentazioneInformazioniAggiuntive: string;
 	esperienze: EsperienzaAnnuncio[];
-	disponibilitaSpostamento: string;
+	automunito: string;
+	immagineAnnuncio: File | null;
 	linkAnnuncio: string;
 };
 
@@ -26,10 +33,12 @@ const createInitialState = (): AnnuncioArbitroData => ({
 	annoNascita: "",
 	regioniInteressate: [],
 	cittaComuniPerRegione: {},
+	contatti: {...CONTATTI_ANNUNCIO_DEFAULT},
 	tipologieCalcio: [],
-	presentazione: "",
+	presentazioneInformazioniAggiuntive: "",
 	esperienze: [],
-	disponibilitaSpostamento: "",
+	automunito: "",
+	immagineAnnuncio: null,
 	linkAnnuncio: "",
 });
 
@@ -38,7 +47,8 @@ export const useAnnuncioArbitroStore = createAnnuncioStore(createInitialState);
 export function isAnnuncioArbitroValid(data: AnnuncioArbitroData) {
 	return (
 		data.regioniInteressate.length > 0 &&
-		data.presentazione.length <= 2000 &&
+		hasContattoPubblico(data.contatti) &&
+		data.presentazioneInformazioniAggiuntive.length <= 2000 &&
 		isLinkAnnuncioValid(data.linkAnnuncio)
 	);
 }

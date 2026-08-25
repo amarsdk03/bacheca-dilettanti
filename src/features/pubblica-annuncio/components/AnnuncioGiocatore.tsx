@@ -1,9 +1,5 @@
 "use client";
 
-import {useRef} from "react";
-import {X} from "lucide-react";
-
-import {Button} from "@/components/ui/button";
 import {
 	Field,
 	FieldDescription,
@@ -23,11 +19,11 @@ import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/compon
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
 import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
-import PremiumOnlyBadge from "@/features/pubblica-annuncio/components/InputFields/PremiumOnlyBadge";
-import {RUOLI_AVANZATI_PER_RUOLO} from "@/features/pubblica-annuncio/components/AnnuncioSquadra";
+import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
+import {RUOLI_SPECIFICI_PER_RUOLO} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import DisponibilitaProfiloSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaProfiloSelect";
 
 export default function AnnuncioGiocatore() {
-	const fileInputRef = useRef<HTMLInputElement>(null);
 	const {
 		nome,
 		cognome,
@@ -37,23 +33,19 @@ export default function AnnuncioGiocatore() {
 		regioniInteressate,
 		cittaComuniPerRegione,
 		contatti,
-		descrizione,
+		descrizioneAggiuntiva,
+		disponibilita,
 		tipologieCalcio,
 		ruoliPrincipali,
 		ruoliSpecifici,
-		foto,
+		immagineAnnuncio,
 		linkAnnuncio,
 		setField,
 	} = useAnnuncioGiocatoreStore();
 
 	const ruoliAvanzatiDisponibili = Array.from(
-		new Set(ruoliPrincipali.flatMap((ruolo) => RUOLI_AVANZATI_PER_RUOLO[ruolo] ?? []))
+		new Set(ruoliPrincipali.flatMap((ruolo) => RUOLI_SPECIFICI_PER_RUOLO[ruolo] ?? []))
 	);
-
-	const removeFoto = () => {
-		setField("foto", null);
-		if (fileInputRef.current) fileInputRef.current.value = "";
-	};
 
 	return (
 		<FieldGroup className="w-full">
@@ -125,11 +117,17 @@ export default function AnnuncioGiocatore() {
 						onValueChange={(value) => setField("tipologieCalcio", value)}
 					/>
 
+					<DisponibilitaProfiloSelect
+						id="giocatore-disponibilita"
+						value={disponibilita}
+						onValueChange={(value) => setField("disponibilita", value)}
+					/>
+
 					<RuoloPrincipaleMultiselectField
 						value={ruoliPrincipali}
 						onValueChange={(value) => {
 							const opzioniDisponibili = new Set(
-								value.flatMap((ruolo) => RUOLI_AVANZATI_PER_RUOLO[ruolo] ?? [])
+								value.flatMap((ruolo) => RUOLI_SPECIFICI_PER_RUOLO[ruolo] ?? [])
 							);
 							setField("ruoliPrincipali", value);
 							setField("ruoliSpecifici", ruoliSpecifici.filter((ruolo) => opzioniDisponibili.has(ruolo)));
@@ -147,43 +145,25 @@ export default function AnnuncioGiocatore() {
 
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="giocatore-descrizione">Breve descrizione aggiuntiva <OptionalLabel /></FieldLabel>
-						<span className="text-xs text-muted-foreground">{descrizione.length}/2000</span>
+						<FieldLabel htmlFor="giocatore-descrizione-aggiuntiva">Breve descrizione aggiuntiva <OptionalLabel /></FieldLabel>
+						<span className="text-xs text-muted-foreground">{descrizioneAggiuntiva.length}/2000</span>
 					</div>
 					<Textarea
-						id="giocatore-descrizione"
-						value={descrizione}
-						onChange={(event) => setField("descrizione", event.target.value.slice(0, 2000))}
+						id="giocatore-descrizione-aggiuntiva"
+						value={descrizioneAggiuntiva}
+						onChange={(event) => setField("descrizioneAggiuntiva", event.target.value.slice(0, 2000))}
 						maxLength={2000}
 						placeholder="Racconta esperienze, caratteristiche tecniche, disponibilità, obiettivi..."
 						className="min-h-32 resize-y"
 					/>
 				</Field>
 
-				<Field>
-					<div className="flex flex-wrap items-center justify-between gap-2">
-						<FieldLabel htmlFor="giocatore-foto">Immagine dell&apos;annuncio <OptionalLabel /></FieldLabel>
-						<PremiumOnlyBadge tipologia="giocatore" funzione="Immagine dell'annuncio" />
-					</div>
-					<Input
-						ref={fileInputRef}
-						id="giocatore-foto"
-						type="file"
-						accept="image/png,image/jpeg,image/webp"
-						onChange={(event) => setField("foto", event.target.files?.[0] ?? null)}
-					/>
-					<FieldDescription>
-						L&apos;immagine sarà inclusa nell&apos;annuncio solo se si sceglie una pubblicazione a pagamento.
-					</FieldDescription>
-					{foto && (
-						<div className="flex items-center justify-between gap-3 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm text-purple-900">
-							<span className="min-w-0 truncate">{foto.name}</span>
-							<Button type="button" variant="ghost" size="icon-xs" onClick={removeFoto} aria-label="Rimuovi immagine">
-								<X />
-							</Button>
-						</div>
-					)}
-				</Field>
+				<ImmagineAnnuncioPremiumField
+					idPrefix="giocatore"
+					tipologia="giocatore"
+					value={immagineAnnuncio}
+					onValueChange={(value) => setField("immagineAnnuncio", value)}
+				/>
 
 				<LinkAnnuncioPremiumField
 					idPrefix="giocatore"

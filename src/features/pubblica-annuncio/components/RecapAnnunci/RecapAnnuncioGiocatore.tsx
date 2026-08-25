@@ -2,10 +2,15 @@ import {useAnnuncioGiocatoreStore} from "@/features/pubblica-annuncio/state/Annu
 import {
 	formatContatti,
 	formatDataNascita,
+	PremiumImageRecap,
 	PremiumLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
+import {
+	DISPONIBILITA_PROFILO_OPTIONS,
+	getOptionLabel,
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export default function RecapAnnuncioGiocatore() {
 	const data = useAnnuncioGiocatoreStore();
@@ -17,11 +22,16 @@ export default function RecapAnnuncioGiocatore() {
 				<RecapField label="Nome e cognome">{`${data.nome} ${data.cognome}`.trim() || "—"}</RecapField>
 				<RecapField label="Data di nascita">{formatDataNascita(data.giornoNascita, data.meseNascita, data.annoNascita)}</RecapField>
 				<RecapField label="Tipologia calcio">{data.tipologieCalcio.join(", ") || "—"}</RecapField>
+				<RecapField label="Disponibilità">
+					{getOptionLabel(DISPONIBILITA_PROFILO_OPTIONS, data.disponibilita) || "Non specificare"}
+				</RecapField>
 				<RecapField label="Ruolo principale">{data.ruoliPrincipali.join(", ") || "—"}</RecapField>
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
 				<RecapField label="Contatti pubblici" wide>{formatContatti(data.contatti)}</RecapField>
-				{data.foto && <RecapField label="Immagine premium" wide>{data.foto.name}</RecapField>}
-				{data.descrizione.trim() !== "" && <RecapField label="Breve descrizione" wide>{data.descrizione}</RecapField>}
+				<PremiumImageRecap image={data.immagineAnnuncio} />
+				{data.descrizioneAggiuntiva.trim() !== "" && (
+					<RecapField label="Breve descrizione aggiuntiva" wide>{data.descrizioneAggiuntiva}</RecapField>
+				)}
 				<PremiumLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>

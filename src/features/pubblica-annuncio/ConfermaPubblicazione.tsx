@@ -39,7 +39,7 @@ export default function ConfermaPubblicazione() {
 					</div>
 					<p className="mt-5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-fuchsia-600">Invio completato</p>
 					<h1 className="mt-3 text-3xl font-semibold tracking-tight text-neutral-950 sm:text-5xl">Il tuo annuncio è stato inviato.</h1>
-					<p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-neutral-600 sm:text-lg">Grazie! Abbiamo ricevuto tutti i dati. Per ora la pubblicazione è simulata, ma puoi già vedere come apparirà il collegamento al tuo annuncio.</p>
+					<p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-neutral-600 sm:text-lg">Grazie! L’annuncio è stato salvato ed è ora in revisione. La scheda qui sotto resta una semplice anteprima finché non collegheremo la pagina pubblica del singolo annuncio.</p>
 					<Link href="#annuncio-demo" className={cn(buttonVariants({size: "lg"}), "mt-7")}>
 						Visualizza l&apos;annuncio demo <ArrowUpRight />
 					</Link>

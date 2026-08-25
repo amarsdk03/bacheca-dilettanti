@@ -17,9 +17,24 @@ import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/Inpu
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/components/ui/input-group";
 import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
+import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
+import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
+import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 
 export default function AnnuncioCampoImpianto() {
-	const {nomeImpianto, indirizzo, presentazione, contatti, disponibilita, linkAnnuncio, setField} = useAnnuncioCampoImpiantoStore();
+	const {
+		nomeImpianto,
+		indirizzo,
+		presentazione,
+		tipologieCalcio,
+		contatti,
+		regioniInteressate,
+		cittaComuniPerRegione,
+		disponibilita,
+		immagineAnnuncio,
+		linkAnnuncio,
+		setField,
+	} = useAnnuncioCampoImpiantoStore();
 
 	const updateDisponibilita = <K extends keyof DisponibilitaCampoImpianto>(field: K, value: DisponibilitaCampoImpianto[K]) => {
 		setField("disponibilita", (previous) => ({...previous, [field]: value}));
@@ -40,6 +55,10 @@ export default function AnnuncioCampoImpianto() {
 					<FieldLabel htmlFor="campo-impianto-indirizzo">Indirizzo <OptionalLabel /></FieldLabel>
 					<Input id="campo-impianto-indirizzo" value={indirizzo} onChange={(event) => setField("indirizzo", event.target.value)} placeholder="Via Roma 1, Milano" />
 				</Field>
+				<TipologiaCalcioMultiselectField
+					value={tipologieCalcio}
+					onValueChange={(value) => setField("tipologieCalcio", value)}
+				/>
 				<Field>
 					<div className="flex items-center justify-between gap-3">
 						<FieldLabel htmlFor="campo-impianto-presentazione">Breve presentazione <OptionalLabel /></FieldLabel>
@@ -57,6 +76,14 @@ export default function AnnuncioCampoImpianto() {
 			</FieldSet>
 
 			<ContattiAnnuncioFields contatti={contatti} setContatti={(value) => setField("contatti", value)} />
+
+			<RegioniInteresseField
+				idPrefix="campo-impianto"
+				regioniInteressate={regioniInteressate}
+				setRegioniInteressate={(value) => setField("regioniInteressate", value)}
+				cittaComuniPerRegione={cittaComuniPerRegione}
+				setCittaComuniPerRegione={(value) => setField("cittaComuniPerRegione", value)}
+			/>
 
 			<FieldSet>
 				<div className="mt-4">
@@ -105,9 +132,15 @@ export default function AnnuncioCampoImpianto() {
 					/>
 				</Field>
 			</FieldSet>
+			<ImmagineAnnuncioPremiumField
+				idPrefix="campo-impianto"
+				tipologia="campi-impianti-sportivi"
+				value={immagineAnnuncio}
+				onValueChange={(value) => setField("immagineAnnuncio", value)}
+			/>
 			<LinkAnnuncioPremiumField
 				idPrefix="campo-impianto"
-				tipologia="campo-impianto-sportivo"
+				tipologia="campi-impianti-sportivi"
 				value={linkAnnuncio}
 				onValueChange={(value) => setField("linkAnnuncio", value)}
 			/>

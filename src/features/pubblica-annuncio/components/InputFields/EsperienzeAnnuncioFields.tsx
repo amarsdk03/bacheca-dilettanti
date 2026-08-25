@@ -6,8 +6,12 @@ import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/comp
 import {Input} from "@/components/ui/input";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
+import {
+	STATO_ESPERIENZA_OPTIONS,
+	type StatoEsperienza,
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
-export type StatoEsperienza = "non-specificare" | "in-corso" | "conseguito";
+export type {StatoEsperienza} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export type EsperienzaAnnuncio = {
 	id: string;
@@ -41,12 +45,6 @@ type EsperienzeAnnuncioFieldsProps = {
 	idPrefix: string;
 	titolo?: string;
 };
-
-const STATO_OPTIONS: {value: StatoEsperienza; label: string}[] = [
-	{value: "non-specificare", label: "Non specificare"},
-	{value: "in-corso", label: "In corso"},
-	{value: "conseguito", label: "Conseguito"},
-];
 
 export default function EsperienzeAnnuncioFields({
 	                                                 esperienze,
@@ -145,7 +143,7 @@ export default function EsperienzeAnnuncioFields({
 								value={esperienza.stato}
 								onValueChange={(value) => updateEsperienza(esperienza.id, "stato", value as StatoEsperienza)}
 							>
-								{STATO_OPTIONS.map((opzione) => (
+								{STATO_ESPERIENZA_OPTIONS.map((opzione) => (
 									<Field key={opzione.value} orientation="horizontal">
 										<RadioGroupItem
 											value={opzione.value}

@@ -1,11 +1,17 @@
 import {useAnnuncioStaffStore} from "@/features/pubblica-annuncio/state/AnnuncioStaff.store";
 import {
 	EsperienzeRecap,
+	formatContatti,
 	formatDataNascita,
+	PremiumImageRecap,
 	PremiumLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
+import {
+	DISPONIBILITA_PROFILO_OPTIONS,
+	getOptionLabel,
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export default function RecapAnnuncioStaff() {
 	const data = useAnnuncioStaffStore();
@@ -17,12 +23,21 @@ export default function RecapAnnuncioStaff() {
 				<RecapField label="Nome e cognome">{`${data.nome} ${data.cognome}`.trim() || "—"}</RecapField>
 				<RecapField label="Data di nascita">{formatDataNascita(data.giornoNascita, data.meseNascita, data.annoNascita)}</RecapField>
 				<RecapField label="Tipologia calcio">{data.tipologieCalcio.join(", ") || "—"}</RecapField>
+				<RecapField label="Disponibilità">
+					{getOptionLabel(DISPONIBILITA_PROFILO_OPTIONS, data.disponibilita) || "Non specificare"}
+				</RecapField>
 				<RecapField label="Figura professionale">{data.figureProfessionali.join(", ") || "—"}</RecapField>
-				<RecapField label="Categoria ricercata">{data.categoriaRicercata || "—"}</RecapField>
+				<RecapField label="Categorie ricercate">{data.categorieRicercate.join(", ") || "—"}</RecapField>
 				<RecapField label="Disponibilità spostamento">{data.disponibilitaSpostamento || "Non specificato"}</RecapField>
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
-				{data.presentazione.trim() !== "" && <RecapField label="Presentazione personale" wide>{data.presentazione}</RecapField>}
+				<RecapField label="Contatti" wide>{formatContatti(data.contatti)}</RecapField>
+				{data.presentazioneInformazioniAggiuntive.trim() !== "" && (
+					<RecapField label="Breve presentazione / informazioni aggiuntive" wide>
+						{data.presentazioneInformazioniAggiuntive}
+					</RecapField>
+				)}
 				<EsperienzeRecap esperienze={data.esperienze} />
+				<PremiumImageRecap image={data.immagineAnnuncio} />
 				<PremiumLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>

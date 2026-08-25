@@ -67,9 +67,6 @@ export default function PremiumOnlyBadge({tipologia, funzione}: PremiumOnlyBadge
 									<p className="font-semibold text-fuchsia-700">{piano.prezzo}</p>
 								</div>
 								<p className="mt-2 text-sm leading-5 text-muted-foreground">{piano.descrizione}</p>
-								{piano.prezzoAnnuale && (
-									<p className="mt-1 text-sm font-medium">Oppure {piano.prezzoAnnuale}</p>
-								)}
 								{piano.caratteristiche && piano.caratteristiche.length > 0 && (
 									<ul className="mt-3 grid gap-1.5 text-sm">
 										{piano.caratteristiche.map((caratteristica) => (

@@ -5,10 +5,9 @@ import {
 	type ContattiAnnuncio,
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 
 export type DisponibilitaCampoImpianto = {
-	periodoDa: string;
-	periodoA: string;
 	orario: string;
 	costoOrario: string;
 	serviziInclusi: string;
@@ -18,14 +17,16 @@ export type AnnuncioCampoImpiantoData = {
 	nomeImpianto: string;
 	indirizzo: string;
 	presentazione: string;
+	tipologieCalcio: string[];
 	contatti: ContattiAnnuncio;
+	regioniInteressate: string[];
+	cittaComuniPerRegione: CittaComuniPerRegione;
 	disponibilita: DisponibilitaCampoImpianto;
+	immagineAnnuncio: File | null;
 	linkAnnuncio: string;
 };
 
 export const DISPONIBILITA_CAMPO_IMPIANTO_DEFAULT: DisponibilitaCampoImpianto = {
-	periodoDa: "",
-	periodoA: "",
 	orario: "",
 	costoOrario: "",
 	serviziInclusi: "",
@@ -35,8 +36,12 @@ const createInitialState = (): AnnuncioCampoImpiantoData => ({
 	nomeImpianto: "",
 	indirizzo: "",
 	presentazione: "",
+	tipologieCalcio: [],
 	contatti: {...CONTATTI_ANNUNCIO_DEFAULT},
+	regioniInteressate: [],
+	cittaComuniPerRegione: {},
 	disponibilita: {...DISPONIBILITA_CAMPO_IMPIANTO_DEFAULT},
+	immagineAnnuncio: null,
 	linkAnnuncio: "",
 });
 
@@ -45,6 +50,7 @@ export const useAnnuncioCampoImpiantoStore = createAnnuncioStore(createInitialSt
 export function isAnnuncioCampoImpiantoValid(data: AnnuncioCampoImpiantoData) {
 	return (
 		hasContattoPubblico(data.contatti) &&
+		data.regioniInteressate.length > 0 &&
 		data.presentazione.length <= 5000 &&
 		data.disponibilita.serviziInclusi.length <= 2000 &&
 		isLinkAnnuncioValid(data.linkAnnuncio)

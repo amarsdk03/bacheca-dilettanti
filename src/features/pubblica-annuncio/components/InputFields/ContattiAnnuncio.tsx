@@ -3,95 +3,17 @@ import {type Dispatch, type SetStateAction} from "react";
 import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
-import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import {
+	SOCIAL_CONTACT_OPTIONS,
+	type CanaleContattoAnnuncio,
+	type ContattiAnnuncio,
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
-export type CanaleContattoAnnuncio =
-	| "Email"
-	| "Telefono"
-	| "Instagram"
-	| "Facebook"
-	| "Tiktok"
-	| "Youtube"
-	| "X (Twitter)"
-	| "Linkedin";
-
-export type ContattiAnnuncio = Record<CanaleContattoAnnuncio, string>;
-
-export const CONTATTI_ANNUNCIO_DEFAULT: ContattiAnnuncio = {
-	"Email": "",
-	"Telefono": "",
-	"Instagram": "",
-	"Facebook": "",
-	"Tiktok": "",
-	"Youtube": "",
-	"X (Twitter)": "",
-	"Linkedin": "",
-};
-
-export const SOCIAL_CONTACT_OPTIONS: {
-	valore: CanaleContattoAnnuncio;
-	etichetta: string;
-	placeholder: string;
-	tipoInput: "email" | "tel" | "url";
-	icona?: string;
-}[] = [
-	{
-		valore: "Email",
-		etichetta: "Email",
-		placeholder: "nome@email.it",
-		tipoInput: "email",
-		icona: "Mail",
-	},
-	{
-		valore: "Telefono",
-		etichetta: "Telefono",
-		placeholder: "+39 333 123 4567",
-		tipoInput: "tel",
-		icona: "Phone",
-	},
-	{
-		valore: "Instagram",
-		etichetta: "Instagram",
-		placeholder: "https://instagram.com/nomeutente",
-		tipoInput: "url",
-		icona: "Camera",
-	},
-	{
-		valore: "Facebook",
-		etichetta: "Facebook",
-		placeholder: "https://facebook.com/nomeutente",
-		tipoInput: "url",
-		icona: "Users",
-	},
-	{
-		valore: "Tiktok",
-		etichetta: "TikTok",
-		placeholder: "https://tiktok.com/@nomeutente",
-		tipoInput: "url",
-		icona: "Music2",
-	},
-	{
-		valore: "Youtube",
-		etichetta: "YouTube",
-		placeholder: "https://youtube.com/nomeutente",
-		tipoInput: "url",
-		icona: "Video",
-	},
-	{
-		valore: "X (Twitter)",
-		etichetta: "X (Twitter)",
-		placeholder: "https://x.com/nomeutente",
-		tipoInput: "url",
-		icona: "MessagesSquare",
-	},
-	{
-		valore: "Linkedin",
-		etichetta: "LinkedIn",
-		placeholder: "https://linkedin.com/in/nomeutente",
-		tipoInput: "url",
-		icona: "BriefcaseBusiness",
-	},
-];
+export {
+	CONTATTI_ANNUNCIO_DEFAULT,
+	type CanaleContattoAnnuncio,
+	type ContattiAnnuncio,
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export function hasContattoPubblico(contatti: ContattiAnnuncio) {
 	return contatti.Email.trim() !== "" || contatti.Telefono.trim() !== "";
@@ -104,13 +26,11 @@ export function getCanaliContattoCompilati(contatti: ContattiAnnuncio) {
 type ContattiAnnuncioFieldsProps = {
 	contatti: ContattiAnnuncio;
 	setContatti: Dispatch<SetStateAction<ContattiAnnuncio>>;
-	required?: boolean;
 };
 
 export default function ContattiAnnuncioFields({
 	contatti,
 	setContatti,
-	required = true,
 }: ContattiAnnuncioFieldsProps) {
 	const contattoPubblicoPresente = hasContattoPubblico(contatti);
 
@@ -148,11 +68,11 @@ export default function ContattiAnnuncioFields({
 		<FieldSet>
 			<div>
 				<FieldLegend variant="label" className="field-legend-title mb-0">
-					Contatti pubblici {!required && <OptionalLabel />}
+					Contatti pubblici
 				</FieldLegend>
 				<FieldDescription
 					className="text-red-800 font-medium mb-2 pt-1.5"
-					hidden={!required || contattoPubblicoPresente}
+					hidden={contattoPubblicoPresente}
 				>
 					Inserisci almeno un contatto tra email e telefono.
 				</FieldDescription>

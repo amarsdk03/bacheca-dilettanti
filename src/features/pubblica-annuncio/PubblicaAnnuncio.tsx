@@ -1,114 +1,116 @@
 "use client";
 
-import {useState} from "react";
-import {ClipboardPenIcon} from "lucide-react";
+import {useMemo, useRef, useState} from "react";
+import Link from "next/link";
+import {ClipboardPenIcon, InfoIcon, MailCheckIcon, UserRoundCheckIcon} from "lucide-react";
 
+import GradientBackground from "@/components/styling/GradientBackground";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
-import {Card, CardContent, CardHeader} from "@/components/ui/card";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {
-	isAnnuncioArbitroValid,
-	useAnnuncioArbitroStore,
-} from "@/features/pubblica-annuncio/state/AnnuncioArbitro.store";
-import {
-	isAnnuncioCampoImpiantoValid,
-	useAnnuncioCampoImpiantoStore,
-} from "@/features/pubblica-annuncio/state/AnnuncioCampoImpianto.store";
-import {
-	isAnnuncioGiocatoreValid,
-	useAnnuncioGiocatoreStore,
-} from "@/features/pubblica-annuncio/state/AnnuncioGiocatore.store";
-import {
-	isAnnuncioSquadraValid,
-	useAnnuncioSquadraStore,
-} from "@/features/pubblica-annuncio/state/AnnuncioSquadra.store";
-import {
-	isAnnuncioStaffValid,
-	useAnnuncioStaffStore,
-} from "@/features/pubblica-annuncio/state/AnnuncioStaff.store";
-import {
-	isAnnuncioAziendeEntiValid,
-	isAnnuncioProfessionistiStudiValid,
-	isAnnuncioTorneoEventoValid,
-	useAnnuncioAziendeEntiStore,
-	useAnnuncioProfessionistiStudiStore,
-	useAnnuncioTorneoEventoStore,
-} from "@/features/pubblica-annuncio/state/AnnuncioNuoveTipologie.store";
+	createProfileDrafts,
+	createProfileLocations,
+	type ProfileDrafts,
+	type ProfileDraftUpdater,
+	type ProfileLocationDraft,
+	type ProfileLocations,
+} from "@/features/profilo/profile-model";
+import AnnouncementDetailsForm from "@/features/pubblica-annuncio/components/AnnouncementDetailsForm";
 import ConfermaInvioAnnuncio from "@/features/pubblica-annuncio/components/ConfermaInvioAnnuncio";
-import DettagliAnnuncio from "@/features/pubblica-annuncio/components/DettagliAnnuncio";
+import PublishProfileStep from "@/features/pubblica-annuncio/components/PublishProfileStep";
 import SelezionaTipologiaAnnuncio from "@/features/pubblica-annuncio/components/SelezionaTipologiaAnnuncio";
-import SelezionaVisibilitaAnnuncio from "@/features/pubblica-annuncio/components/SelezionaVisibilitaAnnuncio";
 import {
-	getPianiPubblicazione,
-	getTipologia,
-	isPianoPagamento,
-	PUBBLICAZIONE_GRATUITA,
-} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import useIsMobile from "@/lib/isMobile";
+	cloneProfileDrafts,
+	cloneProfileLocations,
+	createAnnouncementDetailsDrafts,
+	getAnnouncementDetail,
+	getAnnouncementValidationErrors,
+	getAnnouncementValidationMessage,
+	getDatabaseAnnouncementType,
+	getProfileValidationErrors,
+	getProfileValidationMessage,
+	isPublishableProfileType,
+	isTeamAnnouncementSubtype,
+	PUBLISH_PAYLOAD_VERSION,
+	type AnnouncementContacts,
+	type PublishableProfileType,
+	type PublishAnnouncementPayload,
+	type PublishProfileContext,
+	type TeamAnnouncementSubtype,
+} from "@/features/pubblica-annuncio/publish-model";
 
-export default function PubblicaAnnuncio() {
-	const isMobile = useIsMobile();
+interface PubblicaAnnuncioProps {
+	authenticated: boolean;
+	registered: boolean;
+	profileContext: PublishProfileContext | null;
+}
+
+export default function PubblicaAnnuncio({
+	authenticated,
+	registered,
+	profileContext,
+}: PubblicaAnnuncioProps) {
 	const [step, setStep] = useState(1);
-	const [tipologia, setTipologia] = useState("");
-	const [sottotipologia, setSottotipologia] = useState("");
-	const [pianoSelezionato, setPianoSelezionato] = useState(PUBBLICAZIONE_GRATUITA.valore);
-	const [emailPagamento, setEmailPagamento] = useState("");
-	const [emailVerificata, setEmailVerificata] = useState<string | null>(null);
-	const [visibilitaConfermata, setVisibilitaConfermata] = useState(false);
+	const [profileType, setProfileType] = useState<PublishableProfileType | "">("");
+	const [teamSubtype, setTeamSubtype] = useState<TeamAnnouncementSubtype | null>(null);
+	const [profileDrafts, setProfileDrafts] = useState<ProfileDrafts>(() => (
+		registered && profileContext ? cloneProfileDrafts(profileContext.drafts) : createProfileDrafts()
+	));
+	const [profileLocations, setProfileLocations] = useState<ProfileLocations>(() => (
+		registered && profileContext ? cloneProfileLocations(profileContext.locations) : createProfileLocations()
+	));
+	const [announcementDrafts, setAnnouncementDrafts] = useState(createAnnouncementDetailsDrafts);
+	const [announcementLocations, setAnnouncementLocations] = useState<ProfileLocationDraft[]>([]);
+	const [contacts, setContacts] = useState<AnnouncementContacts>({email: "", phone: ""});
+	const [submissionId] = useState(() => globalThis.crypto.randomUUID());
+	const [profileValidationVisible, setProfileValidationVisible] = useState(false);
+	const [announcementValidationVisible, setAnnouncementValidationVisible] = useState(false);
+	const profileLocationSnapshot = useRef<string | null>(null);
+	const enabledProfileTypes = registered ? profileContext?.enabledProfileTypes ?? [] : [];
 
-	const giocatoreValido = useAnnuncioGiocatoreStore((state) => isAnnuncioGiocatoreValid(state));
-	const squadraValida = useAnnuncioSquadraStore((state) => isAnnuncioSquadraValid(state, sottotipologia));
-	const arbitroValido = useAnnuncioArbitroStore((state) => isAnnuncioArbitroValid(state));
-	const staffValido = useAnnuncioStaffStore((state) => isAnnuncioStaffValid(state));
-	const aziendeEntiValida = useAnnuncioAziendeEntiStore((state) => isAnnuncioAziendeEntiValid(state));
-	const professionistiStudiValida = useAnnuncioProfessionistiStudiStore((state) => isAnnuncioProfessionistiStudiValid(state));
-	const torneoEventoValido = useAnnuncioTorneoEventoStore((state) => isAnnuncioTorneoEventoValid(state));
-	const campoImpiantoValido = useAnnuncioCampoImpiantoStore((state) => isAnnuncioCampoImpiantoValid(state));
-	const fotoGiocatore = useAnnuncioGiocatoreStore((state) => state.foto);
-	const linkGiocatore = useAnnuncioGiocatoreStore((state) => state.linkAnnuncio);
-	const linkSquadra = useAnnuncioSquadraStore((state) => state.linkAnnuncio);
-	const linkArbitro = useAnnuncioArbitroStore((state) => state.linkAnnuncio);
-	const linkStaff = useAnnuncioStaffStore((state) => state.linkAnnuncio);
-	const linkAziendeEnti = useAnnuncioAziendeEntiStore((state) => state.linkAnnuncio);
-	const linkProfessionistiStudi = useAnnuncioProfessionistiStudiStore((state) => state.linkAnnuncio);
-	const linkTorneoEvento = useAnnuncioTorneoEventoStore((state) => state.linkAnnuncio);
-	const linkCampoImpianto = useAnnuncioCampoImpiantoStore((state) => state.linkAnnuncio);
+	const profileValidationErrors = profileType
+		? getProfileValidationErrors(profileType, profileDrafts, profileLocations)
+		: {};
+	const profileValidationMessage = profileType
+		? getProfileValidationMessage(profileType, profileDrafts, profileLocations)
+		: "Seleziona una tipologia di profilo.";
+	const announcementValidationErrors = profileType
+		? getAnnouncementValidationErrors(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts)
+		: {};
+	const announcementValidationMessage = profileType
+		? getAnnouncementValidationMessage(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts)
+		: "Seleziona una tipologia di profilo.";
+	const step1Valid = profileType !== "" && (profileType !== "squadra" || teamSubtype !== null);
+	const step2Valid = step1Valid && profileValidationMessage === null;
+	const step3Valid = step2Valid && announcementValidationMessage === null;
 
-	const tipologiaSelezionata = getTipologia(tipologia);
-	const richiedeSottotipologia = Boolean(tipologiaSelezionata?.sottotipologie?.length);
-	const step1Valid = tipologia !== "" && (!richiedeSottotipologia || sottotipologia !== "");
-	const step2Valid = {
-		giocatore: giocatoreValido,
-		squadra: squadraValida,
-		arbitro: arbitroValido,
-		"staff-sportivo": staffValido,
-		"aziende-enti": aziendeEntiValida,
-		"professionisti-studi": professionistiStudiValida,
-		"torneo-evento": torneoEventoValido,
-		"campo-impianto-sportivo": campoImpiantoValido,
-	}[tipologia] ?? false;
-	const pianiPubblicazione = getPianiPubblicazione(tipologia);
-	const pianoScelto = pianiPubblicazione.find((piano) => piano.valore === pianoSelezionato)
-		?? PUBBLICAZIONE_GRATUITA;
-	const annuncioPagamento = isPianoPagamento(pianoScelto);
-	const linkAnnuncio = {
-		giocatore: linkGiocatore,
-		squadra: linkSquadra,
-		arbitro: linkArbitro,
-		"staff-sportivo": linkStaff,
-		"aziende-enti": linkAziendeEnti,
-		"professionisti-studi": linkProfessionistiStudi,
-		"torneo-evento": linkTorneoEvento,
-		"campo-impianto-sportivo": linkCampoImpianto,
-	}[tipologia] ?? "";
-	const funzioniPremium = [
-		...(tipologia === "giocatore" && fotoGiocatore !== null ? ["Immagine dell'annuncio"] : []),
-		...(linkAnnuncio.trim() !== "" ? ["Link annuncio"] : []),
-	];
-	const premiumValido = funzioniPremium.length === 0 || annuncioPagamento;
-	const emailNormalizzata = emailPagamento.trim().toLowerCase();
-	const step3Valid = premiumValido && (!annuncioPagamento || emailVerificata === emailNormalizzata);
+	const payload = useMemo<PublishAnnouncementPayload | null>(() => {
+		if (!profileType) return null;
+		const announcementType = getDatabaseAnnouncementType(profileType, teamSubtype);
+		const detail = getAnnouncementDetail(profileType, teamSubtype, announcementDrafts);
+		if (!announcementType || !detail) return null;
+		return {
+			version: PUBLISH_PAYLOAD_VERSION,
+			submissionId,
+			profileType,
+			teamSubtype,
+			anonymousProfile: registered ? null : {
+				type: profileType,
+				draft: profileDrafts[profileType],
+				locations: profileLocations[profileType],
+			},
+			announcement: {
+				type: announcementType,
+				detail,
+				locations: announcementLocations,
+				contacts,
+			},
+			consents: {dataConfirmed: false, termsAccepted: false, privacyAccepted: false},
+		};
+	}, [announcementDrafts, announcementLocations, contacts, profileDrafts, profileLocations, profileType, registered, submissionId, teamSubtype]);
 
 	const scrollToTop = () => window.scrollTo({top: 0, behavior: "smooth"});
 	const goToStep = (nextStep: number) => {
@@ -119,139 +121,228 @@ export default function PubblicaAnnuncio() {
 	const handleTabChange = (value: string) => {
 		const targetStep = Number(value.replace("tab-", ""));
 		if (targetStep === 2 && !step1Valid) return;
-		if (targetStep === 3 && (!step1Valid || !step2Valid)) return;
-		if (targetStep === 4 && (!step1Valid || !step2Valid || !step3Valid || !visibilitaConfermata)) return;
+		if (targetStep === 3 && !step2Valid) return;
+		if (targetStep === 4 && !step3Valid) return;
 		goToStep(targetStep);
 	};
 
-	const handleTipologiaChange = (value: string) => {
-		setTipologia(value);
-		setSottotipologia("");
-		setPianoSelezionato(PUBBLICAZIONE_GRATUITA.valore);
-		setEmailPagamento("");
-		setEmailVerificata(null);
-		setVisibilitaConfermata(false);
+	const handleProfileTypeChange = (value: string) => {
+		if (!isPublishableProfileType(value)) return;
+		if (registered && !enabledProfileTypes.includes(value)) return;
+		setProfileType(value);
+		setTeamSubtype(null);
+		setProfileValidationVisible(false);
+		setAnnouncementValidationVisible(false);
+		setAnnouncementLocations([]);
+		profileLocationSnapshot.current = null;
 	};
 
-	const handleEmailChange = (value: string) => {
-		setEmailPagamento(value);
-		if (emailVerificata !== value.trim().toLowerCase()) setEmailVerificata(null);
-		setVisibilitaConfermata(false);
+	const updateProfileDraft: ProfileDraftUpdater = (type, field, value) => {
+		setProfileDrafts((previous) => ({
+			...previous,
+			[type]: {...previous[type], [field]: value},
+		}) as ProfileDrafts);
 	};
 
-	const handlePianoChange = (value: string) => {
-		setPianoSelezionato(value);
-		setVisibilitaConfermata(false);
+	const updateProfileLocations = (type: PublishableProfileType, value: ProfileLocationDraft[]) => {
+		setProfileLocations((previous) => ({...previous, [type]: value}));
 	};
 
-	const handleEmailVerificata = (value: string | null) => {
-		setEmailVerificata(value);
-		setVisibilitaConfermata(false);
+	const prepareAnnouncementStep = () => {
+		if (!profileType || profileValidationMessage) {
+			setProfileValidationVisible(true);
+			return;
+		}
+
+		const sourceLocations = profileLocations[profileType];
+		const nextSnapshot = JSON.stringify(sourceLocations);
+		if (profileLocationSnapshot.current !== nextSnapshot) {
+			setAnnouncementLocations(structuredClone(sourceLocations));
+			profileLocationSnapshot.current = nextSnapshot;
+		}
+
+		setAnnouncementDrafts((previous) => {
+			if (profileType === "torneo-evento" && previous.torneoEvento.tipologie_sport.length === 0) {
+				return {
+					...previous,
+					torneoEvento: {...previous.torneoEvento, tipologie_sport: [...(profileDrafts["torneo-evento"].tipologie_sport ?? [])]},
+				};
+			}
+			if (profileType === "campi-impianti-sportivi" && previous.campoImpianto.tipologie_sport.length === 0) {
+				const facility = profileDrafts["campi-impianti-sportivi"];
+				return {
+					...previous,
+					campoImpianto: {
+						...previous.campoImpianto,
+						tipologie_sport: [...(facility.tipologie_sport ?? [])],
+						costo_partenza: facility.costo_partenza === null ? "" : String(facility.costo_partenza),
+						servizi_inclusi: facility.servizi_inclusi ?? "",
+					},
+				};
+			}
+			return previous;
+		});
+		setProfileValidationVisible(false);
+		goToStep(3);
+	};
+
+	const continueToConfirmation = () => {
+		if (announcementValidationMessage) {
+			setAnnouncementValidationVisible(true);
+			return;
+		}
+		setAnnouncementValidationVisible(false);
+		goToStep(4);
 	};
 
 	return (
-		<div className="min-h-screen bg-muted/30 py-16">
-			<div className="mx-auto max-w-3xl px-4">
-				<section className="mx-auto mb-8 max-w-6xl px-4 sm:mb-12 sm:px-6 lg:px-8">
-					<div className="flex flex-col items-center">
-						<div className="flex max-w-xl flex-col items-center text-center">
-							<div className="flex items-center gap-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-								<ClipboardPenIcon className="size-6 sm:size-8" />
-								<h1 className="text-2xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">Pubblica un annuncio</h1>
-							</div>
-							<p className="mt-2 text-sm leading-6 text-neutral-600 sm:text-lg">Compila i campi richiesti per pubblicare il tuo annuncio</p>
-						</div>
+		<GradientBackground className="min-h-screen bg-muted/30 py-16">
+			<div className="relative z-10 mx-auto max-w-4xl px-4">
+				<section className="mx-auto mb-4 max-w-3xl text-center sm:mb-8" aria-labelledby="publish-title">
+					<div className="flex items-center justify-center gap-2">
+						<ClipboardPenIcon className="size-7" />
+						<h1 id="publish-title" className="text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">Pubblica un annuncio</h1>
 					</div>
+					<p className="mt-3 text-base text-muted-foreground">Scegli il profilo, controlla i dati e invia gratuitamente l’annuncio in revisione.</p>
 				</section>
+
+				{registered ? (
+					<Alert className="mb-10">
+						<UserRoundCheckIcon />
+						<AlertTitle>Stai pubblicando dal tuo account</AlertTitle>
+						<AlertDescription>Puoi usare soltanto i sottoprofili abilitati. I dati del profilo verranno caricati dal database.</AlertDescription>
+					</Alert>
+				) : authenticated ? (
+					<Alert className="mb-10">
+						<MailCheckIcon />
+						<AlertTitle>Indirizzo email già verificato</AlertTitle>
+						<AlertDescription>Completa i dati e invia l’annuncio: non dovrai richiedere un nuovo codice.</AlertDescription>
+					</Alert>
+				) : (
+					<Alert className="mb-10">
+						<InfoIcon />
+						<AlertTitle>Verifica email obbligatoria</AlertTitle>
+						<AlertDescription>Nell’ultimo passaggio dovrai confermare un indirizzo email con un codice OTP prima di inviare l’annuncio.</AlertDescription>
+					</Alert>
+				)}
+
+				{registered && enabledProfileTypes.length === 0 && (
+					<Alert variant="destructive" className="mb-10">
+						<AlertTitle>Nessun sottoprofilo disponibile</AlertTitle>
+						<AlertDescription>Abilita o completa un sottoprofilo da <Link href="/il-tuo-profilo?sezione=profilo">Il tuo profilo</Link> prima di pubblicare.</AlertDescription>
+					</Alert>
+				)}
 
 				<Tabs value={`tab-${step}`} onValueChange={handleTabChange}>
 					<TabsList variant="line" className="grid w-full grid-cols-4">
-						<TabsTrigger value="tab-1" onClick={scrollToTop}>{isMobile ? "Profilo" : "1. Selezione profilo"}</TabsTrigger>
-
+						<TabsTrigger value="tab-1">
+							<span className="hidden sm:block">1. Tipo annuncio</span>
+							<span className="sm:hidden">Tipo</span>
+						</TabsTrigger>
 						<Tooltip>
 							<TooltipTrigger render={<span className="w-full" />}>
-								<TabsTrigger value="tab-2" disabled={!step1Valid} className="w-full" onClick={scrollToTop}>{isMobile ? "Dati" : "2. Compila i dati"}</TabsTrigger>
+								<TabsTrigger value="tab-2" disabled={!step1Valid} className="w-full">
+									<span className="hidden sm:block">2. Dati profilo</span>
+									<span className="sm:hidden">Profilo</span>
+								</TabsTrigger>
 							</TooltipTrigger>
-							{!step1Valid && <TooltipContent><p>Campi obbligatori mancanti!</p></TooltipContent>}
+							{!step1Valid && <TooltipContent><p>Seleziona prima il tipo di annuncio.</p></TooltipContent>}
 						</Tooltip>
-
 						<Tooltip>
 							<TooltipTrigger render={<span className="w-full" />}>
-								<TabsTrigger value="tab-3" disabled={!step1Valid || !step2Valid} className="w-full" onClick={scrollToTop}>{isMobile ? "Visibilità" : "3. Visibilità"}</TabsTrigger>
+								<TabsTrigger value="tab-3" disabled={!step2Valid} className="w-full">
+									<span className="hidden sm:block">3. Dati annuncio</span>
+									<span className="sm:hidden">Annuncio</span>
+								</TabsTrigger>
 							</TooltipTrigger>
-							{!step2Valid && <TooltipContent><p>{step < 2 ? "Completa gli step precedenti prima di continuare" : "Campi obbligatori mancanti!"}</p></TooltipContent>}
+							{!step2Valid && <TooltipContent><p>Completa i dati essenziali del profilo.</p></TooltipContent>}
 						</Tooltip>
-
 						<Tooltip>
 							<TooltipTrigger render={<span className="w-full" />}>
-								<TabsTrigger value="tab-4" disabled={!step1Valid || !step2Valid || !step3Valid || !visibilitaConfermata} className="w-full" onClick={scrollToTop}>{isMobile ? "Conferma" : "4. Conferma e invia"}</TabsTrigger>
+								<TabsTrigger value="tab-4" disabled={!step3Valid} className="w-full">
+									<span className="hidden sm:block">4. Conferma e invia</span>
+									<span className="sm:hidden">Invia</span>
+								</TabsTrigger>
 							</TooltipTrigger>
-							{(!step3Valid || !visibilitaConfermata) && (
-								<TooltipContent>
-									<p>{step < 3 ? "Completa gli step precedenti prima di continuare" : "Conferma il piano e, se richiesto, verifica l'email"}</p>
-								</TooltipContent>
-							)}
+							{!step3Valid && <TooltipContent><p>Completa i dati dell’annuncio.</p></TooltipContent>}
 						</Tooltip>
 					</TabsList>
 
 					<TabsContent value="tab-1">
-						<Card className="my-4"><CardHeader><CardContent>
-							<SelezionaTipologiaAnnuncio
-								tipologia={tipologia}
-								sottotipologia={sottotipologia}
-								onTipologiaChange={handleTipologiaChange}
-								onSottotipologiaChange={setSottotipologia}
-								onContinue={() => goToStep(2)}
-							/>
-						</CardContent></CardHeader></Card>
+						<Card className="my-4">
+							<CardHeader><CardTitle>1. Tipo annuncio</CardTitle></CardHeader>
+							<CardContent>
+								<SelezionaTipologiaAnnuncio
+									tipologia={profileType}
+									sottotipologia={teamSubtype ?? ""}
+									onTipologiaChangeAction={handleProfileTypeChange}
+									onSottotipologiaChangeAction={(value) => isTeamAnnouncementSubtype(value) && setTeamSubtype(value)}
+									onContinueAction={() => goToStep(2)}
+									registered={registered}
+									enabledProfileTypes={enabledProfileTypes}
+								/>
+							</CardContent>
+						</Card>
 					</TabsContent>
 
 					<TabsContent value="tab-2">
-						<Card className="my-4"><CardHeader><CardContent className="grid gap-8">
-							<DettagliAnnuncio tipologia={tipologia} sottotipologia={sottotipologia} />
-							<div className="flex justify-between">
-								<Button variant="outline" onClick={() => goToStep(1)}>Indietro</Button>
-								<Tooltip>
-									<TooltipTrigger render={<span />}><Button disabled={!step2Valid} onClick={() => goToStep(3)}>Avanti</Button></TooltipTrigger>
-									{!step2Valid && <TooltipContent><p>Campi obbligatori mancanti!</p></TooltipContent>}
-								</Tooltip>
-							</div>
-						</CardContent></CardHeader></Card>
+						<Card className="my-4">
+							<CardHeader><CardTitle>2. Dati profilo</CardTitle></CardHeader>
+							<CardContent className="grid gap-8">
+								{profileType && (
+									<PublishProfileStep
+										profileType={profileType}
+										registered={registered}
+										drafts={profileDrafts}
+										locations={profileLocations}
+										onChange={updateProfileDraft}
+										onLocationsChange={updateProfileLocations}
+										errors={profileValidationVisible ? profileValidationErrors : {}}
+									/>
+								)}
+								<div className="flex justify-between gap-3">
+									<Button variant="outline" onClick={() => goToStep(1)}>Indietro</Button>
+									<Button onClick={prepareAnnouncementStep}>Avanti</Button>
+								</div>
+							</CardContent>
+						</Card>
 					</TabsContent>
 
 					<TabsContent value="tab-3">
-						<Card className="my-4"><CardHeader><CardContent>
-							<SelezionaVisibilitaAnnuncio
-								tipologia={tipologia}
-								pianoSelezionato={pianoSelezionato}
-								funzioniPremium={funzioniPremium}
-								onPianoChange={handlePianoChange}
-								email={emailPagamento}
-								onEmailChange={handleEmailChange}
-								emailVerificata={emailVerificata}
-								onEmailVerificata={handleEmailVerificata}
-								onBack={() => goToStep(2)}
-								onContinue={() => {
-									setVisibilitaConfermata(true);
-									goToStep(4);
-								}}
-							/>
-						</CardContent></CardHeader></Card>
+						<Card className="my-4">
+							<CardHeader><CardTitle>3. Dati annuncio</CardTitle></CardHeader>
+							<CardContent className="grid gap-8">
+								{profileType && (
+									<AnnouncementDetailsForm
+										profileType={profileType}
+										teamSubtype={teamSubtype}
+										drafts={announcementDrafts}
+										onDraftsChange={setAnnouncementDrafts}
+										locations={announcementLocations}
+										onLocationsChange={setAnnouncementLocations}
+										contacts={contacts}
+										onContactsChange={setContacts}
+										errors={announcementValidationVisible ? announcementValidationErrors : {}}
+									/>
+								)}
+								<div className="flex justify-between gap-3">
+									<Button variant="outline" onClick={() => goToStep(2)}>Indietro</Button>
+									<Button onClick={continueToConfirmation}>Avanti</Button>
+								</div>
+							</CardContent>
+						</Card>
 					</TabsContent>
 
 					<TabsContent value="tab-4">
-						<Card className="my-4"><CardHeader><CardContent>
-							<ConfermaInvioAnnuncio
-								tipologia={tipologia}
-								sottotipologia={sottotipologia}
-								pianoScelto={pianoScelto}
-								emailVerificata={emailVerificata}
-								onEditStep={goToStep}
-							/>
-						</CardContent></CardHeader></Card>
+						<Card className="my-4">
+							<CardHeader><CardTitle>4. Conferma e invia</CardTitle></CardHeader>
+							<CardContent>
+								{payload && profileType && <ConfermaInvioAnnuncio payload={payload} profileDrafts={profileDrafts} profileLocations={profileLocations[profileType]} authenticated={authenticated} onEditStep={goToStep} />}
+							</CardContent>
+						</Card>
 					</TabsContent>
 				</Tabs>
 			</div>
-		</div>
+		</GradientBackground>
 	);
 }

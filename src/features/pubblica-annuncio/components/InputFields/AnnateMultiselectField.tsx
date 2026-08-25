@@ -1,8 +1,5 @@
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
-
-export const ANNATE_OPTIONS = Array.from({length: 44}, (_, index) =>
-	String(new Date().getFullYear() - 17 - index)
-);
+import {ANNATE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type AnnateMultiselectFieldProps = {
 	value: string[];

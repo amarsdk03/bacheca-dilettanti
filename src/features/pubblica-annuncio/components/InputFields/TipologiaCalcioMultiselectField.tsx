@@ -1,15 +1,18 @@
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
-
-export const TIPOLOGIA_CALCIO_OPTIONS = ["Calcio a 11", "Calcio a 7", "Calcio a 5"] as const;
+import {TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type TipologiaCalcioMultiselectFieldProps = {
 	value: string[];
 	onValueChange: (value: string[]) => void;
+	required?: boolean;
+	error?: string;
 };
 
 export default function TipologiaCalcioMultiselectField({
 	value,
 	onValueChange,
+	required = false,
+	error,
 }: TipologiaCalcioMultiselectFieldProps) {
 	return (
 		<MultiselectField
@@ -19,6 +22,8 @@ export default function TipologiaCalcioMultiselectField({
 			onValueChange={onValueChange}
 			placeholder="Seleziona le tipologie..."
 			emptyText="Nessuna tipologia trovata."
+			required={required}
+			error={error}
 		/>
 	);
 }

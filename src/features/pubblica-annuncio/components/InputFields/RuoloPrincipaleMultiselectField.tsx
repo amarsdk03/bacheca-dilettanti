@@ -1,22 +1,18 @@
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
-
-export const RUOLO_PRINCIPALE_OPTIONS = [
-	"Portiere",
-	"Difensore",
-	"Centrocampista",
-	"Attaccante",
-] as const;
+import {RUOLO_PRINCIPALE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type RuoloPrincipaleMultiselectFieldProps = {
 	value: string[];
 	onValueChange: (value: string[]) => void;
 	required?: boolean;
+	error?: string;
 };
 
 export default function RuoloPrincipaleMultiselectField({
 	value,
 	onValueChange,
 	required = false,
+	error,
 }: RuoloPrincipaleMultiselectFieldProps) {
 	return (
 		<MultiselectField
@@ -27,6 +23,7 @@ export default function RuoloPrincipaleMultiselectField({
 			placeholder="Seleziona i ruoli..."
 			emptyText="Nessun ruolo trovato."
 			required={required}
+			error={error}
 		/>
 	);
 }

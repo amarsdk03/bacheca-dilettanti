@@ -2,6 +2,7 @@ import {useAnnuncioSquadraStore} from "@/features/pubblica-annuncio/state/Annunc
 import {
 	formatContatti,
 	formatPeriodo,
+	PremiumImageRecap,
 	PremiumLinkRecap,
 	RecapField,
 	RegioniRecap,
@@ -19,15 +20,15 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 			<p className="mb-1 text-muted-foreground">Dettagli squadra</p>
 			<dl className="grid gap-1 sm:grid-cols-2">
 				<RecapField label="Nome società">{data.nomeSocieta || "—"}</RecapField>
-				<RecapField label="Tipologia sport">{data.tipologiaSport || "—"}</RecapField>
+				<RecapField label="Tipologia principale">{data.tipologiaPrincipale || "—"}</RecapField>
 				<RegioniRecap
-					titolo="Sede principale"
 					regioni={data.sedePrincipale.regioniInteressate}
 					cittaComuniPerRegione={data.sedePrincipale.cittaComuniPerRegione}
 				/>
-				{data.linkStemma.trim() !== "" && <RecapField label="Link stemma">{data.linkStemma}</RecapField>}
 				<RecapField label="Contatti pubblici" wide>{formatContatti(data.contatti)}</RecapField>
-				{data.descrizione.trim() !== "" && <RecapField label="Descrizione" wide>{data.descrizione}</RecapField>}
+				{data.presentazioneAggiuntiva.trim() !== "" && (
+					<RecapField label="Breve presentazione aggiuntiva" wide>{data.presentazioneAggiuntiva}</RecapField>
+				)}
 
 				{sottotipologia === "cerca-giocatore" && (
 					<>
@@ -53,9 +54,13 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 					<>
 						<RecapField label="Categorie avversario" wide>{data.cercaAmichevoli.categorieAvversario.join(", ") || "—"}</RecapField>
 						<RecapField label="Periodo">{formatPeriodo(data.cercaAmichevoli.periodoDa, data.cercaAmichevoli.periodoA)}</RecapField>
+						<RecapField label="Orario indicativo">
+							{data.cercaAmichevoli.orarioIndicativoDa && data.cercaAmichevoli.orarioIndicativoA
+								? `Dalle ${data.cercaAmichevoli.orarioIndicativoDa} / Alle ${data.cercaAmichevoli.orarioIndicativoA}`
+								: "—"}
+						</RecapField>
 						<RecapField label="Disponibilità trasferta">{data.cercaAmichevoli.disponibilitaTrasferta || "Non specificata"}</RecapField>
 						<RegioniRecap
-							titolo="Regioni e località del campo"
 							regioni={data.cercaAmichevoli.regioniInteressate}
 							cittaComuniPerRegione={data.cercaAmichevoli.cittaComuniPerRegione}
 						/>
@@ -69,6 +74,7 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 						<RecapField label="Cosa offrite" wide>{data.cercaSponsor.cosaOffrite || "—"}</RecapField>
 					</>
 				)}
+				<PremiumImageRecap image={data.immagineAnnuncio} />
 				<PremiumLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>
