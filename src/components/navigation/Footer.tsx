@@ -41,7 +41,7 @@ export default function Footer(
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
 							<li><Link href="/annunci" className="hover:text-neutral-900">Sfoglia annunci</Link></li>
 							<li><Link href="/pubblica-annuncio" className="hover:text-neutral-900">Pubblica annuncio</Link></li>
-							<li><Link href="/visibilita" className="hover:text-neutral-900">Visibilità annunci</Link></li>
+							<li><Link href="/visibilita" className="hover:text-neutral-900">Visibilità</Link></li>
 						</ul>
 					</div>
 
@@ -51,8 +51,8 @@ export default function Footer(
 						</h3>
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
 							<li><Link href="/profili" className="hover:text-neutral-900">Sfoglia profili</Link></li>
-							<li><Link href="/registrati" className="hover:text-neutral-900">Registra profilo</Link></li>
-							<li><Link href="/accedi" className="hover:text-neutral-900">Accedi al tuo profilo</Link></li>
+							<li><Link href="/registrati" className="hover:text-neutral-900">Registrati</Link></li>
+							<li><Link href="/accedi" className="hover:text-neutral-900">Accedi</Link></li>
 						</ul>
 					</div>
 

@@ -24,9 +24,9 @@ import {getTipologia, tipologieAnnuncio} from "@/features/pubblica-annuncio/type
 type SelezionaTipologiaAnnuncioProps = {
 	tipologia: string;
 	sottotipologia: string;
-	onTipologiaChange: (value: string) => void;
-	onSottotipologiaChange: (value: string) => void;
-	onContinue: () => void;
+	onTipologiaChangeAction: (value: string) => void;
+	onSottotipologiaChangeAction: (value: string) => void;
+	onContinueAction: () => void;
 	registered: boolean;
 	enabledProfileTypes: readonly PublishableProfileType[];
 };
@@ -34,9 +34,9 @@ type SelezionaTipologiaAnnuncioProps = {
 export default function SelezionaTipologiaAnnuncio({
 	tipologia,
 	sottotipologia,
-	onTipologiaChange,
-	onSottotipologiaChange,
-	onContinue,
+	onTipologiaChangeAction,
+	onSottotipologiaChangeAction,
+	onContinueAction,
 	registered,
 	enabledProfileTypes,
 }: SelezionaTipologiaAnnuncioProps) {
@@ -54,7 +54,7 @@ export default function SelezionaTipologiaAnnuncio({
 			setValidationVisible(true);
 			return;
 		}
-		onContinue();
+		onContinueAction();
 	};
 
 	return (
@@ -70,7 +70,7 @@ export default function SelezionaTipologiaAnnuncio({
 						</FieldDescription>
 						{typeError && <FieldError>{typeError}</FieldError>}
 
-				<RadioGroup className="grid w-full gap-3 sm:grid-cols-2" value={tipologia} onValueChange={onTipologiaChange} aria-invalid={Boolean(typeError)}>
+				<RadioGroup className="grid w-full gap-3 sm:grid-cols-2" value={tipologia} onValueChange={onTipologiaChangeAction} aria-invalid={Boolean(typeError)}>
 					{tipologieAnnuncio.map((opzione) => {
 						const limited = isLimitedProfileType(opzione.valore as ProfileType);
 						const enabledForAccount = enabledProfileTypes.includes(opzione.valore as PublishableProfileType);
@@ -101,7 +101,7 @@ export default function SelezionaTipologiaAnnuncio({
 						<FieldLegend variant="label" className="field-legend-title mb-0">Seleziona la tipologia di annuncio:</FieldLegend>
 						<Field data-invalid={Boolean(subtypeError)} className="mt-4">
 							{subtypeError && <FieldError>{subtypeError}</FieldError>}
-						<RadioGroup className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2" value={sottotipologia} onValueChange={onSottotipologiaChange} aria-invalid={Boolean(subtypeError)}>
+						<RadioGroup className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2" value={sottotipologia} onValueChange={onSottotipologiaChangeAction} aria-invalid={Boolean(subtypeError)}>
 							{tipologiaSelezionata.sottotipologie.map((opzione) => (
 								<FieldLabel key={opzione.valore} htmlFor={`sotto-${opzione.valore}`} className="group/card">
 									<Field orientation="horizontal" className="rounded-lg transition-all group-has-[data-checked]/card:bg-fuchsia-100">

@@ -41,7 +41,6 @@ import {
 	type PublishProfileContext,
 	type TeamAnnouncementSubtype,
 } from "@/features/pubblica-annuncio/publish-model";
-import useIsMobile from "@/lib/isMobile";
 
 interface PubblicaAnnuncioProps {
 	authenticated: boolean;
@@ -54,7 +53,6 @@ export default function PubblicaAnnuncio({
 	registered,
 	profileContext,
 }: PubblicaAnnuncioProps) {
-	const isMobile = useIsMobile();
 	const [step, setStep] = useState(1);
 	const [profileType, setProfileType] = useState<PublishableProfileType | "">("");
 	const [teamSubtype, setTeamSubtype] = useState<TeamAnnouncementSubtype | null>(null);
@@ -199,29 +197,29 @@ export default function PubblicaAnnuncio({
 
 	return (
 		<GradientBackground className="min-h-screen bg-muted/30 py-16">
-			<div className="mx-auto max-w-4xl px-4">
-				<section className="mx-auto mb-8 max-w-3xl text-center sm:mb-12" aria-labelledby="publish-title">
+			<div className="relative z-10 mx-auto max-w-4xl px-4">
+				<section className="mx-auto mb-4 max-w-3xl text-center sm:mb-8" aria-labelledby="publish-title">
 					<div className="flex items-center justify-center gap-2">
 						<ClipboardPenIcon className="size-7" />
-						<h1 id="publish-title" className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Pubblica un annuncio</h1>
+						<h1 id="publish-title" className="text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">Pubblica un annuncio</h1>
 					</div>
 					<p className="mt-3 text-base text-muted-foreground">Scegli il profilo, controlla i dati e invia gratuitamente l’annuncio in revisione.</p>
 				</section>
 
 				{registered ? (
-					<Alert className="mb-6">
+					<Alert className="mb-10">
 						<UserRoundCheckIcon />
 						<AlertTitle>Stai pubblicando dal tuo account</AlertTitle>
 						<AlertDescription>Puoi usare soltanto i sottoprofili abilitati. I dati del profilo verranno caricati dal database.</AlertDescription>
 					</Alert>
 				) : authenticated ? (
-					<Alert className="mb-6">
+					<Alert className="mb-10">
 						<MailCheckIcon />
 						<AlertTitle>Indirizzo email già verificato</AlertTitle>
 						<AlertDescription>Completa i dati e invia l’annuncio: non dovrai richiedere un nuovo codice.</AlertDescription>
 					</Alert>
 				) : (
-					<Alert className="mb-6">
+					<Alert className="mb-10">
 						<InfoIcon />
 						<AlertTitle>Verifica email obbligatoria</AlertTitle>
 						<AlertDescription>Nell’ultimo passaggio dovrai confermare un indirizzo email con un codice OTP prima di inviare l’annuncio.</AlertDescription>
@@ -229,7 +227,7 @@ export default function PubblicaAnnuncio({
 				)}
 
 				{registered && enabledProfileTypes.length === 0 && (
-					<Alert variant="destructive" className="mb-6">
+					<Alert variant="destructive" className="mb-10">
 						<AlertTitle>Nessun sottoprofilo disponibile</AlertTitle>
 						<AlertDescription>Abilita o completa un sottoprofilo da <Link href="/il-tuo-profilo?sezione=profilo">Il tuo profilo</Link> prima di pubblicare.</AlertDescription>
 					</Alert>
@@ -237,22 +235,34 @@ export default function PubblicaAnnuncio({
 
 				<Tabs value={`tab-${step}`} onValueChange={handleTabChange}>
 					<TabsList variant="line" className="grid w-full grid-cols-4">
-						<TabsTrigger value="tab-1">{isMobile ? "Tipo" : "1. Tipo annuncio"}</TabsTrigger>
+						<TabsTrigger value="tab-1">
+							<span className="hidden sm:block">1. Tipo annuncio</span>
+							<span className="sm:hidden">Tipo</span>
+						</TabsTrigger>
 						<Tooltip>
 							<TooltipTrigger render={<span className="w-full" />}>
-								<TabsTrigger value="tab-2" disabled={!step1Valid} className="w-full">{isMobile ? "Profilo" : "2. Dati profilo"}</TabsTrigger>
+								<TabsTrigger value="tab-2" disabled={!step1Valid} className="w-full">
+									<span className="hidden sm:block">2. Dati profilo</span>
+									<span className="sm:hidden">Profilo</span>
+								</TabsTrigger>
 							</TooltipTrigger>
 							{!step1Valid && <TooltipContent><p>Seleziona prima il tipo di annuncio.</p></TooltipContent>}
 						</Tooltip>
 						<Tooltip>
 							<TooltipTrigger render={<span className="w-full" />}>
-								<TabsTrigger value="tab-3" disabled={!step2Valid} className="w-full">{isMobile ? "Annuncio" : "3. Dati annuncio"}</TabsTrigger>
+								<TabsTrigger value="tab-3" disabled={!step2Valid} className="w-full">
+									<span className="hidden sm:block">3. Dati annuncio</span>
+									<span className="sm:hidden">Annuncio</span>
+								</TabsTrigger>
 							</TooltipTrigger>
 							{!step2Valid && <TooltipContent><p>Completa i dati essenziali del profilo.</p></TooltipContent>}
 						</Tooltip>
 						<Tooltip>
 							<TooltipTrigger render={<span className="w-full" />}>
-								<TabsTrigger value="tab-4" disabled={!step3Valid} className="w-full">{isMobile ? "Invia" : "4. Conferma e invia"}</TabsTrigger>
+								<TabsTrigger value="tab-4" disabled={!step3Valid} className="w-full">
+									<span className="hidden sm:block">4. Conferma e invia</span>
+									<span className="sm:hidden">Invia</span>
+								</TabsTrigger>
 							</TooltipTrigger>
 							{!step3Valid && <TooltipContent><p>Completa i dati dell’annuncio.</p></TooltipContent>}
 						</Tooltip>
@@ -265,9 +275,9 @@ export default function PubblicaAnnuncio({
 								<SelezionaTipologiaAnnuncio
 									tipologia={profileType}
 									sottotipologia={teamSubtype ?? ""}
-									onTipologiaChange={handleProfileTypeChange}
-									onSottotipologiaChange={(value) => isTeamAnnouncementSubtype(value) && setTeamSubtype(value)}
-									onContinue={() => goToStep(2)}
+									onTipologiaChangeAction={handleProfileTypeChange}
+									onSottotipologiaChangeAction={(value) => isTeamAnnouncementSubtype(value) && setTeamSubtype(value)}
+									onContinueAction={() => goToStep(2)}
 									registered={registered}
 									enabledProfileTypes={enabledProfileTypes}
 								/>

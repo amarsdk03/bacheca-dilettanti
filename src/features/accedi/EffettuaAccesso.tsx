@@ -67,9 +67,9 @@ const choices = [
 
 export default function EffettuaAccesso() {
 	return (
-		<GradientBackground className="px-4 py-16 sm:px-6">
+		<GradientBackground className="px-4 py-12 sm:px-6 sm:py-16">
 			<div className="relative mx-auto max-w-6xl">
-				<div className="pb-16 pt-8">
+				<div className="pt-2 pb-4 sm:pt-8 sm:pb-16">
 					<section className="mx-auto max-w-3xl text-center" aria-labelledby="access-choice-title">
 						<Badge variant="outline" className="border-fuchsia-200 bg-white/80 text-fuchsia-700">
 							Scegli come continuare
@@ -83,7 +83,7 @@ export default function EffettuaAccesso() {
 						</p>
 					</section>
 
-					<section aria-label="Modalità di accesso" className="mt-20 grid items-stretch gap-5 lg:grid-cols-3">
+					<section aria-label="Modalità di accesso" className="mt-6 sm:mt-20 grid items-stretch gap-5 lg:grid-cols-3">
 						{choices.map(({title, description, href, cta, icon: Icon, featured, benefits}) => (
 							<article key={title} className={featured ? "lg:-translate-y-2" : ""}>
 								<Card className={`h-full shadow-sm ${featured ? "bg-fuchsia-950 text-white ring-2 ring-fuchsia-500 shadow-fuchsia-200/60" : "bg-white/90"}`}>
@@ -132,8 +132,8 @@ export default function EffettuaAccesso() {
 					<div className="mx-auto mt-8 flex max-w-2xl items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
 						<MailCheckIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 						<p>
-							<strong>Pubblicazione senza profilo:</strong> prima dell’invio verificheremo il tuo indirizzo
-							email con un codice monouso. Per lo stesso indirizzo è possibile pubblicare un annuncio ogni 24 ore.
+							<strong>Pubblicazione senza profilo:</strong> prima dell’invio, verificheremo il tuo indirizzo
+							email con un codice monouso. Senza profilo, è possibile pubblicare massimo 1 annuncio ogni 24 ore.
 						</p>
 					</div>
 				</div>

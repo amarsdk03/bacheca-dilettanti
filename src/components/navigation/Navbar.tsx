@@ -30,7 +30,7 @@ export default async function Navbar({minimal = false, backToHome = false}: Navb
 
 	return (
 		<header className="sticky top-0 z-50 border-b border-black/70 bg-black/90 backdrop-blur">
-			<div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+			<div className="mx-auto flex h-16 max-w-6xl items-center justify-between pe-4 sm:px-6 lg:px-8">
 				<Link href="/" className="navbar-link">
 					<Image
 						src={DEFAULT_LOGO_TRANSPARENT_PATH}
@@ -60,7 +60,7 @@ export default async function Navbar({minimal = false, backToHome = false}: Navb
 								nativeButton={false}
 								variant="outline"
 								size="lg"
-								className="hidden rounded-2xl sm:inline-flex"
+								className="rounded-2xl inline-flex"
 							>
 								<ArrowLeftIcon data-icon="inline-start" /> Torna alla Home
 							</Button>
