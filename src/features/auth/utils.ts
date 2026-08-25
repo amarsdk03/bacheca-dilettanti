@@ -1,4 +1,4 @@
-export const DEFAULT_AUTH_REDIRECT = "/profilo";
+export const DEFAULT_AUTH_REDIRECT = "/il-tuo-profilo";
 
 export function sanitizeNextPath(
 	value: FormDataEntryValue | string | null | undefined,
@@ -34,4 +34,8 @@ export function getAuthCallbackUrl(nextPath: string) {
 	const callback = new URL("/auth/callback", getSiteUrl());
 	callback.searchParams.set("next", sanitizeNextPath(nextPath));
 	return callback.toString();
+}
+
+export function getAuthConfirmUrl() {
+	return new URL("/auth/confirm", getSiteUrl()).toString();
 }

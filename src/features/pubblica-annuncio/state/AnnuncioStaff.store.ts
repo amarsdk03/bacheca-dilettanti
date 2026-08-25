@@ -7,6 +7,7 @@ import {
 	hasContattoPubblico,
 	type ContattiAnnuncio,
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
+import type {DisponibilitaProfilo} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export type AnnuncioStaffData = {
 	nome: string;
@@ -22,6 +23,7 @@ export type AnnuncioStaffData = {
 	categorieRicercate: string[];
 	presentazioneInformazioniAggiuntive: string;
 	esperienze: EsperienzaAnnuncio[];
+	disponibilita: DisponibilitaProfilo;
 	disponibilitaSpostamento: string;
 	immagineAnnuncio: File | null;
 	linkAnnuncio: string;
@@ -41,6 +43,7 @@ const createInitialState = (): AnnuncioStaffData => ({
 	categorieRicercate: [],
 	presentazioneInformazioniAggiuntive: "",
 	esperienze: [],
+	disponibilita: "non-specificare",
 	disponibilitaSpostamento: "",
 	immagineAnnuncio: null,
 	linkAnnuncio: "",

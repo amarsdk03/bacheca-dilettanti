@@ -21,6 +21,7 @@ import MultiselectField from "@/features/pubblica-annuncio/components/InputField
 import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
 import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
 import {RUOLI_SPECIFICI_PER_RUOLO} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import DisponibilitaProfiloSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaProfiloSelect";
 
 export default function AnnuncioGiocatore() {
 	const {
@@ -33,6 +34,7 @@ export default function AnnuncioGiocatore() {
 		cittaComuniPerRegione,
 		contatti,
 		descrizioneAggiuntiva,
+		disponibilita,
 		tipologieCalcio,
 		ruoliPrincipali,
 		ruoliSpecifici,
@@ -113,6 +115,12 @@ export default function AnnuncioGiocatore() {
 					<TipologiaCalcioMultiselectField
 						value={tipologieCalcio}
 						onValueChange={(value) => setField("tipologieCalcio", value)}
+					/>
+
+					<DisponibilitaProfiloSelect
+						id="giocatore-disponibilita"
+						value={disponibilita}
+						onValueChange={(value) => setField("disponibilita", value)}
 					/>
 
 					<RuoloPrincipaleMultiselectField

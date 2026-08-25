@@ -11,7 +11,7 @@ export default function Aggiornamenti() {
 	return (
 		<main className="bg-neutral-50 text-neutral-900">
 			<section className="relative overflow-hidden border-b border-neutral-200 bg-neutral-950">
-				<Image src="/backgrounds/homepage-hero2.jpg" alt="" fill priority className="object-cover opacity-25 blur-[2px]" />
+				<Image src="/backgrounds/homepage-hero.jpg" alt="" fill priority className="object-cover opacity-25 blur-[2px]" />
 				<div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
 					<p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-fuchsia-300">Dal mondo dilettantistico</p>
 					<h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-6xl">Aggiornamenti, guide e storie dal campo.</h1>

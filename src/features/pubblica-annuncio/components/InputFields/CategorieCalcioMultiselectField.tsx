@@ -16,7 +16,7 @@ import {
 	ComboboxValue,
 	useComboboxAnchor,
 } from "@/components/ui/combobox";
-import {Field, FieldLabel} from "@/components/ui/field";
+import {Field, FieldError, FieldLabel} from "@/components/ui/field";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 
 type CategorieCalcioMultiselectFieldProps = {
@@ -25,6 +25,7 @@ type CategorieCalcioMultiselectFieldProps = {
 	items: ReadonlyArray<{gruppo: string; opzioni: readonly string[]}>;
 	onValueChange: (value: string[]) => void;
 	required?: boolean;
+	error?: string;
 	className?: string;
 };
 
@@ -34,12 +35,13 @@ export default function CategorieCalcioMultiselectField({
 	items,
 	onValueChange,
 	required = false,
+	error,
 	className,
 }: CategorieCalcioMultiselectFieldProps) {
 	const anchor = useComboboxAnchor();
 
 	return (
-		<Field className={className}>
+		<Field className={className} data-invalid={Boolean(error)}>
 			<FieldLabel>{label} {!required && <OptionalLabel />}</FieldLabel>
 			<Combobox
 				multiple
@@ -51,7 +53,11 @@ export default function CategorieCalcioMultiselectField({
 				<ComboboxChips ref={anchor} className="w-full">
 					<ComboboxValue>
 						{value.map((item) => <ComboboxChip key={item}>{item}</ComboboxChip>)}
-						<ComboboxChipsInput placeholder={value.length === 0 ? "Seleziona categorie..." : ""} />
+						<ComboboxChipsInput
+							placeholder={value.length === 0 ? "Seleziona categorie..." : ""}
+							aria-invalid={Boolean(error)}
+							aria-required={required}
+						/>
 					</ComboboxValue>
 				</ComboboxChips>
 
@@ -70,6 +76,7 @@ export default function CategorieCalcioMultiselectField({
 					</ComboboxList>
 				</ComboboxContent>
 			</Combobox>
+			{error && <FieldError>{error}</FieldError>}
 		</Field>
 	);
 }

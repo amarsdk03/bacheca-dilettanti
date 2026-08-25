@@ -66,7 +66,17 @@ export const CITTA_ESEMPIO_PER_REGIONE: Record<string, string[]> = {
 	Veneto: ["Verona", "Venezia", "Padova"],
 };
 
-export const TIPOLOGIA_CALCIO_OPTIONS = ["Calcio a 11", "Calcio a 7", "Calcio a 5"] as const;
+export const TIPOLOGIA_CALCIO_OPTIONS = ["Calcio a 11", "Calcio a 8", "Calcio a 7", "Calcio a 5"] as const;
+
+export type DisponibilitaProfilo = "non-specificare" | "disponibile-subito" | "sotto-contratto";
+export const DISPONIBILITA_PROFILO_OPTIONS: readonly {
+	valore: DisponibilitaProfilo;
+	etichetta: string;
+}[] = [
+	{valore: "non-specificare", etichetta: "Non specificare"},
+	{valore: "disponibile-subito", etichetta: "Disponibile subito"},
+	{valore: "sotto-contratto", etichetta: "Al momento sotto contratto"},
+];
 
 export const TIPOLOGIA_PRINCIPALE_SQUADRA_OPTIONS = TIPOLOGIA_CALCIO_OPTIONS.map((tipologia) => ({
 	valore: tipologia,
@@ -333,6 +343,18 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		valore: "campi-impianti-sportivi",
 		icona: "TrafficCone",
 		descrizione: "Fornisci e pubblicizza i tuoi campi e impianti sportivi",
+	},
+	{
+		nome: "Professionisti e studi",
+		valore: "professionisti-studi",
+		icona: "BriefcaseBusiness",
+		descrizione: "Offri servizi professionali a squadre, atleti e società sportive",
+	},
+	{
+		nome: "Creators",
+		valore: "creators",
+		icona: "Sparkles",
+		descrizione: "Condividi contenuti sportivi e opportunità con la community",
 	},
 ];
 

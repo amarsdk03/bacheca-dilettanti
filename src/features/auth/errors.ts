@@ -28,5 +28,6 @@ export function getAuthErrorMessage(error: AuthError | null) {
 		return "Si è verificato un errore inatteso. Riprova.";
 	}
 
+	console.error("Supabase Auth Error:", error);
 	return AUTH_ERROR_MESSAGES[error.code ?? ""] ?? "Non è stato possibile completare l'operazione. Riprova.";
 }

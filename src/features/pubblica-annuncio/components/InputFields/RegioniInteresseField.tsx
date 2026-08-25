@@ -1,8 +1,8 @@
-import {useId, useState, type Dispatch, type SetStateAction} from "react";
+import {useId, useState, type Dispatch, type ReactNode, type SetStateAction} from "react";
 import {Check, Plus, X} from "lucide-react";
 
 import {Button} from "@/components/ui/button";
-import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {Regione, REGIONI_ITALIANE} from "@/const/defaultConstants";
@@ -30,6 +30,8 @@ type RegioniInteresseFieldProps = {
 	cittaComuniPerRegione: CittaComuniPerRegione;
 	setCittaComuniPerRegione: Dispatch<SetStateAction<CittaComuniPerRegione>>;
 	idPrefix?: string;
+	required?: boolean;
+	error?: ReactNode | null;
 };
 
 // --- Sub-componente estratto: prima era duplicato 3 volte nel file originale ---
@@ -118,6 +120,8 @@ export default function RegioniInteresseField({
 	                                              cittaComuniPerRegione,
 	                                              setCittaComuniPerRegione,
 	                                              idPrefix,
+	                                              required = true,
+	                                              error,
                                               }: RegioniInteresseFieldProps) {
 	const [bozzaCittaPerRegione, setBozzaCittaPerRegione] = useState<Record<string, string>>({});
 	const generatedId = useId();
@@ -125,6 +129,11 @@ export default function RegioniInteresseField({
 	const getCittaFieldId = (regione: string) => `${resolvedIdPrefix}-citta-${encodeURIComponent(regione)}`;
 	const tutteLeRegioni = REGIONI_ITALIANE.map((regione) => regione.nome);
 	const tutteSelezionate = regioniInteressate.length === tutteLeRegioni.length;
+	const resolvedError = error !== undefined
+		? error
+		: required && regioniInteressate.length === 0
+			? "Almeno una regione va selezionata"
+			: null;
 
 	const handleRegioniChange = (prossimeRegioni: string[]) => {
 		setRegioniInteressate(prossimeRegioni);
@@ -185,10 +194,10 @@ export default function RegioniInteresseField({
 
 	return (
 		<FieldSet>
-			<div className="mt-4">
+			<Field data-invalid={Boolean(resolvedError)} className="mt-4">
 				<div className="flex items-center justify-between gap-3">
 					<FieldLegend variant="label" className="field-legend-title mb-0">
-						Regioni interessate
+						Regioni interessate {!required && <OptionalLabel />}
 					</FieldLegend>
 					<Button
 						type="button"
@@ -199,16 +208,11 @@ export default function RegioniInteresseField({
 						{tutteSelezionate ? "Deseleziona tutte" : "Seleziona tutte"}
 					</Button>
 				</div>
-				<FieldDescription
-					className="text-red-800 font-medium"
-					hidden={regioniInteressate.length > 0}
-				>
-					Almeno una regione va selezionata
-				</FieldDescription>
-			</div>
+				{resolvedError && <FieldError>{resolvedError}</FieldError>}
+			</Field>
 
 			{Object.entries(regioniPerArea).map(([area, regioni]) => (
-				<Field key={area}>
+				<Field key={area} data-invalid={Boolean(resolvedError)}>
 					<FieldLabel htmlFor={`${resolvedIdPrefix}-area-${area}`}>{area}</FieldLabel>
 					<ToggleGroup
 						id={`${resolvedIdPrefix}-area-${area}`}
@@ -219,7 +223,8 @@ export default function RegioniInteresseField({
 						value={regioniInteressate}
 						onValueChange={handleRegioniChange}
 						multiple
-						aria-required
+						aria-required={required}
+						aria-invalid={Boolean(resolvedError)}
 					>
 						{regioni.map((regione) => (
 							<ToggleGroupItem

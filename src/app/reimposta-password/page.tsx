@@ -1,8 +1,8 @@
 import type {Metadata} from "next";
 import {redirect} from "next/navigation";
 
-import ReimpostaPassword from "@/features/auth/ReimpostaPassword";
-import {getCurrentViewer} from "@/features/auth/queries";
+import ReimpostaPassword from "@/features/accedi/ReimpostaPassword";
+import {getCurrentViewer} from "@/features/auth/server/queries";
 import {dynamicMetadata} from "@/server/metadata";
 
 export const metadata: Metadata = dynamicMetadata("Reimposta password");

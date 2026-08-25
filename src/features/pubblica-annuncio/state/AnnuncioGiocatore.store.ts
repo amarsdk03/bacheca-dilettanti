@@ -6,6 +6,7 @@ import {
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import type {DisponibilitaProfilo} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export type AnnuncioGiocatoreData = {
 	nome: string;
@@ -17,6 +18,7 @@ export type AnnuncioGiocatoreData = {
 	cittaComuniPerRegione: CittaComuniPerRegione;
 	contatti: ContattiAnnuncio;
 	descrizioneAggiuntiva: string;
+	disponibilita: DisponibilitaProfilo;
 	tipologieCalcio: string[];
 	ruoliPrincipali: string[];
 	ruoliSpecifici: string[];
@@ -34,6 +36,7 @@ const createInitialState = (): AnnuncioGiocatoreData => ({
 	cittaComuniPerRegione: {},
 	contatti: {...CONTATTI_ANNUNCIO_DEFAULT},
 	descrizioneAggiuntiva: "",
+	disponibilita: "non-specificare",
 	tipologieCalcio: [],
 	ruoliPrincipali: [],
 	ruoliSpecifici: [],

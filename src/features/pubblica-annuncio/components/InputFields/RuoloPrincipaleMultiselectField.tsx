@@ -5,12 +5,14 @@ type RuoloPrincipaleMultiselectFieldProps = {
 	value: string[];
 	onValueChange: (value: string[]) => void;
 	required?: boolean;
+	error?: string;
 };
 
 export default function RuoloPrincipaleMultiselectField({
 	value,
 	onValueChange,
 	required = false,
+	error,
 }: RuoloPrincipaleMultiselectFieldProps) {
 	return (
 		<MultiselectField
@@ -21,6 +23,7 @@ export default function RuoloPrincipaleMultiselectField({
 			placeholder="Seleziona i ruoli..."
 			emptyText="Nessun ruolo trovato."
 			required={required}
+			error={error}
 		/>
 	);
 }

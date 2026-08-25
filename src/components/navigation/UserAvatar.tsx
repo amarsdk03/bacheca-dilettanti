@@ -2,7 +2,7 @@
 
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
-import {ClipboardPenIcon, LoaderCircleIcon, LogOutIcon, UserIcon} from "lucide-react";
+import {ListChecksIcon, LoaderCircleIcon, LogOutIcon, SettingsIcon, UserIcon} from "lucide-react";
 
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Button} from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {signOut} from "@/features/auth/actions";
+import {signOut} from "@/features/auth/server/actions";
 import type {ViewerDTO} from "@/features/auth/types";
 
 function LogoutItem() {
@@ -50,11 +50,14 @@ export default function UserAvatar({viewer}: {viewer: ViewerDTO}) {
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
-					<DropdownMenuItem render={<Link href="/profilo" />}>
+					<DropdownMenuItem render={<Link href="/il-tuo-profilo?sezione=profilo" />}>
 						<UserIcon /> Profilo
 					</DropdownMenuItem>
-					<DropdownMenuItem render={<Link href="/pubblica-annuncio" />}>
-						<ClipboardPenIcon /> Pubblica annuncio
+					<DropdownMenuItem render={<Link href="/il-tuo-profilo?sezione=annunci" />}>
+						<ListChecksIcon /> Annunci
+					</DropdownMenuItem>
+					<DropdownMenuItem render={<Link href="/il-tuo-profilo?sezione=impostazioni" />}>
+						<SettingsIcon /> Impostazioni
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />

@@ -1,6 +1,6 @@
 import type {ReactNode} from "react";
 
-import {Field, FieldDescription, FieldLabel} from "@/components/ui/field";
+import {Field, FieldDescription, FieldError, FieldLabel} from "@/components/ui/field";
 import {
 	Combobox,
 	ComboboxChip,
@@ -41,11 +41,10 @@ export default function MultiselectField({
 	const anchor = useComboboxAnchor();
 
 	return (
-		<Field>
+		<Field data-invalid={Boolean(error)}>
 			<FieldLabel>
 				{label} {!required && <OptionalLabel />}
 			</FieldLabel>
-			{error && <FieldDescription className="font-medium text-red-800">{error}</FieldDescription>}
 			<Combobox
 				multiple
 				autoHighlight
@@ -58,7 +57,11 @@ export default function MultiselectField({
 						{value.map((item) => (
 							<ComboboxChip key={item}>{item}</ComboboxChip>
 						))}
-						<ComboboxChipsInput placeholder={value.length === 0 ? placeholder : ""} />
+						<ComboboxChipsInput
+							placeholder={value.length === 0 ? placeholder : ""}
+							aria-invalid={Boolean(error)}
+							aria-required={required}
+						/>
 					</ComboboxValue>
 				</ComboboxChips>
 
@@ -73,6 +76,7 @@ export default function MultiselectField({
 					</ComboboxList>
 				</ComboboxContent>
 			</Combobox>
+			{error && <FieldError>{error}</FieldError>}
 			{description && <FieldDescription>{description}</FieldDescription>}
 		</Field>
 	);

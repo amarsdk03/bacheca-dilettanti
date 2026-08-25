@@ -1,6 +1,6 @@
 "use client";
 
-import {type FormEvent, useState} from "react";
+import {type SubmitEvent, useState} from "react";
 import {ExternalLink, Mail, Send} from "lucide-react";
 import {SiInstagram, SiWhatsapp} from "@icons-pack/react-simple-icons";
 
@@ -17,7 +17,7 @@ export default function Contatti({emailStaff}: {emailStaff: string}) {
 	const [oggetto, setOggetto] = useState("");
 	const [messaggio, setMessaggio] = useState("");
 
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+	const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		const body = [`Nome: ${nome}`, `Email: ${email}`, "", messaggio].join("\n");
 		window.location.href = `mailto:${emailStaff}?subject=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(body)}`;

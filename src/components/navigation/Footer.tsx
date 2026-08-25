@@ -36,23 +36,23 @@ export default function Footer(
 				<div className="grid grid-cols-2 sm:grid-cols-4 gap-10 sm:pt-4" hidden={minimal}>
 					<div>
 						<h3 className="font-mono text-xs font-semibold uppercase tracking-wide text-neutral-400">
-							Piattaforma
+							Annunci
 						</h3>
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
-							<li><Link href="/#" className="hover:text-neutral-900">Come funziona</Link></li>
-							<li><Link href="/#" className="hover:text-neutral-900">Categorie</Link></li>
-							<li><Link href="/#" className="hover:text-neutral-900">Annunci</Link></li>
+							<li><Link href="/annunci" className="hover:text-neutral-900">Sfoglia annunci</Link></li>
+							<li><Link href="/pubblica-annuncio" className="hover:text-neutral-900">Pubblica annuncio</Link></li>
+							<li><Link href="/visibilita" className="hover:text-neutral-900">Visibilità annunci</Link></li>
 						</ul>
 					</div>
 
 					<div>
 						<h3 className="font-mono text-xs font-semibold uppercase tracking-wide text-neutral-400">
-							Per chi cerca
+							Profili
 						</h3>
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
-							<li><Link href="/#" className="hover:text-neutral-900">Giocatori</Link></li>
-							<li><Link href="/#" className="hover:text-neutral-900">Squadre</Link></li>
-							<li><Link href="/#" className="hover:text-neutral-900">Staff tecnico</Link></li>
+							<li><Link href="/profili" className="hover:text-neutral-900">Sfoglia profili</Link></li>
+							<li><Link href="/registrati" className="hover:text-neutral-900">Registra profilo</Link></li>
+							<li><Link href="/accedi" className="hover:text-neutral-900">Accedi al tuo profilo</Link></li>
 						</ul>
 					</div>
 
@@ -61,7 +61,7 @@ export default function Footer(
 							Altro
 						</h3>
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
-							<li><Link href="/#" className="hover:text-neutral-900">Chi siamo</Link></li>
+							<li><Link href="/" className="hover:text-neutral-900">Homepage</Link></li>
 							<li><Link href="/aggiornamenti" className="hover:text-neutral-900">Aggiornamenti</Link></li>
 							<li><Link href="/contatti" className="hover:text-neutral-900">Social e contatti</Link></li>
 						</ul>

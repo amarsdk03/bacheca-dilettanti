@@ -1,8 +1,8 @@
 import type {Metadata} from "next";
 import {redirect} from "next/navigation";
 
-import Registrati from "@/features/auth/Registrati";
-import {getCurrentViewer} from "@/features/auth/queries";
+import Registrati from "@/features/registrati/Registrati";
+import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {sanitizeNextPath} from "@/features/auth/utils";
 import {dynamicMetadata} from "@/server/metadata";
 import Navbar from "@/components/navigation/Navbar";
@@ -15,7 +15,8 @@ interface PageProps {
 }
 
 export default async function Page({searchParams}: PageProps) {
-	if (await getCurrentViewer()) redirect("/profilo");
+	const account = await getAuthenticatedViewer();
+	if (account?.registeredAt) redirect("/il-tuo-profilo");
 
 	const params = await searchParams;
 	const nextPath = sanitizeNextPath(Array.isArray(params.next) ? params.next[0] : params.next);
@@ -24,7 +25,11 @@ export default async function Page({searchParams}: PageProps) {
 	return (
 		<>
 			<Navbar minimal={true} backToHome={true} />
-			<Registrati nextPath={nextPath} contactEmail={contactEmail} />
+			<Registrati
+				nextPath={nextPath}
+				contactEmail={contactEmail}
+				existingSessionEmail={account?.viewer.email ?? null}
+			/>
 		</>
 	);
 }

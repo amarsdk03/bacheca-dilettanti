@@ -19,12 +19,14 @@ import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/co
 import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
+import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 
 export default function AnnuncioCampoImpianto() {
 	const {
 		nomeImpianto,
 		indirizzo,
 		presentazione,
+		tipologieCalcio,
 		contatti,
 		regioniInteressate,
 		cittaComuniPerRegione,
@@ -53,6 +55,10 @@ export default function AnnuncioCampoImpianto() {
 					<FieldLabel htmlFor="campo-impianto-indirizzo">Indirizzo <OptionalLabel /></FieldLabel>
 					<Input id="campo-impianto-indirizzo" value={indirizzo} onChange={(event) => setField("indirizzo", event.target.value)} placeholder="Via Roma 1, Milano" />
 				</Field>
+				<TipologiaCalcioMultiselectField
+					value={tipologieCalcio}
+					onValueChange={(value) => setField("tipologieCalcio", value)}
+				/>
 				<Field>
 					<div className="flex items-center justify-between gap-3">
 						<FieldLabel htmlFor="campo-impianto-presentazione">Breve presentazione <OptionalLabel /></FieldLabel>

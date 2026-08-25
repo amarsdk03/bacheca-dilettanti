@@ -22,6 +22,7 @@ export default function RecapAnnuncioTorneoEvento() {
 			<p className="mb-1 text-muted-foreground">Dettagli torneo / evento</p>
 			<dl className="grid gap-1 sm:grid-cols-2">
 				<RecapField label="Nome torneo / evento" wide>{data.nome || "—"}</RecapField>
+				<RecapField label="Tipologia calcio">{data.tipologieCalcio.join(", ") || "—"}</RecapField>
 				<RecapField label="Contatti" wide>{formatContatti(data.contatti)}</RecapField>
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
 				<RecapField label="Modalità di iscrizione">{getOptionLabel(MODALITA_ISCRIZIONE_OPTIONS, data.modalitaIscrizione) || "Non specificata"}</RecapField>
@@ -29,6 +30,22 @@ export default function RecapAnnuncioTorneoEvento() {
 				<RecapField label="Numero squadre">{data.numeroSquadre || "—"}</RecapField>
 				<RecapField label="Costo partecipazione">{data.costoPartecipazione ? `${data.costoPartecipazione} EUR ${costoPer}` : "—"}</RecapField>
 				{data.infoAggiuntive.trim() !== "" && <RecapField label="Informazioni aggiuntive" wide>{data.infoAggiuntive}</RecapField>}
+				{data.premiTrofei.length > 0 && (
+					<div className="sm:col-span-2">
+						<dt className="text-xs text-muted-foreground">Premi e trofei</dt>
+						<dd className="font-medium">
+							<ul className="grid gap-1">
+								{data.premiTrofei.map((premio) => (
+									<li key={premio.id}>
+										{premio.posto.trim() !== ""
+											? `${premio.posto} — ${premio.titoloPremio}`
+											: premio.titoloPremio}
+									</li>
+								))}
+							</ul>
+						</dd>
+					</div>
+				)}
 				<PremiumImageRecap image={data.immagineAnnuncio} />
 				<PremiumLinkRecap link={data.linkAnnuncio} />
 			</dl>

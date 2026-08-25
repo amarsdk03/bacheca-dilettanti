@@ -9,7 +9,9 @@ import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/Inpu
 import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
 import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import PremiTrofeiFields from "@/features/pubblica-annuncio/components/InputFields/PremiTrofeiFields";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
+import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 import {useAnnuncioTorneoEventoStore} from "@/features/pubblica-annuncio/state/AnnuncioTorneoEvento.store";
 import {ANNATE_OPTIONS, MODALITA_ISCRIZIONE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
@@ -25,6 +27,10 @@ export default function AnnuncioTorneoEvento() {
 					<FieldDescription>Inserisci le informazioni utili per squadre e partecipanti.</FieldDescription>
 				</div>
 				<AnnuncioTextField id="torneo-evento-nome" label="Nome torneo / evento" value={data.nome} onValueChange={(value) => data.setField("nome", value)} placeholder="Torneo estivo 2026" />
+				<TipologiaCalcioMultiselectField
+					value={data.tipologieCalcio}
+					onValueChange={(value) => data.setField("tipologieCalcio", value)}
+				/>
 			</FieldSet>
 
 			<ContattiAnnuncioFields contatti={data.contatti} setContatti={(value) => data.setField("contatti", value)} />
@@ -76,9 +82,15 @@ export default function AnnuncioTorneoEvento() {
 				</div>
 
 				<AnnuncioTextareaField id="torneo-evento-info-aggiuntive" label="Informazioni aggiuntive" value={data.infoAggiuntive} onValueChange={(value) => data.setField("infoAggiuntive", value)} placeholder="Programma, regolamento, date e altre informazioni utili..." />
-				<ImmagineAnnuncioPremiumField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.immagineAnnuncio} onValueChange={(value) => data.setField("immagineAnnuncio", value)} />
-				<LinkAnnuncioPremiumField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.linkAnnuncio} onValueChange={(value) => data.setField("linkAnnuncio", value)} />
 			</FieldSet>
+
+			<PremiTrofeiFields
+				premiTrofei={data.premiTrofei}
+				setPremiTrofei={(value) => data.setField("premiTrofei", value)}
+			/>
+
+			<ImmagineAnnuncioPremiumField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.immagineAnnuncio} onValueChange={(value) => data.setField("immagineAnnuncio", value)} />
+			<LinkAnnuncioPremiumField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.linkAnnuncio} onValueChange={(value) => data.setField("linkAnnuncio", value)} />
 		</FieldGroup>
 	);
 }

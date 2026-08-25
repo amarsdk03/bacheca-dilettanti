@@ -431,7 +431,7 @@ export default function Homepage() {
 				{/* ------------------------------ Hero ------------------------------ */}
 				<section className="relative overflow-hidden">
 					<Image
-						src="/backgrounds/homepage-hero2.jpg"
+						src="/backgrounds/homepage-hero.jpg"
 						alt="Homepage hero background"
 						fill
 						priority

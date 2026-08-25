@@ -5,7 +5,7 @@ import {ArrowLeftIcon, ClipboardPenIcon, UserRoundIcon} from "lucide-react";
 import UserAvatar from "@/components/navigation/UserAvatar";
 import {Button} from "@/components/ui/button";
 import {DEFAULT_LOGO_TRANSPARENT_PATH} from "@/const/defaultConstants";
-import {getCurrentViewer} from "@/features/auth/queries";
+import {getCurrentViewer} from "@/features/auth/server/queries";
 
 interface NavbarLink {
 	label: string;
@@ -13,9 +13,9 @@ interface NavbarLink {
 }
 
 const navbarLinks: NavbarLink[] = [
-	{label: "Sfoglia annunci", href: "/#"},
-	{label: "Visibilità", href: "/visibilita"},
-	{label: "Profili 🔥", href: "/#"},
+	{label: "Sfoglia annunci", href: "/annunci"},
+	/*{label: "Visibilità", href: "/visibilita"},*/
+	{label: "Profili 🔥", href: "/profili"},
 	{label: "Aggiornamenti", href: "/aggiornamenti"},
 	{label: "Contatti", href: "/contatti"},
 ];

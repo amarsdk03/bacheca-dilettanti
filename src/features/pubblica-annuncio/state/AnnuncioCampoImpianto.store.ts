@@ -17,6 +17,7 @@ export type AnnuncioCampoImpiantoData = {
 	nomeImpianto: string;
 	indirizzo: string;
 	presentazione: string;
+	tipologieCalcio: string[];
 	contatti: ContattiAnnuncio;
 	regioniInteressate: string[];
 	cittaComuniPerRegione: CittaComuniPerRegione;
@@ -35,6 +36,7 @@ const createInitialState = (): AnnuncioCampoImpiantoData => ({
 	nomeImpianto: "",
 	indirizzo: "",
 	presentazione: "",
+	tipologieCalcio: [],
 	contatti: {...CONTATTI_ANNUNCIO_DEFAULT},
 	regioniInteressate: [],
 	cittaComuniPerRegione: {},

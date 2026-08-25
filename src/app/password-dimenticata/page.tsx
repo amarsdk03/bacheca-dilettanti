@@ -1,8 +1,8 @@
 import type {Metadata} from "next";
 import {redirect} from "next/navigation";
 
-import PasswordDimenticata from "@/features/auth/PasswordDimenticata";
-import {getCurrentViewer} from "@/features/auth/queries";
+import PasswordDimenticata from "@/features/accedi/PasswordDimenticata";
+import {getCurrentViewer} from "@/features/auth/server/queries";
 import {dynamicMetadata} from "@/server/metadata";
 
 export const metadata: Metadata = dynamicMetadata("Password dimenticata");
@@ -12,7 +12,7 @@ interface PageProps {
 }
 
 export default async function Page({searchParams}: PageProps) {
-	if (await getCurrentViewer()) redirect("/profilo");
+	if (await getCurrentViewer()) redirect("/il-tuo-profilo");
 
 	const params = await searchParams;
 	const error = Array.isArray(params.errore) ? params.errore[0] : params.errore;

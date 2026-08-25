@@ -23,6 +23,7 @@ import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/Inpu
 import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
 import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
 import {CATEGORIE_CALCIO_GROUPS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import DisponibilitaProfiloSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaProfiloSelect";
 
 export default function AnnuncioStaff() {
 	const {
@@ -39,6 +40,7 @@ export default function AnnuncioStaff() {
 		categorieRicercate,
 		presentazioneInformazioniAggiuntive,
 		esperienze,
+		disponibilita,
 		disponibilitaSpostamento,
 		immagineAnnuncio,
 		linkAnnuncio,
@@ -109,7 +111,13 @@ export default function AnnuncioStaff() {
 						onValueChange={(value) => setField("categorieRicercate", value)}
 					/>
 
-					<div className="grid gap-x-4 sm:grid-cols-2">
+					<div className="grid gap-4 sm:grid-cols-2">
+						<DisponibilitaProfiloSelect
+							id="staff-disponibilita"
+							value={disponibilita}
+							onValueChange={(value) => setField("disponibilita", value)}
+						/>
+
 						<DisponibilitaSpostamentoSelect
 							id="staff-disponibilita-spostamento"
 							value={disponibilitaSpostamento}
