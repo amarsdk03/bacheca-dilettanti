@@ -9,7 +9,7 @@ import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
-import {DEFAULT_LOGO_TRANSPARENT_PATH} from "@/const/defaultConstants";
+import {DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
 import {updatePassword} from "@/features/auth/server/actions";
 import {INITIAL_AUTH_STATE} from "@/features/auth/types";
 
@@ -25,7 +25,7 @@ export default function ReimpostaPassword() {
 		<div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
 			<div className="flex w-full max-w-sm flex-col gap-6">
 				<Link href="/" className="flex justify-center">
-					<Image src={DEFAULT_LOGO_TRANSPARENT_PATH} alt="Bacheca Dilettanti" width={150} height={90} priority />
+					<Image src={DEFAULT_LOGO_PATH} alt="Bacheca Dilettanti" width={150} height={90} priority />
 				</Link>
 				<Card>
 					<CardHeader className="text-center">

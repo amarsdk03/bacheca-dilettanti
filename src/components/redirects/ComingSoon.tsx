@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import Image from "next/image";
-import {DEFAULT_LOGO_TRANSPARENT_PATH} from "@/const/defaultConstants";
+import {DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
 import AccessForm from "@/app/accesso/access-form";
 
 
@@ -237,7 +237,7 @@ export default function ComingSoon({ next }: { next?: string }) {
 						>
 							<motion.div variants={fadeUp}>
 								<Image
-									src={DEFAULT_LOGO_TRANSPARENT_PATH}
+									src={DEFAULT_LOGO_PATH}
 									alt={"Logo torneo"}
 									width={300}
 									height={300}

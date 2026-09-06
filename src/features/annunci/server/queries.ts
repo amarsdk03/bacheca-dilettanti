@@ -4,6 +4,7 @@ import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
 	ANNOUNCEMENTS_PER_PAGE,
+	ANNOUNCEMENT_TYPES,
 	announcementOption,
 	getAnnouncementFilterEntries,
 	getAnnouncementStorageTypes,
@@ -20,6 +21,7 @@ import {
 	type AnnouncementFact,
 	type AnnouncementFactKind,
 	type AnnouncementType,
+	type LatestAnnouncementsResult,
 } from "@/features/annunci/announcement-model";
 import type {ProfileType} from "@/features/profilo/profile-model";
 import {createAdminClient} from "@/lib/supabase/admin";
@@ -788,6 +790,38 @@ function emptyDirectoryResult(error = false): AnnouncementDirectoryResult {
 		totalPages: 1,
 		error,
 	};
+}
+
+export async function loadLatestPublicAnnouncements(): Promise<LatestAnnouncementsResult> {
+	try {
+		const supabase = createAdminClient();
+		const {data, error} = await publicAnnouncementQuery(supabase)
+			.in("tipologia_annuncio", ANNOUNCEMENT_TYPES)
+			.order("creato_il", {ascending: false, nullsFirst: false})
+			.order("uuid", {ascending: false})
+			.limit(6);
+
+		if (error) {
+			logQueryError("latest", error);
+			return {announcements: [], error: true};
+		}
+
+		const announcements = (data ?? [])
+			.map(mapAnnouncement)
+			.filter((item): item is MappedAnnouncement => Boolean(item))
+			.map(({item}) => ({
+				id: item.id,
+				profileType: item.profileType,
+				title: item.title,
+				location: item.location,
+				createdAt: item.createdAt,
+			}));
+
+		return {announcements, error: false};
+	} catch (error) {
+		logQueryError("latest-unexpected", error);
+		return {announcements: [], error: true};
+	}
 }
 
 export async function loadPublicAnnouncementDirectory(

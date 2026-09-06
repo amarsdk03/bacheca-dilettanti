@@ -70,6 +70,7 @@ interface ProfileOption {
 	label: string;
 	description: string;
 	icon: LucideIcon;
+	colore?: string;
 }
 
 export const MAX_PROFILE_COUNT = 5;
@@ -93,48 +94,56 @@ export const PROFILE_OPTIONS: readonly ProfileOption[] = [
 		label: "Giocatore",
 		description: "Crea il tuo profilo e fatti scoprire da società sportive e osservatori",
 		icon: UserIcon,
+		colore: "#2F6BFF",
 	},
 	{
 		value: "squadra",
 		label: "Squadra",
 		description: "Cerca nuove figure calcistiche, staff, partite o sponsor per la tua squadra",
 		icon: AwardIcon,
+		colore: "#2FAE66",
 	},
 	{
 		value: "staff-sportivo",
 		label: "Staff sportivo",
 		description: "Cerca e applica per occupazioni retribuite nel settore sportivo",
 		icon: SearchIcon,
+		colore: "#F28A2E",
 	},
 	{
 		value: "arbitro",
 		label: "Arbitro",
 		description: "Renditi disponibile per arbitrare o gestire partite ed eventi sportivi",
 		icon: ClipboardListIcon,
+		colore: "#D4B21F",
 	},
 	{
 		value: "torneo-evento",
 		label: "Torneo / Evento",
 		description: "Organizza e promuovi il tuo torneo, evento o manifestazione sportiva",
 		icon: TrophyIcon,
+		colore: "#111111",
 	},
 	{
 		value: "campi-impianti-sportivi",
 		label: "Campi e impianti",
 		description: "Fornisci e pubblicizza i tuoi campi e impianti sportivi",
 		icon: TrafficConeIcon,
+		colore: "#5B8F63",
 	},
 	{
 		value: "professionisti-studi",
 		label: "Professionisti e studi",
 		description: "Offri i tuoi servizi professionali a squadre, atleti e società sportive",
 		icon: BriefcaseBusinessIcon,
+		colore: "#D4B21F",
 	},
 	{
 		value: "creators",
 		label: "Creators",
 		description: "Condividi il tuo profilo e i tuoi contenuti con la nostra community",
 		icon: SparklesIcon,
+		colore: "#E53935",
 	},
 ];
 

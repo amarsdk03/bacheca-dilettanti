@@ -1,742 +1,395 @@
-'use client';
-
-import {useState} from 'react';
+import type {CSSProperties} from "react";
 import Link from "next/link";
-import type {CSSProperties} from 'react';
-
-import type {Variants} from "motion/react";
-import {AnimatePresence, motion, useReducedMotion} from "motion/react";
-import {Bricolage_Grotesque, IBM_Plex_Mono, Manrope} from 'next/font/google';
 import {
-	ArrowRight,
-	ArrowUpRight,
-	Clock,
-	MapPin,
-	Pin,
-} from 'lucide-react';
-import Image from "next/image";
-import {Card, CardContent} from "@/components/ui/card";
-import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
+	ArrowRightIcon,
+	BriefcaseBusinessIcon,
+	CameraIcon,
+	HandshakeIcon,
+	MapPinIcon,
+	RocketIcon,
+} from "lucide-react";
 
+import {buttonVariants} from "@/components/ui/button";
+import {Card, CardContent, CardHeader} from "@/components/ui/card";
+import {cn} from "@/lib/utils";
+import type {ProfileType} from "@/features/profilo/profile-model";
+import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
+import {loadLatestPublicAnnouncements} from "@/features/annunci/server/queries";
 
-
-/**
- * Font setup — per un'app reale conviene spostare questi loader in app/layout.tsx
- * e riusare le stesse CSS variable ovunque. Qui restano nel componente per renderlo
- * autonomo e facile da incollare in un progetto esistente.
- */
-const display = Bricolage_Grotesque({
-	subsets: ['latin'],
-	variable: '--font-display',
-});
-
-const body = Manrope({
-	subsets: ['latin'],
-	variable: '--font-body',
-});
-
-const mono = IBM_Plex_Mono({
-	subsets: ['latin'],
-	weight: ['400', '500', '600'],
-	variable: '--font-mono',
-});
-
-
-
-
-type ListingCategory = 'Giocatore' | 'Squadra' | 'Staff';
-type FilterValue = 'Tutti' | ListingCategory;
-
-interface Listing {
-	id: string;
-	category: ListingCategory;
-	type: string;
-	title: string;
-	region: string;
-	level: string;
-	postedAgo: string;
-	rotate?: number;
-}
-
-interface Stat {
-	value: string;
-	label: string;
-}
-
-interface AudienceCategory {
-	icon: string;
-	title: string;
-	need: string;
-	opportunity: string;
-}
-
-interface UserType {
+interface HomepageCategory {
+	type: ProfileType;
 	label: string;
 	description: string;
 }
 
+const HOMEPAGE_CATEGORIES = [
+	{
+		type: "giocatore",
+		label: "Giocatori",
+		description: "Trova la tua prossima opportunità",
+	},
+	{
+		type: "staff-sportivo",
+		label: "Staff",
+		description: "Allena il talento, costruisci il futuro",
+	},
+	{
+		type: "squadra",
+		label: "Squadre",
+		description: "Cerca profili e rafforza la tua rosa",
+	},
+	{
+		type: "professionisti-studi",
+		label: "Professionisti",
+		description: "Scopri nuovi talenti e opportunità",
+	},
+	{
+		type: "creators",
+		label: "Creators",
+		description: "Racconta il calcio a modo tuo",
+	},
+	{
+		type: "torneo-evento",
+		label: "Tornei / Eventi",
+		description: "Promuovi i tuoi eventi e raggiungi tutti",
+	},
+	{
+		type: "campi-impianti-sportivi",
+		label: "Campi / Strutture",
+		description: "Trova o pubblica la tua struttura",
+	},
+] as const satisfies readonly HomepageCategory[];
 
-
-
-const heroListings: Listing[] = [
-	{
-		id: 'h1',
-		category: 'Giocatore',
-		type: 'Calcio a 11',
-		title: 'Terzino sinistro, classe 2001, valuta proposte',
-		region: 'Lombardia',
-		level: 'Eccellenza, Promozione',
-		postedAgo: '2 giorni fa',
-		rotate: -4,
-	},
-	{
-		id: 'h2',
-		category: 'Squadra',
-		type: 'Calcio a 7',
-		title: 'Cerchiamo centrocampista per la prossima stagione',
-		region: 'Emilia-Romagna',
-		level: 'Primavera',
-		postedAgo: '5 ore fa',
-		rotate: 3,
-	},
-	{
-		id: 'h3',
-		category: 'Staff',
-		type: 'Calcio a 5',
-		title: 'Preparatore atletico disponibile da subito',
-		region: 'Puglia, Campania',
-		level: 'Dilettantistico, Giovanile',
-		postedAgo: '1 giorno fa',
-		rotate: -2,
-	},
-];
-
-const listings: Listing[] = [
-	{
-		id: 'l1',
-		category: 'Giocatore',
-		type: 'Calcio a 11',
-		title: 'Centrocampista centrale, classe 1999, valuta proposte in Promozione',
-		region: 'Lombardia',
-		level: 'Promozione',
-		postedAgo: '2 giorni fa',
-	},
-	{
-		id: 'l2',
-		category: 'Squadra',
-		type: 'Calcio a 11',
-		title: 'Cerca portiere per la prossima stagione tra Eccellenza e Promozione',
-		region: 'Veneto',
-		level: 'Eccellenza',
-		postedAgo: '5 ore fa',
-	},
-	{
-		id: 'l3',
-		category: 'Staff',
-		type: 'Calcio a 5',
-		title: 'Preparatore atletico disponibile da subito per settore giovanile',
-		region: 'Emilia-Romagna',
-		level: 'Giovanile',
-		postedAgo: '1 giorno fa',
-	},
-	{
-		id: 'l4',
-		category: 'Giocatore',
-		type: 'Calcio a 7',
-		title: 'Esterno offensivo con esperienza in tornei regionali di Calcio a 7',
-		region: 'Toscana',
-		level: 'Campionato amatoriale',
-		postedAgo: '3 giorni fa',
-	},
-	{
-		id: 'l5',
-		category: 'Squadra',
-		type: 'Calcio a 11',
-		title: 'Cerchiamo terzino under 20 per completare la rosa della prima squadra',
-		region: 'Lazio',
-		level: 'Promozione',
-		postedAgo: '6 ore fa',
-	},
-	{
-		id: 'l6',
-		category: 'Staff',
-		type: 'Calcio a 11',
-		title: 'Allenatore UEFA B cerca nuova squadra per la prossima stagione',
-		region: 'Puglia',
-		level: 'Promozione',
-		postedAgo: '4 giorni fa',
-	},
-];
-
-const stats: Stat[] = [
-	{value: '1.240+', label: 'Annunci pubblicati'},
-	{value: '310+', label: 'Società iscritte'},
-	{value: '20', label: 'Regioni coperte'},
-	{value: '30 min', label: 'Tempo medio di risposta'},
-];
-
-const audienceCategories: AudienceCategory[] = [
-	{
-		icon: 'User',
-		title: 'Giocatori',
-		need: 'Proporsi, mostrare esperienze e disponibilità, essere trovati.',
-		opportunity: 'Profili Plus e Pro, video e annunci prioritari',
-	},
-	{
-		icon: 'Award',
-		title: 'Squadre',
-		need: 'Cercare giocatori, staff, partite o sponsor e presentare la squadra.',
-		opportunity: 'Profili vetrina, Club Pilota e promozione',
-	},
-	{
-		icon: 'Search',
-		title: 'Staff sportivo',
-		need: 'Presentare qualifiche, esperienze e disponibilità per nuovi incarichi.',
-		opportunity: 'Abbonamenti, portfolio e pubblicazioni nel feed',
-	},
-	{
-		icon: 'ClipboardList',
-		title: 'Arbitri',
-		need: 'Mostrare esperienza e disponibilità per partite ed eventi sportivi.',
-		opportunity: 'Profilo dedicato e maggiore visibilità nelle ricerche',
-	},
-	{
-		icon: 'Trophy',
-		title: 'Tornei ed eventi',
-		need: 'Promuovere manifestazioni, raccogliere iscrizioni e comunicare le scadenze.',
-		opportunity: 'Pacchetti promozionali ad alto valore economico',
-	},
-	{
-		icon: 'TrafficCone',
-		title: 'Campi e impianti sportivi',
-		need: 'Presentare la struttura, essere trovati e facilitare le prenotazioni.',
-		opportunity: 'Profili locali, listini, disponibilità e booking',
-	},
-];
-
-const userTypes: UserType[] = [
-	{label: 'Giocatori', description: 'Atleti che cercano una squadra, una vetrina o una nuova opportunità.'},
-	{label: 'Staff', description: 'Allenatori, preparatori e dirigenti tecnici che vogliono proporsi.'},
-	{label: 'Società', description: 'Club e realtà sportive che pubblicano richieste o presentazioni.'},
-	{label: 'Professionisti', description: 'Figure specialistiche e consulenti che lavorano nel calcio dilettantistico.'},
-	{label: 'Eventi', description: 'Tornei, open day, stage e appuntamenti da promuovere al pubblico giusto.'},
-	{label: 'Strutture', description: 'Campi, impianti e servizi sportivi da mettere in evidenza.'},
-];
-
-const filters: { label: string; value: FilterValue }[] = [
-	{label: 'Tutti', value: 'Tutti'},
-	{label: 'Giocatori', value: 'Giocatore'},
-	{label: 'Squadre', value: 'Squadra'},
-	{label: 'Staff', value: 'Staff'},
-];
-
-const categoryBadgeStyles: Record<ListingCategory, string> = {
-	Giocatore: 'bg-neutral-900 text-white',
-	Squadra: 'bg-neutral-900 text-white',
-	Staff: 'bg-neutral-900 text-white',
+const PROFILE_LABELS: Record<ProfileType, string> = {
+	giocatore: "Giocatori",
+	squadra: "Squadre",
+	"staff-sportivo": "Staff",
+	"professionisti-studi": "Professionisti",
+	arbitro: "Arbitri",
+	creators: "Creators",
+	"torneo-evento": "Tornei / Eventi",
+	"campi-impianti-sportivi": "Campi / Strutture",
 };
 
+const FALLBACK_ACCENT = "#8e72ff";
 
-
-
-const containerStagger: Variants = {
-	hidden: {},
-	visible: {transition: {staggerChildren: 0.1, delayChildren: 0.25}},
-};
-
-const fadeUp: Variants = {
-	hidden: {opacity: 0, y: 20},
-	visible: {opacity: 1, y: 0, transition: {duration: 0.5, ease: [0.22, 1, 0.36, 1]}},
-};
-
-
-
-
-interface PinnedHeroCardProps {
-	listing: Listing;
-	index: number;
-	reduceMotion: boolean;
+function profileAccent(type: ProfileType) {
+	return PROFILE_OPTIONS.find(({value}) => value === type)?.colore ?? FALLBACK_ACCENT;
 }
 
-function PinnedHeroCard({listing, index, reduceMotion}: PinnedHeroCardProps) {
-	const rotate = listing.rotate ?? 0;
-	const alignment =
-		index === 1 ? 'self-end' : index === 2 ? 'self-start ml-6 sm:ml-10' : 'self-start';
+function ProfilePngIcon({type, color, className}: {
+	type: ProfileType;
+	color: string;
+	className: string;
+}) {
+	const iconUrl = `/icone-profili/${type}.png`;
 
 	return (
-		<motion.div
-			initial={reduceMotion ? false : {opacity: 0, y: 36, rotate: 0, scale: 0.92}}
-			animate={{opacity: 1, y: 0, rotate, scale: 1}}
-			transition={
-				reduceMotion
-					? {duration: 0}
-					: {type: 'spring', stiffness: 130, damping: 15, delay: 0.15 + index * 0.12}
-			}
-			whileHover={{rotate: 0, y: -6, scale: 1.03}}
-			className={`relative w-[86%] max-w-sm rounded-2xl border border-neutral-200 bg-white p-5 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] sm:w-[78%] ${alignment}`}
-		>
-			<Pin
-				aria-hidden="true"
-				className="absolute -top-3 left-6 h-6 w-6 -rotate-12 text-black drop-shadow-sm"
-				fill="white"
-				strokeWidth={1.75}
-			/>
-			<span
-				className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${categoryBadgeStyles[listing.category]}`}
-			>
-        {listing.category}
-      </span>
-			<h3 className="mt-3 font-(family-name:--font-display) text-lg font-semibold leading-snug text-neutral-900">
-				{listing.title}
-			</h3>
-			<div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
-        <span className="inline-flex items-center gap-1">
-          <MapPin className="h-3.5 w-3.5" aria-hidden="true"/>
-	        {listing.region}
-        </span>
-				<span>
-          {listing.type} · {listing.level}
-        </span>
-			</div>
-		</motion.div>
+		<span
+			className={cn("block shrink-0", className)}
+			data-profile-icon={type}
+			style={{
+				backgroundColor: color,
+				maskImage: `url(${iconUrl})`,
+				maskPosition: "center",
+				maskRepeat: "no-repeat",
+				maskSize: "contain",
+				WebkitMaskImage: `url(${iconUrl})`,
+				WebkitMaskPosition: "center",
+				WebkitMaskRepeat: "no-repeat",
+				WebkitMaskSize: "contain",
+			}}
+			aria-hidden="true"
+		/>
 	);
 }
 
-interface ListingCardProps {
-	listing: Listing;
-	reduceMotion: boolean;
+function formatPublishedAt(createdAt: string | null) {
+	if (!createdAt) return "Data non disponibile";
+
+	const publishedAt = new Date(createdAt);
+	if (Number.isNaN(publishedAt.getTime())) return "Data non disponibile";
+
+	const elapsed = Math.max(0, Date.now() - publishedAt.getTime());
+	const minutes = Math.floor(elapsed / 60_000);
+	const hours = Math.floor(elapsed / 3_600_000);
+	const days = Math.floor(elapsed / 86_400_000);
+
+	if (minutes < 1) return "Adesso";
+	if (minutes < 60) return `${minutes} min fa`;
+	if (hours < 24) return `${hours}h fa`;
+	if (days < 30) return `${days}g fa`;
+
+	return new Intl.DateTimeFormat("it-IT", {
+		day: "numeric",
+		month: "short",
+	}).format(publishedAt);
 }
 
-function ListingCard({listing, reduceMotion}: ListingCardProps) {
-	return (
-		<motion.article
-			layout={!reduceMotion}
-			initial={{opacity: 0, y: 16}}
-			animate={{opacity: 1, y: 0}}
-			exit={{opacity: 0, scale: 0.96}}
-			transition={{duration: reduceMotion ? 0 : 0.3, ease: 'easeOut'}}
-			whileHover={reduceMotion ? undefined : {y: -4}}
-			className="group flex flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-5 transition-shadow hover:shadow-[0_12px_28px_-14px_rgba(0,0,0,0.16)]"
-		>
-			<div>
-				<div className="flex items-center justify-between">
-          <span
-	          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${categoryBadgeStyles[listing.category]}`}
-          >
-            {listing.category}
-          </span>
-					<span className="inline-flex items-center gap-1 text-xs text-neutral-400">
-            <Clock className="h-3.5 w-3.5" aria-hidden="true"/>
-						{listing.postedAgo}
-          </span>
-				</div>
-				<h3 className="mt-3 font-(family-name:--font-display) text-base font-semibold leading-snug text-neutral-900">
-					{listing.title}
-				</h3>
-				<div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
-          <span className="inline-flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5" aria-hidden="true"/>
-	          {listing.region}
-          </span>
-					<span>
-            {listing.type} · {listing.level}
-          </span>
-				</div>
-			</div>
-			<Link
-				href="/visiblita"
-				aria-label={`Vedi annuncio: ${listing.title}`}
-				className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-fuchsia-600 transition-colors group-hover:text-(--accent-dark) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded"
-			>
-				Vedi annuncio
-				<ArrowUpRight
-					className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-					aria-hidden="true"/>
-			</Link>
-		</motion.article>
-	);
-}
+const PROMOTIONS = [
+	{
+		eyebrow: "Per i professionisti",
+		title: "Osserva. Collabora. Cresci.",
+		description: "Scopri talenti, entra in contatto con realtà affidabili e costruisci nuove opportunità.",
+		href: "/profili?type=professionisti-studi",
+		cta: "Scopri di più",
+		icon: BriefcaseBusinessIcon,
+		accent: "#111111",
+	},
+	{
+		eyebrow: "Per i creators",
+		title: "Il tuo contenuto ha valore",
+		description: "Condividi la tua passione, racconta storie, intervista e analizza il calcio.",
+		href: "/profili?type=creators",
+		cta: "Scopri di più",
+		icon: CameraIcon,
+		accent: "#E53935",
+	},
+	{
+		eyebrow: "Partner ufficiali",
+		title: "Insieme per il calcio",
+		description: "Unisciti ai brand che credono nei valori del calcio dilettantistico.",
+		href: "/contatti",
+		cta: "Diventa partner",
+		icon: HandshakeIcon,
+		accent: "#111111",
+	},
+] as const;
 
-interface FilterPillProps {
-	label: string;
-	active: boolean;
-	onClick: () => void;
-}
-
-function FilterPill({label, active, onClick}: FilterPillProps) {
-	return (
-		<button
-			type="button"
-			onClick={onClick}
-			aria-pressed={active}
-			className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
-				active
-					? 'border-fuchsia-600 bg-fuchsia-600 text-white'
-					: 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900'
-			}`}
-		>
-			{label}
-		</button>
-	);
-}
-
-function SectionEyebrow({children}: { children: string }) {
-	return (
-		<span className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-(--accent-dark)">
-			{children}
-	    </span>
-	);
-}
-
-
-
-
-export default function Homepage() {
-	const shouldReduceMotion = useReducedMotion();
-	const [activeFilter, setActiveFilter] = useState<FilterValue>('Tutti');
-
-	const filteredListings =
-		activeFilter === 'Tutti' ? listings : listings.filter((item) => item.category === activeFilter);
-
-	const accentVars = {
-		'--accent': '#d591e3',
-		'--accent-dark': '#dc61f2',
-		'--accent-tint': '#f2daf2',
-	} as CSSProperties;
+export default async function Homepage() {
+	const {announcements, error} = await loadLatestPublicAnnouncements();
 
 	return (
 		<div
-			style={accentVars}
-			className={`${display.variable} ${body.variable} ${mono.variable} font-(family-name:--font-body) text-neutral-900 antialiased`}
+			id="main-content"
+			className="font-home-body overflow-x-clip bg-[radial-gradient(circle_at_55%_0%,rgba(142,114,255,0.10),transparent_34rem),linear-gradient(180deg,#ffffff_0%,#fbfaff_72%,#ffffff_100%)] text-brand-ink antialiased"
 		>
-			<main id="main-content">
-				{/* ------------------------------ Hero ------------------------------ */}
-				<section className="relative overflow-hidden">
-					<Image
-						src="/backgrounds/homepage-hero.jpg"
-						alt="Homepage hero background"
-						fill
-						priority
-						className="-z-20 object-cover object-center"
-						style={{filter: 'blur(0px)'}}
-					/>
-					<div aria-hidden="true" className="absolute inset-0 -z-10 bg-black/75" />
-
-					<div className="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-14 sm:px-6 sm:pt-20 lg:px-8 lg:pt-24">
-						<div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-12">
-							<motion.div
-								initial={shouldReduceMotion ? false : 'hidden'}
-								animate="visible"
-								variants={containerStagger}
-							>
-								<motion.div variants={fadeUp}>
-									<span className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-white">
-										La bacheca del calcio dilettantistico italiano
-								    </span>
-								</motion.div>
-
-								<motion.h1
-									variants={fadeUp}
-									className="mt-4 font-(family-name:--font-display) text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl"
-								>
-									Proponiti.
-									<br/>
-									Trova opportunità.
-									<br/>
-                                    Fatti conoscere.
-								</motion.h1>
-
-								<motion.p variants={fadeUp}
-								          className="mt-6 max-w-lg text-base leading-relaxed text-neutral-200 sm:text-lg">
-									Bacheca Dilettanti connette giocatori, staff, società, professionisti, strutture ed
-									eventi. Pubblica gratuitamente un annuncio, scopri nuove opportunità e valorizza il tuo
-									profilo o la tua realtà.
-								</motion.p>
-
-								<motion.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-4">
-								<Link
-									href="/pubblica-annuncio"
-									className="inline-flex items-center gap-2 rounded-full text-black bg-white hover:bg-neutral-200 px-6 py-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-								>
-										Pubblica un annuncio
-										<ArrowRight className="size-4" aria-hidden="true"/>
-									</Link>
-									<Link
-										href="/visiblita"
-										className="inline-flex items-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-white/50 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-									>
-										Sfoglia gli annunci
-									</Link>
-								</motion.div>
-
-								<motion.dl variants={fadeUp}
-								           className="mt-12 grid grid-cols-2 gap-6 border-t border-white/15 pt-8 sm:grid-cols-4">
-									{stats.map((stat) => (
-										<div key={stat.label}>
-											<dt className="sr-only">{stat.label}</dt>
-											<dd className="font-mono text-2xl font-semibold text-white">
-												{stat.value}
-											</dd>
-											<dd className="mt-1 text-xs text-neutral-300">{stat.label}</dd>
-										</div>
-									))}
-								</motion.dl>
-							</motion.div>
-
-							<div className="hidden sm:block relative">
-								<div
-									aria-hidden="true"
-									className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle,rgba(255,255,255,0.25)_1px,transparent_1px)] bg-size-[18px_18px]"
-								/>
-								<div className="relative flex flex-col gap-6 py-8 pl-2 pr-2 sm:pl-6">
-									{heroListings.map((listing, index) => (
-										<PinnedHeroCard
-											key={listing.id}
-											listing={listing}
-											index={index}
-											reduceMotion={Boolean(shouldReduceMotion)}
-										/>
-									))}
-								</div>
-							</div>
-						</div>
-					</div>
-				</section>
-
-				{/* ------------------------------ Annunci ------------------------------ */}
-				<section id="annunci-lista" className="border-t border-neutral-200 bg-white">
-					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-						<div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-							<motion.div
-								initial="hidden"
-								whileInView="visible"
-								viewport={{once: true, margin: '-80px'}}
-								variants={containerStagger}
-							>
-								<motion.div variants={fadeUp}>
-									<SectionEyebrow>
-										Ultimi annunci
-									</SectionEyebrow>
-								</motion.div>
-								<motion.h2
-									variants={fadeUp}
-									className="mt-3 font-(family-name:--font-display) text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
-								>
-									Nuove opportunità pubblicate
-								</motion.h2>
-								<motion.p variants={fadeUp} className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-600">
-									<b>Nota:</b> gli annunci mostrati qui sotto sono solo a scopo presentativo e non sono pubblicati da
-									individui o enti reali. Torneremo presto con i vostri ultimi annunci all'avvio del sito!
-								</motion.p>
-							</motion.div>
-
-							<div role="group" aria-label="Filtra annunci per categoria"
-							     className="flex flex-wrap gap-2">
-								{filters.map((filter) => (
-									<FilterPill
-										key={filter.value}
-										label={filter.label}
-										active={activeFilter === filter.value}
-										onClick={() => setActiveFilter(filter.value)}
-									/>
-								))}
-							</div>
-						</div>
-
-						<motion.div layout={!shouldReduceMotion}
-						            className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-							<AnimatePresence mode="popLayout">
-								{filteredListings.map((listing) => (
-									<ListingCard key={listing.id} listing={listing}
-									             reduceMotion={Boolean(shouldReduceMotion)}/>
-								))}
-							</AnimatePresence>
-						</motion.div>
-					</div>
-				</section>
-
-				{/* ------------------------------ Annunci  ------------------------------ */}
-				<section id="annunci" className="border-t border-neutral-200 bg-neutral-50">
-					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-						<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-							<motion.div
-								initial="hidden"
-								whileInView="visible"
-								viewport={{once: true, margin: '-80px'}}
-								variants={containerStagger}
-							>
-								<motion.div variants={fadeUp}>
-									<SectionEyebrow>
-										Il primo hub italiano del calcio dilettantistico
-									</SectionEyebrow>
-								</motion.div>
-								<motion.h2
-									variants={fadeUp}
-									className="mt-3 font-(family-name:--font-display) text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
-								>
-									Tutto ciò di cui hai bisogno, qui.
-								</motion.h2>
-								<motion.p variants={fadeUp} className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-600">
-									Un'unica piattaforma che riunisce tutti i soggetti del calcio dilettantistico:
-									ogni categoria ha esigenze diverse, e Bacheca Dilettanti le mette in comunicazione
-									nello stesso ambiente.
-								</motion.p>
-							</motion.div>
-						</div>
-
-						<motion.div
-							initial="hidden"
-							whileInView="visible"
-							viewport={{once: true, margin: '-80px'}}
-							variants={containerStagger}
-							className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+			<section aria-labelledby="homepage-title">
+				<div className="mx-auto grid max-w-370 gap-10 px-4 pb-10 pt-10 sm:px-6 sm:pb-12 sm:pt-14 lg:px-8 min-[1120px]:grid-cols-[1.02fr_0.98fr] min-[1120px]:items-center min-[1120px]:pb-12 min-[1120px]:pt-16">
+					<div className="max-w-2xl">
+						<h1
+							id="homepage-title"
+							className="font-home-display text-[clamp(2.65rem,4.25vw,4rem)] font-bold uppercase leading-[0.99] tracking-[-0.035em] text-black"
 						>
-							{audienceCategories.map((item) => (
-								<motion.div
-									key={item.title}
-									variants={fadeUp}
-									className="group rounded-2xl border border-neutral-200 bg-white p-5 transition-shadow hover:shadow-[0_12px_28px_-14px_rgba(0,0,0,0.16)]"
-								>
-									<div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--accent-tint) text-(--accent-dark)">
-										<DynamicLucideIcon iconName={item.icon} className="h-5 w-5" aria-hidden="true" />
-									</div>
-									<h3 className="mt-4 font-(family-name:--font-display) text-base font-semibold text-neutral-900">
-										{item.title}
-									</h3>
-									<p className="mt-2 text-sm leading-relaxed text-neutral-600">
-										{item.need}
-									</p>
-									<p className="mt-3 text-xs font-medium text-(--accent-dark)">
-										{item.opportunity}
-									</p>
-								</motion.div>
-							))}
-						</motion.div>
-					</div>
-				</section>
-
-				{/* -------------------- Fai crescere il tuo percorso o la tua realtà -------------------- */}
-				<section id="categorie" className="border-t border-neutral-200 bg-white" hidden>
-					<div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-						<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-							<motion.div
-								initial="hidden"
-								whileInView="visible"
-								viewport={{once: true, margin: '-80px'}}
-								variants={containerStagger}
-								className="max-w-xl"
-							>
-								<motion.div variants={fadeUp}>
-									<SectionEyebrow>
-										Sali di livello
-									</SectionEyebrow>
-								</motion.div>
-								<motion.h2
-									variants={fadeUp}
-									className="mt-3 font-(family-name:--font-display) text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
-								>
-									Fai crescere il tuo percorso o la tua realtà
-								</motion.h2>
-								<motion.p variants={fadeUp} className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-600">
-									Valorizza il tuo profilo, pubblica contenuti e presenta giocate, analisi, progetti
-									o servizi. Inserisciti in uno spazio consultato ogni giorno da giocatori, membri
-									dello staff e società.
-								</motion.p>
-							</motion.div>
-
+							Il punto d’incontro del calcio dilettantistico
+						</h1>
+						<p className="mt-6 max-w-2xl text-base leading-7 text-neutral-700 sm:text-lg sm:leading-8">
+							Bacheca Dilettanti è la piattaforma dedicata a giocatori, staff, società,
+							professionisti e appassionati che vivono il calcio ogni giorno. Opportunità,
+							connessioni e visibilità, tutto in un unico spazio.
+						</p>
+						<div className="mt-7 flex flex-col gap-3 min-[430px]:flex-row">
 							<Link
-								href="/visibilita"
-								className="inline-flex items-center gap-2 self-start lg:self-auto rounded-full border border-fuchsia-200 bg-white px-5 py-3 text-lg font-semibold text-fuchsia-700 transition-all hover:-translate-y-0.5 hover:border-fuchsia-300 hover:bg-fuchsia-50 hover:text-fuchsia-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 focus-visible:ring-offset-2"
+								href="/annunci"
+								className={buttonVariants({
+									variant: "brand",
+									size: "lg",
+									className: "h-11 justify-between gap-6 text-white font-bold uppercase px-5 min-[430px]:min-w-52",
+								})}
 							>
-								Esplora visibilità
-								<ArrowRight className="size-6" aria-hidden="true" />
+								<span className={"text-white font-bold uppercase"}>Sfoglia annunci</span>
+								<ArrowRightIcon aria-hidden="true" />
+							</Link>
+							<Link
+								href="#"
+								className={buttonVariants({
+									variant: "outline",
+									size: "lg",
+									className: "h-11 justify-between gap-6 border-black/35 bg-white/70 px-5 text-black font-bold uppercase min-[430px]:min-w-48",
+								})}
+							>
+								<span className={"text-black font-bold uppercase"}>Scopri di più</span>
+								<ArrowRightIcon aria-hidden="true" />
 							</Link>
 						</div>
-
-						<motion.div
-							initial="hidden"
-							whileInView="visible"
-							viewport={{once: true, margin: '-80px'}}
-							variants={fadeUp}
-							className="mt-12"
-							hidden={true}
-						>
-							<Card className="rounded-3xl border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-[0_16px_36px_-24px_rgba(0,0,0,0.2)]">
-								<CardContent className="p-6 sm:p-8">
-									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-										{userTypes.map((userType, index) => (
-											<div
-												key={userType.label}
-												className={`group rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_26px_-18px_rgba(0,0,0,0.18)] ${
-													index % 2 === 0
-														? 'border-fuchsia-200 bg-linear-to-br from-fuchsia-50 to-white'
-														: 'border-neutral-200 bg-linear-to-br from-neutral-50 to-white'
-												}`}
-											>
-												<div className="flex h-full flex-col justify-between gap-4">
-													<div className="flex items-start justify-between gap-3">
-														<div className="space-y-2">
-															<p className="text-xl font-semibold text-neutral-950 transition-colors group-hover:text-fuchsia-800">
-																Per {userType.label.toLowerCase()}
-															</p>
-															<div className="h-1.5 w-10 rounded-full bg-fuchsia-500/20 transition-colors group-hover:bg-fuchsia-500/35" />
-														</div>
-													</div>
-													<p className="text-sm leading-6">
-														{userType.description}
-													</p>
-												</div>
-											</div>
-										))}
-									</div>
-								</CardContent>
-							</Card>
-						</motion.div>
 					</div>
-				</section>
 
-				{/* ------------------------------ CTA finale ------------------------------ */}
-				<section className="relative overflow-hidden bg-[#131316]">
-					<div
-						aria-hidden="true"
-						className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--accent)_0%,transparent_60%)] opacity-25 blur-3xl"
-					/>
-					<div className="relative mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 lg:px-8">
-						<motion.div
-							initial="hidden"
-							whileInView="visible"
-							viewport={{once: true, margin: '-80px'}}
-							variants={containerStagger}
-							className="mx-auto max-w-xl"
-						>
-							<motion.div variants={fadeUp}>
-                            <span
-	                            className="font-mono text-xs font-medium uppercase tracking-[0.18em] text-fuchsia-600">
-                                Inizia ora
-                            </span>
-							</motion.div>
-							<motion.h2
-								variants={fadeUp}
-								className="mt-4 font-(family-name:--font-display) text-3xl font-bold tracking-tight text-white sm:text-4xl"
+					<Card className="gap-0 overflow-hidden border border-black/10 bg-white/90 py-0 shadow-none ring-0 backdrop-blur-sm">
+						<CardHeader className="flex min-h-16 flex-row items-center justify-between gap-4 border-b border-black/10 px-4 py-4 sm:ps-5">
+							<h2 className="font-home-display text-xl font-semibold uppercase tracking-[-0.01em] sm:text-2xl">
+								<span className="text-brand-indigo">•</span> Ultime opportunità
+							</h2>
+							<Link
+								href="/annunci"
+								className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-bold uppercase text-[#6445de] outline-none transition-colors hover:bg-brand-indigo/10 focus-visible:ring-3 focus-visible:ring-brand-indigo/35"
 							>
-								Il tuo prossimo annuncio parte da qui.
-							</motion.h2>
-							<motion.p variants={fadeUp} className="mt-4 text-base leading-relaxed text-neutral-400">
-								Pubblicare un annuncio è gratuito e richiede meno di due minuti.
-							</motion.p>
-							<motion.div variants={fadeUp} className="mt-8">
+								Vedi tutte
+								<ArrowRightIcon className="size-3.5" aria-hidden="true" />
+							</Link>
+						</CardHeader>
+
+						<CardContent className="px-0">
+							{error ? (
+								<div className="flex min-h-48 flex-col items-center justify-center gap-3 px-5 py-8 text-center">
+									<p className="font-bold">Opportunità temporaneamente non disponibili.</p>
+									<Link className="text-sm font-bold text-[#6445de] hover:underline" href="/annunci">
+										Apri la bacheca annunci
+									</Link>
+								</div>
+							) : announcements.length === 0 ? (
+								<div className="flex min-h-48 flex-col items-center justify-center gap-3 px-5 py-8 text-center">
+									<p className="font-bold">Nessuna opportunità pubblicata al momento.</p>
+									<Link className="text-sm font-bold text-[#6445de] hover:underline" href="/annunci">
+										Esplora la bacheca
+									</Link>
+								</div>
+							) : (
+								<ul aria-label="Ultimi annunci pubblicati">
+									{announcements.map((announcement) => {
+										const accent = profileAccent(announcement.profileType);
+										const publishedLabel = formatPublishedAt(announcement.createdAt);
+
+										return (
+											<li key={announcement.id} className="border-b border-black/8 last:border-b-0">
+												<Link
+													href={`/dettagli-annuncio?id=${encodeURIComponent(announcement.id)}`}
+													className="grid min-h-15 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-3 outline-none transition-colors hover:bg-brand-indigo/5 focus-visible:bg-brand-indigo/10 focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-brand-indigo/35 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:px-5 xl:grid-cols-[2.5rem_minmax(0,1fr)_minmax(6rem,auto)_auto]"
+												>
+													<span
+														className="col-start-1 row-start-1 flex size-8 items-center justify-center rounded-lg"
+														style={{backgroundColor: `${accent}12`}}
+													>
+														<ProfilePngIcon type={announcement.profileType} color={accent} className="size-5" />
+														<span className="sr-only">{PROFILE_LABELS[announcement.profileType]}</span>
+													</span>
+													<span className="col-span-2 col-start-1 row-start-2 min-w-0 text-sm font-bold leading-5 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+														<span className="line-clamp-2">{announcement.title}</span>
+													</span>
+													<span className="col-span-2 col-start-1 row-start-3 inline-flex min-w-0 items-center gap-1.5 text-xs text-neutral-600 sm:col-start-2 sm:row-start-2 xl:col-span-1 xl:col-start-3 xl:row-start-1">
+														<MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />
+														<span className="truncate">{announcement.location}</span>
+													</span>
+													<time
+														dateTime={announcement.createdAt ?? undefined}
+														className="col-start-2 row-start-1 justify-self-end whitespace-nowrap text-xs text-neutral-500 sm:col-start-3 xl:col-start-4"
+													>
+														{publishedLabel}
+													</time>
+												</Link>
+											</li>
+										);
+									})}
+								</ul>
+							)}
+						</CardContent>
+					</Card>
+				</div>
+			</section>
+
+			<section id="categorie" aria-labelledby="categories-title" className="scroll-mt-24">
+				<div className="mx-auto max-w-370 px-4 pb-7 sm:px-6 sm:pb-8 lg:px-8">
+					<h2
+						id="categories-title"
+						className="font-home-display mb-3 text-lg font-normal uppercase tracking-[-0.01em] sm:text-xl"
+					>
+						Cerca. Connettiti. Cresci.
+					</h2>
+					<div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-7">
+						{HOMEPAGE_CATEGORIES.map((category) => {
+							const accent = profileAccent(category.type);
+
+							return (
 								<Link
-									href="/pubblica-annuncio"
-									className="inline-flex items-center gap-2 rounded-full bg-fuchsia-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-(--accent-dark) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+									key={category.type}
+									href={`/profili?type=${category.type}`}
+									className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-brand-indigo/45 focus-visible:ring-offset-2"
 								>
-									Pubblica un annuncio
-									<ArrowRight className="h-4 w-4" aria-hidden="true"/>
+									<Card
+										className="h-full gap-0 border bg-white/85 py-0 shadow-none ring-0 transition-transform duration-200 group-hover:-translate-y-1"
+										style={{borderColor: `${accent}45`} as CSSProperties}
+									>
+										<CardContent className="flex h-full min-h-42 flex-col px-4 py-4">
+											<ProfilePngIcon type={category.type} color={accent} className="size-9" />
+											<h3 className="font-home-display mt-3 text-base font-normal uppercase leading-tight text-black">
+												{category.label}
+											</h3>
+											<p className="mt-2 text-xs leading-5 text-neutral-700">{category.description}</p>
+											<div
+												className="mt-auto transition-transform group-hover:translate-x-1"
+											>
+												<span
+													className="mt-4 flex size-7 translate-y-1 items-center justify-center rounded-full text-white transition-transform group-hover:translate-x-px"
+													style={{backgroundColor: accent}}
+													aria-hidden="true"
+												>
+													<ArrowRightIcon className="size-3.5" />
+												</span>
+											</div>
+										</CardContent>
+									</Card>
 								</Link>
-							</motion.div>
-						</motion.div>
+							);
+						})}
 					</div>
-				</section>
-			</main>
+				</div>
+			</section>
+
+			<section aria-label="Scopri Bacheca Dilettanti">
+				<div className="mx-auto max-w-370 px-4 pb-12 sm:px-6 sm:pb-16 lg:px-8">
+					<Card className="grid gap-px overflow-hidden bg-black/10 py-0 shadow-none ring-1 ring-black/10 md:grid-cols-2 xl:grid-cols-[1.25fr_repeat(3,minmax(0,1fr))]">
+						<article className="bg-[linear-gradient(135deg,#f0ecff_0%,#ffffff_100%)] p-5 sm:p-6">
+							<div className="flex items-start gap-4">
+								<span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-indigo/15 text-[#6445de]">
+									<RocketIcon className="size-6" aria-hidden="true" />
+								</span>
+								<div className="min-w-0">
+									<p className="font-home-display text-base font-normal uppercase text-[#6445de]">Il lancio è vicino</p>
+									<h2 className="font-home-display mt-1 text-2xl font-medium uppercase leading-none">Preparati al decollo</h2>
+									<p className="mt-3 text-sm leading-5 text-neutral-700">
+										Bacheca Dilettanti sta per arrivare. Unisciti alla community e sii tra i primi a vivere l’esperienza completa.
+									</p>
+									<Link
+										href="/aggiornamenti"
+										className={buttonVariants({
+											variant: "outline",
+											size: "sm",
+											className: "mt-4 h-9 border-[#8e72ff]/60 bg-white px-4 font-bold uppercase text-[#6445de]",
+										})}
+									>
+										Rimani aggiornato
+										<ArrowRightIcon aria-hidden="true" />
+									</Link>
+								</div>
+							</div>
+						</article>
+
+						{PROMOTIONS.map((promotion) => {
+							const Icon = promotion.icon;
+
+							return (
+								<article key={promotion.eyebrow} className="flex h-full bg-white p-5 sm:p-6">
+									<div className="flex w-full min-w-0 items-start gap-4">
+										<span
+											className="flex size-11 shrink-0 items-center justify-center rounded-full"
+											style={{backgroundColor: `${promotion.accent}10`, color: promotion.accent}}
+										>
+											<Icon className="size-5" aria-hidden="true" />
+										</span>
+										<div className="flex min-h-44 min-w-0 flex-1 flex-col self-stretch">
+											<p className="font-home-display text-sm font-normal uppercase" style={{color: promotion.accent}}>
+												{promotion.eyebrow}
+											</p>
+											<h2 className="font-home-display mt-1 text-2xl font-medium uppercase leading-[1.05]">
+												{promotion.title}
+											</h2>
+											<p className="mt-3 text-sm leading-5 text-neutral-700">{promotion.description}</p>
+											<Link
+												href={promotion.href}
+												className={cn(
+													"mt-auto inline-flex min-h-11 items-center gap-1 self-start rounded-md py-2 text-xs font-bold uppercase text-[#6445de] outline-none hover:underline focus-visible:ring-3 focus-visible:ring-brand-indigo/35",
+												)}
+											>
+												{promotion.cta}
+												<ArrowRightIcon className="size-3.5" aria-hidden="true" />
+											</Link>
+										</div>
+									</div>
+								</article>
+							);
+						})}
+					</Card>
+				</div>
+			</section>
 		</div>
 	);
 }

@@ -1,5 +1,5 @@
 export const DEFAULT_LOGO_PATH = "/logo.png";
-export const DEFAULT_LOGO_TRANSPARENT_PATH = "/logo_transparent.png";
+export const DEFAULT_BANNER_PATH = "/banner.png";
 
 export type Regione = {nome: string; area: "Nord" | "Centro" | "Sud"};
 

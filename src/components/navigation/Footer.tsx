@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import {DEFAULT_LOGO_TRANSPARENT_PATH} from "@/const/defaultConstants";
+import {DEFAULT_BANNER_PATH, DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
 import {SiInstagram, SiWhatsapp} from "@icons-pack/react-simple-icons";
 
 
@@ -22,9 +22,9 @@ export default function Footer(
 				<div className="flex justify-center sm:ms-3 sm:mt-4 mb-2 sm:mb-0">
 					<Link href={"/"} className={"navbar-link"}>
 						<Image
-							src={DEFAULT_LOGO_TRANSPARENT_PATH}
+							src={DEFAULT_BANNER_PATH}
 							alt={"Logo torneo"}
-							width={200}
+							width={400}
 							height={200}
 							className={"navbar-logo"}
 							draggable={false}

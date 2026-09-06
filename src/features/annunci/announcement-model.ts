@@ -153,42 +153,49 @@ export interface AnnouncementDirectoryOption {
 	value: AnnouncementDirectoryType;
 	label: string;
 	description: string;
+	profileType: ProfileType;
 	icon: LucideIcon;
 }
 
 export const ANNOUNCEMENT_DIRECTORY_OPTIONS: readonly AnnouncementDirectoryOption[] = [
 	{
 		value: "annuncio_giocatore",
+		profileType: "giocatore",
 		label: "Giocatore",
 		description: "Giocatori disponibili e in cerca di una nuova squadra",
 		icon: UserIcon,
 	},
 	{
 		value: "annuncio_squadra",
+		profileType: "squadra",
 		label: "Squadra",
 		description: "Squadre che cercano giocatori, staff, partite o sponsor",
 		icon: UserSearchIcon,
 	},
 	{
 		value: "annuncio_staff_sportivo",
+		profileType: "staff-sportivo",
 		label: "Staff sportivo",
 		description: "Professionisti dello sport disponibili per nuovi incarichi",
 		icon: UsersIcon,
 	},
 	{
 		value: "annuncio_arbitro",
+		profileType: "arbitro",
 		label: "Arbitro",
 		description: "Arbitri disponibili per partite, tornei ed eventi",
 		icon: BadgeCheckIcon,
 	},
 	{
 		value: "annuncio_torneo_evento",
+		profileType: "torneo-evento",
 		label: "Torneo / evento",
 		description: "Tornei, manifestazioni ed eventi a cui partecipare",
 		icon: TrophyIcon,
 	},
 	{
 		value: "annuncio_campo_impianto",
+		profileType: "campi-impianti-sportivi",
 		label: "Campo / impianto",
 		description: "Campi e impianti disponibili per attivitÃ  ed eventi",
 		icon: MapPinIcon,
@@ -329,6 +336,19 @@ export interface AnnouncementDirectoryResult {
 	total: number;
 	currentPage: number;
 	totalPages: number;
+	error: boolean;
+}
+
+export interface LatestAnnouncementPreview {
+	id: string;
+	profileType: ProfileType;
+	title: string;
+	location: string;
+	createdAt: string | null;
+}
+
+export interface LatestAnnouncementsResult {
+	announcements: LatestAnnouncementPreview[];
 	error: boolean;
 }
 

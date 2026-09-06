@@ -16,7 +16,7 @@ Sviluppato da Amar Sidkir per Gabriele Zaniboni a partire dal 15 luglio 2026.
 
 ## 2. Changelog
 
-### Versione 1.0 - 16 agosto 2026
+### Versione 1.0 - Settembre 2026
 
 - Homepage
-- Pubblica annuncio per utenti anonimi
+- Pubblica annuncio per utenti anonimi e registrati
