@@ -11,10 +11,11 @@ export interface AuthFieldErrors {
 export interface AuthActionState {
 	status: AuthActionStatus;
 	message?: string;
+	email?: string;
 	fieldErrors?: AuthFieldErrors;
 	step?: 1 | 2 | 3;
 	profileType?: ProfileType;
-	reason?: "already_registered" | "email_verification_required";
+	reason?: "already_registered" | "email_not_confirmed" | "email_verification_required";
 }
 
 export const INITIAL_AUTH_STATE: AuthActionState = {

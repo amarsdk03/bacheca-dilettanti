@@ -2,15 +2,20 @@
 
 import "server-only";
 
+import {AUTH_EMAIL_FLOW} from "@/features/auth/email-flow";
 import {getAuthErrorMessage} from "@/features/auth/errors";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
+import {sendSignupConfirmationEmail} from "@/features/auth/server/signup-confirmation";
 import type {
 	RegistrationEmailRecoveryInput,
 	RegistrationEmailRecoveryVerificationInput,
 	RequestRegistrationEmailRecoveryResult,
 	VerifyRegistrationEmailRecoveryResult,
 } from "@/features/registrati/registration-recovery";
-import {getRegistrationEmailIdentity} from "@/features/registrati/server/email-identity";
+import {
+	getRegistrationEmailIdentity,
+	setAuthEmailFlow,
+} from "@/features/registrati/server/email-identity";
 import {createClient} from "@/lib/supabase/server";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,6 +56,18 @@ export async function requestRegistrationEmailRecovery(
 		if (identity.status === "registered") {
 			return {status: "already_registered", message: REGISTERED_EMAIL_MESSAGE};
 		}
+		if (identity.status === "signup_pending") {
+			const resendResult = await sendSignupConfirmationEmail(email);
+			if (resendResult.status !== "sent") return resendResult;
+
+			return {
+				status: "signup_pending",
+				email,
+				message: resendResult.message,
+			};
+		}
+
+		await setAuthEmailFlow(identity.authUserId, AUTH_EMAIL_FLOW.ANNOUNCEMENT_OTP);
 
 		const supabase = await createClient();
 		const {error} = await supabase.auth.signInWithOtp({
@@ -121,7 +138,7 @@ export async function verifyRegistrationEmailRecovery(
 			await supabase.auth.signOut({scope: "local"});
 			return {status: "already_registered", message: REGISTERED_EMAIL_MESSAGE};
 		}
-		if (identity.status !== "publish_only" || identity.authUserId !== data.user.id) {
+		if (identity.status !== "recovery_required" || identity.authUserId !== data.user.id) {
 			await supabase.auth.signOut({scope: "local"});
 			return {status: "error", message: "L’indirizzo verificato non corrisponde all’account da recuperare."};
 		}

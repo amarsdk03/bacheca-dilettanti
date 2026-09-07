@@ -1656,6 +1656,13 @@ export type Database = {
         Args: { p_email_hash: string }
         Returns: Json
       }
+      get_registration_email_identity_v1: {
+        Args: { p_email: string }
+        Returns: {
+          auth_user_uuid: string | null
+          identity_status: string
+        }[]
+      }
       delete_owned_subprofile: {
         Args: { p_profile_type: string; p_user_id: string }
         Returns: string

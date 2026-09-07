@@ -129,7 +129,7 @@ function formatPublishedAt(createdAt: string | null) {
 const PROMOTIONS = [
 	{
 		eyebrow: "Per i professionisti",
-		title: "Osserva. Collabora. Cresci.",
+		title: "Osserva. Collabora. Cresci",
 		description: "Scopri talenti, entra in contatto con realtà affidabili e costruisci nuove opportunità.",
 		href: "/profili?type=professionisti-studi",
 		cta: "Scopri di più",
@@ -147,7 +147,7 @@ const PROMOTIONS = [
 	},
 	{
 		eyebrow: "Partner ufficiali",
-		title: "Insieme per il calcio",
+		title: "Insieme per il nostro calcio",
 		description: "Unisciti ai brand che credono nei valori del calcio dilettantistico.",
 		href: "/contatti",
 		cta: "Diventa partner",
@@ -191,14 +191,14 @@ export default async function Homepage() {
 								<ArrowRightIcon aria-hidden="true" />
 							</Link>
 							<Link
-								href="#"
+								href="/pubblica-annuncio"
 								className={buttonVariants({
 									variant: "outline",
 									size: "lg",
 									className: "h-11 justify-between gap-6 border-black/35 bg-white/70 px-5 text-black font-bold uppercase min-[430px]:min-w-48",
 								})}
 							>
-								<span className={"text-black font-bold uppercase"}>Scopri di più</span>
+								<span className={"text-black font-bold uppercase"}>Pubblica ora</span>
 								<ArrowRightIcon aria-hidden="true" />
 							</Link>
 						</div>
@@ -327,7 +327,7 @@ export default async function Homepage() {
 			<section aria-label="Scopri Bacheca Dilettanti">
 				<div className="mx-auto max-w-370 px-4 pb-12 sm:px-6 sm:pb-16 lg:px-8">
 					<Card className="grid gap-px overflow-hidden bg-black/10 py-0 shadow-none ring-1 ring-black/10 md:grid-cols-2 xl:grid-cols-[1.25fr_repeat(3,minmax(0,1fr))]">
-						<article className="bg-[linear-gradient(135deg,#f0ecff_0%,#ffffff_100%)] p-5 sm:p-6">
+						<article className="bg-[linear-gradient(135deg,#f0ecff_0%,#ffffff_100%)] p-5 sm:pt-6 sm:pb-4">
 							<div className="flex items-start gap-4">
 								<span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-indigo/15 text-[#6445de]">
 									<RocketIcon className="size-6" aria-hidden="true" />
@@ -343,7 +343,7 @@ export default async function Homepage() {
 										className={buttonVariants({
 											variant: "outline",
 											size: "sm",
-											className: "mt-4 h-9 border-[#8e72ff]/60 bg-white px-4 font-bold uppercase text-[#6445de]",
+											className: "mt-4 sm:mt-10 h-9 border-[#8e72ff]/60 bg-white px-4 font-bold uppercase text-[#6445de]",
 										})}
 									>
 										Rimani aggiornato
@@ -357,7 +357,7 @@ export default async function Homepage() {
 							const Icon = promotion.icon;
 
 							return (
-								<article key={promotion.eyebrow} className="flex h-full bg-white p-5 sm:p-6">
+								<article key={promotion.eyebrow} className="flex h-full bg-white p-5 sm:pt-6 sm:pb-2">
 									<div className="flex w-full min-w-0 items-start gap-4">
 										<span
 											className="flex size-11 shrink-0 items-center justify-center rounded-full"
@@ -365,7 +365,7 @@ export default async function Homepage() {
 										>
 											<Icon className="size-5" aria-hidden="true" />
 										</span>
-										<div className="flex min-h-44 min-w-0 flex-1 flex-col self-stretch">
+										<div className="flex min-h-36 sm:min-h-44 min-w-0 flex-1 flex-col self-stretch">
 											<p className="font-home-display text-sm font-normal uppercase" style={{color: promotion.accent}}>
 												{promotion.eyebrow}
 											</p>
@@ -373,15 +373,19 @@ export default async function Homepage() {
 												{promotion.title}
 											</h2>
 											<p className="mt-3 text-sm leading-5 text-neutral-700">{promotion.description}</p>
-											<Link
-												href={promotion.href}
-												className={cn(
-													"mt-auto inline-flex min-h-11 items-center gap-1 self-start rounded-md py-2 text-xs font-bold uppercase text-[#6445de] outline-none hover:underline focus-visible:ring-3 focus-visible:ring-brand-indigo/35",
-												)}
+											<div
+												className="mt-auto"
 											>
-												{promotion.cta}
-												<ArrowRightIcon className="size-3.5" aria-hidden="true" />
-											</Link>
+												<Link
+													href={promotion.href}
+													className={cn(
+														"sm:mt-4 inline-flex min-h-11 items-center gap-1 self-start rounded-md py-2 text-xs font-bold uppercase text-[#6445de] outline-none hover:underline focus-visible:ring-3 focus-visible:ring-brand-indigo/35",
+													)}
+												>
+													{promotion.cta}
+													<ArrowRightIcon className="size-3.5" aria-hidden="true" />
+												</Link>
+											</div>
 										</div>
 									</div>
 								</article>

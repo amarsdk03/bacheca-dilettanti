@@ -5,7 +5,12 @@ import "server-only";
 import {revalidatePath} from "next/cache";
 import {redirect} from "next/navigation";
 
+import {
+	AUTH_EMAIL_FLOW,
+	createAuthEmailFlowMetadata,
+} from "@/features/auth/email-flow";
 import {getAuthErrorMessage} from "@/features/auth/errors";
+import {sendSignupConfirmationEmail} from "@/features/auth/server/signup-confirmation";
 import type {AuthActionState} from "@/features/auth/types";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {getAuthCallbackUrl, getAuthConfirmUrl, sanitizeNextPath} from "@/features/auth/utils";
@@ -38,12 +43,22 @@ export async function signInWithPassword(
 	const {data, error} = await supabase.auth.signInWithPassword({email, password});
 
 	if (error) {
-		return {status: "error", message: getAuthErrorMessage(error)};
+		return {
+			status: "error",
+			message: getAuthErrorMessage(error),
+			email: error.code === "email_not_confirmed" ? email : undefined,
+			reason: error.code === "email_not_confirmed" ? "email_not_confirmed" : undefined,
+		};
 	}
 
 	if (!data.user.email_confirmed_at) {
 		await supabase.auth.signOut({scope: "local"});
-		return {status: "error", message: "Conferma prima il tuo indirizzo email."};
+		return {
+			status: "error",
+			message: "Conferma prima il tuo indirizzo email.",
+			email,
+			reason: "email_not_confirmed",
+		};
 	}
 
 	revalidatePath("/", "layout");
@@ -103,7 +118,23 @@ export async function signUpWithPassword(
 					reason: "already_registered",
 				};
 			}
-			if (identity.status === "publish_only") {
+			if (identity.status === "signup_pending") {
+				const resendResult = await sendSignupConfirmationEmail(email);
+				if (resendResult.status !== "sent") {
+					return {
+						status: "error",
+						message: resendResult.message,
+						step: 1,
+					};
+				}
+
+				return {
+					status: "success",
+					message: resendResult.message,
+					email,
+				};
+			}
+			if (identity.status === "recovery_required") {
 				return {
 					status: "error",
 					message: "Verifica nuovamente l’indirizzo email prima di completare la registrazione.",
@@ -165,7 +196,10 @@ export async function signUpWithPassword(
 	if (existingAccount) {
 		try {
 			const supabase = await createClient();
-			const {error: passwordError} = await supabase.auth.updateUser({password});
+			const {error: passwordError} = await supabase.auth.updateUser({
+				password,
+				data: createAuthEmailFlowMetadata(AUTH_EMAIL_FLOW.ACCOUNT_SIGNUP),
+			});
 			if (passwordError && passwordError.code !== "same_password") {
 				return {
 					status: "error",
@@ -225,7 +259,10 @@ export async function signUpWithPassword(
 			email,
 			password,
 			options: {
-				data: {registration_intent: intentToken},
+				data: {
+					registration_intent: intentToken,
+					...createAuthEmailFlowMetadata(AUTH_EMAIL_FLOW.ACCOUNT_SIGNUP),
+				},
 				emailRedirectTo: getAuthConfirmUrl(),
 			},
 		});

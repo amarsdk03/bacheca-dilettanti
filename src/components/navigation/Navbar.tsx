@@ -1,13 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import {ArrowLeftIcon, ClipboardPenIcon} from "lucide-react";
+import {ArrowLeftIcon, ClipboardPenIcon, UserIcon} from "lucide-react";
 
 import NavbarNavigation from "@/components/navigation/NavbarNavigation";
 import UserAvatar from "@/components/navigation/UserAvatar";
-import {buttonVariants} from "@/components/ui/button";
+import {Button, buttonVariants} from "@/components/ui/button";
 import {DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
 import {getCurrentViewer} from "@/features/auth/server/queries";
 import {cn} from "@/lib/utils";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 interface NavbarProps {
 	minimal?: boolean;
@@ -40,7 +41,7 @@ export default async function Navbar({minimal = false, backToHome = false}: Navb
 					/>
 				</Link>
 
-				{!minimal && <NavbarNavigation authenticated={Boolean(viewer)} />}
+				{!minimal && <NavbarNavigation authenticated={Boolean(viewer)} viewer={viewer} />}
 
 				<div className={cn("flex shrink-0 items-center gap-2", minimal ? "ml-auto" : "lg:ml-0")}>
 					{backToHome ? (
@@ -52,38 +53,40 @@ export default async function Navbar({minimal = false, backToHome = false}: Navb
 							<span className="hidden sm:inline">Torna alla Home</span>
 							<span className="sm:hidden">Home</span>
 						</Link>
-					) : viewer ? (
-						<>
-							<Link
-								href="/pubblica-annuncio"
-								className={cn(
-									buttonVariants({variant: "inverse-outline", size: "lg"}),
-									inverseButtonClassName,
-									"hidden lg:inline-flex",
-								)}
-							>
-								<ClipboardPenIcon data-icon="inline-start" aria-hidden="true" className="ms-2" />
-								Pubblica annuncio
-							</Link>
-							<UserAvatar viewer={viewer} />
-						</>
 					) : (
-						<div className="hidden items-center gap-2 lg:flex">
-							<Link
-								href="/accedi"
-								className={cn(buttonVariants({variant: "inverse-outline", size: "lg"}), inverseButtonClassName)}
-							>
-								Accedi
-							</Link>
-							<Link
-								href="/registrati"
-								className={cn(
-									buttonVariants({variant: "brand", size: "lg"}),
-									"h-10 rounded-md px-5 font-bold text-white uppercase",
+						<div className={"flex items-center gap-3"}>
+							<div className={"hidden lg:block"}>
+								<Link
+									href="/pubblica-annuncio"
+									aria-label="Pubblica un annuncio"
+									className={cn(
+										buttonVariants({variant: "outline", size: "lg"}),
+										"text-black rounded-md",
+									)}
+								>
+									<ClipboardPenIcon aria-hidden="true" />
+									Pubblica annuncio
+								</Link>
+							</div>
+							<div className="hidden lg:block">
+								{viewer ? (
+									<UserAvatar viewer={viewer} />
+								) : (
+									<Link
+										href="/registrati"
+										className={cn(
+											buttonVariants({variant: "ghost", size: "icon-lg"}),
+											"rounded-full"
+										)}
+									>
+										<Avatar className="size-9">
+											<AvatarFallback>
+												<UserIcon className="size-5" aria-hidden="true" />
+											</AvatarFallback>
+										</Avatar>
+									</Link>
 								)}
-							>
-								Registrati
-							</Link>
+							</div>
 						</div>
 					)}
 				</div>

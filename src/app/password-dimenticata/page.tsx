@@ -4,6 +4,7 @@ import {redirect} from "next/navigation";
 import PasswordDimenticata from "@/features/accedi/PasswordDimenticata";
 import {getCurrentViewer} from "@/features/auth/server/queries";
 import {dynamicMetadata} from "@/server/metadata";
+import Navbar from "@/components/navigation/Navbar";
 
 export const metadata: Metadata = dynamicMetadata("Password dimenticata");
 
@@ -17,5 +18,10 @@ export default async function Page({searchParams}: PageProps) {
 	const params = await searchParams;
 	const error = Array.isArray(params.errore) ? params.errore[0] : params.errore;
 
-	return <PasswordDimenticata invalidLink={error === "link-scaduto"} />;
+	return (
+		<>
+			<Navbar backToHome={true} minimal={true} />
+			<PasswordDimenticata invalidLink={error === "link-scaduto"} />
+		</>
+	);
 }

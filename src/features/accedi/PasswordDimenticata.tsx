@@ -12,6 +12,7 @@ import {Input} from "@/components/ui/input";
 import {DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
 import {requestPasswordReset} from "@/features/auth/server/actions";
 import {INITIAL_AUTH_STATE} from "@/features/auth/types";
+import GradientBackground from "@/components/styling/GradientBackground";
 
 function SubmitButton() {
 	const {pending} = useFormStatus();
@@ -22,11 +23,8 @@ export default function PasswordDimenticata({invalidLink = false}: {invalidLink?
 	const [state, formAction] = useActionState(requestPasswordReset, INITIAL_AUTH_STATE);
 
 	return (
-		<div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
+		<GradientBackground className="flex min-h-[calc(100svh-4rem)] flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
 			<div className="flex w-full max-w-sm flex-col gap-6">
-				<Link href="/" className="flex justify-center">
-					<Image src={DEFAULT_LOGO_PATH} alt="Bacheca Dilettanti" width={150} height={90} priority />
-				</Link>
 				<Card>
 					<CardHeader className="text-center">
 						<CardTitle className="text-xl">Recupera la password</CardTitle>
@@ -57,6 +55,6 @@ export default function PasswordDimenticata({invalidLink = false}: {invalidLink?
 					</CardContent>
 				</Card>
 			</div>
-		</div>
+		</GradientBackground>
 	);
 }

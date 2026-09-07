@@ -12,6 +12,7 @@ import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/com
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group";
 import GradientBackground from "@/components/styling/GradientBackground";
+import SignupConfirmationResend from "@/features/auth/SignupConfirmationResend";
 import {signInWithPassword} from "@/features/auth/server/actions";
 import {INITIAL_AUTH_STATE} from "@/features/auth/types";
 
@@ -34,7 +35,7 @@ export default function Accedi({nextPath, invalidConfirmationLink = false}: Acce
 	const [showPassword, setShowPassword] = useState(false);
 
 	return (
-		<GradientBackground className="flex min-h-[calc(100svh-4rem)] items-center justify-center px-6 py-10 md:px-10">
+		<GradientBackground className="flex min-h-[calc(100svh-4rem)] items-center justify-center gap-6 bg-muted p-6 md:p-10">
 			<div className="relative flex w-full max-w-sm flex-col gap-2">
 				<Card className="bg-card/95 shadow-xl backdrop-blur-sm">
 					<CardHeader className="text-center">
@@ -116,6 +117,9 @@ export default function Accedi({nextPath, invalidConfirmationLink = false}: Acce
 								</Field>
 							</FieldGroup>
 						</form>
+						{state.reason === "email_not_confirmed" && state.email && (
+							<SignupConfirmationResend email={state.email} className="mt-4" />
+						)}
 					</CardContent>
 				</Card>
 			</div>

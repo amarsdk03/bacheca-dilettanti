@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import Image from "next/image";
-import {DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
+import {DEFAULT_BANNER_PATH, DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
 import AccessForm from "@/app/accesso/access-form";
 
 
@@ -235,12 +235,12 @@ export default function ComingSoon({ next }: { next?: string }) {
 							variants={containerStagger}
 							className="flex flex-col items-center"
 						>
-							<motion.div variants={fadeUp}>
+							<motion.div variants={fadeUp} className={"my-2"}>
 								<Image
-									src={DEFAULT_LOGO_PATH}
+									src={DEFAULT_BANNER_PATH}
 									alt={"Logo torneo"}
-									width={300}
-									height={300}
+									width={500}
+									height={250}
 									draggable={false}
 									loading={"eager"}
 									style={{filter: 'invert(1)'}}

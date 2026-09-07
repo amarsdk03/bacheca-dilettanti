@@ -20,6 +20,7 @@ import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import GradientBackground from "@/components/styling/GradientBackground";
 import LimitedProfileAvailability from "@/features/profilo/LimitedProfileAvailability";
 import ProfileDetailsForm from "@/features/profilo/ProfileDetailsForm";
+import SignupConfirmationResend from "@/features/auth/SignupConfirmationResend";
 import {signUpWithPassword} from "@/features/auth/server/actions";
 import {
 	createProfileDrafts,
@@ -121,6 +122,7 @@ function RegistrationConfirmation({email}: {email: string}) {
 								</EmptyDescription>
 							</EmptyHeader>
 							<EmptyContent>
+								<SignupConfirmationResend email={email} />
 								<Link href="/accedi" className={buttonVariants({size: "lg"})}>
 									Vai ad accedi
 									<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
@@ -163,10 +165,11 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 	const [showPrimaryProfileError, setShowPrimaryProfileError] = useState(false);
 	const [profileDetailIndex, setProfileDetailIndex] = useState(0);
 	const [handledServerError, setHandledServerError] = useState<AuthActionState | null>(null);
+	const [pendingSignupEmail, setPendingSignupEmail] = useState<string | null>(null);
 	const registrationHeaderRef = useRef<HTMLDivElement>(null);
 
-	if (state.status === "success") {
-		return <RegistrationConfirmation email={account.email} />;
+	if (state.status === "success" || pendingSignupEmail) {
+		return <RegistrationConfirmation email={pendingSignupEmail ?? account.email} />;
 	}
 
 	const selectedProfilesInCatalogOrder = PROFILE_OPTIONS
@@ -280,6 +283,11 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 			setResolvedEmail(normalizedAccountEmail);
 			setOtpCode("");
 			setOtpFeedback(result.message);
+			return;
+		}
+		if (result.status === "signup_pending") {
+			setRegistrationEmailStatus("unchecked");
+			setPendingSignupEmail(result.email);
 			return;
 		}
 		if (result.status === "already_registered") {

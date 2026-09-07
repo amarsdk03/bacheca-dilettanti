@@ -5,6 +5,10 @@ import "server-only";
 import {createHash} from "node:crypto";
 import {revalidatePath} from "next/cache";
 
+import {
+	AUTH_EMAIL_FLOW,
+	createAuthEmailFlowMetadata,
+} from "@/features/auth/email-flow";
 import {getAuthErrorMessage} from "@/features/auth/errors";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import type {
@@ -20,6 +24,10 @@ import {
 	PublishPayloadError,
 } from "@/features/pubblica-annuncio/server/validation";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {
+	getRegistrationEmailIdentity,
+	setAuthEmailFlow,
+} from "@/features/registrati/server/email-identity";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import type {Json} from "@/server/supabase";
@@ -29,6 +37,8 @@ const PRIVACY_VERSION = "2026-08-24";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const OTP_PATTERN = /^\d{6}$/;
 const REGISTERED_EMAIL_MESSAGE = "Email già registrata, accedi al profilo per pubblicare annunci";
+const SIGNUP_PENDING_EMAIL_MESSAGE =
+	"Questa email appartiene a una registrazione da confermare. Apri l’email di verifica oppure accedi per richiederne una nuova.";
 
 interface PublishRpcResult {
 	status?: unknown;
@@ -92,25 +102,6 @@ async function consumePublishOtpQuota(email: string): Promise<PublishOtpQuotaRes
 	throw new Error("PUBLISH_OTP_QUOTA_INVALID_RESPONSE");
 }
 
-async function isRegisteredEmail(email: string) {
-	const admin = createAdminClient();
-	const {data, error} = await admin
-		.from("utente")
-		.select("utente_uuid")
-		.eq("indirizzo_email", email)
-		.not("auth_user_uuid", "is", null)
-		.not("registrato_il", "is", null)
-		.limit(1)
-		.maybeSingle();
-
-	if (error) {
-		console.error("[publish-otp] Registered email lookup failed", {code: error.code});
-		throw new Error("REGISTERED_EMAIL_LOOKUP_FAILED");
-	}
-
-	return Boolean(data);
-}
-
 export async function requestPublishEmailOtp(
 	input: PublishOtpActionInput,
 ): Promise<RequestPublishEmailOtpResult> {
@@ -129,7 +120,7 @@ export async function requestPublishEmailOtp(
 			return {status: "already_registered", message: REGISTERED_EMAIL_MESSAGE};
 		}
 
-		const registeredEmail = await isRegisteredEmail(email);
+		const identity = await getRegistrationEmailIdentity(email);
 		const supabase = await createClient();
 
 		// The page can still have `authenticated=false` after the first OTP has
@@ -142,8 +133,11 @@ export async function requestPublishEmailOtp(
 			}
 		}
 
-		if (registeredEmail) {
+		if (identity.status === "registered") {
 			return {status: "already_registered", message: REGISTERED_EMAIL_MESSAGE};
+		}
+		if (identity.status === "signup_pending") {
+			return {status: "already_registered", message: SIGNUP_PENDING_EMAIL_MESSAGE};
 		}
 
 		const quota = await consumePublishOtpQuota(email);
@@ -158,10 +152,15 @@ export async function requestPublishEmailOtp(
 			};
 		}
 
+		if (identity.status === "recovery_required") {
+			await setAuthEmailFlow(identity.authUserId, AUTH_EMAIL_FLOW.ANNOUNCEMENT_OTP);
+		}
+
 		const {error} = await supabase.auth.signInWithOtp({
 			email,
 			options: {
 				shouldCreateUser: true,
+				data: createAuthEmailFlowMetadata(AUTH_EMAIL_FLOW.ANNOUNCEMENT_OTP),
 			},
 		});
 
@@ -232,9 +231,19 @@ export async function verifyPublishEmailOtp(
 			return {status: "error", message: "Non è stato possibile verificare l’indirizzo email."};
 		}
 
-		if (await isRegisteredEmail(email)) {
+		const identity = await getRegistrationEmailIdentity(email);
+		if (identity.status === "registered" || identity.status === "signup_pending") {
 			await supabase.auth.signOut({scope: "local"});
-			return {status: "already_registered", message: REGISTERED_EMAIL_MESSAGE};
+			return {
+				status: "already_registered",
+				message: identity.status === "signup_pending"
+					? SIGNUP_PENDING_EMAIL_MESSAGE
+					: REGISTERED_EMAIL_MESSAGE,
+			};
+		}
+		if (identity.status !== "recovery_required" || identity.authUserId !== data.user.id) {
+			await supabase.auth.signOut({scope: "local"});
+			return {status: "error", message: "L’indirizzo verificato non corrisponde all’account atteso."};
 		}
 
 		return {status: "verified", message: "Indirizzo email verificato."};

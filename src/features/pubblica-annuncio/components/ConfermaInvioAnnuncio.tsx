@@ -486,21 +486,18 @@ export default function ConfermaInvioAnnuncio({
 						<Checkbox id="confirm-data" checked={dataConfirmed} onCheckedChange={(checked) => setDataConfirmed(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.data)} />
 						<FieldContent>
 							<FieldLabel htmlFor="confirm-data" className="font-normal">Confermo che i dati inseriti sono corretti e veritieri.</FieldLabel>
-							{consentErrors.data && <FieldError>{consentErrors.data}</FieldError>}
 						</FieldContent>
 					</Field>
 					<Field orientation="horizontal" data-invalid={Boolean(consentErrors.terms)}>
 						<Checkbox id="confirm-terms" checked={termsAccepted} onCheckedChange={(checked) => setTermsAccepted(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.terms)} />
 						<FieldContent>
 							<FieldLabel htmlFor="confirm-terms" className="font-normal">Ho letto e accetto i Termini e condizioni del servizio.</FieldLabel>
-							{consentErrors.terms && <FieldError>{consentErrors.terms}</FieldError>}
 						</FieldContent>
 					</Field>
 					<Field orientation="horizontal" data-invalid={Boolean(consentErrors.privacy)}>
 						<Checkbox id="confirm-privacy" checked={privacyAccepted} onCheckedChange={(checked) => setPrivacyAccepted(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.privacy)} />
 						<FieldContent>
 							<FieldLabel htmlFor="confirm-privacy" className="font-normal">Ho letto l’informativa privacy e acconsento al trattamento dei dati.</FieldLabel>
-							{consentErrors.privacy && <FieldError>{consentErrors.privacy}</FieldError>}
 						</FieldContent>
 					</Field>
 				</FieldGroup>

@@ -9,6 +9,7 @@ export interface RegistrationEmailRecoveryVerificationInput extends Registration
 export type RequestRegistrationEmailRecoveryResult =
 	| {status: "new_email"}
 	| {status: "sent"; message: string}
+	| {status: "signup_pending"; email: string; message: string}
 	| {status: "verified"; email: string; message: string}
 	| {status: "already_registered"; message: string}
 	| {status: "rate_limited" | "error"; message: string};

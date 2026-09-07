@@ -3,7 +3,7 @@
 import {useState, type ReactNode} from "react";
 import Link from "next/link";
 import {usePathname, useSearchParams} from "next/navigation";
-import {ChevronDownIcon, ClipboardPenIcon, MenuIcon, UserRoundIcon} from "lucide-react";
+import {ChevronDownIcon, ClipboardPenIcon, MenuIcon, UserIcon, UserRoundIcon} from "lucide-react";
 
 import {Button, buttonVariants} from "@/components/ui/button";
 import {
@@ -27,9 +27,11 @@ import {
 import {ANNOUNCEMENT_DIRECTORY_OPTIONS} from "@/features/annunci/announcement-model";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
 import {cn} from "@/lib/utils";
+import {ViewerDTO} from "@/features/auth/types";
 
 interface NavbarNavigationProps {
 	authenticated: boolean;
+	viewer: ViewerDTO | null;
 }
 
 const desktopLinkClassName =
@@ -110,7 +112,7 @@ function MobileLink({
 	);
 }
 
-export default function NavbarNavigation({authenticated}: NavbarNavigationProps) {
+export default function NavbarNavigation({authenticated, viewer}: NavbarNavigationProps) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -234,6 +236,21 @@ export default function NavbarNavigation({authenticated}: NavbarNavigationProps)
 				</Link>
 			</nav>
 
+			<div className={"block lg:hidden"}>
+				<Link
+					href="/pubblica-annuncio"
+					aria-label="Pubblica un annuncio"
+					className={cn(
+						buttonVariants({variant: "outline", size: "lg"}),
+						"text-black rounded-md",
+					)}
+				>
+					<ClipboardPenIcon aria-hidden="true" />
+					<span className="block sm:hidden">Pubblica</span>
+					<span className="hidden sm:block">Pubblica annuncio</span>
+				</Link>
+			</div>
+
 			<Sheet open={mobileMenuOpen} onOpenChange={(open) => setMobileMenuOpen(open)}>
 				<SheetTrigger
 					render={(
@@ -241,7 +258,7 @@ export default function NavbarNavigation({authenticated}: NavbarNavigationProps)
 							type="button"
 							variant="ghost"
 							size="icon-lg"
-							className="size-11 rounded-xl text-white hover:bg-white/10 hover:text-white focus-visible:ring-[#8e72ff]/70 lg:hidden"
+							className="size-11 ms-1 rounded-xl text-white hover:bg-white/10 hover:text-white focus-visible:ring-[#8e72ff]/70 lg:hidden"
 						/>
 					)}
 					aria-label="Apri il menu di navigazione"
@@ -312,23 +329,23 @@ export default function NavbarNavigation({authenticated}: NavbarNavigationProps)
 						{authenticated ? (
 							<>
 								<Link
-									href="/pubblica-annuncio"
-									onClick={() => setMobileMenuOpen(false)}
-									className={cn(
-										buttonVariants({variant: "brand", size: "lg"}),
-										"h-11 w-full rounded-xl font-bold",
-									)}
-								>
-									<ClipboardPenIcon data-icon="inline-start" aria-hidden="true" />
-									Pubblica annuncio
-								</Link>
-								<Link
 									href="/il-tuo-profilo?sezione=profilo"
 									onClick={() => setMobileMenuOpen(false)}
 									className={cn(buttonVariants({variant: "outline", size: "lg"}), "h-11 w-full rounded-xl border-black/20 font-bold")}
 								>
 									<UserRoundIcon data-icon="inline-start" aria-hidden="true" />
 									Il tuo profilo
+								</Link>
+								<Link
+									href="/registrati"
+									onClick={() => setMobileMenuOpen(false)}
+									className={cn(
+										buttonVariants({variant: "brand", size: "lg"}),
+										"h-11 w-full rounded-xl text-white font-bold",
+									)}
+								>
+									<ClipboardPenIcon data-icon="inline-start" aria-hidden="true" />
+									Pubblica annuncio
 								</Link>
 							</>
 						) : (
@@ -338,7 +355,7 @@ export default function NavbarNavigation({authenticated}: NavbarNavigationProps)
 									onClick={() => setMobileMenuOpen(false)}
 									className={cn(
 										buttonVariants({variant: "brand", size: "lg"}),
-										"h-11 w-full rounded-xl font-bold",
+										"h-11 w-full rounded-xl text-white font-bold",
 									)}
 								>
 									Registrati
