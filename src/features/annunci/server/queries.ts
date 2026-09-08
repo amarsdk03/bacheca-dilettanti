@@ -795,6 +795,7 @@ function emptyDirectoryResult(error = false): AnnouncementDirectoryResult {
 export async function loadLatestPublicAnnouncements(): Promise<LatestAnnouncementsResult> {
 	try {
 		const supabase = createAdminClient();
+
 		const {data, error} = await publicAnnouncementQuery(supabase)
 			.in("tipologia_annuncio", ANNOUNCEMENT_TYPES)
 			.order("creato_il", {ascending: false, nullsFirst: false})

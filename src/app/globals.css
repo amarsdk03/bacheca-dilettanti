@@ -147,6 +147,22 @@
     }
 }
 
+.blink-anim {
+    animation: blinkAnim 2.5s infinite;
+}
+
+@keyframes blinkAnim {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 .navbar-div {
     background-color: #e6e6e6;
 }

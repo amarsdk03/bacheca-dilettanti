@@ -1,4 +1,4 @@
-import type {CSSProperties} from "react";
+import {Suspense, type CSSProperties} from "react";
 import Link from "next/link";
 import {
 	ArrowRightIcon,
@@ -11,10 +11,12 @@ import {
 
 import {buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
+import {Skeleton} from "@/components/ui/skeleton";
 import {cn} from "@/lib/utils";
 import type {ProfileType} from "@/features/profilo/profile-model";
 import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
 import {loadLatestPublicAnnouncements} from "@/features/annunci/server/queries";
+import HomepageTitle from "@/features/homepage/components/HomepageTitle";
 
 interface HomepageCategory {
 	type: ProfileType;
@@ -130,7 +132,7 @@ const PROMOTIONS = [
 	{
 		eyebrow: "Per i professionisti",
 		title: "Osserva. Collabora. Cresci",
-		description: "Scopri talenti, entra in contatto con realtà affidabili e costruisci nuove opportunità.",
+		description: "Scopri talenti, entra in contatto con realtà affidabili e nuove opportunità.",
 		href: "/profili?type=professionisti-studi",
 		cta: "Scopri di più",
 		icon: BriefcaseBusinessIcon,
@@ -156,9 +158,91 @@ const PROMOTIONS = [
 	},
 ] as const;
 
-export default async function Homepage() {
+function LatestOpportunitiesSkeleton() {
+	return (
+		<CardContent className="px-0" aria-busy="true">
+			<p className="sr-only" role="status">Caricamento ultime opportunità</p>
+			<ul aria-hidden="true">
+				{Array.from({length: 6}, (_, index) => (
+					<li key={index} className="border-b border-black/8 last:border-b-0">
+						<div className="grid min-h-15 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:px-5 xl:grid-cols-[2.5rem_minmax(0,1fr)_minmax(6rem,auto)_auto]">
+							<Skeleton className="col-start-1 row-start-1 size-8 rounded-lg" />
+							<Skeleton className="col-span-2 col-start-1 row-start-2 h-4 w-4/5 sm:col-span-1 sm:col-start-2 sm:row-start-1" />
+							<div className="col-span-2 col-start-1 row-start-3 inline-flex items-center gap-1.5 sm:col-start-2 sm:row-start-2 xl:col-span-1 xl:col-start-3 xl:row-start-1">
+								<Skeleton className="size-3.5 shrink-0 rounded-full" />
+								<Skeleton className="h-3 w-24" />
+							</div>
+							<Skeleton className="col-start-2 row-start-1 h-3 w-12 justify-self-end sm:col-start-3 xl:col-start-4" />
+						</div>
+					</li>
+				))}
+			</ul>
+		</CardContent>
+	);
+}
+
+async function LatestOpportunitiesContent() {
 	const {announcements, error} = await loadLatestPublicAnnouncements();
 
+	return (
+		<CardContent className="px-0">
+			{error ? (
+				<div className="flex min-h-48 flex-col items-center justify-center gap-3 px-5 py-8 text-center">
+					<p className="font-bold">Opportunità temporaneamente non disponibili.</p>
+					<Link className="text-sm font-bold text-[#6445de] hover:underline" href="/annunci">
+						Apri la bacheca annunci
+					</Link>
+				</div>
+			) : announcements.length === 0 ? (
+				<div className="flex min-h-48 flex-col items-center justify-center gap-3 px-5 py-8 text-center">
+					<p className="font-bold">Nessuna opportunità pubblicata al momento.</p>
+					<Link className="text-sm font-bold text-[#6445de] hover:underline" href="/annunci">
+						Esplora la bacheca
+					</Link>
+				</div>
+			) : (
+				<ul aria-label="Ultimi annunci pubblicati">
+					{announcements.map((announcement) => {
+						const accent = profileAccent(announcement.profileType);
+						const publishedLabel = formatPublishedAt(announcement.createdAt);
+
+						return (
+							<li key={announcement.id} className="border-b border-black/8 last:border-b-0">
+								<Link
+									href={`/dettagli-annuncio?id=${encodeURIComponent(announcement.id)}`}
+									className="grid min-h-15 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-3 outline-none transition-colors hover:bg-brand-indigo/5 focus-visible:bg-brand-indigo/10 focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-brand-indigo/35 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:px-5 xl:grid-cols-[2.5rem_minmax(0,1fr)_minmax(6rem,auto)_auto]"
+								>
+									<span
+										className="col-start-1 row-start-1 flex size-8 items-center justify-center rounded-lg"
+										style={{backgroundColor: `${accent}12`}}
+									>
+										<ProfilePngIcon type={announcement.profileType} color={accent} className="size-5" />
+										<span className="sr-only">{PROFILE_LABELS[announcement.profileType]}</span>
+									</span>
+									<span className="col-span-2 col-start-1 row-start-2 min-w-0 text-sm font-bold leading-5 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+										<span className="line-clamp-2">{announcement.title}</span>
+									</span>
+									<span className="col-span-2 col-start-1 row-start-3 inline-flex min-w-0 items-center gap-1.5 text-xs text-neutral-600 sm:col-start-2 sm:row-start-2 xl:col-span-1 xl:col-start-3 xl:row-start-1">
+										<MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />
+										<span className="truncate">{announcement.location}</span>
+									</span>
+									<time
+										dateTime={announcement.createdAt ?? undefined}
+										className="col-start-2 row-start-1 justify-self-end whitespace-nowrap text-xs text-neutral-500 sm:col-start-3 xl:col-start-4"
+									>
+										{publishedLabel}
+									</time>
+								</Link>
+							</li>
+						);
+					})}
+				</ul>
+			)}
+		</CardContent>
+	);
+}
+
+export default function Homepage() {
 	return (
 		<div
 			id="main-content"
@@ -167,12 +251,10 @@ export default async function Homepage() {
 			<section aria-labelledby="homepage-title">
 				<div className="mx-auto grid max-w-370 gap-10 px-4 pb-10 pt-10 sm:px-6 sm:pb-12 sm:pt-14 lg:px-8 min-[1120px]:grid-cols-[1.02fr_0.98fr] min-[1120px]:items-center min-[1120px]:pb-12 min-[1120px]:pt-16">
 					<div className="max-w-2xl">
-						<h1
-							id="homepage-title"
-							className="font-home-display text-[clamp(2.65rem,4.25vw,4rem)] font-bold uppercase leading-[0.99] tracking-[-0.035em] text-black"
-						>
-							Il punto d’incontro del calcio dilettantistico
-						</h1>
+						<HomepageTitle
+							title="Il punto d’incontro del calcio dilettantistico"
+							className="font-home-display text-[clamp(2.65rem,4.25vw,4rem)] text-black font-bold uppercase leading-[0.99] tracking-[-0.035em]"
+						/>
 						<p className="mt-6 max-w-2xl text-base leading-7 text-neutral-700 sm:text-lg sm:leading-8">
 							Bacheca Dilettanti è la piattaforma dedicata a giocatori, staff, società,
 							professionisti e appassionati che vivono il calcio ogni giorno. Opportunità,
@@ -181,25 +263,37 @@ export default async function Homepage() {
 						<div className="mt-7 flex flex-col gap-3 min-[430px]:flex-row">
 							<Link
 								href="/annunci"
-								className={buttonVariants({
-									variant: "brand",
-									size: "lg",
-									className: "h-11 justify-between gap-6 text-white font-bold uppercase px-5 min-[430px]:min-w-52",
-								})}
+								className={cn(
+									buttonVariants({
+										variant: "brand",
+										size: "lg",
+									}),
+									"h-11 justify-between gap-6 text-white font-bold uppercase px-5 min-[430px]:min-w-52",
+								)}
 							>
 								<span className={"text-white font-bold uppercase"}>Sfoglia annunci</span>
-								<ArrowRightIcon aria-hidden="true" />
+								<ArrowRightIcon
+									data-icon="inline-end"
+									aria-hidden="true"
+									className="-translate-x-2 transition-transform duration-200 ease-out group-hover/button:-translate-x-1.5"
+								/>
 							</Link>
 							<Link
 								href="/pubblica-annuncio"
-								className={buttonVariants({
-									variant: "outline",
-									size: "lg",
-									className: "h-11 justify-between gap-6 border-black/35 bg-white/70 px-5 text-black font-bold uppercase min-[430px]:min-w-48",
-								})}
+								className={cn(
+									buttonVariants({
+										variant: "outline",
+										size: "lg",
+									}),
+									"h-11 justify-between gap-6 text-black font-bold uppercase px-5 min-[430px]:min-w-52 border-black/50",
+								)}
 							>
 								<span className={"text-black font-bold uppercase"}>Pubblica ora</span>
-								<ArrowRightIcon aria-hidden="true" />
+								<ArrowRightIcon
+									data-icon="inline-end"
+									aria-hidden="true"
+									className="-translate-x-2 transition-transform duration-200 ease-out group-hover/button:-translate-x-1.5"
+								/>
 							</Link>
 						</div>
 					</div>
@@ -207,7 +301,7 @@ export default async function Homepage() {
 					<Card className="gap-0 overflow-hidden border border-black/10 bg-white/90 py-0 shadow-none ring-0 backdrop-blur-sm">
 						<CardHeader className="flex min-h-16 flex-row items-center justify-between gap-4 border-b border-black/10 px-4 py-4 sm:ps-5">
 							<h2 className="font-home-display text-xl font-semibold uppercase tracking-[-0.01em] sm:text-2xl">
-								<span className="text-brand-indigo">•</span> Ultime opportunità
+								<span className="text-brand-indigo blink-anim me-0.5">•</span> Ultime opportunità
 							</h2>
 							<Link
 								href="/annunci"
@@ -218,60 +312,9 @@ export default async function Homepage() {
 							</Link>
 						</CardHeader>
 
-						<CardContent className="px-0">
-							{error ? (
-								<div className="flex min-h-48 flex-col items-center justify-center gap-3 px-5 py-8 text-center">
-									<p className="font-bold">Opportunità temporaneamente non disponibili.</p>
-									<Link className="text-sm font-bold text-[#6445de] hover:underline" href="/annunci">
-										Apri la bacheca annunci
-									</Link>
-								</div>
-							) : announcements.length === 0 ? (
-								<div className="flex min-h-48 flex-col items-center justify-center gap-3 px-5 py-8 text-center">
-									<p className="font-bold">Nessuna opportunità pubblicata al momento.</p>
-									<Link className="text-sm font-bold text-[#6445de] hover:underline" href="/annunci">
-										Esplora la bacheca
-									</Link>
-								</div>
-							) : (
-								<ul aria-label="Ultimi annunci pubblicati">
-									{announcements.map((announcement) => {
-										const accent = profileAccent(announcement.profileType);
-										const publishedLabel = formatPublishedAt(announcement.createdAt);
-
-										return (
-											<li key={announcement.id} className="border-b border-black/8 last:border-b-0">
-												<Link
-													href={`/dettagli-annuncio?id=${encodeURIComponent(announcement.id)}`}
-													className="grid min-h-15 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-3 outline-none transition-colors hover:bg-brand-indigo/5 focus-visible:bg-brand-indigo/10 focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-brand-indigo/35 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:px-5 xl:grid-cols-[2.5rem_minmax(0,1fr)_minmax(6rem,auto)_auto]"
-												>
-													<span
-														className="col-start-1 row-start-1 flex size-8 items-center justify-center rounded-lg"
-														style={{backgroundColor: `${accent}12`}}
-													>
-														<ProfilePngIcon type={announcement.profileType} color={accent} className="size-5" />
-														<span className="sr-only">{PROFILE_LABELS[announcement.profileType]}</span>
-													</span>
-													<span className="col-span-2 col-start-1 row-start-2 min-w-0 text-sm font-bold leading-5 sm:col-span-1 sm:col-start-2 sm:row-start-1">
-														<span className="line-clamp-2">{announcement.title}</span>
-													</span>
-													<span className="col-span-2 col-start-1 row-start-3 inline-flex min-w-0 items-center gap-1.5 text-xs text-neutral-600 sm:col-start-2 sm:row-start-2 xl:col-span-1 xl:col-start-3 xl:row-start-1">
-														<MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />
-														<span className="truncate">{announcement.location}</span>
-													</span>
-													<time
-														dateTime={announcement.createdAt ?? undefined}
-														className="col-start-2 row-start-1 justify-self-end whitespace-nowrap text-xs text-neutral-500 sm:col-start-3 xl:col-start-4"
-													>
-														{publishedLabel}
-													</time>
-												</Link>
-											</li>
-										);
-									})}
-								</ul>
-							)}
-						</CardContent>
+						<Suspense fallback={<LatestOpportunitiesSkeleton />}>
+							<LatestOpportunitiesContent />
+						</Suspense>
 					</Card>
 				</div>
 			</section>
