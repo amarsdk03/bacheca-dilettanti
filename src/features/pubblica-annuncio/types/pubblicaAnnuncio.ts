@@ -127,8 +127,9 @@ export const MESI_OPTIONS = [
 	"Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
 	"Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
 ] as const;
-export const ANNATE_OPTIONS = Array.from({length: 101}, (_, index) => String(new Date().getFullYear() - index));
-export const ANNI_NASCITA_OPTIONS = Array.from({length: 84}, (_, index) => String(new Date().getFullYear() - 18 - index));
+const CURRENT_YEAR = new Date().getFullYear();
+export const ANNATE_OPTIONS = Array.from({length: CURRENT_YEAR - 1900 + 1}, (_, index) => String(CURRENT_YEAR - index));
+export const ANNI_NASCITA_OPTIONS = ANNATE_OPTIONS;
 
 export type StatoEsperienza = "non-specificare" | "in-corso" | "conseguito";
 export const STATO_ESPERIENZA_OPTIONS: {value: StatoEsperienza; label: string}[] = [

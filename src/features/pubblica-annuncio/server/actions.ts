@@ -25,6 +25,10 @@ import {
 } from "@/features/pubblica-annuncio/server/validation";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {
+	ANNOUNCEMENT_IMAGE_MIME_TYPES,
+	MAX_ANNOUNCEMENT_IMAGE_BYTES,
+} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import {
 	getRegistrationEmailIdentity,
 	setAuthEmailFlow,
 } from "@/features/registrati/server/email-identity";
@@ -39,6 +43,7 @@ const OTP_PATTERN = /^\d{6}$/;
 const REGISTERED_EMAIL_MESSAGE = "Email già registrata, accedi al profilo per pubblicare annunci";
 const SIGNUP_PENDING_EMAIL_MESSAGE =
 	"Questa email appartiene a una registrazione da confermare. Apri l’email di verifica oppure accedi per richiederne una nuova.";
+const ANNOUNCEMENT_IMAGES_BUCKET = "immagini_annunci";
 
 interface PublishRpcResult {
 	status?: unknown;
@@ -51,6 +56,78 @@ interface PublishOtpQuotaRpcResult {
 	status?: unknown;
 	limit?: unknown;
 	retryAt?: unknown;
+}
+
+interface UploadedAnnouncementImage {
+	path: string;
+	mimeType: typeof ANNOUNCEMENT_IMAGE_MIME_TYPES[number];
+	newlyUploaded: boolean;
+}
+
+function detectedImageType(bytes: Uint8Array): UploadedAnnouncementImage["mimeType"] | null {
+	if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 && bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a) return "image/png";
+	if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+	if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP") return "image/webp";
+	return null;
+}
+
+async function uploadAnnouncementImage(
+	file: File | null,
+	authUserId: string,
+	submissionId: string,
+): Promise<UploadedAnnouncementImage | null> {
+	if (!file || file.size === 0) return null;
+	if (file.size > MAX_ANNOUNCEMENT_IMAGE_BYTES || !(ANNOUNCEMENT_IMAGE_MIME_TYPES as readonly string[]).includes(file.type)) {
+		throw new PublishPayloadError("Seleziona un’immagine PNG, JPEG o WebP di massimo 5 MB.", 3);
+	}
+
+	const bytes = new Uint8Array(await file.arrayBuffer());
+	const mimeType = detectedImageType(bytes);
+	if (!mimeType || mimeType !== file.type) {
+		throw new PublishPayloadError("Il contenuto dell’immagine non corrisponde al formato dichiarato.", 3);
+	}
+
+	const extension = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+	const hash = createHash("sha256").update(bytes).digest("hex");
+	const directory = `${authUserId}/${submissionId}`;
+	const filename = `${hash}.${extension}`;
+	const path = `${directory}/${filename}`;
+	const admin = createAdminClient();
+	const bucket = admin.storage.from(ANNOUNCEMENT_IMAGES_BUCKET);
+	const {error} = await bucket.upload(path, bytes, {contentType: mimeType, upsert: false});
+	if (!error) return {path, mimeType, newlyUploaded: true};
+
+	const {data: existing, error: listError} = await bucket.list(directory, {limit: 1, search: filename});
+	if (!listError && existing?.some(({name}) => name === filename)) {
+		return {path, mimeType, newlyUploaded: false};
+	}
+	console.error("[publish-announcement] Image upload failed", {message: error.message});
+	throw new PublishPayloadError("Non è stato possibile caricare l’immagine dell’annuncio.", 3);
+}
+
+async function removeUploadedImage(image: UploadedAnnouncementImage | null) {
+	if (!image?.newlyUploaded) return;
+	const {error} = await createAdminClient().storage.from(ANNOUNCEMENT_IMAGES_BUCKET).remove([image.path]);
+	if (error) console.error("[publish-announcement] Image cleanup failed", {message: error.message});
+}
+
+async function removeUnreferencedRetryImage(
+	image: UploadedAnnouncementImage | null,
+	announcementId: string,
+) {
+	if (!image?.newlyUploaded) return;
+	const admin = createAdminClient();
+	const {data, error} = await admin
+		.from("media_annuncio")
+		.select("id")
+		.eq("uuid_annuncio", announcementId)
+		.eq("link_media", image.path)
+		.limit(1);
+	if (error) {
+		console.error("[publish-announcement] Retry image lookup failed", {code: error.code});
+		return;
+	}
+	if (!data?.length) await removeUploadedImage(image);
 }
 
 type PublishOtpQuotaResult =
@@ -265,6 +342,9 @@ function rpcErrorMessage(message: string): PublishAnnouncementResult {
 	if (message.includes("PROFILE_NOT_ENABLED") || message.includes("REGISTERED_PROFILE_NOT_FOUND")) {
 		return {status: "error", step: 1, message: "Il profilo selezionato non è abilitato o è stato nascosto."};
 	}
+	if (message.includes("PROFILE_UPDATE_NOT_ALLOWED") || message.includes("INVALID_PROFILE_PAYLOAD")) {
+		return {status: "error", step: 2, message: "Non è stato possibile salvare le modifiche del profilo. Controlla i dati e riprova."};
+	}
 	if (message.includes("PROFILE_TYPE_UNAVAILABLE")) {
 		return {status: "error", step: 1, message: "Questa tipologia non può ancora pubblicare annunci."};
 	}
@@ -282,7 +362,7 @@ function rpcErrorMessage(message: string): PublishAnnouncementResult {
 }
 
 export async function publishAnnouncement(
-	rawPayload: PublishAnnouncementPayload,
+	formData: FormData,
 ): Promise<PublishAnnouncementResult> {
 	const account = await getAuthenticatedViewer();
 	if (!account) {
@@ -295,6 +375,11 @@ export async function publishAnnouncement(
 
 	let payload;
 	try {
+		const serializedPayload = formData.get("payload");
+		if (typeof serializedPayload !== "string") {
+			throw new PublishPayloadError("I dati dell’annuncio sono mancanti.", 3);
+		}
+		const rawPayload = JSON.parse(serializedPayload) as PublishAnnouncementPayload;
 		payload = parsePublishPayload(rawPayload, Boolean(account.registeredAt));
 	} catch (error) {
 		if (error instanceof PublishPayloadError) {
@@ -306,16 +391,38 @@ export async function publishAnnouncement(
 		return {status: "error", step: 3, message: "I dati dell’annuncio non sono validi."};
 	}
 
+	let uploadedImage: UploadedAnnouncementImage | null = null;
 	try {
 		const supabase = await createClient();
+		const {data: authData, error: authError} = await supabase.auth.getUser();
+		if (authError || !authData.user) {
+			return {status: "error", step: 4, message: "La sessione non è più valida. Accedi o verifica nuovamente l’email."};
+		}
+		const imageEntry = formData.get("image");
+		uploadedImage = await uploadAnnouncementImage(
+			imageEntry instanceof File ? imageEntry : null,
+			authData.user.id,
+			payload.submissionId,
+		);
 		const rpcPayload = {
 			profile_type: payload.profileType,
 			announcement_type: payload.announcementType,
 			profile_draft: payload.profileDraft,
 			profile_locations: payload.profileLocations,
+			profile_update: payload.profileUpdate ? {
+				profile_type: payload.profileUpdate.type,
+				draft: payload.profileUpdate.draft,
+				locations: payload.profileUpdate.locations,
+			} : null,
 			detail: payload.detail,
 			announcement_locations: payload.announcementLocations,
 			contacts: payload.contacts,
+			premium: {
+				generic_link: payload.extras.genericLink || null,
+				video_highlights: payload.extras.videoHighlights || null,
+				image_path: uploadedImage?.path ?? null,
+				image_mime: uploadedImage?.mimeType ?? null,
+			},
 		} as unknown as Json;
 		const {data, error} = await supabase.rpc("publish_announcement_v1", {
 			p_submission_id: payload.submissionId,
@@ -326,11 +433,13 @@ export async function publishAnnouncement(
 
 		if (error) {
 			console.error("[publish-announcement] Publish RPC failed", {code: error.code});
+			await removeUploadedImage(uploadedImage);
 			return rpcErrorMessage(error.message);
 		}
 
 		const result = data as PublishRpcResult | null;
 		if (result?.status === "rate_limited" && typeof result.retryAt === "string") {
+			await removeUploadedImage(uploadedImage);
 			return {
 				status: "rate_limited",
 				retryAt: result.retryAt,
@@ -338,7 +447,11 @@ export async function publishAnnouncement(
 			};
 		}
 		if (result?.status !== "success" || typeof result.announcementId !== "string") {
+			await removeUploadedImage(uploadedImage);
 			return {status: "error", message: "La risposta del servizio di pubblicazione non è valida. Riprova."};
+		}
+		if (result.idempotent === true) {
+			await removeUnreferencedRetryImage(uploadedImage, result.announcementId);
 		}
 
 		revalidatePath("/il-tuo-profilo");
@@ -349,6 +462,10 @@ export async function publishAnnouncement(
 			idempotent: result.idempotent === true,
 		};
 	} catch (error) {
+		if (error instanceof PublishPayloadError) {
+			await removeUploadedImage(uploadedImage);
+			return {status: "error", step: error.step, message: error.message};
+		}
 		console.error("[publish-announcement] Publish request failed", {
 			cause: error instanceof Error ? error.name : "unknown",
 		});

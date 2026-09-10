@@ -15,12 +15,14 @@ import {
 	type AnnouncementContacts,
 	type AnnouncementDetailsDrafts,
 	type DatabaseAnnouncementType,
+	type PremiumAnnouncementExtras,
 	type PublishableProfileType,
 	type PublishAnnouncementPayload,
 	type TeamAnnouncementSubtype,
 	PUBLISH_PAYLOAD_VERSION,
 } from "@/features/pubblica-annuncio/publish-model";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
 import {
 	parseProfileEditorPayload,
 	RegistrationPayloadError,
@@ -54,9 +56,15 @@ export interface NormalizedPublishPayload {
 	announcementType: DatabaseAnnouncementType;
 	profileDraft: Record<string, Json> | null;
 	profileLocations: ProfileLocationDraft[];
+	profileUpdate: {
+		type: PublishableProfileType;
+		draft: Record<string, Json>;
+		locations: ProfileLocationDraft[];
+	} | null;
 	detail: Record<string, Json>;
 	announcementLocations: ProfileLocationDraft[];
 	contacts: AnnouncementContacts;
+	extras: PremiumAnnouncementExtras;
 }
 
 function fail(message: string, step: 1 | 2 | 3 | 4): never {
@@ -164,6 +172,20 @@ function normalizeContacts(value: unknown): AnnouncementContacts {
 	return {email: email.toLowerCase(), phone};
 }
 
+function normalizeExtras(value: unknown, profileType: PublishableProfileType): PremiumAnnouncementExtras {
+	if (!isRecord(value)) fail("I contenuti Premium non sono validi.", 3);
+	assertExactKeys(value, ["genericLink", "videoHighlights"], 3);
+	const genericLink = textValue(value.genericLink, 2048, 3) ?? "";
+	const videoHighlights = textValue(value.videoHighlights, 2048, 3) ?? "";
+	if (!isLinkAnnuncioValid(genericLink) || !isLinkAnnuncioValid(videoHighlights)) {
+		fail("Inserisci link completi che inizino con http:// o https://.", 3);
+	}
+	if (profileType !== "giocatore" && videoHighlights) {
+		fail("Il link video highlights è disponibile soltanto per gli annunci Giocatore.", 3);
+	}
+	return {genericLink, videoHighlights};
+}
+
 function normalizePrizeList(value: unknown): Json[] {
 	if (!Array.isArray(value) || value.length > 20) fail("I premi inseriti non sono validi.", 3);
 	return value.map((entry) => {
@@ -181,8 +203,11 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 	if (!isRecord(value)) fail("I dati dell’annuncio non sono validi.", 3);
 
 	if (type === "annuncio_giocatore") {
-		assertExactKeys(value, ["descrizione_aggiuntiva"], 3);
-		return {descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true)};
+		assertExactKeys(value, ["categorie_ricercate", "descrizione_aggiuntiva"], 3);
+		return {
+			categorie_ricercate: stringList(value.categorie_ricercate, 3),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
+		};
 	}
 	if (type === "annuncio_squadra_cerca_giocatore") {
 		assertExactKeys(value, ["ruoli_principali", "ruoli_secondari", "annate_ricercate", "stagione", "descrizione_aggiuntiva"], 3);
@@ -259,7 +284,12 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		assertExactKeys(value, ["nome_evento", "tipologie_sport", "modalita_iscrizione", "annate_ammesse_da", "annate_ammesse_a", "numero_squadre", "costo_partecipazione", "tipo_partecipazione", "lista_premi_trofei", "descrizione_aggiuntiva"], 3);
 		const yearFrom = textValue(value.annate_ammesse_da, 4, 3);
 		const yearTo = textValue(value.annate_ammesse_a, 4, 3);
-		if ((yearFrom && !/^\d{4}$/.test(yearFrom)) || (yearTo && !/^\d{4}$/.test(yearTo)) || (yearFrom && yearTo && Number(yearFrom) > Number(yearTo))) {
+		const currentYear = new Date().getFullYear();
+		if (
+			(yearFrom && (!/^\d{4}$/.test(yearFrom) || Number(yearFrom) < 1900 || Number(yearFrom) > currentYear))
+			|| (yearTo && (!/^\d{4}$/.test(yearTo) || Number(yearTo) < 1900 || Number(yearTo) > currentYear))
+			|| (yearFrom && yearTo && Number(yearFrom) > Number(yearTo))
+		) {
 			fail("L’intervallo delle annate non è valido.", 3);
 		}
 		const registration = textValue(value.modalita_iscrizione, 40, 3);
@@ -327,7 +357,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 	if (!serialized || Buffer.byteLength(serialized, "utf8") > MAX_PAYLOAD_BYTES || !isRecord(rawValue)) {
 		fail("I dati dell’annuncio sono mancanti o troppo grandi.", 3);
 	}
-	assertExactKeys(rawValue, ["version", "submissionId", "profileType", "teamSubtype", "anonymousProfile", "announcement", "consents"], 3);
+	assertExactKeys(rawValue, ["version", "submissionId", "profileType", "teamSubtype", "anonymousProfile", "profileUpdate", "announcement", "consents"], 3);
 	if (rawValue.version !== PUBLISH_PAYLOAD_VERSION) fail("Aggiorna la pagina e ripeti la pubblicazione.", 1);
 	if (typeof rawValue.submissionId !== "string" || !UUID_PATTERN.test(rawValue.submissionId)) fail("La richiesta di pubblicazione non è valida.", 4);
 	if (typeof rawValue.profileType !== "string" || !isPublishableProfileType(rawValue.profileType)) fail("La tipologia di profilo non è valida.", 1);
@@ -343,14 +373,36 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 
 	const expectedAnnouncementType = getDatabaseAnnouncementType(profileType, teamSubtype);
 	if (!expectedAnnouncementType || !isRecord(rawValue.announcement)) fail("La tipologia di annuncio non è valida.", 1);
-	assertExactKeys(rawValue.announcement, ["type", "detail", "locations", "contacts"], 3);
+	assertExactKeys(rawValue.announcement, ["type", "detail", "locations", "contacts", "extras"], 3);
 	if (rawValue.announcement.type !== expectedAnnouncementType) fail("I dati non corrispondono alla tipologia selezionata.", 3);
 
 	let profileDraft: Record<string, Json> | null = null;
 	let profileLocations: ProfileLocationDraft[] = [];
+	let profileUpdate: NormalizedPublishPayload["profileUpdate"] = null;
 	if (registered) {
 		if (rawValue.anonymousProfile !== null) fail("I dati del profilo anonimo non sono previsti per questo account.", 2);
+		if (rawValue.profileUpdate !== null) {
+			if (!isRecord(rawValue.profileUpdate)) fail("Le modifiche del profilo non sono valide.", 2);
+			try {
+				const update = parseProfileEditorPayload(rawValue.profileUpdate);
+				if (update.type !== profileType || !isPublishableProfileType(update.type)) fail("Le modifiche non corrispondono al profilo selezionato.", 2);
+				const locations = normalizeLocations(update.locations, 2);
+				const drafts = createProfileDrafts();
+				assignNormalizedProfileDraft(drafts, profileType, update.draft);
+				const profileMessage = getProfileValidationMessage(profileType, drafts, {
+					...Object.fromEntries(Object.keys(drafts).map((key) => [key, []])),
+					[profileType]: locations,
+				} as Record<keyof ProfileDrafts, ProfileLocationDraft[]>);
+				if (profileMessage) fail(profileMessage, 2);
+				profileUpdate = {type: profileType, draft: update.draft, locations};
+			} catch (error) {
+				if (error instanceof PublishPayloadError) throw error;
+				if (error instanceof RegistrationPayloadError) fail(error.message, 2);
+				throw error;
+			}
+		}
 	} else {
+		if (rawValue.profileUpdate !== null) fail("Le modifiche del profilo richiedono un account registrato.", 2);
 		if (!isRecord(rawValue.anonymousProfile)) fail("Completa i dati del profilo prima di pubblicare.", 2);
 		try {
 			const profile = parseProfileEditorPayload(rawValue.anonymousProfile);
@@ -374,9 +426,10 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 	const detail = normalizeDetail(expectedAnnouncementType, rawValue.announcement.detail);
 	const announcementLocations = normalizeLocations(rawValue.announcement.locations, 3);
 	const contacts = normalizeContacts(rawValue.announcement.contacts);
+	const extras = normalizeExtras(rawValue.announcement.extras, profileType);
 
 	const normalizedDrafts = {
-		giocatore: {descrizione_aggiuntiva: ""},
+		giocatore: {categorie_ricercate: [], descrizione_aggiuntiva: ""},
 		squadraCercaGiocatore: {ruoli_principali: [], ruoli_secondari: [], annate_ricercate: [], stagione: "", descrizione_aggiuntiva: ""},
 		squadraCercaStaff: {figura_ricercata: "", settore: "", compenso_mensile: "", requisiti: "", periodo_dal: "", periodo_al: "", descrizione_aggiuntiva: ""},
 		squadraCercaPartita: {categorie_avversario: [], periodo_dal: "", periodo_al: "", orario_dalle: "", orario_alle: "", disponibilita_trasferta: "", descrizione_aggiuntiva: ""},
@@ -387,7 +440,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		campoImpianto: {tipologie_sport: [], orari: "", costo_partenza: "", servizi_inclusi: "", descrizione_aggiuntiva: ""},
 	} satisfies AnnouncementDetailsDrafts;
 	assignNormalizedAnnouncementDetail(normalizedDrafts, expectedAnnouncementType, detail);
-	const detailMessage = getAnnouncementValidationMessage(profileType, teamSubtype, normalizedDrafts, announcementLocations, contacts);
+	const detailMessage = getAnnouncementValidationMessage(profileType, teamSubtype, normalizedDrafts, announcementLocations, contacts, extras);
 	if (detailMessage) fail(detailMessage, 3);
 
 	if (!isRecord(rawValue.consents)) fail("Conferma i consensi richiesti.", 4);
@@ -403,9 +456,11 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		announcementType: expectedAnnouncementType,
 		profileDraft,
 		profileLocations,
+		profileUpdate,
 		detail,
 		announcementLocations,
 		contacts,
+		extras,
 	};
 }
 

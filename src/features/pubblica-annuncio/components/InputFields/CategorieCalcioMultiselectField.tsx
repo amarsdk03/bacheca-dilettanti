@@ -17,7 +17,7 @@ import {
 	useComboboxAnchor,
 } from "@/components/ui/combobox";
 import {Field, FieldError, FieldLabel} from "@/components/ui/field";
-import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 
 type CategorieCalcioMultiselectFieldProps = {
 	label: string;
@@ -42,7 +42,7 @@ export default function CategorieCalcioMultiselectField({
 
 	return (
 		<Field className={className} data-invalid={Boolean(error)}>
-			<FieldLabel>{label} {!required && <OptionalLabel />}</FieldLabel>
+			<FieldLabel>{label} <FieldRequirementIndicator required={required} /></FieldLabel>
 			<Combobox
 				multiple
 				autoHighlight

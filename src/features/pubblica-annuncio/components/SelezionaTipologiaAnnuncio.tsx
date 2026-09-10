@@ -11,13 +11,14 @@ import {
 	FieldDescription,
 	FieldError,
 	FieldGroup,
-	FieldLabel,
 	FieldLegend,
 	FieldSet,
 	FieldTitle,
 } from "@/components/ui/field";
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
+import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {isLimitedProfileType, type ProfileType} from "@/features/profilo/profile-model";
+import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
+import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import type {PublishableProfileType} from "@/features/pubblica-annuncio/publish-model";
 import {getTipologia, tipologieAnnuncio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
@@ -61,50 +62,65 @@ export default function SelezionaTipologiaAnnuncio({
 		<div className="grid gap-8">
 			<FieldGroup className="w-full">
 				<FieldSet>
-					<FieldLegend variant="label" className="field-legend-title mb-0">Seleziona il tipo di annuncio</FieldLegend>
-					<Field data-invalid={Boolean(typeError)} className="mt-4">
-						<FieldDescription>
-						{registered
-							? "Puoi pubblicare soltanto con i sottoprofili attualmente abilitati."
-							: "Scegli il profilo con cui vuoi presentarti nell’annuncio."}
-						</FieldDescription>
+					<FieldLegend variant="label" className="field-legend-title mb-0">Seleziona il tipo di profilo: <RequiredMark /></FieldLegend>
+						<Field data-invalid={Boolean(typeError)} className="mt-4">
 						{typeError && <FieldError>{typeError}</FieldError>}
 
-				<RadioGroup className="grid w-full gap-3 sm:grid-cols-2" value={tipologia} onValueChange={onTipologiaChangeAction} aria-invalid={Boolean(typeError)}>
-					{tipologieAnnuncio.map((opzione) => {
-						const limited = isLimitedProfileType(opzione.valore as ProfileType);
-						const enabledForAccount = enabledProfileTypes.includes(opzione.valore as PublishableProfileType);
-						const disabled = limited || (registered && !enabledForAccount);
-						return (
-						<FieldLabel key={opzione.valore} htmlFor={opzione.valore} className="group/card" data-disabled={disabled}>
-							<Field orientation="horizontal" data-disabled={disabled} className="rounded-lg transition-all group-has-[data-checked]/card:bg-accent">
-								<FieldContent>
-									<FieldTitle className="field-content-title flex-wrap gap-1.5">
-										{opzione.icona && <DynamicLucideIcon iconName={opzione.icona} className="size-4" />}
-										{opzione.nome}
-										{limited && <Badge variant="secondary" className="text-fuchsia-600">Coming soon...</Badge>}
-										{!limited && registered && !enabledForAccount && <Badge variant="outline">Non abilitato</Badge>}
-									</FieldTitle>
-									<FieldDescription>{opzione.descrizione}</FieldDescription>
-								</FieldContent>
-								<RadioGroupItem value={opzione.valore} id={opzione.valore} disabled={disabled} />
-							</Field>
-						</FieldLabel>
-						);
-					})}
-				</RadioGroup>
+						<ToggleGroup
+							className="grid w-full gap-3 sm:grid-cols-2"
+							value={tipologia ? [tipologia] : []}
+							onValueChange={(values) => values[0] && onTipologiaChangeAction(values[0])}
+							aria-required="true"
+							aria-invalid={Boolean(typeError)}
+						>
+							{tipologieAnnuncio.map((opzione) => {
+								const limited = isLimitedProfileType(opzione.valore as ProfileType);
+								const enabledForAccount = enabledProfileTypes.includes(opzione.valore as PublishableProfileType);
+								const disabled = limited || (registered && !enabledForAccount);
+								const profileType = opzione.valore as ProfileType;
+								const accent = getProfileAccent(profileType);
+								return (
+								<ToggleGroupItem
+									key={opzione.valore}
+									value={opzione.valore}
+									disabled={disabled}
+									className="h-auto min-h-24 w-full items-stretch justify-start whitespace-normal rounded-xl border bg-background p-0 text-left shadow-none hover:-translate-y-0.5 hover:bg-background hover:shadow-sm data-pressed:bg-background data-pressed:ring-1 data-pressed:ring-black/25 disabled:opacity-55"
+								>
+									<Field orientation="horizontal" data-disabled={disabled} className="h-full w-full items-start border-0 p-4">
+										<span className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{backgroundColor: `${accent}14`}}>
+											<ProfilePngIcon type={profileType} color={accent} className="size-7" />
+										</span>
+										<FieldContent>
+											<FieldTitle className="field-content-title flex-wrap gap-1.5">
+												{opzione.nome}
+												{limited && <Badge variant="secondary" className="text-brand-indigo">Coming soon...</Badge>}
+												{!limited && registered && !enabledForAccount && <Badge variant="outline">Non abilitato</Badge>}
+											</FieldTitle>
+											<FieldDescription>{opzione.descrizione}</FieldDescription>
+										</FieldContent>
+									</Field>
+								</ToggleGroupItem>
+								);
+							})}
+						</ToggleGroup>
 					</Field>
 				</FieldSet>
 
 				{richiedeSottotipologia && tipologiaSelezionata?.sottotipologie && (
 					<FieldSet>
-						<FieldLegend variant="label" className="field-legend-title mb-0">Seleziona la tipologia di annuncio:</FieldLegend>
+						<FieldLegend variant="label" className="field-legend-title mb-0">Seleziona la tipologia di annuncio: <RequiredMark /></FieldLegend>
 						<Field data-invalid={Boolean(subtypeError)} className="mt-4">
 							{subtypeError && <FieldError>{subtypeError}</FieldError>}
-						<RadioGroup className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2" value={sottotipologia} onValueChange={onSottotipologiaChangeAction} aria-invalid={Boolean(subtypeError)}>
+						<ToggleGroup
+							className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2"
+							value={sottotipologia ? [sottotipologia] : []}
+							onValueChange={(values) => values[0] && onSottotipologiaChangeAction(values[0])}
+							aria-required="true"
+							aria-invalid={Boolean(subtypeError)}
+						>
 							{tipologiaSelezionata.sottotipologie.map((opzione) => (
-								<FieldLabel key={opzione.valore} htmlFor={`sotto-${opzione.valore}`} className="group/card">
-									<Field orientation="horizontal" className="rounded-lg transition-all group-has-[data-checked]/card:bg-fuchsia-100">
+								<ToggleGroupItem key={opzione.valore} value={opzione.valore} className="h-auto min-h-12 w-full items-stretch justify-start whitespace-normal rounded-xl border bg-background p-0 text-left shadow-none hover:bg-brand-indigo/5 data-pressed:border-brand-indigo data-pressed:bg-brand-indigo/10 data-pressed:ring data-pressed:ring-brand-indigo/20">
+									<Field orientation="horizontal" className="h-full w-full border-0 p-4">
 										<FieldContent>
 											<FieldTitle className="field-content-title gap-1.5">
 												{opzione.icona && <DynamicLucideIcon iconName={opzione.icona} className="me-1.5 size-4 sm:me-0" />}
@@ -112,11 +128,10 @@ export default function SelezionaTipologiaAnnuncio({
 											</FieldTitle>
 											{opzione.descrizione && <FieldDescription>{opzione.descrizione}</FieldDescription>}
 										</FieldContent>
-										<RadioGroupItem value={opzione.valore} id={`sotto-${opzione.valore}`} />
 									</Field>
-								</FieldLabel>
+								</ToggleGroupItem>
 							))}
-						</RadioGroup>
+						</ToggleGroup>
 						</Field>
 					</FieldSet>
 				)}

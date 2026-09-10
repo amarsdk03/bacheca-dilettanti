@@ -186,7 +186,7 @@ async function loadProfileContent(
 	if (type === "giocatore") {
 		const {data, error} = await supabase
 			.from("profilo_giocatore")
-			.select("id, nome, cognome, sport_principale, tipologie_sport, disponibilita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
+			.select("id, nome, cognome, sport_principale, tipologie_sport, categorie_ricercate, disponibilita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -202,6 +202,7 @@ async function loadProfileContent(
 					detailField("Tipologie sportive", formatList(data.tipologie_sport)),
 					detailField("Ruoli principali", formatList(jsonStringArray(data.ruoli_sport, "principali"))),
 					detailField("Ruoli specifici", formatList(jsonStringArray(data.ruoli_sport, "specifici"))),
+					detailField("Categorie ricercate", formatList(data.categorie_ricercate)),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Piede principale", data.piede_principale),
 					detailField("Altezza (cm)", data.altezza),

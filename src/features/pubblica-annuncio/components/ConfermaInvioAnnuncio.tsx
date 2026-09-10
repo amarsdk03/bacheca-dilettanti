@@ -7,9 +7,7 @@ import {CheckCircle2Icon, Clock3Icon, ShieldCheckIcon} from "lucide-react";
 import {REGEXP_ONLY_DIGITS} from "input-otp";
 
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
-import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Checkbox} from "@/components/ui/checkbox";
 import {
 	Field,
@@ -24,19 +22,23 @@ import {
 import {Input} from "@/components/ui/input";
 import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
 import {toast} from "@/components/ui/toast";
-import type {ProfileDrafts, ProfileLocationDraft} from "@/features/profilo/profile-model";
+import type {ProfileDrafts} from "@/features/profilo/profile-model";
+import {buildPublishPreview} from "@/features/pubblica-annuncio/announcement-preview";
+import AnnouncementPreviewCard from "@/features/pubblica-annuncio/components/AnnouncementPreviewCard";
+import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";
 import {
 	publishAnnouncement,
 	requestPublishEmailOtp,
 	verifyPublishEmailOtp,
 } from "@/features/pubblica-annuncio/server/actions";
-import {EMAIL_PATTERN, getTipologia} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 interface ConfermaInvioAnnuncioProps {
 	payload: PublishAnnouncementPayload;
+	image: File | null;
+	imagePreviewUrl: string | null;
 	profileDrafts: ProfileDrafts;
-	profileLocations: ProfileLocationDraft[];
 	authenticated: boolean;
 	onEditStep: (step: number) => void;
 }
@@ -49,19 +51,6 @@ interface OtpRetryState {
 	retryAt: string;
 }
 
-function profileTitle(payload: PublishAnnouncementPayload, drafts: ProfileDrafts) {
-	if (payload.profileType === "giocatore") return [drafts.giocatore.nome, drafts.giocatore.cognome].filter(Boolean).join(" ") || "Giocatore";
-	if (payload.profileType === "squadra") return drafts.squadra.nome_societa || "Squadra";
-	if (payload.profileType === "staff-sportivo") return [drafts["staff-sportivo"].nome, drafts["staff-sportivo"].cognome].filter(Boolean).join(" ") || "Staff sportivo";
-	if (payload.profileType === "arbitro") return [drafts.arbitro.nome, drafts.arbitro.cognome].filter(Boolean).join(" ") || "Arbitro";
-	if (payload.profileType === "torneo-evento") return drafts["torneo-evento"].nome_organizzazione || "Organizzazione";
-	return drafts["campi-impianti-sportivi"].nome_organizzazione || "Campo o impianto";
-}
-
-function locationSummary(locations: ProfileLocationDraft[]) {
-	return locations.map(({regione, citta}) => [citta, regione].filter(Boolean).join(", ")).join(" · ");
-}
-
 function formattedDate(value: string) {
 	return new Intl.DateTimeFormat("it-IT", {
 		dateStyle: "medium",
@@ -72,8 +61,9 @@ function formattedDate(value: string) {
 
 export default function ConfermaInvioAnnuncio({
 	payload,
+	image,
+	imagePreviewUrl,
 	profileDrafts,
-	profileLocations,
 	authenticated,
 	onEditStep,
 }: ConfermaInvioAnnuncioProps) {
@@ -119,8 +109,6 @@ export default function ConfermaInvioAnnuncio({
 				: challengeMatchesEmail
 					? "Invia di nuovo"
 					: "Invia codice";
-	const selectedType = getTipologia(payload.profileType);
-	const selectedSubtype = selectedType?.sottotipologie?.find(({valore}) => valore === payload.teamSubtype);
 	const consentErrors = {
 		data: validationVisible && !dataConfirmed ? "Conferma che i dati inseriti sono corretti e veritieri." : null,
 		terms: validationVisible && !termsAccepted ? "Accetta i Termini e condizioni del servizio." : null,
@@ -140,6 +128,7 @@ export default function ConfermaInvioAnnuncio({
 		: null;
 	const displayedEmailError = emailError ?? validationEmailError;
 	const displayedOtpError = otpError ?? validationOtpError;
+	const preview = buildPublishPreview(payload, profileDrafts, imagePreviewUrl, image?.name ?? null);
 
 	useEffect(() => {
 		if (!otpRetry) return;
@@ -283,10 +272,14 @@ export default function ConfermaInvioAnnuncio({
 
 		setIsSubmitting(true);
 		try {
-			const result = await publishAnnouncement({
+			const finalPayload = {
 				...payload,
 				consents: {dataConfirmed, termsAccepted, privacyAccepted},
-			});
+			};
+			const formData = new FormData();
+			formData.set("payload", JSON.stringify(finalPayload));
+			if (image) formData.set("image", image);
+			const result = await publishAnnouncement(formData);
 			if (result.status === "success") {
 				toast.add({
 					title: "Annuncio inviato",
@@ -294,7 +287,7 @@ export default function ConfermaInvioAnnuncio({
 					type: "success",
 					timeout: 4500,
 				});
-				router.push("/pubblica-annuncio/conferma");
+				router.push(`/pubblica-annuncio/conferma?id=${encodeURIComponent(result.announcementId)}`);
 				router.refresh();
 				return;
 			}
@@ -321,125 +314,99 @@ export default function ConfermaInvioAnnuncio({
 
 	return (
 		<div className="grid gap-8">
-			<div className="grid gap-4 md:grid-cols-2">
-				<Card>
-					<CardHeader>
-						<div className="flex items-center justify-between gap-3">
-							<CardTitle>Profilo utilizzato</CardTitle>
-							<Button variant="ghost" size="sm" onClick={() => onEditStep(2)}>Modifica</Button>
-						</div>
-						<CardDescription>{selectedType?.nome ?? payload.profileType}</CardDescription>
-					</CardHeader>
-					<CardContent className="grid gap-2 text-sm">
-						<p className="font-medium">{profileTitle(payload, profileDrafts)}</p>
-						<p className="text-muted-foreground">{locationSummary(profileLocations)}</p>
-					</CardContent>
-				</Card>
+			<FieldSet>
+				<FieldLegend variant="label" className="field-legend-title mb-4">Conferma e pubblica:</FieldLegend>
+				<AnnouncementPreviewCard preview={preview} />
 
-				<Card>
-					<CardHeader>
-						<div className="flex items-center justify-between gap-3">
-							<CardTitle>Dati annuncio</CardTitle>
-							<Button variant="ghost" size="sm" onClick={() => onEditStep(3)}>Modifica</Button>
-						</div>
-						<CardDescription>{selectedSubtype?.nome ?? selectedType?.nome ?? payload.announcement.type}</CardDescription>
-					</CardHeader>
-					<CardContent className="grid gap-2 text-sm">
-						<div className="flex flex-wrap gap-2"><Badge variant="secondary">Gratuito</Badge><Badge variant="outline">In revisione dopo l’invio</Badge></div>
-						<p className="text-muted-foreground">{locationSummary(payload.announcement.locations)}</p>
-						<p>{[payload.announcement.contacts.email, payload.announcement.contacts.phone].filter(Boolean).join(" · ")}</p>
-					</CardContent>
-				</Card>
-			</div>
-
-			{!authenticated && (
-				<FieldSet>
-					<FieldLegend>Verifica indirizzo email</FieldLegend>
-					<FieldDescription>
-						L’indirizzo è precompilato dal contatto pubblico, ma puoi modificarlo. Verrà usato soltanto per la verifica e non sostituirà il contatto mostrato nell’annuncio.
-					</FieldDescription>
-					<FieldGroup>
-						<Field data-invalid={Boolean(displayedEmailError || registeredEmail)}>
-							<FieldLabel htmlFor="publish-verification-email">Email di verifica</FieldLabel>
-							<div className="flex flex-col gap-3 sm:flex-row">
-								<Input
-									id="publish-verification-email"
-									type="email"
-									autoComplete="email"
-									value={verificationEmail}
-									onChange={(event) => resetVerification(event.target.value)}
-									placeholder="nome@email.it"
-									disabled={otpBusy}
-									required
-									aria-required="true"
-									aria-invalid={Boolean(displayedEmailError || registeredEmail)}
-								/>
-								<Button
-									type="button"
-									variant="outline"
-									onClick={requestOtp}
-									disabled={otpBusy || otpRetryActive || emailVerified || registeredEmail}
-								>
-									{otpRequestLabel}
-								</Button>
-							</div>
-							{registeredEmail ? (
-								<FieldError>
-									Email già registrata,{" "}
-									<Link href="/accedi?next=%2Fpubblica-annuncio" className="underline underline-offset-4">accedi al profilo per pubblicare annunci</Link>
-								</FieldError>
-							) : displayedEmailError ? (
-								<FieldError>{displayedEmailError}</FieldError>
-							) : null}
-							{otpFeedback && !emailVerified && <FieldDescription role="status">{otpFeedback}</FieldDescription>}
-						</Field>
-
-						{challengeMatchesEmail && !emailVerified && !registeredEmail && (
-							<Field data-invalid={Boolean(displayedOtpError)}>
-								<FieldLabel htmlFor="publish-verification-code">Codice OTP</FieldLabel>
-								<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-									<InputOTP
-										id="publish-verification-code"
-										maxLength={6}
-										pattern={REGEXP_ONLY_DIGITS}
-										value={otpCode}
-										onChange={(value) => {
-											setOtpCode(value);
-											setOtpError(null);
-										}}
-									inputMode="numeric"
-									autoComplete="one-time-code"
-									disabled={otpBusy}
-									required
-									aria-required="true"
-									aria-invalid={Boolean(displayedOtpError)}
+				{!authenticated && (
+					<FieldSet className={"mt-6"}>
+						<FieldLegend>Verifica indirizzo email</FieldLegend>
+						<FieldDescription className={"pt-1"}>
+							L’indirizzo è precompilato dal contatto pubblico, ma puoi modificarlo. Verrà usato soltanto per la verifica e non sostituirà il contatto mostrato nell’annuncio.
+						</FieldDescription>
+						<FieldGroup>
+							<Field data-invalid={Boolean(displayedEmailError || registeredEmail)}>
+								<FieldLabel htmlFor="publish-verification-email">Email di verifica <RequiredMark /></FieldLabel>
+								<div className="flex flex-col gap-3 sm:flex-row">
+									<Input
+										id="publish-verification-email"
+										type="email"
+										autoComplete="email"
+										value={verificationEmail}
+										onChange={(event) => resetVerification(event.target.value)}
+										placeholder="nome@email.it"
+										disabled={otpBusy}
+										required
+										aria-required="true"
+										aria-invalid={Boolean(displayedEmailError || registeredEmail)}
+									/>
+									<Button
+										type="button"
+										variant="outline"
+										onClick={requestOtp}
+										disabled={otpBusy || otpRetryActive || emailVerified || registeredEmail}
 									>
-										<InputOTPGroup>
-											{Array.from({length: 6}, (_, index) => (
-												<InputOTPSlot key={index} index={index} aria-invalid={Boolean(displayedOtpError)} />
-											))}
-										</InputOTPGroup>
-									</InputOTP>
-								<Button type="button" onClick={verifyOtp} disabled={otpBusy}>
-										{otpStatus === "verifying" ? "Verifica..." : "Verifica codice"}
+										{otpRequestLabel}
 									</Button>
 								</div>
-								{displayedOtpError && <FieldError>{displayedOtpError}</FieldError>}
+								{registeredEmail ? (
+									<FieldError>
+										Email già registrata,{" "}
+										<Link href="/accedi?next=%2Fpubblica-annuncio" className="underline underline-offset-4">accedi al profilo per pubblicare annunci</Link>
+									</FieldError>
+								) : displayedEmailError ? (
+									<FieldError>{displayedEmailError}</FieldError>
+								) : null}
+								{otpFeedback && !emailVerified && <FieldDescription role="status">{otpFeedback}</FieldDescription>}
 							</Field>
-						)}
 
-						{emailVerified && (
-							<Field orientation="horizontal">
-								<CheckCircle2Icon aria-hidden="true" />
-								<FieldContent>
-									<FieldLabel>Email verificata</FieldLabel>
-									<FieldDescription role="status">{normalizedEmail}</FieldDescription>
-								</FieldContent>
-							</Field>
-						)}
-					</FieldGroup>
-				</FieldSet>
-			)}
+							{challengeMatchesEmail && !emailVerified && !registeredEmail && (
+								<Field data-invalid={Boolean(displayedOtpError)}>
+									<FieldLabel htmlFor="publish-verification-code">Codice OTP <RequiredMark /></FieldLabel>
+									<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+										<InputOTP
+											id="publish-verification-code"
+											maxLength={6}
+											pattern={REGEXP_ONLY_DIGITS}
+											value={otpCode}
+											onChange={(value) => {
+												setOtpCode(value);
+												setOtpError(null);
+											}}
+										inputMode="numeric"
+										autoComplete="one-time-code"
+										disabled={otpBusy}
+										required
+										aria-required="true"
+										aria-invalid={Boolean(displayedOtpError)}
+										>
+											<InputOTPGroup>
+												{Array.from({length: 6}, (_, index) => (
+													<InputOTPSlot key={index} index={index} aria-invalid={Boolean(displayedOtpError)} />
+												))}
+											</InputOTPGroup>
+										</InputOTP>
+									<Button type="button" onClick={verifyOtp} disabled={otpBusy}>
+											{otpStatus === "verifying" ? "Verifica..." : "Verifica codice"}
+										</Button>
+									</div>
+									{displayedOtpError && <FieldError>{displayedOtpError}</FieldError>}
+								</Field>
+							)}
+
+							{emailVerified && (
+								<Field orientation="horizontal">
+									<CheckCircle2Icon aria-hidden="true" />
+									<FieldContent>
+										<FieldLabel>Email verificata</FieldLabel>
+										<FieldDescription role="status">{normalizedEmail}</FieldDescription>
+									</FieldContent>
+								</Field>
+							)}
+						</FieldGroup>
+					</FieldSet>
+				)}
+			</FieldSet>
 
 			{authenticated && (
 				<Alert>
@@ -455,12 +422,6 @@ export default function ConfermaInvioAnnuncio({
 					<AlertDescription>{otpServiceError}</AlertDescription>
 				</Alert>
 			)}
-
-			<Alert>
-				<ShieldCheckIcon />
-				<AlertTitle>Controllo prima della pubblicazione</AlertTitle>
-				<AlertDescription>L’annuncio verrà salvato su Supabase come gratuito e in revisione. Non sarà pubblicamente visibile finché non sarà approvato.</AlertDescription>
-			</Alert>
 
 			{rateLimitRetryAt && (
 				<Alert variant="destructive">
@@ -480,24 +441,23 @@ export default function ConfermaInvioAnnuncio({
 			)}
 
 			<FieldSet>
-				<FieldLegend>Conferme richieste</FieldLegend>
-				<FieldGroup className="gap-4">
+				<FieldGroup className="gap-3">
 					<Field orientation="horizontal" data-invalid={Boolean(consentErrors.data)}>
 						<Checkbox id="confirm-data" checked={dataConfirmed} onCheckedChange={(checked) => setDataConfirmed(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.data)} />
 						<FieldContent>
-							<FieldLabel htmlFor="confirm-data" className="font-normal">Confermo che i dati inseriti sono corretti e veritieri.</FieldLabel>
+							<FieldLabel htmlFor="confirm-data" className="font-normal">Confermo che i dati inseriti sono corretti e veritieri. <RequiredMark /></FieldLabel>
 						</FieldContent>
 					</Field>
 					<Field orientation="horizontal" data-invalid={Boolean(consentErrors.terms)}>
 						<Checkbox id="confirm-terms" checked={termsAccepted} onCheckedChange={(checked) => setTermsAccepted(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.terms)} />
 						<FieldContent>
-							<FieldLabel htmlFor="confirm-terms" className="font-normal">Ho letto e accetto i Termini e condizioni del servizio.</FieldLabel>
+							<FieldLabel htmlFor="confirm-terms" className="font-normal">Ho letto e accetto i Termini e condizioni del servizio. <RequiredMark /></FieldLabel>
 						</FieldContent>
 					</Field>
 					<Field orientation="horizontal" data-invalid={Boolean(consentErrors.privacy)}>
 						<Checkbox id="confirm-privacy" checked={privacyAccepted} onCheckedChange={(checked) => setPrivacyAccepted(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.privacy)} />
 						<FieldContent>
-							<FieldLabel htmlFor="confirm-privacy" className="font-normal">Ho letto l’informativa privacy e acconsento al trattamento dei dati.</FieldLabel>
+							<FieldLabel htmlFor="confirm-privacy" className="font-normal">Ho letto l’informativa privacy e acconsento al trattamento dei dati. <RequiredMark /></FieldLabel>
 						</FieldContent>
 					</Field>
 				</FieldGroup>

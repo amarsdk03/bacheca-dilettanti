@@ -14,11 +14,11 @@ export default function HomepageTitle({title, className} : HomepageTitleProps) {
 			className={className}
 			textAlign="start"
 			tag="h1"
-			delay={150}
-			duration={1}
+			delay={100}
+			duration={1.5}
 			ease="power3.out"
 			splitType="words"
-			from={{ opacity: 0, y: 40 }}
+			from={{ opacity: 0, y: 50 }}
 			to={{ opacity: 1, y: 0 }}
 			threshold={0.1}
 			rootMargin="-100px"

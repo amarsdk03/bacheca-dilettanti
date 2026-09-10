@@ -29,7 +29,7 @@ const DETAIL_DEFINITIONS = [
 		key: "annuncio_giocatore",
 		subtypeLabel: "Giocatore",
 		fallbackTitle: "Disponibilità giocatore",
-		titleFields: ["ruoli_principali"],
+		titleFields: ["ruoli_principali", "categorie_ricercate"],
 		descriptionFields: ["descrizione_aggiuntiva"],
 	},
 	{
@@ -102,7 +102,7 @@ function publicProfileAnnouncementsQuery(supabase: SupabaseClient<Database>) {
 			tipologia_annuncio,
 			creato_il,
 			livello_annuncio,
-			annuncio_giocatore(ruoli_principali, descrizione_aggiuntiva),
+			annuncio_giocatore(ruoli_principali, categorie_ricercate, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_giocatore(ruoli_principali, stagione, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_staff(figura_ricercata, requisiti, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_partita(categorie_avversario, descrizione_aggiuntiva),

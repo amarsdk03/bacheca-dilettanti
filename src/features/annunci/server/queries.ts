@@ -63,7 +63,7 @@ function publicAnnouncementQuery(
 			tipologia_annuncio,
 			creato_il,
 			livello_annuncio,
-			annuncio_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, descrizione_aggiuntiva),
+			annuncio_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, categorie_ricercate, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, annate_ricercate, stagione, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_staff(figura_ricercata, settore, compenso_mensile, requisiti, periodo_dal, periodo_al, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_partita(categorie_avversario, disponibilita_trasferta, periodo_dal, periodo_al, orario_dalle, orario_alle, descrizione_aggiuntiva),
@@ -91,7 +91,7 @@ function officialAuthorQuery(supabase: SupabaseClient<Database>) {
 			link_foto_profilo,
 			verificato_il,
 			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
-			profilo_giocatore(id, nascosto, nome, cognome, disponibilita, presentazione, ruoli_sport, tipologie_sport),
+			profilo_giocatore(id, nascosto, nome, cognome, disponibilita, presentazione, ruoli_sport, tipologie_sport, categorie_ricercate),
 			profilo_squadra(id, nascosto, nome_societa, presentazione, sede_principale, tipologie_sport),
 			profilo_staff_sportivo(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione),
 			profilo_arbitro(id, nascosto, nome, cognome, disponibilita, presentazione),
@@ -345,21 +345,25 @@ function announcementContent(
 		const types = cleanStringArray(detail.tipologie_sport);
 		const primaryRoles = cleanStringArray(detail.ruoli_principali);
 		const secondaryRoles = cleanStringArray(detail.ruoli_secondari);
+		const categories = cleanStringArray(detail.categorie_ricercate);
 		title = primaryRoles[0] ? `${primaryRoles[0]} disponibile` : "Giocatore disponibile";
 		facts = [
 			fact("roles", "Ruoli principali", formatSelection(primaryRoles, "selezionati")),
 			fact("roles", "Ruoli secondari", formatSelection(secondaryRoles, "selezionati")),
 			fact("types", "Tipologie", formatSelection(types, "selezionate")),
+			fact("categories", "Categorie ricercate", formatSelection(categories, "selezionate")),
 			fact("location", "Località", location),
 		];
 		fields = [
 			detailField("Ruoli principali", formatSelection(primaryRoles, "selezionati")),
 			detailField("Ruoli secondari", formatSelection(secondaryRoles, "selezionati")),
 			detailField("Tipologie", formatSelection(types, "selezionate")),
+			detailField("Categorie ricercate", formatSelection(categories, "selezionate")),
 		];
 		filters.types = types;
 		filters.roles = [...new Set([...primaryRoles, ...secondaryRoles])];
-		searchValues = [...types, ...primaryRoles, ...secondaryRoles];
+		filters.categories = categories;
+		searchValues = [...types, ...primaryRoles, ...secondaryRoles, ...categories];
 	} else if (type === "annuncio_squadra_cerca_giocatore") {
 		const types = cleanStringArray(detail.tipologie_sport);
 		const primaryRoles = cleanStringArray(detail.ruoli_principali);
@@ -659,6 +663,7 @@ function registeredAuthor(
 		title = fullName(child.nome, child.cognome);
 		highlights = [
 			fact("roles", "Ruoli", formatSelection([...new Set(roles)], "selezionati")),
+			fact("categories", "Categorie", formatSelection(cleanStringArray(child.categorie_ricercate), "selezionate")),
 			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
 			fact("location", "Località", location),
 		];
@@ -822,6 +827,57 @@ export async function loadLatestPublicAnnouncements(): Promise<LatestAnnouncemen
 	} catch (error) {
 		logQueryError("latest-unexpected", error);
 		return {announcements: [], error: true};
+	}
+}
+
+const RELATED_ANNOUNCEMENT_TYPES: Record<AnnouncementType, readonly AnnouncementType[]> = {
+	annuncio_giocatore: ["annuncio_squadra_cerca_giocatore"],
+	annuncio_squadra_cerca_giocatore: ["annuncio_giocatore"],
+	annuncio_staff_sportivo: ["annuncio_squadra_cerca_staff"],
+	annuncio_squadra_cerca_staff: ["annuncio_staff_sportivo"],
+	annuncio_squadra_cerca_partita: ["annuncio_squadra_cerca_partita", "annuncio_campo_impianto"],
+	annuncio_squadra_cerca_sponsor: [],
+	annuncio_arbitro: ["annuncio_torneo_evento", "annuncio_squadra_cerca_partita"],
+	annuncio_torneo_evento: ["annuncio_arbitro", "annuncio_campo_impianto"],
+	annuncio_campo_impianto: ["annuncio_torneo_evento", "annuncio_squadra_cerca_partita"],
+};
+
+export async function loadRelatedPublicAnnouncements(
+	sourceId: string,
+	sourceType: AnnouncementType,
+	sourceRegions: readonly string[],
+): Promise<AnnouncementDirectoryItem[]> {
+	const relatedTypes = RELATED_ANNOUNCEMENT_TYPES[sourceType];
+	if (relatedTypes.length === 0) return [];
+
+	try {
+		const supabase = createAdminClient();
+		const {data, error} = await publicAnnouncementQuery(supabase)
+			.in("tipologia_annuncio", relatedTypes)
+			.neq("uuid", sourceId)
+			.order("creato_il", {ascending: false, nullsFirst: false})
+			.order("uuid", {ascending: false})
+			.limit(100);
+		if (error) {
+			logQueryError("related", error);
+			return [];
+		}
+
+		const normalizedRegions = new Set(sourceRegions.map(normalizeAnnouncementSearchText));
+		const mapped = (data ?? [])
+			.map(mapAnnouncement)
+			.filter((item): item is MappedAnnouncement => Boolean(item))
+			.sort((left, right) => {
+				const leftLocal = left.filterData.regions.some((region) => normalizedRegions.has(normalizeAnnouncementSearchText(region)));
+				const rightLocal = right.filterData.regions.some((region) => normalizedRegions.has(normalizeAnnouncementSearchText(region)));
+				return Number(rightLocal) - Number(leftLocal);
+			})
+			.slice(0, 3);
+		const authorResult = await loadOfficialAuthors(supabase, mapped);
+		return mapped.map((item) => withLoadedAuthor(item, authorResult.authors, authorResult.error));
+	} catch (error) {
+		logQueryError("related-unexpected", error);
+		return [];
 	}
 }
 

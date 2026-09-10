@@ -543,7 +543,7 @@ function ProfilesSection({
 
 			<div className={"mt-2"}>
 				<div className="flex items-center gap-2">
-					<h2 id="profiles-heading" className="text-2xl font-semibold tracking-tight">Profili attivi</h2>
+					<h2 id="profiles-heading" className="text-2xl font-semibold tracking-tight">Sottoprofili attivi</h2>
 					<Badge variant="secondary">{profiles.length}/{MAX_PROFILE_COUNT}</Badge>
 				</div>
 				<p className="mt-1 text-muted-foreground">Un solo sottoprofilo per tipologia, fino a un massimo di cinque.</p>
@@ -567,7 +567,7 @@ function ProfilesSection({
 			
 			<div className={"mt-4"}>
 				<div className="flex items-center gap-2">
-					<h2 id="profiles-heading" className="text-2xl font-semibold tracking-tight">Profili non attivi</h2>
+					<h2 id="profiles-heading" className="text-2xl font-semibold tracking-tight">Sottoprofili non attivi</h2>
 				</div>
 
 				{limitReached && (

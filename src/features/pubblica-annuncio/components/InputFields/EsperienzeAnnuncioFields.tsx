@@ -77,7 +77,7 @@ export default function EsperienzeAnnuncioFields({
 			<div className="mt-4 flex items-start justify-between gap-3">
 				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">
-						{titolo}
+						{titolo} <OptionalLabel />
 					</FieldLegend>
 					<FieldDescription>Licenze, patentini, incarichi o esperienze rilevanti.</FieldDescription>
 				</div>
@@ -138,26 +138,28 @@ export default function EsperienzeAnnuncioFields({
 								</Field>
 							</div>
 
-							<RadioGroup
-								className="mt-4"
-								value={esperienza.stato}
-								onValueChange={(value) => updateEsperienza(esperienza.id, "stato", value as StatoEsperienza)}
-							>
-								{STATO_ESPERIENZA_OPTIONS.map((opzione) => (
-									<Field key={opzione.value} orientation="horizontal">
-										<RadioGroupItem
-											value={opzione.value}
-											id={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
-										/>
-										<FieldLabel
-											htmlFor={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
-											className="font-normal"
-										>
-											{opzione.label}
-										</FieldLabel>
-									</Field>
-								))}
-							</RadioGroup>
+							<Field className="mt-4">
+								<FieldLabel>Stato <OptionalLabel /></FieldLabel>
+								<RadioGroup
+									value={esperienza.stato}
+									onValueChange={(value) => updateEsperienza(esperienza.id, "stato", value as StatoEsperienza)}
+								>
+									{STATO_ESPERIENZA_OPTIONS.map((opzione) => (
+										<Field key={opzione.value} orientation="horizontal">
+											<RadioGroupItem
+												value={opzione.value}
+												id={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
+											/>
+											<FieldLabel
+												htmlFor={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
+												className="font-normal"
+											>
+												{opzione.label}
+											</FieldLabel>
+										</Field>
+									))}
+								</RadioGroup>
+							</Field>
 						</div>
 					))}
 				</div>

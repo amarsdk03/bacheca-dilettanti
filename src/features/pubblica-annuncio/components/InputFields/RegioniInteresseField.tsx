@@ -6,6 +6,7 @@ import {Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet} 
 import {Input} from "@/components/ui/input";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {Regione, REGIONI_ITALIANE} from "@/const/defaultConstants";
+import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import {CITTA_ESEMPIO_PER_REGIONE} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {ScrollArea} from "@/components/ui/scroll-area";
@@ -197,7 +198,7 @@ export default function RegioniInteresseField({
 			<Field data-invalid={Boolean(resolvedError)} className="mt-4">
 				<div className="flex items-center justify-between gap-3">
 					<FieldLegend variant="label" className="field-legend-title mb-0">
-						Regioni interessate {!required && <OptionalLabel />}
+						Regioni interessate <FieldRequirementIndicator required={required} />
 					</FieldLegend>
 					<Button
 						type="button"

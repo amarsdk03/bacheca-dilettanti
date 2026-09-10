@@ -12,9 +12,9 @@ import {
 import {buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Skeleton} from "@/components/ui/skeleton";
-import {cn} from "@/lib/utils";
 import type {ProfileType} from "@/features/profilo/profile-model";
-import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
+import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
+import {cn} from "@/lib/utils";
 import {loadLatestPublicAnnouncements} from "@/features/annunci/server/queries";
 import HomepageTitle from "@/features/homepage/components/HomepageTitle";
 
@@ -72,39 +72,6 @@ const PROFILE_LABELS: Record<ProfileType, string> = {
 	"torneo-evento": "Tornei / Eventi",
 	"campi-impianti-sportivi": "Campi / Strutture",
 };
-
-const FALLBACK_ACCENT = "#8e72ff";
-
-function profileAccent(type: ProfileType) {
-	return PROFILE_OPTIONS.find(({value}) => value === type)?.colore ?? FALLBACK_ACCENT;
-}
-
-function ProfilePngIcon({type, color, className}: {
-	type: ProfileType;
-	color: string;
-	className: string;
-}) {
-	const iconUrl = `/icone-profili/${type}.png`;
-
-	return (
-		<span
-			className={cn("block shrink-0", className)}
-			data-profile-icon={type}
-			style={{
-				backgroundColor: color,
-				maskImage: `url(${iconUrl})`,
-				maskPosition: "center",
-				maskRepeat: "no-repeat",
-				maskSize: "contain",
-				WebkitMaskImage: `url(${iconUrl})`,
-				WebkitMaskPosition: "center",
-				WebkitMaskRepeat: "no-repeat",
-				WebkitMaskSize: "contain",
-			}}
-			aria-hidden="true"
-		/>
-	);
-}
 
 function formatPublishedAt(createdAt: string | null) {
 	if (!createdAt) return "Data non disponibile";
@@ -203,7 +170,7 @@ async function LatestOpportunitiesContent() {
 			) : (
 				<ul aria-label="Ultimi annunci pubblicati">
 					{announcements.map((announcement) => {
-						const accent = profileAccent(announcement.profileType);
+						const accent = getProfileAccent(announcement.profileType);
 						const publishedLabel = formatPublishedAt(announcement.createdAt);
 
 						return (
@@ -329,7 +296,7 @@ export default function Homepage() {
 					</h2>
 					<div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-7">
 						{HOMEPAGE_CATEGORIES.map((category) => {
-							const accent = profileAccent(category.type);
+							const accent = getProfileAccent(category.type);
 
 							return (
 								<Link

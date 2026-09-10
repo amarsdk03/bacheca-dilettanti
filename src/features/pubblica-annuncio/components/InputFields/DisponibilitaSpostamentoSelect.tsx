@@ -8,7 +8,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import {DISPONIBILITA_SPOSTAMENTO_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type DisponibilitaSpostamentoSelectProps = {
@@ -29,10 +29,10 @@ export default function DisponibilitaSpostamentoSelect({
 	return (
 		<Field>
 			<FieldLabel htmlFor={id}>
-				{label} {!required && <OptionalLabel />}
+				{label} <FieldRequirementIndicator required={required} />
 			</FieldLabel>
 			<Select value={value || "Non specificare"} onValueChange={(nextValue) => setValue(nextValue ?? "")}>
-				<SelectTrigger id={id} className="w-full">
+				<SelectTrigger id={id} className="w-full" aria-required={required}>
 					<SelectValue placeholder="Non specificato" />
 				</SelectTrigger>
 				<SelectContent>

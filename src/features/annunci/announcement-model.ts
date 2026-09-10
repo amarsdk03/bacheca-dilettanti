@@ -224,7 +224,7 @@ export const ANNOUNCEMENT_FILTER_PARAM_KEYS = [
 export type AnnouncementFilterParam = typeof ANNOUNCEMENT_FILTER_PARAM_KEYS[number];
 
 export const ANNOUNCEMENT_FILTERS_BY_TYPE = {
-	annuncio_giocatore: ["regione", "tipologia", "ruolo"],
+	annuncio_giocatore: ["regione", "tipologia", "ruolo", "categoria"],
 	annuncio_squadra_cerca_giocatore: ["regione", "tipologia", "ruolo"],
 	annuncio_squadra_cerca_staff: ["regione", "figura", "compensoMin"],
 	annuncio_squadra_cerca_partita: ["regione", "categoria"],

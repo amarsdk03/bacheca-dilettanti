@@ -22,6 +22,7 @@ import {createClient} from "@/lib/supabase/server";
 import type {Json} from "@/server/supabase";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const ANNOUNCEMENT_IMAGES_BUCKET = "immagini_annunci";
 
 function profileRpcErrorMessage(message: string) {
 	if (message.includes("PROFILE_LIMIT_REACHED")) {
@@ -212,6 +213,14 @@ export async function removeAnnouncement(
 	void userId;
 
 	const supabase = await createClient();
+	const {data: mediaRows, error: mediaError} = await supabase
+		.from("media_annuncio")
+		.select("link_media")
+		.eq("uuid_annuncio", announcementId);
+	if (mediaError) {
+		console.error("[profile-dashboard] Announcement media lookup failed", {code: mediaError.code});
+	}
+	const imagePaths = (mediaRows ?? []).map(({link_media}) => link_media).filter(Boolean);
 	const {data, error} = await supabase
 		.from("annuncio")
 		.delete()
@@ -225,6 +234,12 @@ export async function removeAnnouncement(
 	}
 	if (!data) {
 		return {status: "error", message: "L’annuncio non è più disponibile oppure non appartiene al tuo account."};
+	}
+	if (imagePaths.length > 0) {
+		const {error: storageError} = await createAdminClient().storage
+			.from(ANNOUNCEMENT_IMAGES_BUCKET)
+			.remove(imagePaths);
+		if (storageError) console.error("[profile-dashboard] Announcement image cleanup failed", {message: storageError.message});
 	}
 
 	revalidatePath("/il-tuo-profilo");

@@ -13,6 +13,7 @@ import {
 	FieldSet,
 } from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
+import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import {
 	createPremioTrofeo,
@@ -57,7 +58,7 @@ export default function PremiTrofeiFields({
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center gap-2">
 						<FieldLegend variant="label" className="field-legend-title mb-0">
-							Premi e trofei
+							Premi e trofei <OptionalLabel />
 						</FieldLegend>
 						<Badge variant="secondary">{premiTrofei.length}/{MAX_PREMI_TROFEI}</Badge>
 					</div>
@@ -117,7 +118,7 @@ export default function PremiTrofeiFields({
 
 									<Field data-invalid={titoloNonValido}>
 										<FieldLabel htmlFor={`premio-titolo-${premio.id}`}>
-											Titolo premio
+											Titolo premio <RequiredMark />
 										</FieldLabel>
 										<Input
 											id={`premio-titolo-${premio.id}`}
@@ -125,6 +126,7 @@ export default function PremiTrofeiFields({
 											onChange={(event) => updatePremioTrofeo(premio.id, "titoloPremio", event.target.value)}
 											placeholder="1000 euro"
 											required
+											aria-required="true"
 											aria-invalid={titoloNonValido}
 										/>
 										{titoloNonValido && <FieldError>{validationMessage}</FieldError>}

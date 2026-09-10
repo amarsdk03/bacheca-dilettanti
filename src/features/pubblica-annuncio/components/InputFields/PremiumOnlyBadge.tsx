@@ -33,7 +33,7 @@ export default function PremiumOnlyBadge({tipologia, funzione}: PremiumOnlyBadge
 				type="button"
 				className={cn(
 					badgeVariants({variant: "secondary"}),
-					"cursor-pointer border border-purple-200 bg-purple-100 text-purple-900 hover:bg-purple-200"
+					"cursor-pointer border border-brand-indigo/30 bg-brand-indigo/15 text-brand-ink hover:bg-brand-indigo/25"
 				)}
 				aria-label={`Scopri i piani disponibili per ${funzione}`}
 			>
@@ -42,9 +42,9 @@ export default function PremiumOnlyBadge({tipologia, funzione}: PremiumOnlyBadge
 			<SheetContent side="right" className="w-full gap-0 sm:max-w-xl">
 				<SheetHeader className="border-b pr-12">
 					<SheetTitle className="flex items-center gap-4 text-lg/6 mb-2">
-						<Crown className="size-6 text-purple-700" />
+						<Crown className="size-6 text-brand-indigo" />
 						<p>
-							{funzione} è una funzione <span className="text-purple-700 font-semibold">Premium!</span>
+							{funzione} è una funzione <span className="text-brand-indigo font-semibold">Premium!</span>
 						</p>
 					</SheetTitle>
 					<SheetDescription>
@@ -64,7 +64,7 @@ export default function PremiumOnlyBadge({tipologia, funzione}: PremiumOnlyBadge
 											<p className="text-xs text-muted-foreground">{piano.durata}</p>
 										)}
 									</div>
-									<p className="font-semibold text-fuchsia-700">{piano.prezzo}</p>
+									<p className="font-semibold text-brand-indigo">{piano.prezzo}</p>
 								</div>
 								<p className="mt-2 text-sm leading-5 text-muted-foreground">{piano.descrizione}</p>
 								{piano.caratteristiche && piano.caratteristiche.length > 0 && (

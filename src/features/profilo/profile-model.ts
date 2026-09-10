@@ -156,6 +156,7 @@ export function createProfileDrafts(): ProfileDrafts {
 		giocatore: {
 			altezza: "",
 			anno_nascita: "",
+			categorie_ricercate: [],
 			cognome: "",
 			disponibilita: "non-specificare",
 			giorno_nascita: "",

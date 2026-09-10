@@ -5,8 +5,9 @@ import type {
 	ProfileType,
 } from "@/features/profilo/profile-model";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
 
-export const PUBLISH_PAYLOAD_VERSION = 1 as const;
+export const PUBLISH_PAYLOAD_VERSION = 2 as const;
 
 export const PUBLISHABLE_PROFILE_TYPES = [
 	"giocatore",
@@ -52,6 +53,7 @@ export interface TournamentPrize {
 
 export interface AnnouncementDetailsDrafts {
 	giocatore: {
+		categorie_ricercate: string[];
 		descrizione_aggiuntiva: string;
 	};
 	squadraCercaGiocatore: {
@@ -127,17 +129,26 @@ export interface AnonymousProfilePayload {
 	locations: ProfileLocationDraft[];
 }
 
+export type RegisteredProfileUpdatePayload = AnonymousProfilePayload;
+
+export interface PremiumAnnouncementExtras {
+	genericLink: string;
+	videoHighlights: string;
+}
+
 export interface PublishAnnouncementPayload {
 	version: typeof PUBLISH_PAYLOAD_VERSION;
 	submissionId: string;
 	profileType: PublishableProfileType;
 	teamSubtype: TeamAnnouncementSubtype | null;
 	anonymousProfile: AnonymousProfilePayload | null;
+	profileUpdate: RegisteredProfileUpdatePayload | null;
 	announcement: {
 		type: DatabaseAnnouncementType;
 		detail: AnnouncementDetailDraft;
 		locations: ProfileLocationDraft[];
 		contacts: AnnouncementContacts;
+		extras: PremiumAnnouncementExtras;
 	};
 	consents: {
 		dataConfirmed: boolean;
@@ -191,6 +202,8 @@ export type AnnouncementValidationField =
 	| "requirements"
 	| "matchCategories"
 	| "matchTimes"
+	| "genericLink"
+	| "videoHighlights"
 	| "sponsorSector"
 	| "sponsorSupport"
 	| "sponsorOffer"
@@ -253,7 +266,7 @@ export function getDatabaseAnnouncementType(
 
 export function createAnnouncementDetailsDrafts(): AnnouncementDetailsDrafts {
 	return {
-		giocatore: {descrizione_aggiuntiva: ""},
+		giocatore: {categorie_ricercate: [], descrizione_aggiuntiva: ""},
 		squadraCercaGiocatore: {
 			ruoli_principali: [],
 			ruoli_secondari: [],
@@ -406,8 +419,9 @@ export function getAnnouncementValidationMessage(
 	drafts: AnnouncementDetailsDrafts,
 	locations: ProfileLocationDraft[],
 	contacts: AnnouncementContacts,
+	extras: PremiumAnnouncementExtras = {genericLink: "", videoHighlights: ""},
 ): string | null {
-	return Object.values(getAnnouncementValidationErrors(type, teamSubtype, drafts, locations, contacts))[0] ?? null;
+	return Object.values(getAnnouncementValidationErrors(type, teamSubtype, drafts, locations, contacts, extras))[0] ?? null;
 }
 
 export function getAnnouncementValidationErrors(
@@ -416,6 +430,7 @@ export function getAnnouncementValidationErrors(
 	drafts: AnnouncementDetailsDrafts,
 	locations: ProfileLocationDraft[],
 	contacts: AnnouncementContacts,
+	extras: PremiumAnnouncementExtras = {genericLink: "", videoHighlights: ""},
 ): AnnouncementValidationErrors {
 	const errors: AnnouncementValidationErrors = {};
 	const email = contacts.email.trim();
@@ -424,6 +439,9 @@ export function getAnnouncementValidationErrors(
 	if (email && !EMAIL_PATTERN.test(email)) errors.email = "Inserisci un indirizzo email valido.";
 	if (phone && phone.replace(/\D/g, "").length < 6) errors.phone = "Inserisci un numero di telefono valido.";
 	if (locations.length === 0) errors.locations = "Seleziona almeno una località per l’annuncio.";
+	if (!isLinkAnnuncioValid(extras.genericLink)) errors.genericLink = "Inserisci un link completo che inizi con http:// o https://.";
+	if (type === "giocatore" && !isLinkAnnuncioValid(extras.videoHighlights)) errors.videoHighlights = "Inserisci un link video completo che inizi con http:// o https://.";
+	if (type !== "giocatore" && extras.videoHighlights.trim()) errors.videoHighlights = "Il link video highlights è disponibile soltanto per gli annunci Giocatore.";
 
 	const detail = getAnnouncementDetail(type, teamSubtype, drafts);
 	if (!detail) errors.type = "La tipologia di annuncio non è valida.";

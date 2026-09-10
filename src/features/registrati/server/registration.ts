@@ -151,7 +151,13 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 		assertExactKeys(entry, ["id", "titolo", "ente", "periodoDa", "periodoA", "descrizione", "stato"], profileType);
 		const periodoDa = textValue(entry.periodoDa, 4, profileType);
 		const periodoA = textValue(entry.periodoA, 4, profileType);
-		if ((periodoDa && !YEAR_PATTERN.test(periodoDa)) || (periodoA && !YEAR_PATTERN.test(periodoA))) {
+		const currentYear = new Date().getFullYear();
+		const invalidYear = (year: string | null) => Boolean(year) && (
+			!YEAR_PATTERN.test(year as string)
+			|| Number(year) < 1900
+			|| Number(year) > currentYear
+		);
+		if (invalidYear(periodoDa) || invalidYear(periodoA)) {
 			fail("Uno dei periodi inseriti non è valido.", 3, profileType);
 		}
 		if (periodoDa && periodoA && Number(periodoA) < Number(periodoDa)) {
@@ -237,10 +243,11 @@ function normalizeDraft(
 	if (!isRecord(value)) fail("I dati del profilo non sono validi.", 3, type);
 
 	if (type === "giocatore") {
-		assertExactKeys(value, ["altezza", "anno_nascita", "cognome", "disponibilita", "giorno_nascita", "mese_nascita", "nome", "peso", "piede_principale", "presentazione", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport"], type);
+		assertExactKeys(value, ["altezza", "anno_nascita", "categorie_ricercate", "cognome", "disponibilita", "giorno_nascita", "mese_nascita", "nome", "peso", "piede_principale", "presentazione", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport"], type);
 		return {
 			altezza: textValue(value.altezza, MAX_SHORT_TEXT, type),
 			anno_nascita: birthField(value.anno_nascita, "year", type),
+			categorie_ricercate: stringList(value.categorie_ricercate, type),
 			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
 			disponibilita: enumText(value.disponibilita, AVAILABILITIES, type),
 			giorno_nascita: birthField(value.giorno_nascita, "day", type),

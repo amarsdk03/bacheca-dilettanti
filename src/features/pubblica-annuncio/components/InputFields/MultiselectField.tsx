@@ -13,7 +13,7 @@ import {
 	ComboboxValue,
 	useComboboxAnchor,
 } from "@/components/ui/combobox";
-import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
+import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 
 type MultiselectFieldProps = {
 	label: ReactNode;
@@ -43,7 +43,7 @@ export default function MultiselectField({
 	return (
 		<Field data-invalid={Boolean(error)}>
 			<FieldLabel>
-				{label} {!required && <OptionalLabel />}
+				{label} <FieldRequirementIndicator required={required} />
 			</FieldLabel>
 			<Combobox
 				multiple

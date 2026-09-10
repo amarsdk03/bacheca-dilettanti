@@ -47,7 +47,7 @@ export default async function Navbar({minimal = false, backToHome = false}: Navb
 					{backToHome ? (
 						<Link
 							href="/"
-							className={cn(buttonVariants({variant: "inverse-outline", size: "lg"}), inverseButtonClassName)}
+							className={cn(buttonVariants({variant: "inverse-outline", size: "lg"}), inverseButtonClassName, "me-3 sm:me-0")}
 						>
 							<ArrowLeftIcon data-icon="inline-start" aria-hidden="true" className="ms-2" />
 							<span className="hidden sm:inline">Torna alla Home</span>
@@ -73,7 +73,7 @@ export default async function Navbar({minimal = false, backToHome = false}: Navb
 									<UserAvatar viewer={viewer} />
 								) : (
 									<Link
-										href="/registrati"
+										href="/accedi"
 										className={cn(
 											buttonVariants({variant: "ghost", size: "icon-lg"}),
 											"rounded-full"

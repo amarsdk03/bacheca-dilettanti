@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   graphql_public: {
     Tables: {
@@ -251,6 +251,7 @@ export type Database = {
       }
       annuncio_giocatore: {
         Row: {
+          categorie_ricercate: string[] | null
           descrizione_aggiuntiva: string | null
           info_mostrate: Json | null
           ruoli_principali: string[] | null
@@ -259,6 +260,7 @@ export type Database = {
           uuid_annuncio: string
         }
         Insert: {
+          categorie_ricercate?: string[] | null
           descrizione_aggiuntiva?: string | null
           info_mostrate?: Json | null
           ruoli_principali?: string[] | null
@@ -267,6 +269,7 @@ export type Database = {
           uuid_annuncio: string
         }
         Update: {
+          categorie_ricercate?: string[] | null
           descrizione_aggiuntiva?: string | null
           info_mostrate?: Json | null
           ruoli_principali?: string[] | null
@@ -682,6 +685,35 @@ export type Database = {
           },
         ]
       }
+      contatto_annuncio: {
+        Row: {
+          id: number
+          tipo: string
+          uuid_annuncio: string
+          valore: string
+        }
+        Insert: {
+          id?: number
+          tipo: string
+          uuid_annuncio: string
+          valore: string
+        }
+        Update: {
+          id?: number
+          tipo?: string
+          uuid_annuncio?: string
+          valore?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contatto_annuncio_uuid_annuncio_fkey"
+            columns: ["uuid_annuncio"]
+            isOneToOne: false
+            referencedRelation: "annuncio"
+            referencedColumns: ["uuid"]
+          },
+        ]
+      }
       figura_professionale: {
         Row: {
           creato_da: string | null
@@ -724,35 +756,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "utente"
             referencedColumns: ["utente_uuid"]
-          },
-        ]
-      }
-      contatto_annuncio: {
-        Row: {
-          id: number
-          tipo: string
-          uuid_annuncio: string
-          valore: string
-        }
-        Insert: {
-          id?: number
-          tipo: string
-          uuid_annuncio: string
-          valore: string
-        }
-        Update: {
-          id?: number
-          tipo?: string
-          uuid_annuncio?: string
-          valore?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contatto_annuncio_uuid_annuncio_fkey"
-            columns: ["uuid_annuncio"]
-            isOneToOne: false
-            referencedRelation: "annuncio"
-            referencedColumns: ["uuid"]
           },
         ]
       }
@@ -1146,6 +1149,7 @@ export type Database = {
         Row: {
           altezza: string | null
           anno_nascita: string | null
+          categorie_ricercate: string[] | null
           cognome: string | null
           disponibilita: string | null
           giorno_nascita: string | null
@@ -1165,6 +1169,7 @@ export type Database = {
         Insert: {
           altezza?: string | null
           anno_nascita?: string | null
+          categorie_ricercate?: string[] | null
           cognome?: string | null
           disponibilita?: string | null
           giorno_nascita?: string | null
@@ -1184,6 +1189,7 @@ export type Database = {
         Update: {
           altezza?: string | null
           anno_nascita?: string | null
+          categorie_ricercate?: string[] | null
           cognome?: string | null
           disponibilita?: string | null
           giorno_nascita?: string | null
@@ -1656,16 +1662,16 @@ export type Database = {
         Args: { p_email_hash: string }
         Returns: Json
       }
-      get_registration_email_identity_v1: {
-        Args: { p_email: string }
-        Returns: {
-          auth_user_uuid: string | null
-          identity_status: string
-        }[]
-      }
       delete_owned_subprofile: {
         Args: { p_profile_type: string; p_user_id: string }
         Returns: string
+      }
+      get_registration_email_identity_v1: {
+        Args: { p_email: string }
+        Returns: {
+          auth_user_uuid: string
+          identity_status: string
+        }[]
       }
       json_array_to_object: { Args: { _arr: Json[] }; Returns: Json }
       jsonb_array_to_object: { Args: { _arr: Json[] }; Returns: Json }
@@ -1713,12 +1719,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1742,11 +1748,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1767,11 +1773,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1792,11 +1798,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1809,11 +1815,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

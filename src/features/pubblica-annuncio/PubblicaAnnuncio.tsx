@@ -1,8 +1,8 @@
 "use client";
 
-import {useMemo, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import Link from "next/link";
-import {ClipboardPenIcon, InfoIcon, MailCheckIcon, UserRoundCheckIcon} from "lucide-react";
+import {ClipboardPenIcon, InfoIcon, MailCheckIcon} from "lucide-react";
 
 import GradientBackground from "@/components/styling/GradientBackground";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
@@ -36,11 +36,13 @@ import {
 	isTeamAnnouncementSubtype,
 	PUBLISH_PAYLOAD_VERSION,
 	type AnnouncementContacts,
+	type PremiumAnnouncementExtras,
 	type PublishableProfileType,
 	type PublishAnnouncementPayload,
 	type PublishProfileContext,
 	type TeamAnnouncementSubtype,
 } from "@/features/pubblica-annuncio/publish-model";
+import {getAnnouncementImageError} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
 
 interface PubblicaAnnuncioProps {
 	authenticated: boolean;
@@ -65,11 +67,24 @@ export default function PubblicaAnnuncio({
 	const [announcementDrafts, setAnnouncementDrafts] = useState(createAnnouncementDetailsDrafts);
 	const [announcementLocations, setAnnouncementLocations] = useState<ProfileLocationDraft[]>([]);
 	const [contacts, setContacts] = useState<AnnouncementContacts>({email: "", phone: ""});
+	const [extras, setExtras] = useState<PremiumAnnouncementExtras>({genericLink: "", videoHighlights: ""});
+	const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
+	const [announcementImagePreviewUrl, setAnnouncementImagePreviewUrl] = useState<string | null>(null);
+	const announcementImagePreviewUrlRef = useRef<string | null>(null);
+	const [profileUnlocked, setProfileUnlocked] = useState(false);
 	const [submissionId] = useState(() => globalThis.crypto.randomUUID());
 	const [profileValidationVisible, setProfileValidationVisible] = useState(false);
 	const [announcementValidationVisible, setAnnouncementValidationVisible] = useState(false);
 	const profileLocationSnapshot = useRef<string | null>(null);
 	const enabledProfileTypes = registered ? profileContext?.enabledProfileTypes ?? [] : [];
+	const profileDirty = Boolean(
+		registered
+		&& profileContext
+		&& profileType
+		&& JSON.stringify({draft: profileDrafts[profileType], locations: profileLocations[profileType]})
+			!== JSON.stringify({draft: profileContext.drafts[profileType], locations: profileContext.locations[profileType]}),
+	);
+	const imageError = getAnnouncementImageError(announcementImage);
 
 	const profileValidationErrors = profileType
 		? getProfileValidationErrors(profileType, profileDrafts, profileLocations)
@@ -78,14 +93,14 @@ export default function PubblicaAnnuncio({
 		? getProfileValidationMessage(profileType, profileDrafts, profileLocations)
 		: "Seleziona una tipologia di profilo.";
 	const announcementValidationErrors = profileType
-		? getAnnouncementValidationErrors(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts)
+		? getAnnouncementValidationErrors(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras)
 		: {};
 	const announcementValidationMessage = profileType
-		? getAnnouncementValidationMessage(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts)
+		? getAnnouncementValidationMessage(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras)
 		: "Seleziona una tipologia di profilo.";
 	const step1Valid = profileType !== "" && (profileType !== "squadra" || teamSubtype !== null);
 	const step2Valid = step1Valid && profileValidationMessage === null;
-	const step3Valid = step2Valid && announcementValidationMessage === null;
+	const step3Valid = step2Valid && announcementValidationMessage === null && imageError === null;
 
 	const payload = useMemo<PublishAnnouncementPayload | null>(() => {
 		if (!profileType) return null;
@@ -102,17 +117,35 @@ export default function PubblicaAnnuncio({
 				draft: profileDrafts[profileType],
 				locations: profileLocations[profileType],
 			},
+			profileUpdate: registered && profileUnlocked && profileDirty ? {
+				type: profileType,
+				draft: profileDrafts[profileType],
+				locations: profileLocations[profileType],
+			} : null,
 			announcement: {
 				type: announcementType,
 				detail,
 				locations: announcementLocations,
 				contacts,
+				extras,
 			},
 			consents: {dataConfirmed: false, termsAccepted: false, privacyAccepted: false},
 		};
-	}, [announcementDrafts, announcementLocations, contacts, profileDrafts, profileLocations, profileType, registered, submissionId, teamSubtype]);
+	}, [announcementDrafts, announcementLocations, contacts, extras, profileDirty, profileDrafts, profileLocations, profileType, profileUnlocked, registered, submissionId, teamSubtype]);
 
 	const scrollToTop = () => window.scrollTo({top: 0, behavior: "smooth"});
+	const updateAnnouncementImage = (image: File | null) => {
+		if (announcementImagePreviewUrlRef.current) URL.revokeObjectURL(announcementImagePreviewUrlRef.current);
+		const nextPreviewUrl = image ? URL.createObjectURL(image) : null;
+		announcementImagePreviewUrlRef.current = nextPreviewUrl;
+		setAnnouncementImagePreviewUrl(nextPreviewUrl);
+		setAnnouncementImage(image);
+	};
+
+	useEffect(() => () => {
+		if (announcementImagePreviewUrlRef.current) URL.revokeObjectURL(announcementImagePreviewUrlRef.current);
+	}, []);
+
 	const goToStep = (nextStep: number) => {
 		setStep(nextStep);
 		scrollToTop();
@@ -133,6 +166,10 @@ export default function PubblicaAnnuncio({
 		setTeamSubtype(null);
 		setProfileValidationVisible(false);
 		setAnnouncementValidationVisible(false);
+		setProfileUnlocked(false);
+		if (value !== "giocatore") {
+			setExtras((previous) => ({...previous, videoHighlights: ""}));
+		}
 		setAnnouncementLocations([]);
 		profileLocationSnapshot.current = null;
 	};
@@ -162,6 +199,15 @@ export default function PubblicaAnnuncio({
 		}
 
 		setAnnouncementDrafts((previous) => {
+			if (profileType === "giocatore" && previous.giocatore.categorie_ricercate.length === 0) {
+				return {
+					...previous,
+					giocatore: {
+						...previous.giocatore,
+						categorie_ricercate: [...(profileDrafts.giocatore.categorie_ricercate ?? [])],
+					},
+				};
+			}
 			if (profileType === "torneo-evento" && previous.torneoEvento.tipologie_sport.length === 0) {
 				return {
 					...previous,
@@ -187,7 +233,7 @@ export default function PubblicaAnnuncio({
 	};
 
 	const continueToConfirmation = () => {
-		if (announcementValidationMessage) {
+		if (announcementValidationMessage || imageError) {
 			setAnnouncementValidationVisible(true);
 			return;
 		}
@@ -205,26 +251,6 @@ export default function PubblicaAnnuncio({
 					</div>
 					<p className="mt-3 text-base text-muted-foreground">Scegli il profilo, controlla i dati e invia gratuitamente l’annuncio in revisione.</p>
 				</section>
-
-				{registered ? (
-					<Alert className="mb-10">
-						<UserRoundCheckIcon />
-						<AlertTitle>Stai pubblicando dal tuo account</AlertTitle>
-						<AlertDescription>Puoi usare soltanto i sottoprofili abilitati. I dati del profilo verranno caricati dal database.</AlertDescription>
-					</Alert>
-				) : authenticated ? (
-					<Alert className="mb-10">
-						<MailCheckIcon />
-						<AlertTitle>Indirizzo email già verificato</AlertTitle>
-						<AlertDescription>Completa i dati e invia l’annuncio: non dovrai richiedere un nuovo codice.</AlertDescription>
-					</Alert>
-				) : (
-					<Alert className="mb-10">
-						<InfoIcon />
-						<AlertTitle>Verifica email obbligatoria</AlertTitle>
-						<AlertDescription>Nell’ultimo passaggio dovrai confermare un indirizzo email con un codice OTP prima di inviare l’annuncio.</AlertDescription>
-					</Alert>
-				)}
 
 				{registered && enabledProfileTypes.length === 0 && (
 					<Alert variant="destructive" className="mb-10">
@@ -269,8 +295,7 @@ export default function PubblicaAnnuncio({
 					</TabsList>
 
 					<TabsContent value="tab-1">
-						<Card className="my-4">
-							<CardHeader><CardTitle>1. Tipo annuncio</CardTitle></CardHeader>
+						<Card className="my-4 pt-6">
 							<CardContent>
 								<SelezionaTipologiaAnnuncio
 									tipologia={profileType}
@@ -286,13 +311,14 @@ export default function PubblicaAnnuncio({
 					</TabsContent>
 
 					<TabsContent value="tab-2">
-						<Card className="my-4">
-							<CardHeader><CardTitle>2. Dati profilo</CardTitle></CardHeader>
+						<Card className="my-4 pt-6">
 							<CardContent className="grid gap-8">
 								{profileType && (
 									<PublishProfileStep
 										profileType={profileType}
 										registered={registered}
+										unlocked={profileUnlocked}
+										onUnlock={() => setProfileUnlocked(true)}
 										drafts={profileDrafts}
 										locations={profileLocations}
 										onChange={updateProfileDraft}
@@ -309,8 +335,7 @@ export default function PubblicaAnnuncio({
 					</TabsContent>
 
 					<TabsContent value="tab-3">
-						<Card className="my-4">
-							<CardHeader><CardTitle>3. Dati annuncio</CardTitle></CardHeader>
+						<Card className="my-4 pt-6">
 							<CardContent className="grid gap-8">
 								{profileType && (
 									<AnnouncementDetailsForm
@@ -322,6 +347,10 @@ export default function PubblicaAnnuncio({
 										onLocationsChange={setAnnouncementLocations}
 										contacts={contacts}
 										onContactsChange={setContacts}
+										extras={extras}
+										onExtrasChange={setExtras}
+										image={announcementImage}
+										onImageChange={updateAnnouncementImage}
 										errors={announcementValidationVisible ? announcementValidationErrors : {}}
 									/>
 								)}
@@ -334,10 +363,9 @@ export default function PubblicaAnnuncio({
 					</TabsContent>
 
 					<TabsContent value="tab-4">
-						<Card className="my-4">
-							<CardHeader><CardTitle>4. Conferma e invia</CardTitle></CardHeader>
+						<Card className="my-4 pt-6">
 							<CardContent>
-								{payload && profileType && <ConfermaInvioAnnuncio payload={payload} profileDrafts={profileDrafts} profileLocations={profileLocations[profileType]} authenticated={authenticated} onEditStep={goToStep} />}
+								{payload && profileType && <ConfermaInvioAnnuncio payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} authenticated={authenticated} onEditStep={goToStep} />}
 							</CardContent>
 						</Card>
 					</TabsContent>

@@ -178,7 +178,7 @@
 }
 
 .field-legend-title {
-    font-size: 1.25rem;
+    font-size: min(4.5vw, 1.25rem);
     font-weight: 600;
 }
 

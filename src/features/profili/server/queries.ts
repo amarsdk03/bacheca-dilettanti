@@ -30,7 +30,7 @@ function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: numbe
 			verificato_il,
 			ultima_modifica_il,
 			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
-			profilo_giocatore(id, nascosto, nome, cognome, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport),
+			profilo_giocatore(id, nascosto, nome, cognome, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categorie_ricercate),
 			profilo_squadra(id, nascosto, nome_societa, presentazione, sede_principale, sport_principale, tipologie_sport),
 			profilo_staff_sportivo(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, sport_principale),
 			profilo_professionista_studente(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, presentazione_servizi, specializzazioni, sport_principale, tipologie_sport, automunito),
@@ -274,13 +274,14 @@ function mapProfileRow(row: ProfileDirectoryQueryRow) {
 		const primaryRoles = jsonStringArray(player.ruoli_sport, "principali");
 		const specificRoles = jsonStringArray(player.ruoli_sport, "specifici");
 		const sportTypes = cleanStringArray(player.tipologie_sport);
+		const categories = cleanStringArray(player.categorie_ricercate);
 		profiles.push(createDirectoryProfile(row, "giocatore", player.id, {
 			title: fullName(player.nome, player.cognome),
 			presentation: player.presentazione,
 			sport: cleanText(player.sport_principale) ?? sportTypes[0],
 			highlight: primaryRoles[0] ?? sportTypes[0] ?? null,
 			availability: player.disponibilita,
-			searchValues: specificRoles,
+			searchValues: [...specificRoles, ...categories],
 			filterData: {tipologie: sportTypes, ruoli: primaryRoles},
 			factData: {roles: [...new Set([...primaryRoles, ...specificRoles])]},
 		}));

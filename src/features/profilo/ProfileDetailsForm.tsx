@@ -9,6 +9,7 @@ import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/co
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
 import ProfileLocationsField from "@/features/profilo/ProfileLocationsField";
+import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
 import type {
 	ProfileLocationDraft,
 	ProfileDrafts,
@@ -31,6 +32,7 @@ import type {ProfileValidationErrors} from "@/features/pubblica-annuncio/publish
 import {
 	DISPONIBILITA_PROFILO_OPTIONS,
 	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
+	CATEGORIE_CALCIO_GROUPS,
 	RUOLI_SPECIFICI_PER_RUOLO,
 	type DisponibilitaProfilo,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
@@ -56,9 +58,10 @@ const MAIN_FOOT_OPTIONS = [
 	{value: "Ambipiede", label: "Ambipiede"},
 ] as const;
 
+const CURRENT_YEAR = new Date().getFullYear();
 const CAREER_YEAR_OPTIONS = Array.from(
-	{length: 81},
-	(_, index) => String(new Date().getFullYear() + 1 - index),
+	{length: CURRENT_YEAR - 1900 + 1},
+	(_, index) => String(CURRENT_YEAR - index),
 );
 
 const WEEKDAY_OPTIONS = [
@@ -294,7 +297,7 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze}: CareerHistor
 
 	return (
 		<FieldSet>
-			<FieldLegend variant="label" className="field-legend-title mb-0">Storico carriera</FieldLegend>
+			<FieldLegend variant="label" className="field-legend-title mb-0">Storico carriera <OptionalLabel /></FieldLegend>
 			<div className="flex items-start justify-between gap-3">
 				<FieldDescription>Inserisci le stagioni, le squadre e le categorie più rilevanti.</FieldDescription>
 				<Button type="button" variant="outline" size="sm" onClick={addEsperienza}>
@@ -459,7 +462,7 @@ function OpeningHoursField({idPrefix, value, onChange}: OpeningHoursFieldProps) 
 									</FieldLabel>
 								</Field>
 								<Field data-disabled={!entry.attivo}>
-									<FieldLabel htmlFor={`${idPrefix}-${entry.giorno}-dalle`}>Dalle</FieldLabel>
+									<FieldLabel htmlFor={`${idPrefix}-${entry.giorno}-dalle`}>Dalle <OptionalLabel /></FieldLabel>
 									<Input
 										id={`${idPrefix}-${entry.giorno}-dalle`}
 										type="time"
@@ -469,7 +472,7 @@ function OpeningHoursField({idPrefix, value, onChange}: OpeningHoursFieldProps) 
 									/>
 								</Field>
 								<Field data-disabled={!entry.attivo}>
-									<FieldLabel htmlFor={`${idPrefix}-${entry.giorno}-alle`}>Alle</FieldLabel>
+									<FieldLabel htmlFor={`${idPrefix}-${entry.giorno}-alle`}>Alle <OptionalLabel /></FieldLabel>
 									<Input
 										id={`${idPrefix}-${entry.giorno}-alle`}
 										type="time"
@@ -641,6 +644,12 @@ function GiocatoreFields({
 				value={roles.specifici}
 				onValueChange={(specifici) => onChange("giocatore", "ruoli_sport", {...roles, specifici})}
 				placeholder={roles.principali.length > 0 ? "Seleziona i ruoli specifici..." : "Seleziona prima un ruolo principale"}
+			/>
+			<CategorieCalcioMultiselectField
+				label="Categorie ricercate"
+				items={CATEGORIE_CALCIO_GROUPS}
+				value={draft.categorie_ricercate ?? []}
+				onValueChange={(value) => onChange("giocatore", "categorie_ricercate", value)}
 			/>
 			<FieldGroup className="grid gap-4 sm:grid-cols-3">
 				<ProfileTextField id={`${prefix}-altezza`} label="Altezza (in cm)" value={draft.altezza} onChange={(value) => onChange("giocatore", "altezza", value)} placeholder="Es. 180" />
@@ -837,12 +846,7 @@ export default function ProfileDetailsForm({
 
 	return (
 		<FieldSet>
-			<FieldLegend>Completa il tuo profilo</FieldLegend>
-			<FieldDescription>
-				{requiredFields
-					? "Completa i dati essenziali indicati prima di proseguire."
-					: "Tutti i dettagli sono facoltativi e potranno essere modificati in qualsiasi momento."}
-			</FieldDescription>
+			<FieldLegend variant="label" className="field-legend-title mb-2">Inserisci i dati del tuo profilo:</FieldLegend>
 			<FieldGroup className="mt-2 grid gap-4">
 				<ProfileFields type={type} drafts={drafts} prefix={prefix} onChange={onChange} requiredFields={requiredFields} errors={errors} />
 				<LocationsField
