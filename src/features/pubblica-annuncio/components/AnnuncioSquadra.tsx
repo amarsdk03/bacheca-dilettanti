@@ -38,8 +38,8 @@ import {
 	useAnnuncioSquadraStore,
 } from "@/features/pubblica-annuncio/state/AnnuncioSquadra.store";
 import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
-import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
-import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
+import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
+import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
 import OrarioIndicativoFields from "@/features/pubblica-annuncio/components/InputFields/OrarioIndicativoFields";
 import {
 	CATEGORIE_CALCIO_GROUPS,
@@ -575,13 +575,13 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 				</FieldSet>
 			)}
 
-			<ImmagineAnnuncioPremiumField
+			<ImmagineAnnuncioField
 				idPrefix="squadra"
 				tipologia="squadra"
 				value={immagineAnnuncio}
 				onValueChange={(value) => setField("immagineAnnuncio", value)}
 			/>
-			<LinkAnnuncioPremiumField
+			<LinkAnnuncioField
 				idPrefix="squadra"
 				tipologia="squadra"
 				value={linkAnnuncio}

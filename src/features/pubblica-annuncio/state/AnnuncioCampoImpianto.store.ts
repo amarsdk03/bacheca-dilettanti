@@ -4,7 +4,7 @@ import {
 	hasContattoPubblico,
 	type ContattiAnnuncio,
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
-import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 
 export type DisponibilitaCampoImpianto = {

@@ -2,8 +2,8 @@
 
 import {
 	formatContatti,
-	PremiumImageRecap,
-	PremiumLinkRecap,
+	AnnouncementImageRecap,
+	AnnouncementLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
@@ -31,8 +31,8 @@ export default function RecapAnnuncioAziendeEnti() {
 				<OptionalRecapField label="Esperienza / presentazione" value={data.esperienzaPresentazione} />
 				<OptionalRecapField label="Qualifiche / certificazioni" value={data.qualificheCertificazioni} />
 				<OptionalRecapField label="Descrizione / info aggiuntive" value={data.infoAggiuntive} />
-				<PremiumImageRecap image={data.immagineAnnuncio} />
-				<PremiumLinkRecap link={data.linkAnnuncio} />
+				<AnnouncementImageRecap image={data.immagineAnnuncio} />
+				<AnnouncementLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>
 	);

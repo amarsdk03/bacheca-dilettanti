@@ -6,8 +6,8 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 import AnnuncioTextField from "@/features/pubblica-annuncio/components/InputFields/AnnuncioTextField";
 import AnnuncioTextareaField from "@/features/pubblica-annuncio/components/InputFields/AnnuncioTextareaField";
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
-import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
-import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
+import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
+import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import PremiTrofeiFields from "@/features/pubblica-annuncio/components/InputFields/PremiTrofeiFields";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
@@ -89,8 +89,8 @@ export default function AnnuncioTorneoEvento() {
 				setPremiTrofei={(value) => data.setField("premiTrofei", value)}
 			/>
 
-			<ImmagineAnnuncioPremiumField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.immagineAnnuncio} onValueChange={(value) => data.setField("immagineAnnuncio", value)} />
-			<LinkAnnuncioPremiumField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.linkAnnuncio} onValueChange={(value) => data.setField("linkAnnuncio", value)} />
+			<ImmagineAnnuncioField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.immagineAnnuncio} onValueChange={(value) => data.setField("immagineAnnuncio", value)} />
+			<LinkAnnuncioField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.linkAnnuncio} onValueChange={(value) => data.setField("linkAnnuncio", value)} />
 		</FieldGroup>
 	);
 }

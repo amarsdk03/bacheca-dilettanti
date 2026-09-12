@@ -14,8 +14,8 @@ import type {ProfileLocationDraft} from "@/features/profilo/profile-model";
 import AnnateMultiselectField from "@/features/pubblica-annuncio/components/InputFields/AnnateMultiselectField";
 import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
 import FieldRequirementIndicator, {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
-import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
-import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
+import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
+import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import PremiTrofeiFields from "@/features/pubblica-annuncio/components/InputFields/PremiTrofeiFields";
@@ -25,7 +25,7 @@ import type {
 	AnnouncementContacts,
 	AnnouncementDetailsDrafts,
 	AnnouncementValidationErrors,
-	PremiumAnnouncementExtras,
+	AnnouncementExtras,
 	PublishableProfileType,
 	TeamAnnouncementSubtype,
 	TournamentPrize,
@@ -36,6 +36,7 @@ import {
 	MODALITA_ISCRIZIONE_OPTIONS,
 	RUOLI_SPECIFICI_PER_RUOLO,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import Link from "next/link";
 
 interface AnnouncementDetailsFormProps {
 	profileType: PublishableProfileType;
@@ -46,8 +47,8 @@ interface AnnouncementDetailsFormProps {
 	onLocationsChange: (value: ProfileLocationDraft[]) => void;
 	contacts: AnnouncementContacts;
 	onContactsChange: Dispatch<SetStateAction<AnnouncementContacts>>;
-	extras: PremiumAnnouncementExtras;
-	onExtrasChange: Dispatch<SetStateAction<PremiumAnnouncementExtras>>;
+	extras: AnnouncementExtras;
+	onExtrasChange: Dispatch<SetStateAction<AnnouncementExtras>>;
 	image: File | null;
 	onImageChange: (value: File | null) => void;
 	errors?: AnnouncementValidationErrors;
@@ -192,13 +193,13 @@ export default function AnnouncementDetailsForm({
 							onValueChange={(value) => updateDraft("giocatore", "categorie_ricercate", value)}
 						/>
 						<DescriptionField
-						id="announcement-player-description"
-						label="Descrizione"
-						value={drafts.giocatore.descrizione_aggiuntiva}
-						onChange={(value) => updateDraft("giocatore", "descrizione_aggiuntiva", value)}
-						required
-						error={errors.description}
-						placeholder="Descrivi disponibilità, obiettivi e tipo di opportunità che stai cercando..."
+							id="announcement-player-description"
+							label="Descrizione"
+							value={drafts.giocatore.descrizione_aggiuntiva}
+							onChange={(value) => updateDraft("giocatore", "descrizione_aggiuntiva", value)}
+							required
+							error={errors.description}
+							placeholder="Descrivi disponibilità, obiettivi e tipo di opportunità che stai cercando..."
 						/>
 					</FieldGroup>
 				)}
@@ -379,24 +380,21 @@ export default function AnnouncementDetailsForm({
 			</FieldSet>
 
 			<FieldSet>
-				<FieldLegend>Contenuti Premium</FieldLegend>
-				<FieldDescription className="text-brand-indigo">Questi dati vengono salvati con l’annuncio e saranno pubblicabili con un piano a pagamento.</FieldDescription>
+				<FieldLegend variant="label" className="field-legend-title mb-1.5">Contenuti aggiuntivi</FieldLegend>
+				<FieldDescription>Tutti questi campi sono facoltativi e vengono pubblicati insieme all’annuncio.</FieldDescription>
 				<FieldGroup>
-					<LinkAnnuncioPremiumField
-						idPrefix="premium"
-						tipologia={profileType}
+					<LinkAnnuncioField
+						idPrefix="announcement"
 						value={extras.genericLink}
 						onValueChange={(genericLink) => onExtrasChange((previous) => ({...previous, genericLink}))}
 						error={errors.genericLink}
 					/>
 					{profileType === "giocatore" && (
-						<LinkAnnuncioPremiumField
-							idPrefix="premium-highlights"
-							tipologia={profileType}
+						<LinkAnnuncioField
+							idPrefix="announcement-highlights"
 							label="Link video highlights"
-							functionName="Video highlights"
-							placeholder="https://esempio.it/video"
-							description="Il video viene salvato ora e potrà essere pubblicato con un piano a pagamento."
+							placeholder="https://youtu.be/dQEemdsoLDM"
+							description="Inserisci un link social a un tuo video highlights"
 							value={extras.videoHighlights}
 							onValueChange={(videoHighlights) => onExtrasChange((previous) => ({...previous, videoHighlights}))}
 							error={errors.videoHighlights}
@@ -405,18 +403,21 @@ export default function AnnouncementDetailsForm({
 									<TooltipTrigger render={<button type="button" className="inline-flex size-5 items-center justify-center rounded-full text-brand-indigo outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo/40" aria-label="Informazioni sul link video highlights" />}>
 										<CircleHelpIcon className="size-4" />
 									</TooltipTrigger>
-									<TooltipContent>Info aggiuntive</TooltipContent>
+									<TooltipContent className={"block"}>
+										Possiedi il video nella tua galleria ma non hai modo di caricare un link?
+										<Link href="/contatti" className="text-fuchsia-200 font-medium"> Contattaci e lo caricheremo noi su YouTube per te!</Link>
+									</TooltipContent>
 								</Tooltip>
 							)}
 						/>
 					)}
-					<ImmagineAnnuncioPremiumField idPrefix="premium" tipologia={profileType} value={image} onValueChange={onImageChange} />
+					<ImmagineAnnuncioField idPrefix="announcement" value={image} onValueChange={onImageChange} />
 				</FieldGroup>
 			</FieldSet>
 
 			<FieldSet>
-				<FieldLegend>Contatti pubblici <RequiredMark /></FieldLegend>
-				<FieldDescription>Inserisci almeno email o telefono. L’email del tuo account non viene mai pubblicata automaticamente.</FieldDescription>
+				<FieldLegend variant="label" className="field-legend-title mb-1.5">Contatti pubblici <RequiredMark /></FieldLegend>
+				<FieldDescription>Inserisci almeno un indirizzo email o un recapito telefonico.</FieldDescription>
 				<Field data-invalid={Boolean(errors.contacts)}>
 					<FieldGroup className="grid gap-4 sm:grid-cols-2">
 					<Field data-invalid={Boolean(errors.contacts || errors.email)}>
@@ -435,7 +436,7 @@ export default function AnnouncementDetailsForm({
 			</FieldSet>
 
 			<FieldSet>
-				<FieldLegend>Località dell’annuncio</FieldLegend>
+				<FieldLegend variant="label" className="field-legend-title mb-1.5">Località dell’annuncio</FieldLegend>
 				<FieldDescription>Puoi modificare le località precompilate senza cambiare quelle salvate nel profilo.</FieldDescription>
 				<ProfileLocationsField idPrefix="announcement-locations" value={locations} onValueChange={onLocationsChange} required error={errors.locations ?? null} />
 			</FieldSet>

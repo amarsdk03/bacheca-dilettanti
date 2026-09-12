@@ -4,8 +4,8 @@ import {FieldDescription, FieldGroup, FieldLegend, FieldSet} from "@/components/
 import AnnuncioTextField from "@/features/pubblica-annuncio/components/InputFields/AnnuncioTextField";
 import AnnuncioTextareaField from "@/features/pubblica-annuncio/components/InputFields/AnnuncioTextareaField";
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
-import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
-import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
+import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
+import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import {useAnnuncioAziendeEntiStore} from "@/features/pubblica-annuncio/state/AnnuncioAziendeEnti.store";
 
@@ -36,8 +36,8 @@ export default function AnnuncioAziendeEnti() {
 				<AnnuncioTextareaField id="aziende-enti-esperienza-presentazione" label="Esperienza / presentazione" value={data.esperienzaPresentazione} onValueChange={(value) => data.setField("esperienzaPresentazione", value)} placeholder="Racconta l'esperienza e presenta la realtà..." />
 				<AnnuncioTextareaField id="aziende-enti-qualifiche-certificazioni" label="Qualifiche / certificazioni" value={data.qualificheCertificazioni} onValueChange={(value) => data.setField("qualificheCertificazioni", value)} placeholder="Certificazioni, accreditamenti, qualifiche..." />
 				<AnnuncioTextareaField id="aziende-enti-info-aggiuntive" label="Descrizione / info aggiuntive" value={data.infoAggiuntive} onValueChange={(value) => data.setField("infoAggiuntive", value)} placeholder="Aggiungi eventuali altre informazioni..." />
-				<ImmagineAnnuncioPremiumField idPrefix="aziende-enti" tipologia="aziende-enti" value={data.immagineAnnuncio} onValueChange={(value) => data.setField("immagineAnnuncio", value)} />
-				<LinkAnnuncioPremiumField idPrefix="aziende-enti" tipologia="aziende-enti" value={data.linkAnnuncio} onValueChange={(value) => data.setField("linkAnnuncio", value)} />
+				<ImmagineAnnuncioField idPrefix="aziende-enti" tipologia="aziende-enti" value={data.immagineAnnuncio} onValueChange={(value) => data.setField("immagineAnnuncio", value)} />
+				<LinkAnnuncioField idPrefix="aziende-enti" tipologia="aziende-enti" value={data.linkAnnuncio} onValueChange={(value) => data.setField("linkAnnuncio", value)} />
 			</FieldSet>
 		</FieldGroup>
 	);

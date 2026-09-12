@@ -27,7 +27,7 @@ import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio
 import {
 	ANNOUNCEMENT_IMAGE_MIME_TYPES,
 	MAX_ANNOUNCEMENT_IMAGE_BYTES,
-} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {
 	getRegistrationEmailIdentity,
 	setAuthEmailFlow,
@@ -50,6 +50,7 @@ interface PublishRpcResult {
 	announcementId?: unknown;
 	retryAt?: unknown;
 	idempotent?: unknown;
+	paymentRequired?: unknown;
 }
 
 interface PublishOtpQuotaRpcResult {
@@ -339,6 +340,13 @@ function rpcErrorMessage(message: string): PublishAnnouncementResult {
 			message: "Questo invio era già stato completato e l’annuncio è stato eliminato. Avvia un nuovo invio.",
 		};
 	}
+	if (message.includes("SUBMISSION_VISIBILITY_CONFLICT")) {
+		return {
+			status: "error",
+			step: 4,
+			message: "La visibilità di questo invio è già stata salvata. Ricarica la pagina o avvia un nuovo annuncio.",
+		};
+	}
 	if (message.includes("PROFILE_NOT_ENABLED") || message.includes("REGISTERED_PROFILE_NOT_FOUND")) {
 		return {status: "error", step: 1, message: "Il profilo selezionato non è abilitato o è stato nascosto."};
 	}
@@ -358,6 +366,8 @@ function rpcErrorMessage(message: string): PublishAnnouncementResult {
 	) {
 		return {status: "error", step: 4, message: "La verifica email non è più valida. Richiedi un nuovo codice."};
 	}
+
+	console.log("Errore: ", message);
 	return {status: "error", message: "Non è stato possibile pubblicare l’annuncio. Riprova tra poco."};
 }
 
@@ -417,18 +427,19 @@ export async function publishAnnouncement(
 			detail: payload.detail,
 			announcement_locations: payload.announcementLocations,
 			contacts: payload.contacts,
-			premium: {
+			extras: {
 				generic_link: payload.extras.genericLink || null,
 				video_highlights: payload.extras.videoHighlights || null,
 				image_path: uploadedImage?.path ?? null,
 				image_mime: uploadedImage?.mimeType ?? null,
 			},
 		} as unknown as Json;
-		const {data, error} = await supabase.rpc("publish_announcement_v1", {
+		const {data, error} = await supabase.rpc("publish_announcement_v2", {
 			p_submission_id: payload.submissionId,
 			p_payload: rpcPayload,
 			p_terms_version: TERMS_VERSION,
 			p_privacy_version: PRIVACY_VERSION,
+			p_visibility: payload.visibility,
 		});
 
 		if (error) {
@@ -455,6 +466,14 @@ export async function publishAnnouncement(
 		}
 
 		revalidatePath("/il-tuo-profilo");
+		if (payload.visibility === "prioritario" && result.paymentRequired !== false) {
+			return {
+				status: "payment_required",
+				announcementId: result.announcementId,
+				submissionId: payload.submissionId,
+				idempotent: result.idempotent === true,
+			};
+		}
 		return {
 			status: "success",
 			announcementId: result.announcementId,

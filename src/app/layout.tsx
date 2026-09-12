@@ -19,6 +19,7 @@ export default function RootLayout(
 		children: React.ReactNode;
 	}>
 ) {
+	// noinspection HtmlRequiredTitleElement
 	return (
 		<html
 			lang="it"

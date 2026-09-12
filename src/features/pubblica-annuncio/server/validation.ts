@@ -10,19 +10,21 @@ import {
 	getAnnouncementValidationMessage,
 	getDatabaseAnnouncementType,
 	getProfileValidationMessage,
+	isPublishVisibility,
 	isPublishableProfileType,
 	isTeamAnnouncementSubtype,
 	type AnnouncementContacts,
 	type AnnouncementDetailsDrafts,
 	type DatabaseAnnouncementType,
-	type PremiumAnnouncementExtras,
+	type AnnouncementExtras,
+	type PublishVisibility,
 	type PublishableProfileType,
 	type PublishAnnouncementPayload,
 	type TeamAnnouncementSubtype,
 	PUBLISH_PAYLOAD_VERSION,
 } from "@/features/pubblica-annuncio/publish-model";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {
 	parseProfileEditorPayload,
 	RegistrationPayloadError,
@@ -51,6 +53,7 @@ export class PublishPayloadError extends Error {
 
 export interface NormalizedPublishPayload {
 	submissionId: string;
+	visibility: PublishVisibility;
 	profileType: PublishableProfileType;
 	teamSubtype: TeamAnnouncementSubtype | null;
 	announcementType: DatabaseAnnouncementType;
@@ -64,7 +67,7 @@ export interface NormalizedPublishPayload {
 	detail: Record<string, Json>;
 	announcementLocations: ProfileLocationDraft[];
 	contacts: AnnouncementContacts;
-	extras: PremiumAnnouncementExtras;
+	extras: AnnouncementExtras;
 }
 
 function fail(message: string, step: 1 | 2 | 3 | 4): never {
@@ -172,8 +175,8 @@ function normalizeContacts(value: unknown): AnnouncementContacts {
 	return {email: email.toLowerCase(), phone};
 }
 
-function normalizeExtras(value: unknown, profileType: PublishableProfileType): PremiumAnnouncementExtras {
-	if (!isRecord(value)) fail("I contenuti Premium non sono validi.", 3);
+function normalizeExtras(value: unknown, profileType: PublishableProfileType): AnnouncementExtras {
+	if (!isRecord(value)) fail("I contenuti aggiuntivi non sono validi.", 3);
 	assertExactKeys(value, ["genericLink", "videoHighlights"], 3);
 	const genericLink = textValue(value.genericLink, 2048, 3) ?? "";
 	const videoHighlights = textValue(value.videoHighlights, 2048, 3) ?? "";
@@ -357,9 +360,11 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 	if (!serialized || Buffer.byteLength(serialized, "utf8") > MAX_PAYLOAD_BYTES || !isRecord(rawValue)) {
 		fail("I dati dell’annuncio sono mancanti o troppo grandi.", 3);
 	}
-	assertExactKeys(rawValue, ["version", "submissionId", "profileType", "teamSubtype", "anonymousProfile", "profileUpdate", "announcement", "consents"], 3);
+	assertExactKeys(rawValue, ["version", "submissionId", "visibility", "profileType", "teamSubtype", "anonymousProfile", "profileUpdate", "announcement", "consents"], 3);
 	if (rawValue.version !== PUBLISH_PAYLOAD_VERSION) fail("Aggiorna la pagina e ripeti la pubblicazione.", 1);
 	if (typeof rawValue.submissionId !== "string" || !UUID_PATTERN.test(rawValue.submissionId)) fail("La richiesta di pubblicazione non è valida.", 4);
+	if (!isPublishVisibility(rawValue.visibility)) fail("Seleziona la visibilità dell’annuncio.", 4);
+	const visibility = rawValue.visibility;
 	if (typeof rawValue.profileType !== "string" || !isPublishableProfileType(rawValue.profileType)) fail("La tipologia di profilo non è valida.", 1);
 	const profileType = rawValue.profileType;
 
@@ -451,6 +456,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 
 	return {
 		submissionId: rawValue.submissionId,
+		visibility,
 		profileType,
 		teamSubtype,
 		announcementType: expectedAnnouncementType,

@@ -38,8 +38,9 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 	queryFailed(baseProfileError, "profilo");
 	if (!baseProfile) return null;
 
-	const [player, team, staff, referee, tournament, facility, locationResult] = await Promise.all([
+	const [player, playerMedia, team, staff, referee, tournament, facility, locationResult] = await Promise.all([
 		supabase.from("profilo_giocatore").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("media_profilo").select("link_media").eq("uuid_profilo", baseProfile.uuid).eq("formato_media", "video_highlights").order("id", {ascending: false}).limit(1).maybeSingle(),
 		supabase.from("profilo_squadra").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_staff_sportivo").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_arbitro").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
@@ -49,6 +50,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 	]);
 
 	queryFailed(player.error, "profilo_giocatore");
+	queryFailed(playerMedia.error, "media_profilo");
 	queryFailed(team.error, "profilo_squadra");
 	queryFailed(staff.error, "profilo_staff_sportivo");
 	queryFailed(referee.error, "profilo_arbitro");
@@ -58,6 +60,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 
 	const drafts = createProfileDrafts();
 	drafts.giocatore = hydrateDraft(drafts.giocatore, player.data);
+	drafts.giocatore.video_highlights = playerMedia.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, team.data);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staff.data);
 	drafts.arbitro = hydrateDraft(drafts.arbitro, referee.data);

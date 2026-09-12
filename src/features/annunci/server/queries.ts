@@ -896,6 +896,7 @@ export async function loadPublicAnnouncementDirectory(
 				const from = (page - 1) * ANNOUNCEMENTS_PER_PAGE;
 				return publicAnnouncementQuery(supabase, {count: "exact"})
 					.in("tipologia_annuncio", requestedTypes)
+					.order("priorita_attiva", {ascending: false})
 					.order("creato_il", {ascending: false, nullsFirst: false})
 					.order("uuid", {ascending: false})
 					.range(from, from + ANNOUNCEMENTS_PER_PAGE - 1);
@@ -941,6 +942,7 @@ export async function loadPublicAnnouncementDirectory(
 		for (let offset = 0; ; offset += ANNOUNCEMENT_BATCH_SIZE) {
 			const {data, error} = await publicAnnouncementQuery(supabase)
 				.in("tipologia_annuncio", requestedTypes)
+				.order("priorita_attiva", {ascending: false})
 				.order("creato_il", {ascending: false, nullsFirst: false})
 				.order("uuid", {ascending: false})
 				.range(offset, offset + ANNOUNCEMENT_BATCH_SIZE - 1);

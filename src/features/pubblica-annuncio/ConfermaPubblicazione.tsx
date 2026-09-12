@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import {ArrowUpRightIcon, CheckCircle2Icon, CircleAlertIcon, MapPinIcon, SparklesIcon} from "lucide-react";
+import {ArrowUpRightIcon, CheckCircle2Icon, CircleAlertIcon, CrownIcon, MapPinIcon, SparklesIcon} from "lucide-react";
 
 import {buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
@@ -53,13 +53,22 @@ export default function ConfermaPubblicazione({result}: {result: PublishConfirma
 				{result.status !== "ok" ? <MissingConfirmation error={result.status === "error"} /> : (
 					<>
 						<section className="mx-auto max-w-3xl text-center">
-							<div className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-								<CheckCircle2Icon className="size-8" />
+							<div className={cn("mx-auto flex size-16 items-center justify-center rounded-full", result.awaitingPayment ? "bg-brand-indigo/10 text-brand-indigo" : "bg-emerald-100 text-emerald-700")}>
+								{result.awaitingPayment ? <CrownIcon className="size-8" /> : <CheckCircle2Icon className="size-8" />}
 							</div>
-							<p className="mt-5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-brand-indigo">Invio completato</p>
-							<h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">Il tuo annuncio è stato inviato.</h1>
-							<p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">Puoi controllare qui i dati salvati e lo stato dell’approvazione.</p>
-							<Link href="/il-tuo-profilo?sezione=annunci" className={cn(buttonVariants({size: "lg"}), "mt-7")}>Gestisci i tuoi annunci <ArrowUpRightIcon /></Link>
+							<p className="mt-5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-brand-indigo">{result.awaitingPayment ? "Bozza salvata" : "Invio completato"}</p>
+							<h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">{result.awaitingPayment ? "Completa il pagamento." : "Il tuo annuncio è stato inviato."}</h1>
+							<p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
+								{result.awaitingPayment
+									? "L’annuncio resta privato e non entra in revisione finché il pagamento non è confermato."
+									: "Puoi controllare qui i dati salvati e lo stato dell’approvazione."}
+							</p>
+							<Link
+								href={result.awaitingPayment ? `/pubblica-annuncio/pagamento?id=${encodeURIComponent(result.preview.id ?? "")}` : "/il-tuo-profilo?sezione=annunci"}
+								className={cn(buttonVariants({size: "lg"}), "mt-7")}
+							>
+								{result.awaitingPayment ? "Vai al pagamento" : "Gestisci i tuoi annunci"} <ArrowUpRightIcon />
+							</Link>
 						</section>
 
 						<section className="mx-auto mt-12 max-w-3xl" aria-label="Riepilogo annuncio">

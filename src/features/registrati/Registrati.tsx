@@ -20,6 +20,7 @@ import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import GradientBackground from "@/components/styling/GradientBackground";
 import LimitedProfileAvailability from "@/features/profilo/LimitedProfileAvailability";
 import ProfileDetailsForm from "@/features/profilo/ProfileDetailsForm";
+import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
 import SignupConfirmationResend from "@/features/auth/SignupConfirmationResend";
 import {signUpWithPassword} from "@/features/auth/server/actions";
 import {
@@ -35,7 +36,12 @@ import {
 } from "@/features/profilo/profile-model";
 import {INITIAL_AUTH_STATE, type AuthActionState, type AuthFieldErrors} from "@/features/auth/types";
 import {hasFieldErrors, validateRegistration} from "@/features/auth/validation";
-import {createRegistrationPayload} from "@/features/registrati/registration-payload";
+import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
+import {
+	createRegistrationPayload,
+	isRegistrableProfileType,
+	type RegistrableProfileType,
+} from "@/features/registrati/registration-payload";
 import {
 	requestRegistrationEmailRecovery,
 	verifyRegistrationEmailRecovery,
@@ -164,6 +170,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 	const [profileSelectionError, setProfileSelectionError] = useState<string>();
 	const [showPrimaryProfileError, setShowPrimaryProfileError] = useState(false);
 	const [profileDetailIndex, setProfileDetailIndex] = useState(0);
+	const [profileValidationVisible, setProfileValidationVisible] = useState<Partial<Record<RegistrableProfileType, boolean>>>({});
 	const [handledServerError, setHandledServerError] = useState<AuthActionState | null>(null);
 	const [pendingSignupEmail, setPendingSignupEmail] = useState<string | null>(null);
 	const registrationHeaderRef = useRef<HTMLDivElement>(null);
@@ -176,15 +183,16 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 		.map((option) => option.value)
 		.filter((type) => selectedProfileTypes.includes(type));
 	const limitedSelectedProfileTypes = selectedProfilesInCatalogOrder.filter(isLimitedProfileType);
-	const registrableProfileTypes: ProfileType[] = selectedProfilesInCatalogOrder.filter(
-		(type) => !isLimitedProfileType(type),
-	);
-	const orderedSelectedProfileTypes = primaryProfileType
-		? [primaryProfileType, ...registrableProfileTypes.filter((type) => type !== primaryProfileType)]
+	const registrableProfileTypes = selectedProfilesInCatalogOrder.filter(isRegistrableProfileType);
+	const resolvedPrimaryProfileType = primaryProfileType && isRegistrableProfileType(primaryProfileType)
+		? primaryProfileType
+		: null;
+	const orderedSelectedProfileTypes = resolvedPrimaryProfileType
+		? [resolvedPrimaryProfileType, ...registrableProfileTypes.filter((type) => type !== resolvedPrimaryProfileType)]
 		: registrableProfileTypes;
 	const hasUnhandledServerError = state.status === "error" && state !== handledServerError;
 	const visibleStep = hasUnhandledServerError ? state.step ?? 1 : step;
-	const serverProfileDetailIndex = state.profileType
+	const serverProfileDetailIndex = state.profileType && isRegistrableProfileType(state.profileType)
 		? orderedSelectedProfileTypes.indexOf(state.profileType)
 		: -1;
 	const visibleProfileDetailIndex = hasUnhandledServerError && visibleStep === 3 && serverProfileDetailIndex >= 0
@@ -197,6 +205,13 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 		...(hasUnhandledServerError ? state.fieldErrors : {}),
 		...clientFieldErrors,
 	};
+	const currentProfileErrors = currentProfileType && profileValidationVisible[currentProfileType]
+		? getProfileRequiredFieldErrors(
+			currentProfileType,
+			profileDrafts[currentProfileType],
+			profileLocations[currentProfileType],
+		)
+		: {};
 	const normalizedAccountEmail = account.email.trim().toLowerCase();
 	const emailRecoveryBusy = registrationEmailStatus === "checking" || registrationEmailStatus === "verifying";
 	const serverRequiresEmailRecovery = hasUnhandledServerError && state.reason === "email_verification_required";
@@ -367,19 +382,15 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 		const nextSelectedProfileTypes = checked
 			? [...selectedProfileTypes, type]
 			: selectedProfileTypes.filter((selectedType) => selectedType !== type);
-		const previousRegistrableProfiles: ProfileType[] = selectedProfileTypes.filter(
-			(selectedType) => !isLimitedProfileType(selectedType),
-		);
-		const nextRegistrableProfiles: ProfileType[] = nextSelectedProfileTypes.filter(
-			(selectedType) => !isLimitedProfileType(selectedType),
-		);
+		const previousRegistrableProfiles = selectedProfileTypes.filter(isRegistrableProfileType);
+		const nextRegistrableProfiles = nextSelectedProfileTypes.filter(isRegistrableProfileType);
 
 		setSelectedProfileTypes(nextSelectedProfileTypes);
 		setPrimaryProfileType((previousPrimary) => {
 			if (nextRegistrableProfiles.length === 0) return "";
 			if (nextRegistrableProfiles.length === 1) return nextRegistrableProfiles[0];
 			if (previousRegistrableProfiles.length <= 1) return "";
-			return nextRegistrableProfiles.includes(previousPrimary as ProfileType)
+			return previousPrimary !== "" && isRegistrableProfileType(previousPrimary) && nextRegistrableProfiles.includes(previousPrimary)
 				? previousPrimary
 				: "";
 		});
@@ -400,7 +411,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 			return;
 		}
 
-		if (!primaryProfileType || !registrableProfileTypes.includes(primaryProfileType)) {
+		if (!primaryProfileType || !isRegistrableProfileType(primaryProfileType) || !registrableProfileTypes.includes(primaryProfileType)) {
 			setShowPrimaryProfileError(true);
 			return;
 		}
@@ -431,6 +442,16 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 	const continueFromProfileDetails = () => {
 		if (!currentProfileType) return;
 		acknowledgeServerError();
+		const validationErrors = getProfileRequiredFieldErrors(
+			currentProfileType,
+			profileDrafts[currentProfileType],
+			profileLocations[currentProfileType],
+		);
+		setProfileValidationVisible((previous) => ({...previous, [currentProfileType]: true}));
+		if (Object.keys(validationErrors).length > 0) {
+			scrollToHeader();
+			return;
+		}
 		setProfileDetailIndex(visibleProfileDetailIndex + 1);
 		scrollToHeader();
 	};
@@ -479,10 +500,23 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 			return;
 		}
 
-		if (!primaryProfileType || !registrableProfileTypes.includes(primaryProfileType)) {
+		if (!primaryProfileType || !isRegistrableProfileType(primaryProfileType) || !registrableProfileTypes.includes(primaryProfileType)) {
 			event.preventDefault();
 			setShowPrimaryProfileError(true);
 			setStep(2);
+			return;
+		}
+
+		const invalidProfileIndex = orderedSelectedProfileTypes.findIndex((type) => (
+			Object.keys(getProfileRequiredFieldErrors(type, profileDrafts[type], profileLocations[type])).length > 0
+		));
+		if (invalidProfileIndex >= 0) {
+			event.preventDefault();
+			const invalidProfileType = orderedSelectedProfileTypes[invalidProfileIndex];
+			setProfileValidationVisible((previous) => ({...previous, [invalidProfileType]: true}));
+			setStep(3);
+			setProfileDetailIndex(invalidProfileIndex);
+			scrollToHeader();
 			return;
 		}
 
@@ -504,7 +538,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 			: "Registrati gratuitamente con email e password."
 		: visibleStep === 2
 			? "Seleziona le categorie che rappresentano meglio i tuoi interessi e obiettivi."
-			: "Aggiungi i dettagli che vuoi mostrare. Tutti i campi sono facoltativi e modificabili in seguito.";
+			: "Compila i dati essenziali indicati. I campi facoltativi potranno essere modificati anche in seguito.";
 
 	return (
 		<GradientBackground className="min-h-svh px-4 py-8 sm:px-6 md:py-10">
@@ -549,7 +583,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 								{visibleStep === 1 && (
 									<FieldGroup className="mx-auto max-w-2xl">
 										<Field data-invalid={Boolean(fieldErrors.email || emailRecoveryError || emailAlreadyRegistered)}>
-											<FieldLabel htmlFor="registration-email">Email</FieldLabel>
+											<FieldLabel htmlFor="registration-email">Email <RequiredMark /></FieldLabel>
 											<Input id="registration-email" name="email" value={account.email} onChange={(event) => updateAccount("email", event.target.value)} type="email" maxLength={254} placeholder="nome@esempio.it" autoComplete="email" required readOnly={emailLocked} aria-invalid={Boolean(fieldErrors.email || emailRecoveryError || emailAlreadyRegistered)} />
 											{emailAlreadyRegistered ? (
 												<FieldError>
@@ -561,7 +595,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 										</Field>
 										{(registrationEmailStatus === "sent" || registrationEmailStatus === "verifying") && resolvedEmail === normalizedAccountEmail && (
 											<Field data-invalid={Boolean(otpError)}>
-												<FieldLabel htmlFor="registration-recovery-code">Codice OTP</FieldLabel>
+												<FieldLabel htmlFor="registration-recovery-code">Codice OTP <RequiredMark /></FieldLabel>
 												<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 													<InputOTP
 														id="registration-recovery-code"
@@ -597,7 +631,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 											</Field>
 										)}
 										<Field data-invalid={Boolean(fieldErrors.password)}>
-											<FieldLabel htmlFor="registration-password">Password</FieldLabel>
+											<FieldLabel htmlFor="registration-password">Password <RequiredMark /></FieldLabel>
 											<InputGroup>
 												<InputGroupInput id="registration-password" name="password" value={account.password} onChange={(event) => updateAccount("password", event.target.value)} type={showPassword ? "text" : "password"} minLength={8} maxLength={128} autoComplete="new-password" required aria-invalid={Boolean(fieldErrors.password)} />
 												<InputGroupAddon align="inline-end">
@@ -619,7 +653,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 											<FieldError>{fieldErrors.password}</FieldError>
 										</Field>
 										<Field data-invalid={Boolean(fieldErrors.confirmPassword)}>
-											<FieldLabel htmlFor="registration-confirm-password">Conferma password</FieldLabel>
+											<FieldLabel htmlFor="registration-confirm-password">Conferma password <RequiredMark /></FieldLabel>
 											<InputGroup>
 												<InputGroupInput id="registration-confirm-password" name="confirmPassword" value={account.confirmPassword} onChange={(event) => updateAccount("confirmPassword", event.target.value)} type="password" minLength={8} maxLength={128} autoComplete="new-password" required aria-invalid={Boolean(fieldErrors.confirmPassword)} />
 											</InputGroup>
@@ -636,7 +670,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 								{visibleStep === 2 && (
 									<FieldGroup>
 										<FieldSet>
-											<FieldLegend variant="label">Seleziona i tuoi profili</FieldLegend>
+											<FieldLegend variant="label">Seleziona i tuoi profili <RequiredMark /></FieldLegend>
 											<FieldDescription>Puoi scegliere fino a un massimo di {MAX_PROFILE_COUNT} tipologie, che potrai modificare in seguito.</FieldDescription>
 											<Badge variant="secondary" className="w-fit">{selectedProfileTypes.length} di {MAX_PROFILE_COUNT} selezionati</Badge>
 											<FieldGroup data-slot="checkbox-group" className="grid gap-3 sm:grid-cols-2">
@@ -696,20 +730,20 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 
 										{registrableProfileTypes.length > 1 && (
 											<FieldSet className="mt-4">
-												<FieldLegend variant="label">Scegli il profilo principale</FieldLegend>
+												<FieldLegend variant="label">Scegli il profilo principale <RequiredMark /></FieldLegend>
 												<FieldDescription>È il profilo che rappresenterà per primo la tua presenza sulla piattaforma.</FieldDescription>
 												<RadioGroup
 													value={primaryProfileType}
-												onValueChange={(value) => {
-													if (!isProfileType(value) || !registrableProfileTypes.includes(value)) return;
-													acknowledgeServerError();
+													onValueChange={(value) => {
+														if (!isProfileType(value) || !isRegistrableProfileType(value) || !registrableProfileTypes.includes(value)) return;
+														acknowledgeServerError();
 														setPrimaryProfileType(value);
 														setShowPrimaryProfileError(false);
 													}}
 													aria-invalid={showPrimaryProfileError}
 													className="grid gap-3 sm:grid-cols-2"
 												>
-													{PROFILE_OPTIONS.filter(({value}) => registrableProfileTypes.includes(value)).map(({value, label, icon: Icon}) => (
+													{PROFILE_OPTIONS.filter(({value}) => isRegistrableProfileType(value) && registrableProfileTypes.includes(value)).map(({value, label, icon: Icon}) => (
 														<FieldLabel key={value} htmlFor={`registration-primary-${value}`}>
 															<Field orientation="horizontal">
 																<Icon aria-hidden="true" />
@@ -733,6 +767,8 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 										locations={profileLocations}
 										onChange={updateProfileDraft}
 										onLocationsChange={updateProfileLocations}
+										requiredFields
+										errors={currentProfileErrors}
 									/>
 								)}
 							</CardContent>

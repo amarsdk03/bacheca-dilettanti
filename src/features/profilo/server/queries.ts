@@ -112,6 +112,7 @@ function announcementQuery(supabase: SupabaseClient<Database>) {
 			uuid,
 			tipologia_annuncio,
 			creato_il,
+			livello_annuncio,
 			nascosto,
 			stato_annuncio,
 			info_stato_annuncio,
@@ -214,6 +215,7 @@ function toManagedAnnouncement(row: AnnouncementQueryRow): ManagedAnnouncement {
 		description: description ?? "Nessuna descrizione aggiuntiva.",
 		location: locationLabel(row),
 		createdAt: row.creato_il,
+		level: row.livello_annuncio,
 		visibility: row.nascosto === true ? "hidden" : "visible",
 		moderationStatus: row.stato_annuncio,
 		moderationInfo: row.info_stato_annuncio,
@@ -303,6 +305,7 @@ export async function getProfileDashboardData(
 
 	const [
 		playerResult,
+		playerMediaResult,
 		teamResult,
 		staffResult,
 		refereeResult,
@@ -314,6 +317,7 @@ export async function getProfileDashboardData(
 		announcements,
 	] = await Promise.all([
 		supabase.from("profilo_giocatore").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("media_profilo").select("link_media").eq("uuid_profilo", baseProfile.uuid).eq("formato_media", "video_highlights").order("id", {ascending: false}).limit(1).maybeSingle(),
 		supabase.from("profilo_squadra").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_staff_sportivo").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_arbitro").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
@@ -326,6 +330,7 @@ export async function getProfileDashboardData(
 	]);
 
 	queryFailed(playerResult.error, "profilo_giocatore");
+	queryFailed(playerMediaResult.error, "media_profilo");
 	queryFailed(teamResult.error, "profilo_squadra");
 	queryFailed(staffResult.error, "profilo_staff_sportivo");
 	queryFailed(refereeResult.error, "profilo_arbitro");
@@ -336,6 +341,7 @@ export async function getProfileDashboardData(
 	queryFailed(locationResult.error, "localita_profilo");
 
 	drafts.giocatore = hydrateDraft(drafts.giocatore, playerResult.data);
+	drafts.giocatore.video_highlights = playerMediaResult.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, teamResult.data);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staffResult.data);
 	drafts.arbitro = hydrateDraft(drafts.arbitro, refereeResult.data);

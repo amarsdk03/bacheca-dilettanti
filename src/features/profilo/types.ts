@@ -24,6 +24,7 @@ export interface ManagedAnnouncement {
 	description: string;
 	location: string;
 	createdAt: string | null;
+	level: string | null;
 	visibility: AnnouncementVisibility;
 	moderationStatus: string | null;
 	moderationInfo: string | null;

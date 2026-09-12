@@ -19,7 +19,7 @@ import {createClient} from "@/lib/supabase/server";
 const ANNOUNCEMENT_IMAGES_BUCKET = "immagini_annunci";
 
 export type PublishConfirmationResult =
-	| {status: "ok"; preview: AnnouncementPreviewData; suggestions: AnnouncementDirectoryItem[]}
+	| {status: "ok"; preview: AnnouncementPreviewData; suggestions: AnnouncementDirectoryItem[]; awaitingPayment: boolean}
 	| {status: "not-found"}
 	| {status: "error"};
 
@@ -188,7 +188,12 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			statusInfo: cleanText(data.info_stato_annuncio),
 		};
 		const suggestions = await loadRelatedPublicAnnouncements(id, type, locations.map(({region}) => region));
-		return {status: "ok", preview, suggestions};
+		return {
+			status: "ok",
+			preview,
+			suggestions,
+			awaitingPayment: data.stato_annuncio === "in_attesa_pagamento",
+		};
 	} catch (error) {
 		console.error("[publish-confirmation] Unexpected query failure", {cause: error instanceof Error ? error.name : "unknown"});
 		return {status: "error"};

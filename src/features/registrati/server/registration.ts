@@ -1,18 +1,24 @@
 import "server-only";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
+import {getBirthDateError} from "@/features/profilo/birth-date";
 import {
 	isLimitedProfileType,
 	isProfileType,
 	MAX_PROFILE_COUNT,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
+import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
 import {
 	isRegistrableProfileType,
 	REGISTRATION_PAYLOAD_VERSION,
 	type RegistrableProfileType,
 } from "@/features/registrati/registration-payload";
 import type {Json} from "@/server/supabase";
+import {
+	isLinkAnnuncioValid,
+	MAX_LINK_ANNUNCIO_LENGTH,
+} from "@/features/pubblica-annuncio/types/announcementExtras";
 
 const MAX_PAYLOAD_BYTES = 256_000;
 const MAX_SHORT_TEXT = 160;
@@ -140,6 +146,28 @@ function birthField(
 	return normalized;
 }
 
+function birthDate(
+	value: Record<string, unknown>,
+	profileType: ProfileType,
+) {
+	const normalized = {
+		day: birthField(value.giorno_nascita, "day", profileType),
+		month: birthField(value.mese_nascita, "month", profileType),
+		year: birthField(value.anno_nascita, "year", profileType),
+	};
+	const error = getBirthDateError(normalized);
+	if (error) fail(error, 3, profileType);
+	return normalized;
+}
+
+function profileVideoLink(value: unknown, profileType: ProfileType) {
+	const normalized = textValue(value, MAX_LINK_ANNUNCIO_LENGTH, profileType);
+	if (normalized && !isLinkAnnuncioValid(normalized)) {
+		fail("Inserisci un link video completo che inizi con http:// o https://.", 3, profileType);
+	}
+	return normalized;
+}
+
 function experiences(value: unknown, profileType: ProfileType): Json[] {
 	if (value === null || value === undefined) return [];
 	if (!Array.isArray(value) || value.length > MAX_EXPERIENCES) {
@@ -243,15 +271,16 @@ function normalizeDraft(
 	if (!isRecord(value)) fail("I dati del profilo non sono validi.", 3, type);
 
 	if (type === "giocatore") {
-		assertExactKeys(value, ["altezza", "anno_nascita", "categorie_ricercate", "cognome", "disponibilita", "giorno_nascita", "mese_nascita", "nome", "peso", "piede_principale", "presentazione", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport"], type);
+		assertExactKeys(value, ["altezza", "anno_nascita", "categorie_ricercate", "cognome", "disponibilita", "giorno_nascita", "mese_nascita", "nome", "peso", "piede_principale", "presentazione", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport", "video_highlights"], type);
+		const normalizedBirthDate = birthDate(value, type);
 		return {
 			altezza: textValue(value.altezza, MAX_SHORT_TEXT, type),
-			anno_nascita: birthField(value.anno_nascita, "year", type),
+			anno_nascita: normalizedBirthDate.year,
 			categorie_ricercate: stringList(value.categorie_ricercate, type),
 			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
 			disponibilita: enumText(value.disponibilita, AVAILABILITIES, type),
-			giorno_nascita: birthField(value.giorno_nascita, "day", type),
-			mese_nascita: birthField(value.mese_nascita, "month", type),
+			giorno_nascita: normalizedBirthDate.day,
+			mese_nascita: normalizedBirthDate.month,
 			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
 			peso: textValue(value.peso, MAX_SHORT_TEXT, type),
 			piede_principale: enumText(value.piede_principale, FEET, type),
@@ -260,6 +289,7 @@ function normalizeDraft(
 			sport_principale: baseSport(value.sport_principale, type),
 			storico_carriera: experiences(value.storico_carriera, type),
 			tipologie_sport: stringList(value.tipologie_sport, type),
+			video_highlights: profileVideoLink(value.video_highlights, type),
 		};
 	}
 
@@ -276,13 +306,14 @@ function normalizeDraft(
 
 	if (type === "staff-sportivo") {
 		assertExactKeys(value, ["anno_nascita", "cognome", "disponibilita", "figure_professionali", "giorno_nascita", "mese_nascita", "nome", "presentazione", "sport_principale", "storico_esperienze"], type);
+		const normalizedBirthDate = birthDate(value, type);
 		return {
-			anno_nascita: birthField(value.anno_nascita, "year", type),
+			anno_nascita: normalizedBirthDate.year,
 			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
 			disponibilita: enumText(value.disponibilita, AVAILABILITIES, type),
 			figure_professionali: stringList(value.figure_professionali, type),
-			giorno_nascita: birthField(value.giorno_nascita, "day", type),
-			mese_nascita: birthField(value.mese_nascita, "month", type),
+			giorno_nascita: normalizedBirthDate.day,
+			mese_nascita: normalizedBirthDate.month,
 			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
 			sport_principale: baseSport(value.sport_principale, type),
@@ -292,12 +323,13 @@ function normalizeDraft(
 
 	if (type === "arbitro") {
 		assertExactKeys(value, ["anno_nascita", "cognome", "disponibilita", "giorno_nascita", "mese_nascita", "nome", "presentazione", "sport_principale", "storico_esperienze"], type);
+		const normalizedBirthDate = birthDate(value, type);
 		return {
-			anno_nascita: birthField(value.anno_nascita, "year", type),
+			anno_nascita: normalizedBirthDate.year,
 			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
 			disponibilita: enumText(value.disponibilita, AVAILABILITIES, type),
-			giorno_nascita: birthField(value.giorno_nascita, "day", type),
-			mese_nascita: birthField(value.mese_nascita, "month", type),
+			giorno_nascita: normalizedBirthDate.day,
+			mese_nascita: normalizedBirthDate.month,
 			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
 			sport_principale: baseSport(value.sport_principale, type),
@@ -333,14 +365,15 @@ function normalizeDraft(
 			"storico_esperienze",
 			"tipologie_sport",
 		], type);
+		const normalizedBirthDate = birthDate(value, type);
 		return {
-			anno_nascita: birthField(value.anno_nascita, "year", type),
+			anno_nascita: normalizedBirthDate.year,
 			automunito: enumText(value.automunito, VEHICLE_AVAILABILITIES, type),
 			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
 			disponibilita: enumText(value.disponibilita, AVAILABILITIES, type),
 			figure_professionali: stringList(value.figure_professionali, type),
-			giorno_nascita: birthField(value.giorno_nascita, "day", type),
-			mese_nascita: birthField(value.mese_nascita, "month", type),
+			giorno_nascita: normalizedBirthDate.day,
+			mese_nascita: normalizedBirthDate.month,
 			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
 			presentazione_servizi: textValue(value.presentazione_servizi, MAX_LONG_TEXT, type),
@@ -471,10 +504,16 @@ export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): N
 			fail("I dati di uno dei profili non corrispondono alla selezione.", 3, primaryProfileType);
 		}
 		seenProfiles.add(entry.type);
+		const normalizedDraft = normalizeDraft(entry.type, entry.draft);
+		const normalizedLocations = locations(entry.locations, entry.type);
+		const requiredFieldError = Object.values(
+			getProfileRequiredFieldErrors(entry.type, normalizedDraft, normalizedLocations),
+		)[0];
+		if (requiredFieldError) fail(requiredFieldError, 3, entry.type);
 		return {
 			type: entry.type,
-			draft: normalizeDraft(entry.type, entry.draft),
-			locations: locations(entry.locations, entry.type),
+			draft: normalizedDraft,
+			locations: normalizedLocations,
 		};
 	});
 

@@ -4,10 +4,14 @@ import type {
 	ProfileLocationDraft,
 	ProfileType,
 } from "@/features/profilo/profile-model";
+import {
+	getProfileRequiredFieldErrors,
+	type ProfileValidationErrors,
+} from "@/features/profilo/profile-required-fields";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 
-export const PUBLISH_PAYLOAD_VERSION = 2 as const;
+export const PUBLISH_PAYLOAD_VERSION = 3 as const;
 
 export const PUBLISHABLE_PROFILE_TYPES = [
 	"giocatore",
@@ -131,14 +135,22 @@ export interface AnonymousProfilePayload {
 
 export type RegisteredProfileUpdatePayload = AnonymousProfilePayload;
 
-export interface PremiumAnnouncementExtras {
+export interface AnnouncementExtras {
 	genericLink: string;
 	videoHighlights: string;
+}
+
+export const PUBLISH_VISIBILITIES = ["gratuito", "prioritario"] as const;
+export type PublishVisibility = typeof PUBLISH_VISIBILITIES[number];
+
+export function isPublishVisibility(value: unknown): value is PublishVisibility {
+	return typeof value === "string" && (PUBLISH_VISIBILITIES as readonly string[]).includes(value);
 }
 
 export interface PublishAnnouncementPayload {
 	version: typeof PUBLISH_PAYLOAD_VERSION;
 	submissionId: string;
+	visibility: PublishVisibility;
 	profileType: PublishableProfileType;
 	teamSubtype: TeamAnnouncementSubtype | null;
 	anonymousProfile: AnonymousProfilePayload | null;
@@ -148,7 +160,7 @@ export interface PublishAnnouncementPayload {
 		detail: AnnouncementDetailDraft;
 		locations: ProfileLocationDraft[];
 		contacts: AnnouncementContacts;
-		extras: PremiumAnnouncementExtras;
+		extras: AnnouncementExtras;
 	};
 	consents: {
 		dataConfirmed: boolean;
@@ -181,15 +193,7 @@ export type VerifyPublishEmailOtpResult =
 	| {status: "rate_limited"; message: string}
 	| {status: "error"; message: string};
 
-export type ProfileValidationField =
-	| "name"
-	| "sports"
-	| "mainRole"
-	| "professionalRole"
-	| "headquarters"
-	| "locations";
-
-export type ProfileValidationErrors = Partial<Record<ProfileValidationField, string>>;
+export type {ProfileValidationErrors} from "@/features/profilo/profile-required-fields";
 
 export type AnnouncementValidationField =
 	| "contacts"
@@ -227,6 +231,12 @@ export type PublishAnnouncementResult =
 		status: "success";
 		announcementId: string;
 		moderationStatus: "in_revisione";
+		idempotent: boolean;
+	}
+	| {
+		status: "payment_required";
+		announcementId: string;
+		submissionId: string;
 		idempotent: boolean;
 	}
 	| {
@@ -337,15 +347,6 @@ function nonEmpty(value: string | null | undefined) {
 	return Boolean(value?.trim());
 }
 
-function hasItems(value: unknown): value is unknown[] {
-	return Array.isArray(value) && value.length > 0;
-}
-
-function hasMainPlayerRole(value: unknown) {
-	if (!value || Array.isArray(value) || typeof value !== "object") return false;
-	return hasItems((value as {principali?: unknown}).principali);
-}
-
 export function getProfileValidationMessage(
 	type: PublishableProfileType,
 	drafts: ProfileDrafts,
@@ -359,41 +360,7 @@ export function getProfileValidationErrors(
 	drafts: ProfileDrafts,
 	locations: Record<ProfileType, ProfileLocationDraft[]>,
 ): ProfileValidationErrors {
-	const errors: ProfileValidationErrors = {};
-	if (locations[type].length === 0) errors.locations = "Seleziona almeno una località per il profilo.";
-
-	if (type === "giocatore") {
-		const draft = drafts.giocatore;
-		if (!nonEmpty(draft.nome)) errors.name = "Inserisci il nome del giocatore.";
-		if (!hasItems(draft.tipologie_sport)) errors.sports = "Seleziona almeno una tipologia di calcio.";
-		if (!hasMainPlayerRole(draft.ruoli_sport)) errors.mainRole = "Seleziona almeno un ruolo principale.";
-	}
-	if (type === "squadra") {
-		const draft = drafts.squadra;
-		if (!nonEmpty(draft.nome_societa)) errors.name = "Inserisci il nome della società.";
-		if (!hasItems(draft.tipologie_sport)) errors.sports = "Seleziona almeno una tipologia di calcio.";
-	}
-	if (type === "staff-sportivo") {
-		const draft = drafts["staff-sportivo"];
-		if (!nonEmpty(draft.nome)) errors.name = "Inserisci il nome del membro dello staff.";
-		if (!hasItems(draft.figure_professionali)) errors.professionalRole = "Seleziona almeno una figura professionale.";
-	}
-	if (type === "arbitro" && !nonEmpty(drafts.arbitro.nome)) {
-		errors.name = "Inserisci il nome dell’arbitro.";
-	}
-	if (type === "torneo-evento") {
-		const draft = drafts["torneo-evento"];
-		if (!nonEmpty(draft.nome_organizzazione)) errors.name = "Inserisci il nome dell’organizzazione.";
-		if (!hasItems(draft.tipologie_sport)) errors.sports = "Seleziona almeno una tipologia di calcio.";
-	}
-	if (type === "campi-impianti-sportivi") {
-		const draft = drafts["campi-impianti-sportivi"];
-		if (!nonEmpty(draft.nome_organizzazione)) errors.name = "Inserisci il nome dell’impianto o dell’organizzazione.";
-		if (!nonEmpty(draft.sede_principale)) errors.headquarters = "Inserisci la sede principale dell’impianto.";
-		if (!hasItems(draft.tipologie_sport)) errors.sports = "Seleziona almeno una tipologia di calcio.";
-	}
-
-	return errors;
+	return getProfileRequiredFieldErrors(type, drafts[type], locations[type]);
 }
 
 export function getAnnouncementDetail(
@@ -419,7 +386,7 @@ export function getAnnouncementValidationMessage(
 	drafts: AnnouncementDetailsDrafts,
 	locations: ProfileLocationDraft[],
 	contacts: AnnouncementContacts,
-	extras: PremiumAnnouncementExtras = {genericLink: "", videoHighlights: ""},
+	extras: AnnouncementExtras = {genericLink: "", videoHighlights: ""},
 ): string | null {
 	return Object.values(getAnnouncementValidationErrors(type, teamSubtype, drafts, locations, contacts, extras))[0] ?? null;
 }
@@ -430,7 +397,7 @@ export function getAnnouncementValidationErrors(
 	drafts: AnnouncementDetailsDrafts,
 	locations: ProfileLocationDraft[],
 	contacts: AnnouncementContacts,
-	extras: PremiumAnnouncementExtras = {genericLink: "", videoHighlights: ""},
+	extras: AnnouncementExtras = {genericLink: "", videoHighlights: ""},
 ): AnnouncementValidationErrors {
 	const errors: AnnouncementValidationErrors = {};
 	const email = contacts.email.trim();

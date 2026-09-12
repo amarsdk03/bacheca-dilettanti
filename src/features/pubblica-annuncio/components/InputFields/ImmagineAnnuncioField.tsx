@@ -7,22 +7,20 @@ import {Button} from "@/components/ui/button";
 import {Field, FieldDescription, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
-import PremiumOnlyBadge from "@/features/pubblica-annuncio/components/InputFields/PremiumOnlyBadge";
-import {getAnnouncementImageError} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import {getAnnouncementImageError} from "@/features/pubblica-annuncio/types/announcementExtras";
 
-type ImmagineAnnuncioPremiumFieldProps = {
+type ImmagineAnnuncioFieldProps = {
 	idPrefix: string;
-	tipologia: string;
+	tipologia?: string;
 	value: File | null;
 	onValueChange: (value: File | null) => void;
 };
 
-export default function ImmagineAnnuncioPremiumField({
+export default function ImmagineAnnuncioField({
 	idPrefix,
-	tipologia,
 	value,
 	onValueChange,
-}: ImmagineAnnuncioPremiumFieldProps) {
+}: ImmagineAnnuncioFieldProps) {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const error = getAnnouncementImageError(value);
 
@@ -37,7 +35,6 @@ export default function ImmagineAnnuncioPremiumField({
 				<FieldLabel htmlFor={`${idPrefix}-immagine-annuncio`}>
 					Immagine dell&apos;annuncio <OptionalLabel />
 				</FieldLabel>
-				<PremiumOnlyBadge tipologia={tipologia} funzione="Immagine dell'annuncio" />
 			</div>
 			<Input
 				ref={fileInputRef}
@@ -48,8 +45,8 @@ export default function ImmagineAnnuncioPremiumField({
 				aria-invalid={Boolean(error)}
 			/>
 			{error && <FieldDescription className="font-medium text-destructive">{error}</FieldDescription>}
-			<FieldDescription className="text-brand-indigo">
-				PNG, JPEG o WebP, massimo 5 MB. L&apos;immagine viene salvata ora e potrà essere pubblicata con un piano a pagamento.
+			<FieldDescription>
+				PNG, JPEG o WebP, massimo 5 MB.
 			</FieldDescription>
 			{value && (
 				<div className="flex items-center justify-between gap-3 rounded-lg border border-brand-indigo/30 bg-brand-indigo/10 px-3 py-2 text-sm text-brand-ink">

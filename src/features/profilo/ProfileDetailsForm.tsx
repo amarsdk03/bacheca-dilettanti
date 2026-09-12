@@ -24,11 +24,12 @@ import EsperienzeAnnuncioFields, {
 	type EsperienzaAnnuncio,
 } from "@/features/pubblica-annuncio/components/InputFields/EsperienzeAnnuncioFields";
 import FiguraProfessionaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/FiguraProfessionaleMultiselectField";
+import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import RuoloPrincipaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
 import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
-import type {ProfileValidationErrors} from "@/features/pubblica-annuncio/publish-model";
+import type {ProfileValidationErrors} from "@/features/profilo/profile-required-fields";
 import {
 	DISPONIBILITA_PROFILO_OPTIONS,
 	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
@@ -657,6 +658,14 @@ function GiocatoreFields({
 				<ProfileSelectField id={`${prefix}-piede`} label="Piede principale" value={draft.piede_principale} onChange={(value) => onChange("giocatore", "piede_principale", value)} options={MAIN_FOOT_OPTIONS} />
 			</FieldGroup>
 			<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange("giocatore", "presentazione", value)} placeholder="Esperienze, caratteristiche tecniche, disponibilità e obiettivi..." />
+			<LinkAnnuncioField
+				idPrefix={`${prefix}-video-highlights`}
+				value={draft.video_highlights}
+				onValueChange={(value) => onChange("giocatore", "video_highlights", value)}
+				label="Link video highlights"
+				placeholder="https://www.youtube.com/watch?v=..."
+				description="Inserisci il link pubblico a un video con le tue azioni migliori."
+			/>
 			<CareerHistoryFields
 				idPrefix={`${prefix}-storico-carriera`}
 				esperienze={toExperiences(draft.storico_carriera)}

@@ -18,8 +18,8 @@ import RuoloPrincipaleMultiselectField from "@/features/pubblica-annuncio/compon
 import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
-import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
-import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
+import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
+import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
 import {RUOLI_SPECIFICI_PER_RUOLO} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import DisponibilitaProfiloSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaProfiloSelect";
 
@@ -158,14 +158,14 @@ export default function AnnuncioGiocatore() {
 					/>
 				</Field>
 
-				<ImmagineAnnuncioPremiumField
+				<ImmagineAnnuncioField
 					idPrefix="giocatore"
 					tipologia="giocatore"
 					value={immagineAnnuncio}
 					onValueChange={(value) => setField("immagineAnnuncio", value)}
 				/>
 
-				<LinkAnnuncioPremiumField
+				<LinkAnnuncioField
 					idPrefix="giocatore"
 					tipologia="giocatore"
 					value={linkAnnuncio}

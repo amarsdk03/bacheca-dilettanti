@@ -73,7 +73,7 @@ export default function Footer(
 						</h3>
 						<ul className="mt-4 space-y-3 text-sm text-neutral-600">
 							<li><Link href="/#" className="hover:text-neutral-900">Termini di servizio</Link></li>
-							<li><Link href="/#" className="hover:text-neutral-900">Privacy</Link></li>
+							<li><Link href="/#" className="hover:text-neutral-900">Privacy policy</Link></li>
 							<li><Link href="/#" className="hover:text-neutral-900">Cookie</Link></li>
 						</ul>
 					</div>

@@ -3,12 +3,12 @@ export const MAX_ANNOUNCEMENT_IMAGE_BYTES = 5 * 1024 * 1024;
 export const ANNOUNCEMENT_IMAGE_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
 
 export function isLinkAnnuncioValid(link: string) {
-	const valore = link.trim();
-	if (valore === "") return true;
-	if (valore.length > MAX_LINK_ANNUNCIO_LENGTH) return false;
+	const value = link.trim();
+	if (value === "") return true;
+	if (value.length > MAX_LINK_ANNUNCIO_LENGTH) return false;
 
 	try {
-		const url = new URL(valore);
+		const url = new URL(value);
 		return url.protocol === "http:" || url.protocol === "https:";
 	} catch {
 		return false;

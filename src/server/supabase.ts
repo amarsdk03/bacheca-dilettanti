@@ -47,6 +47,9 @@ export type Database = {
           info_stato_annuncio: string | null
           livello_annuncio: string | null
           nascosto: boolean | null
+          priorita_attiva: boolean
+          priorita_fine_il: string | null
+          priorita_inizio_il: string | null
           privato: boolean | null
           stato_annuncio: string | null
           tipologia_annuncio: string
@@ -61,6 +64,9 @@ export type Database = {
           info_stato_annuncio?: string | null
           livello_annuncio?: string | null
           nascosto?: boolean | null
+          priorita_attiva?: boolean
+          priorita_fine_il?: string | null
+          priorita_inizio_il?: string | null
           privato?: boolean | null
           stato_annuncio?: string | null
           tipologia_annuncio: string
@@ -75,6 +81,9 @@ export type Database = {
           info_stato_annuncio?: string | null
           livello_annuncio?: string | null
           nascosto?: boolean | null
+          priorita_attiva?: boolean
+          priorita_fine_il?: string | null
+          priorita_inizio_il?: string | null
           privato?: boolean | null
           stato_annuncio?: string | null
           tipologia_annuncio?: string
@@ -916,6 +925,35 @@ export type Database = {
           },
         ]
       }
+      media_profilo: {
+        Row: {
+          formato_media: string | null
+          id: number
+          link_media: string
+          uuid_profilo: string
+        }
+        Insert: {
+          formato_media?: string | null
+          id?: number
+          link_media: string
+          uuid_profilo: string
+        }
+        Update: {
+          formato_media?: string | null
+          id?: number
+          link_media?: string
+          uuid_profilo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_profilo_uuid_profilo_fkey"
+            columns: ["uuid_profilo"]
+            isOneToOne: false
+            referencedRelation: "profilo"
+            referencedColumns: ["uuid"]
+          },
+        ]
+      }
       profilo: {
         Row: {
           creato_da: string | null
@@ -1666,6 +1704,10 @@ export type Database = {
         Args: { p_profile_type: string; p_user_id: string }
         Returns: string
       }
+      get_owned_priority_checkout_v1: {
+        Args: { p_announcement_id: string }
+        Returns: Json
+      }
       get_registration_email_identity_v1: {
         Args: { p_email: string }
         Returns: {
@@ -1679,12 +1721,70 @@ export type Database = {
         Args: { p_email: string; p_payload: Json }
         Returns: string
       }
+      publish_announcement_core_v1: {
+        Args: {
+          p_payload: Json
+          p_privacy_version: string
+          p_submission_id: string
+          p_terms_version: string
+        }
+        Returns: Json
+      }
       publish_announcement_v1: {
         Args: {
           p_payload: Json
           p_privacy_version: string
           p_submission_id: string
           p_terms_version: string
+        }
+        Returns: Json
+      }
+      publish_announcement_v2: {
+        Args: {
+          p_payload: Json
+          p_privacy_version: string
+          p_submission_id: string
+          p_terms_version: string
+          p_visibility: string
+        }
+        Returns: Json
+      }
+      record_priority_checkout_event_v1: {
+        Args: {
+          p_amount_subtotal: number
+          p_amount_total: number
+          p_announcement_id: string
+          p_checkout_status: string
+          p_paid: boolean
+          p_payment_intent_id: string | null
+          p_payment_status: string
+          p_price_id: string
+          p_session_id: string
+          p_submission_id: string
+        }
+        Returns: Json
+      }
+      record_priority_checkout_session_v1: {
+        Args: {
+          p_amount_subtotal: number
+          p_amount_total: number
+          p_announcement_id: string
+          p_attempt: number
+          p_checkout_status: string
+          p_payment_status: string
+          p_price_id: string
+          p_session_id: string
+          p_submission_id: string
+        }
+        Returns: Json
+      }
+      record_priority_refund_v1: {
+        Args: {
+          p_amount: number
+          p_currency: string
+          p_payment_intent_id: string
+          p_refund_id: string
+          p_refund_status: string
         }
         Returns: Json
       }

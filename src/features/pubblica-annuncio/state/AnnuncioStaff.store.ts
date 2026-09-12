@@ -1,7 +1,7 @@
 import {createAnnuncioStore} from "@/features/pubblica-annuncio/state/createAnnuncioStore";
 import type {EsperienzaAnnuncio} from "@/features/pubblica-annuncio/components/InputFields/EsperienzeAnnuncioFields";
 import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
-import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {
 	CONTATTI_ANNUNCIO_DEFAULT,
 	hasContattoPubblico,

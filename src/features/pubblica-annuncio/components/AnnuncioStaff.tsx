@@ -18,9 +18,9 @@ import FiguraProfessionaleMultiselectField from "@/features/pubblica-annuncio/co
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
-import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
+import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
-import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
+import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
 import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
 import {CATEGORIE_CALCIO_GROUPS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import DisponibilitaProfiloSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaProfiloSelect";
@@ -148,13 +148,13 @@ export default function AnnuncioStaff() {
 			</FieldSet>
 
 			<EsperienzeAnnuncioFields idPrefix="staff" esperienze={esperienze} setEsperienze={(value) => setField("esperienze", value)} />
-			<ImmagineAnnuncioPremiumField
+			<ImmagineAnnuncioField
 				idPrefix="staff"
 				tipologia="staff-sportivo"
 				value={immagineAnnuncio}
 				onValueChange={(value) => setField("immagineAnnuncio", value)}
 			/>
-			<LinkAnnuncioPremiumField
+			<LinkAnnuncioField
 				idPrefix="staff"
 				tipologia="staff-sportivo"
 				value={linkAnnuncio}

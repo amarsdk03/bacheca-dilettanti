@@ -2,8 +2,8 @@ import {useAnnuncioGiocatoreStore} from "@/features/pubblica-annuncio/state/Annu
 import {
 	formatContatti,
 	formatDataNascita,
-	PremiumImageRecap,
-	PremiumLinkRecap,
+	AnnouncementImageRecap,
+	AnnouncementLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
@@ -28,11 +28,11 @@ export default function RecapAnnuncioGiocatore() {
 				<RecapField label="Ruolo principale">{data.ruoliPrincipali.join(", ") || "—"}</RecapField>
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
 				<RecapField label="Contatti pubblici" wide>{formatContatti(data.contatti)}</RecapField>
-				<PremiumImageRecap image={data.immagineAnnuncio} />
+				<AnnouncementImageRecap image={data.immagineAnnuncio} />
 				{data.descrizioneAggiuntiva.trim() !== "" && (
 					<RecapField label="Breve descrizione aggiuntiva" wide>{data.descrizioneAggiuntiva}</RecapField>
 				)}
-				<PremiumLinkRecap link={data.linkAnnuncio} />
+				<AnnouncementLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>
 	);

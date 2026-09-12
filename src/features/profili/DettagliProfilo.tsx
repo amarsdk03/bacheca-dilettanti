@@ -2,6 +2,7 @@ import {
 	BadgeCheckIcon,
 	CalendarDaysIcon,
 	CircleDotIcon,
+	ExternalLinkIcon,
 	MapPinIcon,
 	MegaphoneIcon,
 	StarIcon,
@@ -74,6 +75,23 @@ function humanizeValue(value: string) {
 	return normalized
 		? normalized.charAt(0).toLocaleUpperCase("it-IT") + normalized.slice(1)
 		: value;
+}
+
+function ProfileFieldValue({field}: {
+	field: PublicProfile["fields"][number];
+}) {
+	if (!field.href) return field.value;
+	return (
+		<a
+			href={field.href}
+			target="_blank"
+			rel="noopener noreferrer"
+			className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
+		>
+			Guarda video highlights
+			<ExternalLinkIcon className="size-4" aria-hidden="true" />
+		</a>
+	);
 }
 
 export default function DettagliProfilo({result}: DettagliProfiloProps) {
@@ -175,7 +193,7 @@ function ProfileOverview({profile}: {profile: PublicProfile}) {
 								<div key={field.label} className="rounded-xl bg-muted/50 p-4">
 									<dt className="text-xs font-medium text-muted-foreground">{field.label}</dt>
 									<dd className="mt-1 whitespace-pre-wrap wrap-break-word font-semibold text-foreground">
-										{field.value}
+										<ProfileFieldValue field={field} />
 									</dd>
 								</div>
 							))}
@@ -197,7 +215,7 @@ function ProfileOverview({profile}: {profile: PublicProfile}) {
 								>
 									<dt className="text-xs font-medium text-muted-foreground">{field.label}</dt>
 									<dd className="mt-1 whitespace-pre-wrap wrap-break-word text-base font-medium text-foreground">
-										{field.value}
+										<ProfileFieldValue field={field} />
 									</dd>
 								</div>
 							))}

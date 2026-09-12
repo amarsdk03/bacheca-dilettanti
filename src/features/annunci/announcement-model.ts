@@ -135,14 +135,14 @@ export const ANNOUNCEMENT_OPTIONS: readonly AnnouncementOption[] = [
 	},
 	{
 		value: "annuncio_torneo_evento",
-		label: "Torneo / evento",
+		label: "Torneo / Evento",
 		description: "Tornei, manifestazioni ed eventi a cui partecipare",
 		profileType: "torneo-evento",
 		icon: TrophyIcon,
 	},
 	{
 		value: "annuncio_campo_impianto",
-		label: "Campo / impianto",
+		label: "Campi e impianti",
 		description: "Campi e impianti disponibili per attività ed eventi",
 		profileType: "campi-impianti-sportivi",
 		icon: MapPinIcon,
@@ -189,15 +189,15 @@ export const ANNOUNCEMENT_DIRECTORY_OPTIONS: readonly AnnouncementDirectoryOptio
 	{
 		value: "annuncio_torneo_evento",
 		profileType: "torneo-evento",
-		label: "Torneo / evento",
+		label: "Torneo / Evento",
 		description: "Tornei, manifestazioni ed eventi a cui partecipare",
 		icon: TrophyIcon,
 	},
 	{
 		value: "annuncio_campo_impianto",
 		profileType: "campi-impianti-sportivi",
-		label: "Campo / impianto",
-		description: "Campi e impianti disponibili per attivitÃ  ed eventi",
+		label: "Campi e impianti",
+		description: "Campi e impianti disponibili per attività ed eventi",
 		icon: MapPinIcon,
 	},
 ];

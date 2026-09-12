@@ -2,8 +2,8 @@ import {useAnnuncioSquadraStore} from "@/features/pubblica-annuncio/state/Annunc
 import {
 	formatContatti,
 	formatPeriodo,
-	PremiumImageRecap,
-	PremiumLinkRecap,
+	AnnouncementImageRecap,
+	AnnouncementLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
@@ -74,8 +74,8 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 						<RecapField label="Cosa offrite" wide>{data.cercaSponsor.cosaOffrite || "—"}</RecapField>
 					</>
 				)}
-				<PremiumImageRecap image={data.immagineAnnuncio} />
-				<PremiumLinkRecap link={data.linkAnnuncio} />
+				<AnnouncementImageRecap image={data.immagineAnnuncio} />
+				<AnnouncementLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>
 	);

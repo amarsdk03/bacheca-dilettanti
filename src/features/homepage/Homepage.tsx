@@ -349,12 +349,13 @@ export default function Homepage() {
 										Bacheca Dilettanti sta per arrivare. Unisciti alla community e sii tra i primi a vivere l’esperienza completa.
 									</p>
 									<Link
-										href="/aggiornamenti"
+										href="https://www.instagram.com/bachecadilettanti/"
 										className={buttonVariants({
 											variant: "outline",
 											size: "sm",
 											className: "mt-4 sm:mt-10 h-9 border-[#8e72ff]/60 bg-white px-4 font-bold uppercase text-[#6445de]",
 										})}
+										target="_blank"
 									>
 										Rimani aggiornato
 										<ArrowRightIcon aria-hidden="true" />

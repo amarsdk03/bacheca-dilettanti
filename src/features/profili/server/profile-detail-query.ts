@@ -12,6 +12,7 @@ import {loadPublicProfileAnnouncements} from "@/features/profili/server/profile-
 import {
 	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database, Json} from "@/server/supabase";
@@ -158,12 +159,23 @@ function formatVehicleAvailability(value: string | null) {
 		.find((option) => option.valore === normalized)?.etichetta ?? normalized;
 }
 
-function detailField(label: string, value: string | null | undefined, wide = false): ProfileDetailField {
+function detailField(
+	label: string,
+	value: string | null | undefined,
+	wide = false,
+	href?: string,
+): ProfileDetailField {
 	return {
 		label,
 		value: cleanText(value) ?? NOT_SPECIFIED,
 		...(wide ? {wide: true} : {}),
+		...(href ? {href} : {}),
 	};
+}
+
+function safeExternalUrl(value: unknown) {
+	const url = cleanText(value);
+	return url && isLinkAnnuncioValid(url) ? url : null;
 }
 
 function availabilityValue(value: string | null) {
@@ -184,14 +196,27 @@ async function loadProfileContent(
 	type: ProfileType,
 ): Promise<ProfileContentResult> {
 	if (type === "giocatore") {
-		const {data, error} = await supabase
-			.from("profilo_giocatore")
-			.select("id, nome, cognome, sport_principale, tipologie_sport, categorie_ricercate, disponibilita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
-			.eq("uuid_profilo", id)
-			.eq("nascosto", false)
-			.maybeSingle();
-		if (error) return contentError(error.code);
+		const [playerResult, mediaResult] = await Promise.all([
+			supabase
+				.from("profilo_giocatore")
+				.select("id, nome, cognome, sport_principale, tipologie_sport, categorie_ricercate, disponibilita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
+				.eq("uuid_profilo", id)
+				.eq("nascosto", false)
+				.maybeSingle(),
+			supabase
+				.from("media_profilo")
+				.select("link_media")
+				.eq("uuid_profilo", id)
+				.eq("formato_media", "video_highlights")
+				.order("id", {ascending: false})
+				.limit(1)
+				.maybeSingle(),
+		]);
+		if (playerResult.error) return contentError(playerResult.error.code);
+		if (mediaResult.error) return contentError(mediaResult.error.code);
+		const data = playerResult.data;
 		if (!data) return {status: "not-found"};
+		const highlightsUrl = safeExternalUrl(mediaResult.data?.link_media);
 		return {
 			status: "ok",
 			content: {
@@ -209,6 +234,7 @@ async function loadProfileContent(
 					detailField("Peso (kg)", data.peso),
 					detailField("Presentazione", data.presentazione, true),
 					detailField("Storico carriera", formatExperiences(data.storico_carriera), true),
+					detailField("Link video highlights", highlightsUrl, true, highlightsUrl ?? undefined),
 				],
 			},
 		};

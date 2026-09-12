@@ -2,8 +2,8 @@
 
 import {
 	formatContatti,
-	PremiumImageRecap,
-	PremiumLinkRecap,
+	AnnouncementImageRecap,
+	AnnouncementLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
@@ -46,8 +46,8 @@ export default function RecapAnnuncioTorneoEvento() {
 						</dd>
 					</div>
 				)}
-				<PremiumImageRecap image={data.immagineAnnuncio} />
-				<PremiumLinkRecap link={data.linkAnnuncio} />
+				<AnnouncementImageRecap image={data.immagineAnnuncio} />
+				<AnnouncementLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>
 	);

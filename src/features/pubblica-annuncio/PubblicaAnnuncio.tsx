@@ -36,13 +36,14 @@ import {
 	isTeamAnnouncementSubtype,
 	PUBLISH_PAYLOAD_VERSION,
 	type AnnouncementContacts,
-	type PremiumAnnouncementExtras,
+	type AnnouncementExtras,
+	type PublishVisibility,
 	type PublishableProfileType,
 	type PublishAnnouncementPayload,
 	type PublishProfileContext,
 	type TeamAnnouncementSubtype,
 } from "@/features/pubblica-annuncio/publish-model";
-import {getAnnouncementImageError} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import {getAnnouncementImageError} from "@/features/pubblica-annuncio/types/announcementExtras";
 
 interface PubblicaAnnuncioProps {
 	authenticated: boolean;
@@ -67,7 +68,8 @@ export default function PubblicaAnnuncio({
 	const [announcementDrafts, setAnnouncementDrafts] = useState(createAnnouncementDetailsDrafts);
 	const [announcementLocations, setAnnouncementLocations] = useState<ProfileLocationDraft[]>([]);
 	const [contacts, setContacts] = useState<AnnouncementContacts>({email: "", phone: ""});
-	const [extras, setExtras] = useState<PremiumAnnouncementExtras>({genericLink: "", videoHighlights: ""});
+	const [extras, setExtras] = useState<AnnouncementExtras>({genericLink: "", videoHighlights: ""});
+	const [visibility, setVisibility] = useState<PublishVisibility>("gratuito");
 	const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
 	const [announcementImagePreviewUrl, setAnnouncementImagePreviewUrl] = useState<string | null>(null);
 	const announcementImagePreviewUrlRef = useRef<string | null>(null);
@@ -110,6 +112,7 @@ export default function PubblicaAnnuncio({
 		return {
 			version: PUBLISH_PAYLOAD_VERSION,
 			submissionId,
+			visibility,
 			profileType,
 			teamSubtype,
 			anonymousProfile: registered ? null : {
@@ -131,7 +134,7 @@ export default function PubblicaAnnuncio({
 			},
 			consents: {dataConfirmed: false, termsAccepted: false, privacyAccepted: false},
 		};
-	}, [announcementDrafts, announcementLocations, contacts, extras, profileDirty, profileDrafts, profileLocations, profileType, profileUnlocked, registered, submissionId, teamSubtype]);
+	}, [announcementDrafts, announcementLocations, contacts, extras, profileDirty, profileDrafts, profileLocations, profileType, profileUnlocked, registered, submissionId, teamSubtype, visibility]);
 
 	const scrollToTop = () => window.scrollTo({top: 0, behavior: "smooth"});
 	const updateAnnouncementImage = (image: File | null) => {
@@ -249,7 +252,7 @@ export default function PubblicaAnnuncio({
 						<ClipboardPenIcon className="size-7" />
 						<h1 id="publish-title" className="text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">Pubblica un annuncio</h1>
 					</div>
-					<p className="mt-3 text-base text-muted-foreground">Scegli il profilo, controlla i dati e invia gratuitamente l’annuncio in revisione.</p>
+					<p className="mt-3 text-base text-muted-foreground">Scegli il profilo, controlla i dati e decidi la visibilità dell’annuncio.</p>
 				</section>
 
 				{registered && enabledProfileTypes.length === 0 && (
@@ -365,7 +368,7 @@ export default function PubblicaAnnuncio({
 					<TabsContent value="tab-4">
 						<Card className="my-4 pt-6">
 							<CardContent>
-								{payload && profileType && <ConfermaInvioAnnuncio payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} authenticated={authenticated} onEditStep={goToStep} />}
+								{payload && profileType && <ConfermaInvioAnnuncio payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} authenticated={authenticated} visibility={visibility} onVisibilityChange={setVisibility} onEditStep={goToStep} />}
 							</CardContent>
 						</Card>
 					</TabsContent>

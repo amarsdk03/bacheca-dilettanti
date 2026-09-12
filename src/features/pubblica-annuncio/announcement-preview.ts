@@ -38,6 +38,7 @@ function profileTitle(payload: PublishAnnouncementPayload, drafts: ProfileDrafts
 }
 
 export function formatPreviewStatus(status: string | null) {
+	if (status === "in_attesa_pagamento") return "Pagamento da completare";
 	if (status === "in_revisione") return "In attesa di approvazione";
 	if (status === "pubblicato") return "Pubblicato";
 	if (status === "rifiutato") return "Non approvato";

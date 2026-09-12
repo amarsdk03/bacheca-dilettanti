@@ -133,7 +133,7 @@ declare
   v_image_mime text;
   v_generic_link text;
   v_video_highlights text;
-  v_current_year integer := extract(year from pg_catalog.current_date)::integer;
+  v_current_year integer := extract(year from current_date)::integer;
 begin
   v_auth_user_id := (select auth.uid());
   if v_auth_user_id is null then

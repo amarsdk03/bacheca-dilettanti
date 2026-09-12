@@ -5,8 +5,8 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 import AnnuncioTextField from "@/features/pubblica-annuncio/components/InputFields/AnnuncioTextField";
 import AnnuncioTextareaField from "@/features/pubblica-annuncio/components/InputFields/AnnuncioTextareaField";
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
-import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
-import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
+import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
+import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import {useAnnuncioProfessionistiStudiStore} from "@/features/pubblica-annuncio/state/AnnuncioProfessionistiStudi.store";
@@ -68,8 +68,8 @@ export default function AnnuncioProfessionistiStudi() {
 					</Select>
 				</Field>
 				<AnnuncioTextareaField id="professionisti-studi-info-aggiuntive" label="Info aggiuntive" value={data.infoAggiuntive} onValueChange={(value) => data.setField("infoAggiuntive", value)} placeholder="Aggiungi eventuali altre informazioni..." />
-				<ImmagineAnnuncioPremiumField idPrefix="professionisti-studi" tipologia="professionisti-studi" value={data.immagineAnnuncio} onValueChange={(value) => data.setField("immagineAnnuncio", value)} />
-				<LinkAnnuncioPremiumField idPrefix="professionisti-studi" tipologia="professionisti-studi" value={data.linkAnnuncio} onValueChange={(value) => data.setField("linkAnnuncio", value)} />
+				<ImmagineAnnuncioField idPrefix="professionisti-studi" tipologia="professionisti-studi" value={data.immagineAnnuncio} onValueChange={(value) => data.setField("immagineAnnuncio", value)} />
+				<LinkAnnuncioField idPrefix="professionisti-studi" tipologia="professionisti-studi" value={data.linkAnnuncio} onValueChange={(value) => data.setField("linkAnnuncio", value)} />
 			</FieldSet>
 		</FieldGroup>
 	);

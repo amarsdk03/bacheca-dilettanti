@@ -50,7 +50,6 @@ import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {
 	Card,
-	CardAction,
 	CardContent,
 	CardDescription,
 	CardFooter,
@@ -76,10 +75,10 @@ import {
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {toast} from "@/components/ui/toast";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
+import {Progress} from "@/components/ui/progress";
 import GradientBackground from "@/components/styling/GradientBackground";
 import {requestCurrentUserPasswordReset, signOut} from "@/features/auth/server/actions";
 import {
-	createProfileDrafts,
 	isLimitedProfileType,
 	MAX_PROFILE_COUNT,
 	PROFILE_OPTIONS,
@@ -87,6 +86,7 @@ import {
 	type ProfileLocations,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
+import {getProfileCompletion} from "@/features/profilo/profile-completion";
 import {INITIAL_AUTH_STATE, type ViewerDTO} from "@/features/auth/types";
 import ProfileEditorDialog from "@/features/profilo/ProfileEditorDialog";
 import {
@@ -148,6 +148,7 @@ function formatDate(value: string | null) {
 }
 
 function moderationLabel(value: string | null) {
+	if (value === "in_attesa_pagamento") return "Pagamento da completare";
 	if (value === "in_revisione") return "In revisione";
 	if (value === "pubblicato") return "Pubblicato";
 	if (value === "rifiutato") return "Non approvato";
@@ -158,80 +159,8 @@ function moderationVariant(value: string | null): "default" | "secondary" | "des
 	if (value === "pubblicato") return "default";
 	if (value === "rifiutato") return "destructive";
 	if (value === "in_revisione") return "secondary";
+	if (value === "in_attesa_pagamento") return "outline";
 	return "outline";
-}
-
-function stringList(value: unknown) {
-	return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.trim() !== "") : [];
-}
-
-function firstRole(value: unknown) {
-	if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-	const roles = value as {principali?: unknown};
-	return stringList(roles.principali)[0] ?? null;
-}
-
-function displayValue(value: unknown, fallback = "Non specificato") {
-	return typeof value === "string" && value.trim() ? value.trim() : fallback;
-}
-
-function getLocationLabel(type: ProfileType, locations: ProfileLocations) {
-	const location = locations[type][0];
-	if (!location) return "Località non specificata";
-	return [location.citta, location.regione].filter(Boolean).join(", ");
-}
-
-function getProfilePresentation(type: ProfileType, drafts: ProfileDrafts) {
-	return displayValue(drafts[type].presentazione, "Aggiungi una presentazione per rendere il profilo più completo.");
-}
-
-function getProfileTitle(type: ProfileType, drafts: ProfileDrafts) {
-	switch (type) {
-		case "giocatore":
-			return displayValue(`${drafts.giocatore.nome} ${drafts.giocatore.cognome}`.trim(), "Profilo giocatore");
-		case "squadra":
-			return displayValue(drafts.squadra.nome_societa, "Profilo squadra");
-		case "staff-sportivo":
-			return displayValue(`${drafts["staff-sportivo"].nome} ${drafts["staff-sportivo"].cognome}`.trim(), "Profilo staff sportivo");
-		case "professionisti-studi":
-			return displayValue(`${drafts["professionisti-studi"].nome} ${drafts["professionisti-studi"].cognome}`.trim(), "Profilo professionista");
-		case "arbitro":
-			return displayValue(`${drafts.arbitro.nome} ${drafts.arbitro.cognome}`.trim(), "Profilo arbitro");
-		case "creators":
-			return displayValue(drafts.creators.nome_creator, "Profilo creator");
-		case "torneo-evento":
-			return displayValue(drafts["torneo-evento"].nome_organizzazione, "Profilo torneo / evento");
-		case "campi-impianti-sportivi":
-			return displayValue(drafts["campi-impianti-sportivi"].nome_organizzazione, "Profilo campo / impianto");
-	}
-}
-
-function getProfileFacts(type: ProfileType, drafts: ProfileDrafts, locations: ProfileLocations) {
-	const location = getLocationLabel(type, locations);
-
-	switch (type) {
-		case "giocatore":
-			return [displayValue(drafts.giocatore.sport_principale), firstRole(drafts.giocatore.ruoli_sport) ?? "Ruolo non specificato", location];
-		case "squadra":
-			return [displayValue(drafts.squadra.sport_principale), displayValue(drafts.squadra.sede_principale, location), location];
-		case "staff-sportivo":
-			return [displayValue(drafts["staff-sportivo"].sport_principale), stringList(drafts["staff-sportivo"].figure_professionali)[0] ?? "Figura non specificata", location];
-		case "professionisti-studi":
-			return [displayValue(drafts["professionisti-studi"].sport_principale), stringList(drafts["professionisti-studi"].figure_professionali)[0] ?? "Specializzazione non specificata", location];
-		case "arbitro":
-			return [displayValue(drafts.arbitro.sport_principale), "Attività arbitrale", location];
-		case "creators":
-			return [displayValue(drafts.creators.sport_principale), displayValue(drafts.creators.tipologia_contenuti, "Contenuti non specificati"), location];
-		case "torneo-evento":
-			return [displayValue(drafts["torneo-evento"].sport_principale), displayValue(drafts["torneo-evento"].sede_principale, location), location];
-		case "campi-impianti-sportivi":
-			return [displayValue(drafts["campi-impianti-sportivi"].sport_principale), displayValue(drafts["campi-impianti-sportivi"].sede_principale, location), location];
-	}
-}
-
-function hasProfileDetails(type: ProfileType, drafts: ProfileDrafts, locations: ProfileLocations) {
-	const emptyDraft = createProfileDrafts()[type];
-	return locations[type].length > 0 || JSON.stringify(drafts[type]) !== JSON.stringify(emptyDraft);
 }
 
 function LogoutButton({compact = false}: {compact?: boolean}) {
@@ -349,8 +278,7 @@ function ProfileCard({
 }) {
 	const option = PROFILE_OPTIONS.find(({value}) => value === profile.type);
 	const Icon = option?.icon ?? UserRoundIcon;
-	const facts = getProfileFacts(profile.type, drafts, locations);
-	const hasDetails = hasProfileDetails(profile.type, drafts, locations);
+	const profileCompletion = getProfileCompletion(profile.type, drafts, locations);
 	const [removeOpen, setRemoveOpen] = useState(false);
 	const [pendingAction, setPendingAction] = useState<"primary" | "remove" | null>(null);
 	const [pending, startTransition] = useTransition();
@@ -404,10 +332,30 @@ function ProfileCard({
 					)
 				}
 			</CardHeader>
-			<CardContent>
+			<CardContent className="grid gap-4">
 				<p className="leading-6 text-muted-foreground">
 					{option?.description}
 				</p>
+				<Card size="sm" className="border-primary/20 bg-muted/30 shadow-none">
+					<CardHeader className="gap-2">
+						<div className="flex items-center justify-between gap-3">
+							<CardTitle className="text-sm">{profileCompletion.percentage}% completamento</CardTitle>
+							<span className="text-xs text-muted-foreground">
+								{profileCompletion.completed}/{profileCompletion.total}
+							</span>
+						</div>
+						<Progress
+							value={profileCompletion.percentage}
+							aria-label={`Completamento profilo: ${profileCompletion.percentage}%`}
+							className={"bg-brand-indigo"}
+						/>
+						<CardDescription className="text-xs">
+							{profileCompletion.percentage === 100
+								? "Profilo completo: ben fatto!"
+								: "Hai più possibilità di essere visto se completi il tuo profilo!"}
+						</CardDescription>
+					</CardHeader>
+				</Card>
 			</CardContent>
 			<CardFooter className="flex flex-wrap justify-between gap-2">
 				<div>
@@ -601,6 +549,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 	onRemove: () => Promise<ProfileMutationResult>;
 }) {
 	const isHidden = announcement.visibility === "hidden";
+	const paymentPending = announcement.moderationStatus === "in_attesa_pagamento";
 	const [removeOpen, setRemoveOpen] = useState(false);
 	const [pendingAction, setPendingAction] = useState<"visibility" | "remove" | null>(null);
 	const [pending, startTransition] = useTransition();
@@ -638,7 +587,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 	};
 
 	return (
-		<Card className={isHidden ? "opacity-75" : undefined}>
+		<Card className={isHidden && !paymentPending ? "opacity-75" : undefined}>
 			<CardHeader className="border-b">
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 					<div className="min-w-0">
@@ -646,7 +595,8 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 							<Badge>{announcement.type}</Badge>
 							<Badge variant="outline">{announcement.subtype}</Badge>
 							<Badge variant={moderationVariant(announcement.moderationStatus)}>{moderationLabel(announcement.moderationStatus)}</Badge>
-							{isHidden && <Badge variant="secondary"><EyeOffIcon aria-hidden="true" /> Nascosto</Badge>}
+							{announcement.level === "prioritario" && <Badge variant="secondary">Prioritario</Badge>}
+							{isHidden && !paymentPending && <Badge variant="secondary"><EyeOffIcon aria-hidden="true" /> Nascosto</Badge>}
 						</div>
 						<CardTitle className="text-lg">{announcement.title}</CardTitle>
 					</div>
@@ -659,17 +609,23 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 				<div className="flex items-center gap-2 text-sm text-muted-foreground"><MapPinIcon aria-hidden="true" />{announcement.location}</div>
 			</CardContent>
 			<CardFooter className="flex flex-wrap justify-end gap-2">
-				<Button
-					type="button"
-					variant="outline"
-					onClick={() => runMutation("visibility", onToggleVisibility)}
-					disabled={pending}
-				>
-					{pending && pendingAction === "visibility"
-						? <LoaderCircleIcon className="animate-spin" aria-hidden="true" />
-						: isHidden ? <EyeIcon aria-hidden="true" /> : <EyeOffIcon aria-hidden="true" />}
-					{isHidden ? "Mostra" : "Nascondi"}
-				</Button>
+				{paymentPending ? (
+					<Button render={<Link href={`/pubblica-annuncio/pagamento?id=${encodeURIComponent(announcement.id)}`} />} nativeButton={false}>
+						Completa pagamento
+					</Button>
+				) : (
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => runMutation("visibility", onToggleVisibility)}
+						disabled={pending}
+					>
+						{pending && pendingAction === "visibility"
+							? <LoaderCircleIcon className="animate-spin" aria-hidden="true" />
+							: isHidden ? <EyeIcon aria-hidden="true" /> : <EyeOffIcon aria-hidden="true" />}
+						{isHidden ? "Mostra" : "Nascondi"}
+					</Button>
+				)}
 				<AlertDialog open={removeOpen} onOpenChange={(open) => !pending && setRemoveOpen(open)}>
 					<AlertDialogTrigger render={<Button type="button" variant="destructive" disabled={pending} />}>
 						<Trash2Icon aria-hidden="true" /> Elimina
@@ -680,6 +636,9 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 							<AlertDialogTitle>Eliminare definitivamente l’annuncio?</AlertDialogTitle>
 							<AlertDialogDescription>
 								“{announcement.title}” verrà eliminato definitivamente insieme ai suoi dettagli. Questa azione non può essere annullata.
+								{announcement.level === "prioritario" && announcement.moderationStatus !== "pubblicato" && (
+									<> Se il pagamento è già stato completato, il caso verrà registrato per il rimborso manuale.</>
+								)}
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>

@@ -16,9 +16,9 @@ import {
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/components/ui/input-group";
-import LinkAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioPremiumField";
+import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
-import ImmagineAnnuncioPremiumField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioPremiumField";
+import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
 import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 
 export default function AnnuncioCampoImpianto() {
@@ -95,7 +95,6 @@ export default function AnnuncioCampoImpianto() {
 						<Input id="campo-impianto-orario" value={disponibilita.orario} onChange={(event) => updateDisponibilita("orario", event.target.value)} placeholder="Es. Lun-Ven 18:00-23:00" />
 					</Field>
 					<Field>
-
 						<FieldLabel htmlFor="campo-impianto-costo">Costo orario <OptionalLabel /></FieldLabel>
 						<InputGroup>
 							<InputGroupAddon>
@@ -132,13 +131,13 @@ export default function AnnuncioCampoImpianto() {
 					/>
 				</Field>
 			</FieldSet>
-			<ImmagineAnnuncioPremiumField
+			<ImmagineAnnuncioField
 				idPrefix="campo-impianto"
 				tipologia="campi-impianti-sportivi"
 				value={immagineAnnuncio}
 				onValueChange={(value) => setField("immagineAnnuncio", value)}
 			/>
-			<LinkAnnuncioPremiumField
+			<LinkAnnuncioField
 				idPrefix="campo-impianto"
 				tipologia="campi-impianti-sportivi"
 				value={linkAnnuncio}

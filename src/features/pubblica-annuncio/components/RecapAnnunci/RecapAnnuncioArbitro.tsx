@@ -3,8 +3,8 @@ import {
 	EsperienzeRecap,
 	formatContatti,
 	formatDataNascita,
-	PremiumImageRecap,
-	PremiumLinkRecap,
+	AnnouncementImageRecap,
+	AnnouncementLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
@@ -28,8 +28,8 @@ export default function RecapAnnuncioArbitro() {
 					</RecapField>
 				)}
 				<EsperienzeRecap esperienze={data.esperienze} />
-				<PremiumImageRecap image={data.immagineAnnuncio} />
-				<PremiumLinkRecap link={data.linkAnnuncio} />
+				<AnnouncementImageRecap image={data.immagineAnnuncio} />
+				<AnnouncementLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>
 	);

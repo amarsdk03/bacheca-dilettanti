@@ -29,11 +29,11 @@ export function RecapField({label, children, wide = false}: {label: string; chil
 	);
 }
 
-export function PremiumLinkRecap({link}: {link: string}) {
+export function AnnouncementLinkRecap({link}: {link: string}) {
 	if (link.trim() === "") return null;
 
 	return (
-		<RecapField label="Link annuncio (Premium)" wide>
+		<RecapField label="Link annuncio" wide>
 			<a
 				href={link}
 				target="_blank"
@@ -46,7 +46,7 @@ export function PremiumLinkRecap({link}: {link: string}) {
 	);
 }
 
-export function PremiumImageRecap({image}: {image: File | null}) {
+export function AnnouncementImageRecap({image}: {image: File | null}) {
 	if (!image) return null;
 
 	return (

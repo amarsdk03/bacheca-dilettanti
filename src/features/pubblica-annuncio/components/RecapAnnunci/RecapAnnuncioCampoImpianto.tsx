@@ -1,8 +1,8 @@
 import {useAnnuncioCampoImpiantoStore} from "@/features/pubblica-annuncio/state/AnnuncioCampoImpianto.store";
 import {
 	formatContatti,
-	PremiumImageRecap,
-	PremiumLinkRecap,
+	AnnouncementImageRecap,
+	AnnouncementLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
@@ -23,8 +23,8 @@ export default function RecapAnnuncioCampoImpianto() {
 				<RecapField label="Orario">{data.disponibilita.orario || "—"}</RecapField>
 				<RecapField label="Costo orario">{data.disponibilita.costoOrario ? `${data.disponibilita.costoOrario} €` : "—"}</RecapField>
 				{data.disponibilita.serviziInclusi.trim() !== "" && <RecapField label="Servizi inclusi" wide>{data.disponibilita.serviziInclusi}</RecapField>}
-				<PremiumImageRecap image={data.immagineAnnuncio} />
-				<PremiumLinkRecap link={data.linkAnnuncio} />
+				<AnnouncementImageRecap image={data.immagineAnnuncio} />
+				<AnnouncementLinkRecap link={data.linkAnnuncio} />
 			</dl>
 		</div>
 	);

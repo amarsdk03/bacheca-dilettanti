@@ -5,7 +5,7 @@ import {
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import {createAnnuncioStore} from "@/features/pubblica-annuncio/state/createAnnuncioStore";
-import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/premiumAnnuncio";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 
 export type AnnuncioProfessionistiStudiData = {
 	nome: string;

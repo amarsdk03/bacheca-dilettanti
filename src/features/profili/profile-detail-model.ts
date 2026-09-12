@@ -10,6 +10,7 @@ export interface ProfileDetailParams {
 }
 
 export interface ProfileDetailField {
+	href?: string;
 	label: string;
 	value: string;
 	wide?: boolean;

@@ -19,7 +19,6 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 				<div className="flex flex-wrap items-center gap-2 mb-1.5">
 					<Badge className="bg-brand-indigo text-white">{preview.typeLabel}</Badge>
 					{preview.status && <Badge variant="outline">{preview.status}</Badge>}
-					{(preview.genericLink || preview.videoHighlights || preview.imageUrl) && <Badge variant="secondary" className="text-brand-indigo">Contenuti Premium salvati</Badge>}
 				</div>
 				<CardTitle className="text-2xl leading-tight">{preview.title}</CardTitle>
 				<CardDescription>Pubblicato da {preview.author}</CardDescription>

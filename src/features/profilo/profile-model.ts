@@ -41,7 +41,9 @@ type EditableProfileDraft<Table extends ProfileTable> = Omit<
 >;
 
 export type ProfileDrafts = {
-	giocatore: EditableProfileDraft<"profilo_giocatore">;
+	giocatore: EditableProfileDraft<"profilo_giocatore"> & {
+		video_highlights: string;
+	};
 	squadra: EditableProfileDraft<"profilo_squadra">;
 	"staff-sportivo": EditableProfileDraft<"profilo_staff_sportivo">;
 	"professionisti-studi": EditableProfileDraft<"profilo_professionista_studente">;
@@ -169,6 +171,7 @@ export function createProfileDrafts(): ProfileDrafts {
 			sport_principale: "Calcio",
 			storico_carriera: [],
 			tipologie_sport: [],
+			video_highlights: "",
 		},
 		squadra: {
 			nome_societa: "",
