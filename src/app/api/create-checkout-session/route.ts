@@ -110,7 +110,6 @@ export async function POST(request: Request) {
 			automatic_tax: {enabled: false},
 			allow_promotion_codes: true,
 			submit_type: "auto",
-			consent_collection: {promotions: "none"},
 			integration_identifier: PRIORITY_CHECKOUT_INTEGRATION_IDENTIFIER,
 			origin_context: "web",
 			success_url: successUrlWithSessionPlaceholder,
@@ -125,7 +124,7 @@ export async function POST(request: Request) {
 		};
 
 		const session = await stripe.checkout.sessions.create(sessionParams, {
-			idempotencyKey: `priority-announcement-${context.submissionId}-${attempt}`,
+			idempotencyKey: `priority-announcement-hosted-v1-${context.submissionId}-${attempt}`,
 		});
 		if (!session.url) {
 			throw new Error("CHECKOUT_URL_MISSING");

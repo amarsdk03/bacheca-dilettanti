@@ -36,14 +36,13 @@ These parameters were configured in Checkout Studio and are already set in the C
 | `automatic_tax.enabled` | `false` |
 | `allow_promotion_codes` | `true` |
 | `submit_type` | `auto` |
-| `consent_collection.promotions` | `auto` |
 | `integration_identifier` | `hosted_web_0001` |
 | `origin_context` | `web` |
 | `success_url` | `/pubblica-annuncio/pagamento?id=<announcement>&result=success&session_id={CHECKOUT_SESSION_ID}` |
 | `cancel_url` | `/pubblica-annuncio/pagamento?id=<announcement>&result=cancel` |
 | `line_items` | One unit of `STRIPE_ANNUNCIO_PRIORITARIO_PRICE_ID` |
 
-`payment_method_collection` is intentionally omitted because this is a one-time payment. `client_reference_id` and server-generated metadata associate every Session and webhook event with the owned announcement submission.
+`consent_collection` is intentionally omitted because Stripe rejects the promotions option for the account country; sending `promotions: "none"` still sends the unsupported parameter. `payment_method_collection` is omitted because this is a one-time payment. `client_reference_id` and server-generated metadata associate every Session and webhook event with the owned announcement submission.
 
 ## Setup and next steps
 
