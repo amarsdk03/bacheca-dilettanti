@@ -110,7 +110,7 @@ export async function POST(request: Request) {
 			automatic_tax: {enabled: false},
 			allow_promotion_codes: true,
 			submit_type: "auto",
-			consent_collection: {promotions: "auto"},
+			consent_collection: {promotions: "none"},
 			integration_identifier: PRIORITY_CHECKOUT_INTEGRATION_IDENTIFIER,
 			origin_context: "web",
 			success_url: successUrlWithSessionPlaceholder,
