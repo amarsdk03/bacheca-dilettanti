@@ -264,7 +264,7 @@ const profileCategories: ProfileCategory[] = [
 /* ------------------------------------------------------------------ */
 
 const priorityRows: PriceRow[] = [
-	{name: 'Annuncio prioritario', duration: '7 giorni', price: '7,90 EUR', details: "L'annuncio entra in rotazione con priorità rispetto alla lista standard."},
+	{name: 'Annuncio prioritario', duration: '7 giorni', price: '7,99 EUR', details: "L'annuncio entra in rotazione con priorità rispetto alla lista standard."},
 	{name: 'Pacchetto 2 annunci', duration: '7 giorni', price: '15,80 EUR', details: 'Due annunci prioritari attivati insieme per lo stesso periodo.'},
 	{name: 'Pacchetto 3 annunci', duration: '7 giorni', price: '19,90 EUR', details: 'Tre annunci prioritari con esposizione coordinata a rotazione.'},
 	{name: 'Annuncio prioritario', duration: '30 giorni', price: '29,90 EUR', details: 'Soluzione singola per un mese di maggiore esposizione.'},
@@ -582,7 +582,7 @@ export default function Visibilita() {
 							eyebrow="Pacchetti Instagram + WhatsApp"
 							icon={Sparkles}
 							title="Promozione editoriale e rilancio sui canali"
-							description="Ogni pacchetto combina produzione, revisione e distribuzione sui canali più coerenti con il contenuto. Il credito visibilità web ha un valore interno orientativo di 7,90 EUR."
+							description="Ogni pacchetto combina produzione, revisione e distribuzione sui canali più coerenti con il contenuto. Il credito visibilità web ha un valore interno orientativo di 7,99 EUR."
 						/>
 
 						<div className="mt-8">

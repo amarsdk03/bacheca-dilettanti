@@ -203,7 +203,7 @@ export const PIANI_VISIBILITA = {
 		campi: [{valore: "campi-base", nome: "Base gestori di campi", prezzo: "4,90 EUR / mese", descrizione: "Presenza nella ricerca locale con servizi, prezzi, prenotazioni e filtri.", caratteristiche: ["Presenza nella sezione Campi in affitto nella tua zona", "Servizi e prezzi del campo", "Link di prenotazione", "Filtri nella ricerca per tipologia e territorio", "Possibile pagina con disponibilità orarie e prenotazioni dirette"]}],
 	},
 	annunciPrioritari: [
-		{valore: "prioritario-1-7", nome: "Annuncio prioritario", durata: "7 giorni", prezzo: "7,90 EUR", descrizione: "L'annuncio entra in rotazione con priorità rispetto alla lista standard."},
+		{valore: "prioritario-1-7", nome: "Annuncio prioritario", durata: "7 giorni", prezzo: "7,99 EUR", descrizione: "L'annuncio entra in rotazione con priorità rispetto alla lista standard."},
 		{valore: "prioritario-2-7", nome: "Pacchetto 2 annunci", durata: "7 giorni", prezzo: "15,80 EUR", descrizione: "Due annunci prioritari attivati insieme per lo stesso periodo."},
 		{valore: "prioritario-3-7", nome: "Pacchetto 3 annunci", durata: "7 giorni", prezzo: "19,90 EUR", descrizione: "Tre annunci prioritari con esposizione coordinata a rotazione."},
 		{valore: "prioritario-1-30", nome: "Annuncio prioritario", durata: "30 giorni", prezzo: "29,90 EUR", descrizione: "Soluzione singola per un mese di maggiore esposizione."},

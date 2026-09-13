@@ -14,7 +14,7 @@ The following server-side values must be configured before the hosted Checkout c
 |-------|---------------|-------------|
 | `STRIPE_SECRET_KEY` | Empty or test placeholder | A Stripe sandbox secret key for testing and the corresponding live secret key in production. Keep it server-only. |
 | `STRIPE_WEBHOOK_SECRET` | Empty or `whsec_...` placeholder | The signing secret of the webhook endpoint for the current environment. |
-| `STRIPE_ANNUNCIO_PRIORITARIO_PRICE_ID` | Empty or `price_...` placeholder | The one-time EUR Price ID for **Annuncio prioritario**, with a base amount of **7.90 EUR**. |
+| `STRIPE_ANNUNCIO_PRIORITARIO_PRICE_ID` | Empty or `price_...` placeholder | The one-time EUR Price ID for **Annuncio prioritario**, with a base amount of **7.99 EUR**. |
 | `NEXT_PUBLIC_SITE_URL` | Local development origin or missing | The canonical origin of each deployment, without a path, for example `https://example.com`. |
 
 `success_url` and `cancel_url` are built from `NEXT_PUBLIC_SITE_URL`; they are real application routes rather than placeholders. The Checkout mode is the configured one-time `payment` mode. A browser publishable key is no longer needed by Hosted Checkout.
@@ -46,7 +46,7 @@ These parameters were configured in Checkout Studio and are already set in the C
 
 ## Setup and next steps
 
-1. In a Stripe sandbox, create the product **Annuncio prioritario** with a one-time Price whose base amount is **7.90 EUR**. Set its `price_...` ID in `STRIPE_ANNUNCIO_PRIORITARIO_PRICE_ID`.
+1. In a Stripe sandbox, create the product **Annuncio prioritario** with a one-time Price whose base amount is **7.99 EUR**. Set its `price_...` ID in `STRIPE_ANNUNCIO_PRIORITARIO_PRICE_ID`.
 2. Configure `NEXT_PUBLIC_SITE_URL`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET` separately in local, preview, and production environments. Never expose the secret key through a `NEXT_PUBLIC_` variable.
 3. Apply [supabase/migrations/20260911120000_priority_announcement_checkout.sql](supabase/migrations/20260911120000_priority_announcement_checkout.sql) before enabling priority announcements. It contains the private Checkout receipt, discounted totals, lifecycle trigger, and priority-expiry job.
 4. Create a webhook endpoint at `https://<production-domain>/api/stripe/webhook` and subscribe it to:
@@ -58,7 +58,7 @@ These parameters were configured in Checkout Studio and are already set in the C
    - `refund.updated`
    - `refund.failed`
 5. For local webhook testing, forward Stripe CLI events to `http://localhost:3000/api/stripe/webhook` and use the temporary signing secret printed by the CLI.
-6. Configure any promotion codes in the same Stripe account. The application verifies the 7.90 EUR subtotal and records the total after discounts.
+6. Configure any promotion codes in the same Stripe account. The application verifies the 7.99 EUR subtotal and records the total after discounts.
 
 ## Project structure
 
@@ -92,7 +92,7 @@ Use any future expiry date, any three-digit CVC, and a valid postal code. Also v
 
 The private `announcement_submission` receipt stores the Checkout Session, PaymentIntent, Price, subtotal, charged total, statuses, timestamps, and refund state. Keep these rows for reconciliation.
 
-If a paid announcement is rejected or deleted before priority starts, `refund_required_at` marks it for a manual full refund. Refund the **actual charged total** stored for that receipt, which can be lower than 7.90 EUR after a promotion. A fully discounted order requires no refund. The signed `refund.*` webhook records a refund as complete only when its amount matches the recorded charge.
+If a paid announcement is rejected or deleted before priority starts, `refund_required_at` marks it for a manual full refund. Refund the **actual charged total** stored for that receipt, which can be lower than 7.99 EUR after a promotion. A fully discounted order requires no refund. The signed `refund.*` webhook records a refund as complete only when its amount matches the recorded charge.
 
 Before going live, replace sandbox credentials with live credentials, use the live Price ID, register the live webhook endpoint, and complete one real low-value end-to-end payment and refund test. Add automated fulfillment monitoring or an administrative queue for rows with `refund_required_at` and no `refunded_at`.
 

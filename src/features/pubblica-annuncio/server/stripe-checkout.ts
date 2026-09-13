@@ -8,7 +8,7 @@ import {createClient} from "@/lib/supabase/server";
 export const PRIORITY_CHECKOUT_INTEGRATION_IDENTIFIER = "hosted_web_0001";
 const LEGACY_PRIORITY_CHECKOUT_INTEGRATION_IDENTIFIER = "custom_embedded_web_0001";
 export const PRIORITY_CHECKOUT_ASYNC_PAYMENT_FAILED_STATUS = "async_payment_failed";
-export const PRIORITY_PRICE_EUR_CENTS = 790;
+export const PRIORITY_PRICE_EUR_CENTS = 799;
 // export const PRIORITY_DURATION_DAYS = 7;
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -17,6 +17,13 @@ export class StripeCheckoutConfigurationError extends Error {
 	constructor(message: string) {
 		super(message);
 		this.name = "StripeCheckoutConfigurationError";
+	}
+}
+
+export class StripeCheckoutPriceError extends StripeCheckoutConfigurationError {
+	constructor(message: string) {
+		super(message);
+		this.name = "StripeCheckoutPriceError";
 	}
 }
 
@@ -87,6 +94,20 @@ export function getPriorityPriceId() {
 		throw new StripeCheckoutConfigurationError("STRIPE_ANNUNCIO_PRIORITARIO_PRICE_ID non è configurato.");
 	}
 	return priceId;
+}
+
+export async function validatePriorityPrice(stripe: Stripe, priceId: string) {
+	const price = await stripe.prices.retrieve(priceId);
+	if (
+		!price.active
+		|| price.type !== "one_time"
+		|| price.currency.toLowerCase() !== "eur"
+		|| price.unit_amount !== PRIORITY_PRICE_EUR_CENTS
+	) {
+		throw new StripeCheckoutPriceError(
+			"Il Price Stripe di Annuncio prioritario deve essere attivo, una tantum e pari a 7,99 EUR.",
+		);
+	}
 }
 
 export async function getOwnedPriorityCheckoutContext(

@@ -12,7 +12,9 @@ import {
 	recordPriorityCheckoutSession,
 	StripeCheckoutConfigurationError,
 	StripeCheckoutMismatchError,
+	StripeCheckoutPriceError,
 	syncPriorityCheckoutSession,
+	validatePriorityPrice,
 } from "@/features/pubblica-annuncio/server/stripe-checkout";
 
 export const runtime = "nodejs";
@@ -65,29 +67,37 @@ export async function POST(request: Request) {
 
 		const stripe = getStripeClient();
 		const priceId = getPriorityPriceId();
+		await validatePriorityPrice(stripe, priceId);
 
 		if (
 			context.checkoutSessionId
 			&& context.checkoutStatus !== PRIORITY_CHECKOUT_ASYNC_PAYMENT_FAILED_STATUS
 		) {
 			const existingSession = await stripe.checkout.sessions.retrieve(context.checkoutSessionId);
-			const syncResult = await syncPriorityCheckoutSession(existingSession, {expected: context});
-			if (syncResult.paid) {
-				return redirect(new URL(
-					`/pubblica-annuncio/conferma?id=${encodeURIComponent(context.announcementId)}`,
-					getCheckoutSiteUrl(),
-				));
-			}
-			if (existingSession.status === "open" && existingSession.url) {
-				return redirect(existingSession.url);
-			}
-			if (existingSession.status === "open") {
+			try {
+				const syncResult = await syncPriorityCheckoutSession(existingSession, {expected: context});
+				if (syncResult.paid) {
+					return redirect(new URL(
+						`/pubblica-annuncio/conferma?id=${encodeURIComponent(context.announcementId)}`,
+						getCheckoutSiteUrl(),
+					));
+				}
+				if (existingSession.status === "open" && existingSession.url) {
+					return redirect(existingSession.url);
+				}
+				if (existingSession.status === "open") {
+					await stripe.checkout.sessions.expire(existingSession.id);
+				}
+				if (existingSession.status === "complete") {
+					const url = paymentPageUrl(request, announcementId, "processing");
+					url.searchParams.set("session_id", existingSession.id);
+					return redirect(url);
+				}
+			} catch (error) {
+				if (!(error instanceof StripeCheckoutMismatchError) || existingSession.status !== "open") {
+					throw error;
+				}
 				await stripe.checkout.sessions.expire(existingSession.id);
-			}
-			if (existingSession.status === "complete") {
-				const url = paymentPageUrl(request, announcementId, "processing");
-				url.searchParams.set("session_id", existingSession.id);
-				return redirect(url);
 			}
 		}
 
@@ -124,7 +134,7 @@ export async function POST(request: Request) {
 		};
 
 		const session = await stripe.checkout.sessions.create(sessionParams, {
-			idempotencyKey: `priority-announcement-hosted-v1-${context.submissionId}-${attempt}`,
+			idempotencyKey: `priority-announcement-hosted-v1-${context.submissionId}-${priceId}-${attempt}`,
 		});
 		if (!session.url) {
 			throw new Error("CHECKOUT_URL_MISSING");
@@ -133,6 +143,10 @@ export async function POST(request: Request) {
 		await recordPriorityCheckoutSession(context, session, priceId, attempt);
 		return redirect(session.url);
 	} catch (error) {
+		if (error instanceof StripeCheckoutPriceError) {
+			console.error("[priority-checkout] Stripe Price invalid", {message: error.message});
+			return redirect(paymentPageUrl(request, announcementId, "error", "price"));
+		}
 		if (error instanceof StripeCheckoutConfigurationError) {
 			console.error("[priority-checkout] Stripe configuration missing", {message: error.message});
 			return redirect(paymentPageUrl(request, announcementId, "error", "configuration"));

@@ -17,6 +17,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 	invalid: "Il collegamento non contiene un annuncio valido.",
 	mismatch: "La sessione di pagamento non corrisponde a questa bozza.",
 	"not-found": "La bozza prioritaria non è disponibile o non appartiene alla sessione attiva.",
+	price: "Il prodotto Stripe non è configurato al prezzo previsto di 7,99 EUR.",
 	refunded: "Il pagamento di questo annuncio è già stato rimborsato.",
 	server: "Non è stato possibile preparare il pagamento. Riprova tra poco.",
 };

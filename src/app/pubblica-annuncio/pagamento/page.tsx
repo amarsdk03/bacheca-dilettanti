@@ -52,7 +52,7 @@ export default async function Page({
 					<div className="text-center">
 						<div className="mx-auto flex size-14 items-center justify-center rounded-full bg-brand-indigo/10 text-brand-indigo"><CrownIcon className="size-7" /></div>
 						<h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Annuncio prioritario</h1>
-						<p className="mt-2 text-muted-foreground">Completa il pagamento sicuro di 7,90 EUR.</p>
+						<p className="mt-2 text-muted-foreground">Completa il pagamento sicuro di 7,99 EUR.</p>
 					</div>
 
 					<Card>

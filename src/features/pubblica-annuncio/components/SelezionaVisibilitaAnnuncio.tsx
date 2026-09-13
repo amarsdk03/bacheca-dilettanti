@@ -25,7 +25,7 @@ const VISIBILITY_OPTIONS = [
 	{
 		value: "prioritario",
 		label: "Annuncio prioritario",
-		price: "7,90 EUR",
+		price: "7,99 EUR",
 		description: "Dopo il pagamento, l’annuncio entra in revisione e avrà priorità per 7 giorni dall’approvazione.",
 		icon: CrownIcon,
 	},

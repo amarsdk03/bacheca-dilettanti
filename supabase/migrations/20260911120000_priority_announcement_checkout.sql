@@ -550,7 +550,7 @@ begin
     where announcement_id = old.uuid
       and requested_visibility = 'prioritario'
       and paid_at is not null
-      and coalesce(stripe_amount_total, 790) > 0
+      and coalesce(stripe_amount_total, 799) > 0
       and refunded_at is null
       and old.priorita_inizio_il is null;
     return old;
@@ -586,7 +586,7 @@ begin
     where announcement_id = new.uuid
       and requested_visibility = 'prioritario'
       and paid_at is not null
-      and coalesce(stripe_amount_total, 790) > 0
+      and coalesce(stripe_amount_total, 799) > 0
       and refunded_at is null
       and old.priorita_inizio_il is null;
 
