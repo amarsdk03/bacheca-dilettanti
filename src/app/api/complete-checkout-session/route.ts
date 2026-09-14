@@ -7,6 +7,7 @@ import {
 	isValidAnnouncementId,
 	isValidCheckoutSessionId,
 	StripeCheckoutConfigurationError,
+	StripeCheckoutPersistenceError,
 	syncPriorityCheckoutSession,
 } from "@/features/pubblica-annuncio/server/stripe-checkout";
 
@@ -53,6 +54,9 @@ export async function POST(request: Request) {
 			announcement_id: result.announcementId,
 		});
 	} catch (error) {
+		if (error instanceof StripeCheckoutPersistenceError) {
+			return response({error: "La ricevuta Stripe non può essere aggiornata. Applica le migrazioni Supabase pendenti."}, 503);
+		}
 		if (error instanceof StripeCheckoutConfigurationError) {
 			return response({error: "Il pagamento non è ancora configurato. Consulta STRIPE_INTEGRATION_TODO.md."}, 503);
 		}

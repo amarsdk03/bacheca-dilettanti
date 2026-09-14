@@ -14,6 +14,7 @@ type CompletionState = "completed" | "failed" | "processing";
 
 const ERROR_MESSAGES: Record<string, string> = {
 	configuration: "Il pagamento non è ancora configurato. Consulta STRIPE_INTEGRATION_TODO.md.",
+	database: "La ricevuta Stripe non può essere registrata finché non vengono applicate le migrazioni Supabase pendenti.",
 	invalid: "Il collegamento non contiene un annuncio valido.",
 	mismatch: "La sessione di pagamento non corrisponde a questa bozza.",
 	"not-found": "La bozza prioritaria non è disponibile o non appartiene alla sessione attiva.",

@@ -48,7 +48,7 @@ These parameters were configured in Checkout Studio and are already set in the C
 
 1. In a Stripe sandbox, create the product **Annuncio prioritario** with a one-time Price whose base amount is **7.99 EUR**. Set its `price_...` ID in `STRIPE_ANNUNCIO_PRIORITARIO_PRICE_ID`.
 2. Configure `NEXT_PUBLIC_SITE_URL`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET` separately in local, preview, and production environments. Never expose the secret key through a `NEXT_PUBLIC_` variable.
-3. Apply [supabase/migrations/20260911120000_priority_announcement_checkout.sql](supabase/migrations/20260911120000_priority_announcement_checkout.sql) before enabling priority announcements. It contains the private Checkout receipt, discounted totals, lifecycle trigger, and priority-expiry job.
+3. Apply all pending Supabase migrations before enabling priority announcements. Existing databases need both [supabase/migrations/20260914130000_reconcile_priority_checkout_amount_rpc.sql](supabase/migrations/20260914130000_reconcile_priority_checkout_amount_rpc.sql) and [supabase/migrations/20260914140000_fix_priority_checkout_greatest.sql](supabase/migrations/20260914140000_fix_priority_checkout_greatest.sql); the latter fixes receipt registration after Stripe creates the hosted Session.
 4. Create a webhook endpoint at `https://<production-domain>/api/stripe/webhook` and subscribe it to:
    - `checkout.session.completed`
    - `checkout.session.async_payment_succeeded`
@@ -68,6 +68,8 @@ These parameters were configured in Checkout Studio and are already set in the C
 - `src/app/pubblica-annuncio/pagamento/page.tsx`: hosts redirect, cancellation, processing, failure, and retry states.
 - `src/features/pubblica-annuncio/components/PriorityCheckoutRedirect.tsx`: submits the redirect request and verifies the return without Stripe.js.
 - `src/features/pubblica-annuncio/server/stripe-checkout.ts`: owns the server-only Stripe client and reconciliation checks.
+- `supabase/migrations/20260914130000_reconcile_priority_checkout_amount_rpc.sql`: upgrades an existing database from the old receipt RPC signatures without replaying the original migration.
+- `supabase/migrations/20260914140000_fix_priority_checkout_greatest.sql`: fixes the receipt RPC on databases where the priority Checkout migration was already applied.
 
 ## How the integration works
 

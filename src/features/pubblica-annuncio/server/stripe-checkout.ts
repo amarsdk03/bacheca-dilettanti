@@ -34,6 +34,13 @@ export class StripeCheckoutMismatchError extends Error {
 	}
 }
 
+export class StripeCheckoutPersistenceError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "StripeCheckoutPersistenceError";
+	}
+}
+
 export interface PriorityCheckoutContext {
 	announcementId: string;
 	submissionId: string;
@@ -212,7 +219,7 @@ export async function recordPriorityCheckoutSession(
 	});
 	if (error) {
 		console.error("[priority-checkout] Session receipt update failed", {code: error.code});
-		throw new Error("PRIORITY_CHECKOUT_RECEIPT_FAILED");
+		throw new StripeCheckoutPersistenceError("PRIORITY_CHECKOUT_RECEIPT_FAILED");
 	}
 }
 
@@ -252,7 +259,7 @@ export async function syncPriorityCheckoutSession(
 	});
 	if (error) {
 		console.error("[priority-checkout] Checkout event update failed", {code: error.code});
-		throw new Error("PRIORITY_CHECKOUT_EVENT_FAILED");
+		throw new StripeCheckoutPersistenceError("PRIORITY_CHECKOUT_EVENT_FAILED");
 	}
 
 	const result = isRecord(data) ? data : {};
@@ -284,6 +291,6 @@ export async function syncPriorityRefund(refund: Stripe.Refund) {
 	});
 	if (error) {
 		console.error("[priority-checkout] Refund event update failed", {code: error.code});
-		throw new Error("PRIORITY_REFUND_EVENT_FAILED");
+		throw new StripeCheckoutPersistenceError("PRIORITY_REFUND_EVENT_FAILED");
 	}
 }

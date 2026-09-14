@@ -12,6 +12,7 @@ import {
 	recordPriorityCheckoutSession,
 	StripeCheckoutConfigurationError,
 	StripeCheckoutMismatchError,
+	StripeCheckoutPersistenceError,
 	StripeCheckoutPriceError,
 	syncPriorityCheckoutSession,
 	validatePriorityPrice,
@@ -146,6 +147,10 @@ export async function POST(request: Request) {
 		if (error instanceof StripeCheckoutPriceError) {
 			console.error("[priority-checkout] Stripe Price invalid", {message: error.message});
 			return redirect(paymentPageUrl(request, announcementId, "error", "price"));
+		}
+		if (error instanceof StripeCheckoutPersistenceError) {
+			console.error("[priority-checkout] Checkout receipt persistence failed", {message: error.message});
+			return redirect(paymentPageUrl(request, announcementId, "error", "database"));
 		}
 		if (error instanceof StripeCheckoutConfigurationError) {
 			console.error("[priority-checkout] Stripe configuration missing", {message: error.message});

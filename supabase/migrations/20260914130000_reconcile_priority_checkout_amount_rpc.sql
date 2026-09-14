@@ -1,244 +1,26 @@
-alter table public.annuncio
-  add column priorita_attiva boolean not null default false,
-  add column priorita_inizio_il timestamptz,
-  add column priorita_fine_il timestamptz;
-
-alter table public.annuncio
-  add constraint annuncio_priorita_periodo_check check (
-    priorita_fine_il is null
-    or (priorita_inizio_il is not null and priorita_fine_il > priorita_inizio_il)
-  ),
-  add constraint annuncio_priorita_attiva_check check (
-    not priorita_attiva
-    or (
-      livello_annuncio = 'prioritario'
-      and priorita_inizio_il is not null
-      and priorita_fine_il is not null
-      and stato_annuncio = 'pubblicato'
-    )
-  );
-
 alter table private.announcement_submission
-  add column requested_visibility text not null default 'gratuito',
-  add column requested_announcement_id uuid,
-  add column stripe_checkout_session_id text,
-  add column stripe_payment_intent_id text,
-  add column stripe_price_id text,
-  add column stripe_amount_subtotal integer,
-  add column stripe_amount_total integer,
-  add column stripe_checkout_status text,
-  add column stripe_payment_status text,
-  add column stripe_checkout_attempt integer not null default 0,
-  add column paid_at timestamptz,
-  add column refund_required_at timestamptz,
-  add column stripe_refund_id text,
-  add column stripe_refund_status text,
-  add column refunded_at timestamptz;
+  add column if not exists stripe_amount_subtotal integer,
+  add column if not exists stripe_amount_total integer;
 
-alter table private.announcement_submission
-  add constraint announcement_submission_visibility_check check (
-    requested_visibility in ('gratuito', 'prioritario')
-  ),
-  add constraint announcement_submission_checkout_attempt_check check (
-    stripe_checkout_attempt between 0 and 1000
-  ),
-  add constraint announcement_submission_stripe_amounts_check check (
-    (stripe_amount_subtotal is null and stripe_amount_total is null)
-    or (
-      stripe_amount_subtotal >= 0
-      and stripe_amount_total between 0 and stripe_amount_subtotal
-    )
-  ),
-  add constraint announcement_submission_paid_checkout_check check (
-    paid_at is null
-    or (
-      requested_visibility = 'prioritario'
-      and stripe_checkout_session_id is not null
-      and stripe_payment_status = 'paid'
-      and stripe_amount_subtotal is not null
-      and stripe_amount_total is not null
-    )
-  );
-
-create unique index announcement_submission_stripe_session_uidx
-  on private.announcement_submission (stripe_checkout_session_id)
-  where stripe_checkout_session_id is not null;
-
-create unique index announcement_submission_payment_intent_uidx
-  on private.announcement_submission (stripe_payment_intent_id)
-  where stripe_payment_intent_id is not null;
-
-create index announcement_submission_refund_required_idx
-  on private.announcement_submission (refund_required_at)
-  where refund_required_at is not null and refunded_at is null;
-
-create index annuncio_public_priority_order_idx
-  on public.annuncio (priorita_attiva desc, creato_il desc, uuid desc)
-  where stato_annuncio = 'pubblicato' and nascosto = false and privato = false;
-
-create or replace function public.publish_announcement_v2(
-  p_submission_id uuid,
-  p_payload jsonb,
-  p_terms_version text,
-  p_privacy_version text,
-  p_visibility text
-)
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  v_result jsonb;
-  v_announcement_id uuid;
-  v_existing_visibility text;
-  v_existing_paid_at timestamptz;
-  v_is_retry boolean;
-  v_legacy_payload jsonb;
+do $$
 begin
-  if p_visibility is null
-    or p_visibility not in ('gratuito', 'prioritario')
-    or p_payload is null
-    or pg_catalog.jsonb_typeof(p_payload) <> 'object'
-    or not private.publish_object_has_only_keys(
-      p_payload,
-      array[
-        'profile_type', 'announcement_type', 'profile_draft',
-        'profile_locations', 'profile_update', 'detail',
-        'announcement_locations', 'contacts', 'extras'
-      ],
-      array[
-        'profile_type', 'announcement_type', 'profile_draft',
-        'profile_locations', 'profile_update', 'detail',
-        'announcement_locations', 'contacts', 'extras'
-      ]
-    )
-    or pg_catalog.jsonb_typeof(p_payload -> 'extras') <> 'object' then
-    raise exception using errcode = '22023', message = 'INVALID_PUBLISH_PAYLOAD';
+  if not exists (
+    select 1
+    from pg_catalog.pg_constraint
+    where conname = 'announcement_submission_stripe_amounts_check'
+      and conrelid = 'private.announcement_submission'::regclass
+  ) then
+    alter table private.announcement_submission
+      add constraint announcement_submission_stripe_amounts_check check (
+        (stripe_amount_subtotal is null and stripe_amount_total is null)
+        or (
+          stripe_amount_subtotal >= 0
+          and stripe_amount_total between 0 and stripe_amount_subtotal
+        )
+      );
   end if;
-
-  v_legacy_payload := (p_payload - 'extras')
-    || pg_catalog.jsonb_build_object('premium', p_payload -> 'extras');
-
-  v_result := public.publish_announcement_v1(
-    p_submission_id,
-    v_legacy_payload,
-    p_terms_version,
-    p_privacy_version
-  );
-
-  if v_result ->> 'status' <> 'success' then
-    return v_result;
-  end if;
-
-  v_announcement_id := (v_result ->> 'announcementId')::uuid;
-  v_is_retry := coalesce((v_result ->> 'idempotent')::boolean, false);
-
-  select requested_visibility, paid_at
-  into v_existing_visibility, v_existing_paid_at
-  from private.announcement_submission
-  where submission_id = p_submission_id
-    and announcement_id = v_announcement_id
-  for update;
-
-  if not found then
-    raise exception using errcode = '55000', message = 'PUBLISH_RECEIPT_NOT_FOUND';
-  end if;
-
-  if v_is_retry and v_existing_visibility is distinct from p_visibility then
-    raise exception using errcode = '22023', message = 'SUBMISSION_VISIBILITY_CONFLICT';
-  end if;
-
-  if not v_is_retry then
-    update private.announcement_submission
-    set
-      requested_visibility = p_visibility,
-      requested_announcement_id = v_announcement_id,
-      anonymous_at_publish = case
-        when p_visibility = 'prioritario' then false
-        else anonymous_at_publish
-      end
-    where submission_id = p_submission_id;
-
-    if p_visibility = 'prioritario' then
-      update public.annuncio
-      set
-        livello_annuncio = 'prioritario',
-        stato_annuncio = 'in_attesa_pagamento',
-        info_stato_annuncio = 'Bozza salvata. Completa il pagamento per inviarla in revisione.',
-        nascosto = true,
-        privato = true,
-        priorita_attiva = false,
-        priorita_inizio_il = null,
-        priorita_fine_il = null,
-        ultima_modifica_il = pg_catalog.statement_timestamp()
-      where uuid = v_announcement_id;
-    end if;
-  end if;
-
-  return v_result || pg_catalog.jsonb_build_object(
-    'paymentRequired', p_visibility = 'prioritario' and v_existing_paid_at is null
-  );
 end;
 $$;
-
-revoke all on function public.publish_announcement_v2(uuid, jsonb, text, text, text)
-  from public, anon, authenticated, service_role;
-grant execute on function public.publish_announcement_v2(uuid, jsonb, text, text, text)
-  to authenticated;
-
-create or replace function public.get_owned_priority_checkout_v1(
-  p_announcement_id uuid
-)
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  v_auth_user_id uuid;
-  v_result jsonb;
-begin
-  v_auth_user_id := (select auth.uid());
-  if v_auth_user_id is null then
-    raise exception using errcode = '28000', message = 'AUTH_REQUIRED';
-  end if;
-
-  select pg_catalog.jsonb_build_object(
-    'status', 'ready',
-    'announcementId', submission.announcement_id,
-    'submissionId', submission.submission_id,
-    'checkoutSessionId', submission.stripe_checkout_session_id,
-    'checkoutStatus', submission.stripe_checkout_status,
-    'paymentStatus', submission.stripe_payment_status,
-    'checkoutAttempt', submission.stripe_checkout_attempt,
-    'paidAt', submission.paid_at,
-    'refundRequiredAt', submission.refund_required_at,
-    'refundedAt', submission.refunded_at,
-    'announcementStatus', announcement.stato_annuncio
-  )
-  into v_result
-  from private.announcement_submission as submission
-  join public.utente as app_user
-    on app_user.utente_uuid = submission.utente_id
-  join public.annuncio as announcement
-    on announcement.uuid = submission.announcement_id
-  where submission.announcement_id = p_announcement_id
-    and submission.requested_visibility = 'prioritario'
-    and app_user.auth_user_uuid = v_auth_user_id;
-
-  if not found then
-    return pg_catalog.jsonb_build_object('status', 'not_found');
-  end if;
-
-  return v_result;
-end;
-$$;
-
-revoke all on function public.get_owned_priority_checkout_v1(uuid)
-  from public, anon, authenticated, service_role;
-grant execute on function public.get_owned_priority_checkout_v1(uuid)
-  to authenticated;
 
 create or replace function public.record_priority_checkout_session_v1(
   p_announcement_id uuid,
@@ -600,45 +382,9 @@ $$;
 revoke all on function private.manage_priority_announcement_lifecycle_v1()
   from public, anon, authenticated, service_role;
 
-create trigger manage_priority_announcement_lifecycle_v1
-before update or delete on public.annuncio
-for each row execute function private.manage_priority_announcement_lifecycle_v1();
+comment on column private.announcement_submission.stripe_amount_subtotal is
+  'Importo Stripe prima di sconti e tasse, espresso nell''unità minima della valuta.';
+comment on column private.announcement_submission.stripe_amount_total is
+  'Importo Stripe effettivamente addebitato dopo sconti e tasse, espresso nell''unità minima della valuta.';
 
-create or replace function private.expire_priority_announcements_v1()
-returns bigint
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  v_count bigint;
-begin
-  update public.annuncio
-  set
-    livello_annuncio = 'gratuito',
-    priorita_attiva = false,
-    info_stato_annuncio = 'Il periodo prioritario di 7 giorni è terminato.',
-    ultima_modifica_il = pg_catalog.statement_timestamp()
-  where priorita_attiva
-    and priorita_fine_il <= pg_catalog.statement_timestamp();
-
-  get diagnostics v_count = row_count;
-  return v_count;
-end;
-$$;
-
-revoke all on function private.expire_priority_announcements_v1()
-  from public, anon, authenticated, service_role;
-
-create extension if not exists pg_cron with schema pg_catalog;
-
-select cron.schedule(
-  'expire-priority-announcements',
-  '* * * * *',
-  $cron$select private.expire_priority_announcements_v1();$cron$
-);
-
-comment on column public.annuncio.priorita_inizio_il is
-  'Inizio dei 7 giorni prioritari, impostato quando un annuncio pagato viene approvato.';
-comment on column private.announcement_submission.refund_required_at is
-  'Segnala un pagamento da rimborsare manualmente perché l’annuncio è stato rifiutato o eliminato prima dell’attivazione.';
+notify pgrst, 'reload schema';
