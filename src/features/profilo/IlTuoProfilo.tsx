@@ -105,6 +105,7 @@ import type {
 	ProfileEditorSavePayload,
 	ProfileMutationResult,
 } from "@/features/profilo/types";
+import {cn} from "@/lib/utils";
 import {Separator} from "@base-ui/react";
 
 const DASHBOARD_ITEMS = [
@@ -587,26 +588,53 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 	};
 
 	return (
-		<Card className={isHidden && !paymentPending ? "opacity-75" : undefined}>
-			<CardHeader className="border-b">
+		<Card className={cn("relative overflow-hidden border-black/8", isHidden && !paymentPending && "opacity-75")}>
+			<span className="absolute inset-x-0 top-0 h-1 bg-brand-indigo" aria-hidden="true" />
+			<CardHeader className="border-b border-black/8 pt-5">
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-					<div className="min-w-0">
-						<div className="mb-2 flex flex-wrap gap-2">
-							<Badge>{announcement.type}</Badge>
-							<Badge variant="outline">{announcement.subtype}</Badge>
-							<Badge variant={moderationVariant(announcement.moderationStatus)}>{moderationLabel(announcement.moderationStatus)}</Badge>
-							{announcement.level === "prioritario" && <Badge variant="secondary">Prioritario</Badge>}
-							{isHidden && !paymentPending && <Badge variant="secondary"><EyeOffIcon aria-hidden="true" /> Nascosto</Badge>}
+					<div className="flex min-w-0 gap-3">
+						<span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-indigo/10 text-brand-indigo">
+							<FileTextIcon className="size-5" aria-hidden="true" />
+						</span>
+						<div className="min-w-0">
+							<div className="mb-2 flex flex-wrap gap-1.5">
+								<Badge className="border-0 bg-brand-indigo/12 text-brand-indigo">{announcement.type}</Badge>
+								<Badge variant="outline">{announcement.subtype}</Badge>
+								<Badge variant={moderationVariant(announcement.moderationStatus)}>{moderationLabel(announcement.moderationStatus)}</Badge>
+								{announcement.level === "prioritario" && <Badge variant="secondary">Prioritario</Badge>}
+								{isHidden && !paymentPending && <Badge variant="secondary"><EyeOffIcon aria-hidden="true" /> Nascosto</Badge>}
+							</div>
+							<CardTitle className="wrap-anywhere text-lg leading-snug">{announcement.title}</CardTitle>
 						</div>
-						<CardTitle className="text-lg">{announcement.title}</CardTitle>
 					</div>
-					<span className="shrink-0 text-xs text-muted-foreground">{formatDate(announcement.createdAt)}</span>
+					<span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">{formatDate(announcement.createdAt)}</span>
 				</div>
 			</CardHeader>
-			<CardContent className="grid gap-3">
+			<CardContent className="grid gap-4">
 				<p className="leading-6 text-muted-foreground">{announcement.description}</p>
-				{announcement.moderationInfo && <p className="text-sm text-muted-foreground">{announcement.moderationInfo}</p>}
-				<div className="flex items-center gap-2 text-sm text-muted-foreground"><MapPinIcon aria-hidden="true" />{announcement.location}</div>
+				{announcement.moderationInfo && (
+					<p className="rounded-xl border border-brand-indigo/15 bg-brand-indigo/5 px-3 py-2.5 text-sm leading-6 text-foreground">
+						{announcement.moderationInfo}
+					</p>
+				)}
+				<dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+					<div className="rounded-xl border border-black/7 bg-muted/25 px-3 py-2.5">
+						<dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Stato</dt>
+						<dd className="mt-1 text-sm font-medium">{moderationLabel(announcement.moderationStatus)}</dd>
+					</div>
+					<div className="rounded-xl border border-black/7 bg-muted/25 px-3 py-2.5">
+						<dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Visibilità</dt>
+						<dd className="mt-1 text-sm font-medium">{isHidden ? "Nascosto" : "Visibile"}</dd>
+					</div>
+					<div className="min-w-0 rounded-xl border border-black/7 bg-muted/25 px-3 py-2.5">
+						<dt className="flex items-center gap-1 text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground"><MapPinIcon className="size-3.5 text-brand-indigo" aria-hidden="true" />Località</dt>
+						<dd className="mt-1 truncate text-sm font-medium" title={announcement.location}>{announcement.location}</dd>
+					</div>
+					<div className="rounded-xl border border-black/7 bg-muted/25 px-3 py-2.5">
+						<dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Pubblicato</dt>
+						<dd className="mt-1 text-sm font-medium">{formatDate(announcement.createdAt)}</dd>
+					</div>
+				</dl>
 			</CardContent>
 			<CardFooter className="flex flex-wrap justify-end gap-2">
 				{paymentPending ? (

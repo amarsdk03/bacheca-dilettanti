@@ -245,10 +245,6 @@ export function buildProfilesHref(
 	return suffix ? `/profili?${suffix}` : "/profili";
 }
 
-export function availabilityLabel(value: string | null | undefined) {
-	return PROFILE_FILTER_OPTIONS.disponibilita.find((option) => option.value === value)?.label ?? null;
-}
-
 export function normalizeDirectorySearchText(value: string) {
 	return value
 		.normalize("NFD")

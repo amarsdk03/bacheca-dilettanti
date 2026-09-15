@@ -20,6 +20,7 @@ import {
 	TIPOLOGIA_CALCIO_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import type {ProfileType} from "@/features/profilo/profile-model";
+import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 
 export const ANNOUNCEMENTS_PER_PAGE = 12;
 
@@ -273,6 +274,7 @@ export type AnnouncementFactKind =
 	| "availability"
 	| "car"
 	| "categories"
+	| "content"
 	| "compensation"
 	| "figures"
 	| "headquarters"
@@ -285,6 +287,7 @@ export type AnnouncementFactKind =
 	| "season"
 	| "sector"
 	| "services"
+	| "specializations"
 	| "time"
 	| "types";
 
@@ -304,6 +307,7 @@ export type AnnouncementAuthor =
 		verified: boolean;
 		presentation: string | null;
 		location: string;
+		locations: PublicProfileLocation[];
 		highlights: AnnouncementFact[];
 	}
 	| {
@@ -367,10 +371,16 @@ export interface AnnouncementContact {
 	href: string;
 }
 
+export interface AnnouncementPlayerRoles {
+	primaryRoles: string[];
+	secondaryRoles: string[];
+}
+
 export interface AnnouncementDetail extends AnnouncementDirectoryItem {
 	fields: AnnouncementDetailField[];
 	contacts: AnnouncementContact[];
 	contactsUnavailable: boolean;
+	playerRoles?: AnnouncementPlayerRoles;
 }
 
 export type AnnouncementDetailResult =

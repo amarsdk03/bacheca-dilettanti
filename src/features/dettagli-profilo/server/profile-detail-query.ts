@@ -2,17 +2,18 @@ import "server-only";
 
 import type {SupabaseClient} from "@supabase/supabase-js";
 
-import {availabilityLabel} from "@/features/profili/profile-directory-model";
+import {availabilityLabel} from "@/features/profilo/public-profile-display";
 import type {
 	ProfileDetail,
 	ProfileDetailField,
 	ProfileDetailResult,
-} from "@/features/profili/profile-detail-model";
-import {loadPublicProfileAnnouncements} from "@/features/profili/server/profile-announcements-query";
+	PlayerProfileData,
+} from "@/features/dettagli-profilo/profile-detail-model";
+import {loadPublicProfileAnnouncements} from "@/features/dettagli-profilo/server/profile-announcements-query";
 import {
 	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
+import {toPublicPlayerData} from "./player-profile-data";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database, Json} from "@/server/supabase";
@@ -20,14 +21,14 @@ import type {Database, Json} from "@/server/supabase";
 const NOT_SPECIFIED = "Non specificato";
 
 const PRIMARY_FIELD_LABELS = {
-	giocatore: ["Ruoli principali", "Tipologie sportive", "Località", "Disponibilità"],
-	squadra: ["Tipologie sportive", "Località", "Sede principale"],
-	"staff-sportivo": ["Figure professionali", "Località", "Disponibilità"],
-	"professionisti-studi": ["Figure professionali", "Specializzazioni", "Località", "Disponibilità"],
-	arbitro: ["Località", "Disponibilità"],
-	creators: ["Località", "Tipologia di contenuti"],
-	"torneo-evento": ["Tipologie sportive", "Località", "Sede principale"],
-	"campi-impianti-sportivi": ["Tipologie sportive", "Località", "Costo di partenza", "Servizi inclusi"],
+	giocatore: ["Ruoli principali", "Tipologie sportive", "Disponibilità"],
+	squadra: ["Tipologie sportive", "Sede principale"],
+	"staff-sportivo": ["Figure professionali", "Disponibilità"],
+	"professionisti-studi": ["Figure professionali", "Specializzazioni", "Disponibilità"],
+	arbitro: ["Disponibilità"],
+	creators: ["Tipologia di contenuti"],
+	"torneo-evento": ["Tipologie sportive", "Sede principale"],
+	"campi-impianti-sportivi": ["Tipologie sportive", "Costo di partenza", "Servizi inclusi"],
 } as const satisfies Record<ProfileType, readonly string[]>;
 
 const DAY_LABELS: Record<string, string> = {
@@ -45,6 +46,7 @@ interface ProfileContent {
 	title: string | null;
 	availability: string | null;
 	fields: ProfileDetailField[];
+	player?: PlayerProfileData;
 }
 
 type ProfileContentResult =
@@ -78,11 +80,6 @@ function formatList(value: unknown) {
 function asJsonRecord(value: Json | undefined): Record<string, Json | undefined> | null {
 	if (!value || Array.isArray(value) || typeof value !== "object") return null;
 	return value as Record<string, Json | undefined>;
-}
-
-function jsonStringArray(value: Json | null, key: string) {
-	const record = value ? asJsonRecord(value) : null;
-	return cleanStringArray(record?.[key]);
 }
 
 function jsonText(record: Record<string, Json | undefined>, key: string) {
@@ -173,11 +170,6 @@ function detailField(
 	};
 }
 
-function safeExternalUrl(value: unknown) {
-	const url = cleanText(value);
-	return url && isLinkAnnuncioValid(url) ? url : null;
-}
-
 function availabilityValue(value: string | null) {
 	return availabilityLabel(value) ?? NOT_SPECIFIED;
 }
@@ -199,7 +191,7 @@ async function loadProfileContent(
 		const [playerResult, mediaResult] = await Promise.all([
 			supabase
 				.from("profilo_giocatore")
-				.select("id, nome, cognome, sport_principale, tipologie_sport, categorie_ricercate, disponibilita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
+				.select("id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, tipologie_sport, categorie_ricercate, disponibilita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
 				.eq("uuid_profilo", id)
 				.eq("nascosto", false)
 				.maybeSingle(),
@@ -216,26 +208,14 @@ async function loadProfileContent(
 		if (mediaResult.error) return contentError(mediaResult.error.code);
 		const data = playerResult.data;
 		if (!data) return {status: "not-found"};
-		const highlightsUrl = safeExternalUrl(mediaResult.data?.link_media);
 		return {
 			status: "ok",
 			content: {
 				childId: data.id,
 				title: fullName(data.nome, data.cognome),
 				availability: data.disponibilita,
-				fields: [
-					detailField("Tipologie sportive", formatList(data.tipologie_sport)),
-					detailField("Ruoli principali", formatList(jsonStringArray(data.ruoli_sport, "principali"))),
-					detailField("Ruoli specifici", formatList(jsonStringArray(data.ruoli_sport, "specifici"))),
-					detailField("Categorie ricercate", formatList(data.categorie_ricercate)),
-					detailField("Disponibilità", availabilityValue(data.disponibilita)),
-					detailField("Piede principale", data.piede_principale),
-					detailField("Altezza (cm)", data.altezza),
-					detailField("Peso (kg)", data.peso),
-					detailField("Presentazione", data.presentazione, true),
-					detailField("Storico carriera", formatExperiences(data.storico_carriera), true),
-					detailField("Link video highlights", highlightsUrl, true, highlightsUrl ?? undefined),
-				],
+				fields: [],
+				player: toPublicPlayerData(data, mediaResult.data?.link_media),
 			},
 		};
 	}
@@ -422,12 +402,14 @@ function profileTypeLabel(type: ProfileType) {
 	return PROFILE_OPTIONS.find(({value}) => value === type)?.label ?? "Profilo";
 }
 
-function formatLocations(locations: ProfileLocation[], childId: number) {
+function publicLocations(locations: ProfileLocation[], childId: number) {
 	const values = locations
-		.filter((location) => location.id_sottoprofilo === childId)
-		.map((location) => [cleanText(location.citta), cleanText(location.regione)].filter(Boolean).join(", "))
-		.filter(Boolean);
-	return [...new Set(values)].join("\n") || NOT_SPECIFIED;
+		.filter((location) => location.id_sottoprofilo === null || location.id_sottoprofilo === childId)
+		.map((location) => ({region: cleanText(location.regione), city: cleanText(location.citta)}))
+		.filter((location): location is {region: string; city: string | null} => Boolean(location.region));
+	return values.filter((location, index, all) =>
+		all.findIndex((candidate) => candidate.region === location.region && candidate.city === location.city) === index,
+	);
 }
 
 function splitProfileFields(type: ProfileType, fields: ProfileDetailField[]) {
@@ -446,7 +428,8 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 	try {
 		const supabase = createAdminClient();
 		// This client bypasses owner-only RLS. Every select below is an explicit
-		// public allowlist: never add identity, contact, notes or birth-date fields.
+		// public allowlist. Player birth-date parts are read only to compute age
+		// in toPublicPlayerData; never return those parts, private identity, contacts or notes.
 		const baseProfilePromise = supabase
 			.from("profilo")
 			.select("uuid, link_foto_profilo, verificato_il, tipologia_principale")
@@ -485,30 +468,30 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 
 		const {content} = contentResult;
 		const typeLabel = profileTypeLabel(type);
-		const locationField = detailField(
-			"Località",
-			formatLocations(locationsResult.data ?? [], content.childId),
-			true,
-		);
-		const [firstField, ...remainingFields] = content.fields;
-		const fields = firstField
-			? [firstField, locationField, ...remainingFields]
-			: [locationField];
-		const splitFields = splitProfileFields(type, fields);
-		const profile: ProfileDetail = {
+		const locations = publicLocations(locationsResult.data ?? [], content.childId);
+		const splitFields = splitProfileFields(type, content.fields);
+		const common = {
 			id: baseResult.data.uuid,
-			type,
 			title: content.title ?? `Profilo ${typeLabel.toLocaleLowerCase("it-IT")}`,
 			imageUrl: cleanText(baseResult.data.link_foto_profilo),
 			verified: Boolean(baseResult.data.verificato_il),
 			primary: baseResult.data.tipologia_principale === type,
 			availabilityLabel: availabilityLabel(content.availability),
-			primaryFields: splitFields.primaryFields,
-			fields: splitFields.fields,
 			announcements: announcementsResult.announcements,
 			announcementsUnavailable: announcementsResult.unavailable,
 		};
 
+		if (type === "giocatore") {
+			if (!content.player) return {status: "error"};
+			return {status: "ok", profile: {
+				...common,
+				type,
+				player: content.player,
+				locations,
+			}};
+		}
+
+		const profile: ProfileDetail = {...common, type, locations, ...splitFields};
 		return {status: "ok", profile};
 	} catch (error) {
 		console.error("[dettagli-profilo] Profile lookup unavailable", {

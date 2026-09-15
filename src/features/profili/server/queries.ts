@@ -1,9 +1,10 @@
 import "server-only";
 
+import {availabilityLabel} from "@/features/profilo/public-profile-display";
+
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
-	availabilityLabel,
 	normalizeDirectorySearchText,
 	PROFILE_DIRECTORY_PAGE_SIZE,
 	type DirectoryProfile,

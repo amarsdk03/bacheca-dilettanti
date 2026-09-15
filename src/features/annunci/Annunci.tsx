@@ -2,10 +2,7 @@ import Link from "next/link";
 import {
 	ArrowLeftIcon,
 	ArrowRightIcon,
-	CalendarDaysIcon,
 	InfoIcon,
-	ListChecksIcon,
-	MapPinIcon,
 	SearchIcon,
 	SlidersHorizontalIcon,
 } from "lucide-react";
@@ -14,14 +11,6 @@ import GradientBackground from "@/components/styling/GradientBackground";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
 import {Button, buttonVariants} from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import {
 	Empty,
 	EmptyContent,
@@ -55,25 +44,22 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
-import AnnouncementAuthorHoverCard from "@/features/annunci/AnnouncementAuthorHoverCard";
+import AnnouncementCard from "@/features/annunci/components/cards/AnnouncementCard";
 import AnnouncementFiltersResetButton from "@/features/annunci/AnnouncementFiltersResetButton";
 import {
 	ANNOUNCEMENT_FILTER_OPTIONS,
 	ANNOUNCEMENT_TEAM_SEARCH_OPTIONS,
 	announcementDirectoryOption,
-	announcementOption,
 	buildAnnouncementsHref,
 	createEmptyAnnouncementFilters,
 	getActiveAnnouncementFilterCount,
 	getAnnouncementFiltersForDirectoryType,
 	getAnnouncementFilterEntries,
-	type AnnouncementDirectoryItem,
 	type AnnouncementDirectoryQuery,
 	type AnnouncementDirectoryResult,
 	type AnnouncementDirectoryType,
 } from "@/features/annunci/announcement-model";
 import AnnouncementTypeSelector from "@/features/annunci/AnnouncementTypeSelector";
-import {cn} from "@/lib/utils";
 import Image from "next/image";
 
 interface AnnunciProps {
@@ -87,28 +73,6 @@ interface FilterSelectOption {
 }
 
 type AnnouncementFilterParam = keyof AnnouncementDirectoryQuery["filters"];
-
-const ANNOUNCEMENT_DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {
-	day: "numeric",
-	month: "short",
-	timeZone: "Europe/Rome",
-	year: "numeric",
-});
-
-function formatAnnouncementDate(value: string | null) {
-	if (!value) return "Data non disponibile";
-	const date = new Date(value);
-	return Number.isNaN(date.getTime())
-		? "Data non disponibile"
-		: ANNOUNCEMENT_DATE_FORMATTER.format(date);
-}
-
-function humanizeValue(value: string) {
-	const normalized = value.trim().replaceAll("_", " ").replaceAll("-", " ");
-	return normalized
-		? normalized.charAt(0).toLocaleUpperCase("it-IT") + normalized.slice(1)
-		: value;
-}
 
 function AnnouncementQueryHiddenFields({
 	query,
@@ -415,83 +379,6 @@ function AnnouncementFiltersSheet({query}: {query: AnnouncementDirectoryQuery}) 
 				</div>
 			</SheetContent>
 		</Sheet>
-	);
-}
-
-function AnnouncementCard({announcement}: {announcement: AnnouncementDirectoryItem}) {
-	const option = announcementOption(announcement.type);
-	const TypeIcon = option.icon;
-	const detailParams = new URLSearchParams({id: announcement.id});
-	const detailHref = `/dettagli-annuncio?${detailParams.toString()}`;
-	const formattedDate = formatAnnouncementDate(announcement.createdAt);
-	const hasLocationFact = announcement.facts.some(({kind}) => kind === "location");
-
-	return (
-		<Card className="group relative h-full transition duration-200 focus-within:ring-3 focus-within:ring-ring/50 hover:-translate-y-0.5 hover:ring-fuchsia-300 hover:shadow-lg">
-			<Link
-				href={detailHref}
-				className="absolute inset-0 rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-				aria-label={`Apri l'annuncio: ${announcement.title}`}
-			/>
-			<CardHeader className="pointer-events-none relative">
-				<div className="mb-1 flex flex-wrap items-center gap-1.5">
-					<Badge variant="outline" className="border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700">
-						<TypeIcon data-icon="inline-start" aria-hidden="true" />
-						{announcement.typeLabel}
-					</Badge>
-					{announcement.level && (
-						<Badge variant="secondary">{humanizeValue(announcement.level)}</Badge>
-					)}
-				</div>
-				<CardTitle className="text-lg"><h3>{announcement.title}</h3></CardTitle>
-				<CardDescription className="mt-1 min-h-10 line-clamp-3">
-					{announcement.description ?? "Informazioni aggiuntive non disponibili"}
-				</CardDescription>
-			</CardHeader>
-
-			<CardContent className="pointer-events-none relative mt-auto">
-				<dl className="grid grid-cols-2 gap-2 text-sm">
-					{announcement.facts.slice(0, 4).map(({kind, label, value}) => (
-						<div key={`${kind}:${label}`} className="min-w-0 rounded-lg bg-muted/50 p-3">
-							<dt className="flex items-center gap-1.5 text-xs text-muted-foreground [&>svg]:size-3.5">
-								<ListChecksIcon aria-hidden="true" />
-								<span>{label}</span>
-							</dt>
-							<dd className="mt-1 truncate font-medium text-foreground" title={value}>{value}</dd>
-						</div>
-					))}
-				</dl>
-				<div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground [&_svg]:size-3.5">
-					{!hasLocationFact && (
-						<span className="flex items-center gap-1.5">
-							<MapPinIcon aria-hidden="true" />
-							<span className="line-clamp-1">{announcement.location}</span>
-						</span>
-					)}
-					{announcement.createdAt ? (
-						<time dateTime={announcement.createdAt} className="flex items-center gap-1.5">
-							<CalendarDaysIcon aria-hidden="true" />
-							{formattedDate}
-						</time>
-					) : (
-						<span className="flex items-center gap-1.5">
-							<CalendarDaysIcon aria-hidden="true" />
-							{formattedDate}
-						</span>
-					)}
-				</div>
-			</CardContent>
-
-			<CardFooter className="pointer-events-none relative justify-between gap-3">
-				<div className="pointer-events-auto min-w-0 flex-1">
-					<AnnouncementAuthorHoverCard author={announcement.author} />
-				</div>
-				<span className={cn(buttonVariants({size: "sm", variant: "outline"}), "pointer-events-none")}>
-					Apri
-					<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-				</span>
-			</CardFooter>
-		</Card>
 	);
 }
 

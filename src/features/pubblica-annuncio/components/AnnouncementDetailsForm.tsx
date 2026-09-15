@@ -394,7 +394,7 @@ export default function AnnouncementDetailsForm({
 							idPrefix="announcement-highlights"
 							label="Link video highlights"
 							placeholder="https://youtu.be/dQEemdsoLDM"
-							description="Inserisci un link social a un tuo video highlights"
+							description="Inserisci il link pubblico a un video con le tue azioni migliori"
 							value={extras.videoHighlights}
 							onValueChange={(videoHighlights) => onExtrasChange((previous) => ({...previous, videoHighlights}))}
 							error={errors.videoHighlights}

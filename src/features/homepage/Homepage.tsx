@@ -186,8 +186,14 @@ async function LatestOpportunitiesContent() {
 										<ProfilePngIcon type={announcement.profileType} color={accent} className="size-5" />
 										<span className="sr-only">{PROFILE_LABELS[announcement.profileType]}</span>
 									</span>
-									<span className="col-span-2 col-start-1 row-start-2 min-w-0 text-sm font-bold leading-5 sm:col-span-1 sm:col-start-2 sm:row-start-1">
-										<span className="line-clamp-2">{announcement.title}</span>
+									<span className="col-span-2 col-start-1 row-start-2 min-w-0 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+										<span
+											className="mb-0.5 block text-[0.63rem] font-bold uppercase tracking-[0.12em]"
+											style={{color: accent}}
+										>
+											{PROFILE_LABELS[announcement.profileType]}
+										</span>
+										<span className="line-clamp-2 text-sm font-bold leading-5">{announcement.title}</span>
 									</span>
 									<span className="col-span-2 col-start-1 row-start-3 inline-flex min-w-0 items-center gap-1.5 text-xs text-neutral-600 sm:col-start-2 sm:row-start-2 xl:col-span-1 xl:col-start-3 xl:row-start-1">
 										<MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />

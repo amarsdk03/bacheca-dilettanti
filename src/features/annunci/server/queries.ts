@@ -20,6 +20,7 @@ import {
 	type AnnouncementDirectoryResult,
 	type AnnouncementFact,
 	type AnnouncementFactKind,
+	type AnnouncementPlayerRoles,
 	type AnnouncementType,
 	type LatestAnnouncementsResult,
 } from "@/features/annunci/announcement-model";
@@ -35,7 +36,9 @@ const PROFILE_TABLE_BY_TYPE: Partial<Record<ProfileType, string>> = {
 	giocatore: "profilo_giocatore",
 	squadra: "profilo_squadra",
 	"staff-sportivo": "profilo_staff_sportivo",
+	"professionisti-studi": "profilo_professionista_studente",
 	arbitro: "profilo_arbitro",
+	creators: "profilo_creator",
 	"torneo-evento": "profilo_torneo_evento",
 	"campi-impianti-sportivi": "profilo_campi_impianti",
 };
@@ -44,7 +47,9 @@ const ANONYMOUS_LABEL_BY_PROFILE: Partial<Record<ProfileType, string>> = {
 	giocatore: "Giocatore anonimo",
 	squadra: "Squadra anonima",
 	"staff-sportivo": "Staff sportivo anonimo",
+	"professionisti-studi": "Professionista anonimo",
 	arbitro: "Arbitro anonimo",
+	creators: "Creator anonimo",
 	"torneo-evento": "Torneo / evento anonimo",
 	"campi-impianti-sportivi": "Campo / impianto anonimo",
 };
@@ -94,7 +99,9 @@ function officialAuthorQuery(supabase: SupabaseClient<Database>) {
 			profilo_giocatore(id, nascosto, nome, cognome, disponibilita, presentazione, ruoli_sport, tipologie_sport, categorie_ricercate),
 			profilo_squadra(id, nascosto, nome_societa, presentazione, sede_principale, tipologie_sport),
 			profilo_staff_sportivo(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione),
+			profilo_professionista_studente(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, presentazione_servizi, specializzazioni, tipologie_sport),
 			profilo_arbitro(id, nascosto, nome, cognome, disponibilita, presentazione),
+			profilo_creator(id, nascosto, nome_creator, presentazione, tipologia_contenuti),
 			profilo_torneo_evento(id, nascosto, nome_organizzazione, presentazione, sede_principale, tipologie_sport),
 			profilo_campi_impianti(id, nascosto, nome_organizzazione, presentazione, sede_principale, tipologie_sport, costo_partenza, servizi_inclusi)
 		`)
@@ -123,6 +130,7 @@ interface AnnouncementFilterData {
 interface MappedAnnouncement {
 	item: AnnouncementDirectoryItem;
 	fields: AnnouncementDetailField[];
+	playerRoles: AnnouncementPlayerRoles | null;
 	filterData: AnnouncementFilterData;
 	searchText: string;
 	authorId: string | null;
@@ -340,6 +348,7 @@ function announcementContent(
 	let facts: AnnouncementFact[];
 	let fields: AnnouncementDetailField[];
 	let searchValues: string[] = [];
+	let playerRoles: AnnouncementPlayerRoles | null = null;
 
 	if (type === "annuncio_giocatore") {
 		const types = cleanStringArray(detail.tipologie_sport);
@@ -364,6 +373,7 @@ function announcementContent(
 		filters.roles = [...new Set([...primaryRoles, ...secondaryRoles])];
 		filters.categories = categories;
 		searchValues = [...types, ...primaryRoles, ...secondaryRoles, ...categories];
+		playerRoles = {primaryRoles, secondaryRoles};
 	} else if (type === "annuncio_squadra_cerca_giocatore") {
 		const types = cleanStringArray(detail.tipologie_sport);
 		const primaryRoles = cleanStringArray(detail.ruoli_principali);
@@ -548,7 +558,7 @@ function announcementContent(
 		searchValues = [...types, services ?? "", hours];
 	}
 
-	return {title, description, location, facts, fields, filters, searchValues};
+	return {title, description, location, facts, fields, playerRoles, filters, searchValues};
 }
 
 function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
@@ -582,6 +592,7 @@ function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 			author: anonymousAuthor(option.profileType),
 		},
 		fields: content.fields,
+		playerRoles: content.playerRoles,
 		filterData: content.filters,
 		searchText,
 		authorId: isValidAnnouncementId(row.autore_annuncio) ? row.autore_annuncio : null,
@@ -625,7 +636,7 @@ function profileLocations(
 	profileType: ProfileType,
 	childId: number,
 ) {
-	return profileLocationRecords(row).flatMap((location): AnnouncementLocation[] => {
+	const locations = profileLocationRecords(row).flatMap((location): AnnouncementLocation[] => {
 		if (location.sottoprofilo !== profileType) return [];
 		const scopedChildId = finiteNumber(location.id_sottoprofilo);
 		if (scopedChildId !== null && scopedChildId !== childId) return [];
@@ -633,6 +644,15 @@ function profileLocations(
 		if (!region) return [];
 		return [{region, city: cleanText(location.citta, 120)}];
 	});
+	return locations
+		.filter((location, index, all) =>
+			all.findIndex((candidate) => candidate.region === location.region && candidate.city === location.city) === index,
+		)
+		.sort((left, right) => {
+			const leftLabel = [left.region, left.city].filter(Boolean).join(", ");
+			const rightLabel = [right.region, right.city].filter(Boolean).join(", ");
+			return leftLabel.localeCompare(rightLabel, "it-IT");
+		});
 }
 
 function fullName(name: unknown, surname: unknown) {
@@ -681,11 +701,23 @@ function registeredAuthor(
 			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
 			fact("location", "Località", location),
 		];
+	} else if (profileType === "professionisti-studi") {
+		title = fullName(child.nome, child.cognome);
+		highlights = [
+			fact("figures", "Figure", formatSelection(cleanStringArray(child.figure_professionali), "selezionate")),
+			fact("specializations", "Specializzazioni", cleanText(child.specializzazioni, 160)),
+			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
+		];
 	} else if (profileType === "arbitro") {
 		title = fullName(child.nome, child.cognome);
 		highlights = [
 			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
 			fact("location", "Località", location),
+		];
+	} else if (profileType === "creators") {
+		title = cleanText(child.nome_creator, 160);
+		highlights = [
+			fact("content", "Contenuti", cleanText(child.tipologia_contenuti, 160)),
 		];
 	} else if (profileType === "torneo-evento") {
 		title = cleanText(child.nome_organizzazione, 160);
@@ -714,6 +746,7 @@ function registeredAuthor(
 		verified: Boolean(row.verificato_il),
 		presentation: cleanText(child.presentazione),
 		location,
+		locations,
 		highlights,
 	};
 }
@@ -1036,6 +1069,7 @@ export async function loadPublicAnnouncementDetail(
 			announcement: {
 				...withLoadedAuthor(mapped, authorResult.authors, authorResult.error),
 				fields: mapped.fields,
+				...(mapped.playerRoles ? {playerRoles: mapped.playerRoles} : {}),
 				contacts,
 				contactsUnavailable: Boolean(contactResult.error),
 			},

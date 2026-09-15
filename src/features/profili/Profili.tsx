@@ -1,37 +1,17 @@
 import Link from "next/link";
-import type {LucideIcon} from "lucide-react";
+import ProfileCard from "@/features/profili/components/cards/ProfileCard";
 import {
 	ArrowLeftIcon,
 	ArrowRightIcon,
-	BadgeCheckIcon,
-	BriefcaseBusinessIcon,
-	Building2Icon,
-	CalendarCheckIcon,
-	CircleDollarSignIcon,
-	ClapperboardIcon,
-	GraduationCapIcon,
 	InfoIcon,
-	ListChecksIcon,
-	MapPinIcon,
 	SearchIcon,
 	SlidersHorizontalIcon,
-	TagsIcon,
-	UsersIcon,
 } from "lucide-react";
 
 import GradientBackground from "@/components/styling/GradientBackground";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {Button, buttonVariants} from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import {
 	Empty,
 	EmptyContent,
@@ -71,8 +51,6 @@ import {
 	getProfileFilterEntries,
 	PROFILE_FILTER_OPTIONS,
 	PROFILE_FILTERS_BY_TYPE,
-	type DirectoryProfile,
-	type DirectoryProfileFactKind,
 	type ProfileDirectoryQuery,
 	type ProfileDirectoryResult,
 	type ProfileFilterParam,
@@ -80,7 +58,6 @@ import {
 import ProfileTypeSelector from "@/features/profili/ProfileTypeSelector";
 import ProfileFiltersResetButton from "@/features/profili/ProfileFiltersResetButton";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
-import {cn} from "@/lib/utils";
 import {Separator} from "@/components/ui/separator";
 import Image from "next/image";
 
@@ -96,15 +73,6 @@ interface FilterSelectOption {
 
 function profileTypeOption(type: ProfileType) {
 	return PROFILE_OPTIONS.find(({value}) => value === type) ?? PROFILE_OPTIONS[0];
-}
-
-function profileInitials(title: string) {
-	return title
-		.split(/\s+/)
-		.filter(Boolean)
-		.slice(0, 2)
-		.map((part) => part[0]?.toLocaleUpperCase("it-IT"))
-		.join("") || "PR";
 }
 
 function ProfileQueryHiddenFields({query, includeQuery}: {
@@ -359,84 +327,6 @@ function ProfileFiltersSheet({query}: {query: ProfileDirectoryQuery}) {
 				</div>
 			</SheetContent>
 		</Sheet>
-	);
-}
-
-const PROFILE_FACT_ICONS: Record<DirectoryProfileFactKind, LucideIcon> = {
-	availability: CalendarCheckIcon,
-	content: ClapperboardIcon,
-	figures: BriefcaseBusinessIcon,
-	headquarters: Building2Icon,
-	location: MapPinIcon,
-	price: CircleDollarSignIcon,
-	roles: UsersIcon,
-	services: ListChecksIcon,
-	specializations: GraduationCapIcon,
-	types: TagsIcon,
-};
-
-function ProfileCard({profile}: {profile: DirectoryProfile}) {
-	const {label, icon: TypeIcon} = profileTypeOption(profile.type);
-	const detailParams = new URLSearchParams({id: profile.id, type: profile.type});
-	const detailHref = `/dettagli-profilo?${detailParams.toString()}`;
-
-	return (
-		<Link
-			href={detailHref}
-			className="group block h-full rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-			aria-label={`Apri il profilo di ${profile.title}`}
-		>
-			<Card className="h-full transition duration-200 group-hover:-translate-y-0.5 group-hover:ring-fuchsia-300 group-hover:shadow-lg">
-				<CardHeader>
-					<div className="flex min-w-0 items-center gap-3">
-						<Avatar size="lg">
-							{profile.imageUrl && <AvatarImage src={profile.imageUrl} alt={`Foto profilo di ${profile.title}`} />}
-							<AvatarFallback>{profileInitials(profile.title)}</AvatarFallback>
-						</Avatar>
-						<div className="min-w-0 flex-1">
-							<div className="mb-1 flex flex-wrap items-center gap-1.5">
-								<Badge variant="outline" className="border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700">
-									<TypeIcon data-icon="inline-start" aria-hidden="true" />
-									{label}
-								</Badge>
-								{profile.verified && (
-									<Badge variant="secondary">
-										<BadgeCheckIcon data-icon="inline-start" aria-hidden="true" />
-										Verificato
-									</Badge>
-								)}
-							</div>
-							<CardTitle className="text-lg"><h3>{profile.title}</h3></CardTitle>
-						</div>
-					</div>
-					<CardDescription className="mt-1 min-h-10 line-clamp-3">
-						{profile.presentation ?? <span>Informazioni aggiuntive non disponibili</span>}
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="mt-auto">
-					<dl className="grid grid-cols-2 gap-2 text-sm">
-						{profile.facts.map(({kind, label: factLabel, value}) => {
-							const Icon = PROFILE_FACT_ICONS[kind];
-							return (
-								<div key={kind} className="min-w-0 rounded-lg bg-muted/50 p-3">
-									<dt className="flex items-center gap-1.5 text-xs text-muted-foreground [&>svg]:size-3.5">
-										<Icon aria-hidden="true" />
-										<span>{factLabel}</span>
-									</dt>
-									<dd className="mt-1 truncate font-medium text-foreground" title={value}>{value}</dd>
-								</div>
-							);
-						})}
-					</dl>
-				</CardContent>
-				<CardFooter className="justify-end p-2">
-					<span className={cn(buttonVariants({size: "lg", variant: "outline"}), "pointer-events-none justify-between rounded-xl")}>
-						Apri profilo
-						<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-					</span>
-				</CardFooter>
-			</Card>
-		</Link>
 	);
 }
 

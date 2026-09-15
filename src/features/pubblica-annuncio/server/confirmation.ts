@@ -173,6 +173,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 				: cleanText(detail.nome_evento) ?? option.label;
 		const preview: AnnouncementPreviewData = {
 			id,
+			profileType: option.profileType,
 			title,
 			typeLabel: option.label,
 			author,

@@ -1,4 +1,4 @@
-import type {ProfileDrafts} from "@/features/profilo/profile-model";
+import type {ProfileDrafts, ProfileType} from "@/features/profilo/profile-model";
 import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";
 import {getTipologia} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
@@ -9,6 +9,7 @@ export interface AnnouncementPreviewFact {
 
 export interface AnnouncementPreviewData {
 	id?: string;
+	profileType: ProfileType;
 	title: string;
 	typeLabel: string;
 	author: string;
@@ -86,6 +87,7 @@ export function buildPublishPreview(
 				: (detail.nome_evento as string | undefined) || subtype?.nome || profile;
 
 	return {
+		profileType: payload.profileType,
 		title,
 		typeLabel: subtype?.nome ?? option?.nome ?? payload.profileType,
 		author: profile,

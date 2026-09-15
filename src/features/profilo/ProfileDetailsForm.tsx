@@ -1,5 +1,5 @@
 import type {ComponentProps, Dispatch, SetStateAction} from "react";
-import {PlusIcon, Trash2Icon} from "lucide-react";
+import {CircleHelpIcon, PlusIcon, Trash2Icon} from "lucide-react";
 
 import {Button} from "@/components/ui/button";
 import {Checkbox} from "@/components/ui/checkbox";
@@ -38,6 +38,8 @@ import {
 	type DisponibilitaProfilo,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import type {Json} from "@/server/supabase";
+import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
+import Link from "next/link";
 
 interface ProfileDetailsFormProps {
 	type: ProfileType;
@@ -660,11 +662,22 @@ function GiocatoreFields({
 			<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange("giocatore", "presentazione", value)} placeholder="Esperienze, caratteristiche tecniche, disponibilità e obiettivi..." />
 			<LinkAnnuncioField
 				idPrefix={`${prefix}-video-highlights`}
+				label="Link video highlights"
+				placeholder="https://youtu.be/dQEemdsoLDM"
+				description="Inserisci il link pubblico a un video con le tue azioni migliori"
 				value={draft.video_highlights}
 				onValueChange={(value) => onChange("giocatore", "video_highlights", value)}
-				label="Link video highlights"
-				placeholder="https://www.youtube.com/watch?v=..."
-				description="Inserisci il link pubblico a un video con le tue azioni migliori."
+				labelAddon={(
+					<Tooltip>
+						<TooltipTrigger render={<button type="button" className="inline-flex size-5 items-center justify-center rounded-full text-brand-indigo outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo/40" aria-label="Informazioni sul link video highlights" />}>
+							<CircleHelpIcon className="size-4" />
+						</TooltipTrigger>
+						<TooltipContent className={"block"}>
+							Possiedi il video nella tua galleria ma non hai modo di caricare un link?
+							<Link href="/contatti" className="text-fuchsia-200 font-medium"> Contattaci e lo caricheremo noi su YouTube per te!</Link>
+						</TooltipContent>
+					</Tooltip>
+				)}
 			/>
 			<CareerHistoryFields
 				idPrefix={`${prefix}-storico-carriera`}

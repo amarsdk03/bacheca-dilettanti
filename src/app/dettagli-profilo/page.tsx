@@ -3,12 +3,12 @@ import {notFound} from "next/navigation";
 
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
-import DettagliProfilo from "@/features/profili/DettagliProfilo";
+import DettagliProfilo from "@/features/dettagli-profilo/DettagliProfilo";
 import {
 	parseProfileDetailParams,
 	type RawProfileDetailSearchParams,
-} from "@/features/profili/profile-detail-model";
-import {getProfileDetail} from "@/features/profili/server/profile-detail-query";
+} from "@/features/dettagli-profilo/profile-detail-model";
+import {getProfileDetail} from "@/features/dettagli-profilo/server/profile-detail-query";
 import {dynamicMetadata} from "@/server/metadata";
 
 interface DettagliProfiloPageProps {
