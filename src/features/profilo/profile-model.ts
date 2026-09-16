@@ -77,7 +77,12 @@ interface ProfileOption {
 
 export const MAX_PROFILE_COUNT = 5;
 
+export const PROFILI_LIMITATI = true;
+
 export const LIMITED_PROFILE_TYPES = [
+	"arbitro",
+	"torneo-evento",
+	"campi-impianti-sportivi",
 	"professionisti-studi",
 	"creators",
 ] as const satisfies readonly ProfileType[];
@@ -87,7 +92,8 @@ export type LimitedProfileType = typeof LIMITED_PROFILE_TYPES[number];
 export function isLimitedProfileType(
 	type: ProfileType,
 ): type is LimitedProfileType {
-	return (LIMITED_PROFILE_TYPES as readonly ProfileType[]).includes(type);
+	return PROFILI_LIMITATI
+		&& (LIMITED_PROFILE_TYPES as readonly ProfileType[]).includes(type);
 }
 
 export const PROFILE_OPTIONS: readonly ProfileOption[] = [

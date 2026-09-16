@@ -8,10 +8,15 @@ import {
 	ANNOUNCEMENT_DIRECTORY_OPTIONS,
 	type AnnouncementDirectoryType,
 } from "@/features/annunci/announcement-model";
+import {isLimitedProfileType} from "@/features/profilo/profile-model";
 
 interface AnnouncementTypeSelectorProps {
 	selectedTypes: AnnouncementDirectoryType[];
 }
+
+const DIRECTORY_ANNOUNCEMENT_OPTIONS = ANNOUNCEMENT_DIRECTORY_OPTIONS.filter(
+	({profileType}) => !isLimitedProfileType(profileType),
+);
 
 export default function AnnouncementTypeSelector({
 	selectedTypes,
@@ -24,7 +29,7 @@ export default function AnnouncementTypeSelector({
 
 	function handleTypeChange(nextValues: string[]) {
 		const requested = new Set(nextValues);
-		const nextTypes = ANNOUNCEMENT_DIRECTORY_OPTIONS
+		const nextTypes = DIRECTORY_ANNOUNCEMENT_OPTIONS
 			.map(({value: type}) => type)
 			.filter((type) => requested.has(type));
 		const params = new URLSearchParams();
@@ -53,7 +58,7 @@ export default function AnnouncementTypeSelector({
 				aria-busy={pending}
 				className="w-max"
 			>
-				{ANNOUNCEMENT_DIRECTORY_OPTIONS.map(({value: type, label, icon: Icon}) => (
+				{DIRECTORY_ANNOUNCEMENT_OPTIONS.map(({value: type, label, icon: Icon}) => (
 					<ToggleGroupItem
 						key={type}
 						value={type}

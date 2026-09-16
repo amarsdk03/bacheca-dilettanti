@@ -4,7 +4,7 @@ import {type SubmitEvent, useActionState, useRef, useState} from "react";
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
 import {REGEXP_ONLY_DIGITS} from "input-otp";
-import {ArrowLeftIcon, ArrowRightIcon, CheckIcon, CircleAlertIcon, EyeIcon, EyeOffIcon, FlameIcon, MailCheckIcon, UserPlusIcon} from "lucide-react";
+import {ArrowLeftIcon, ArrowRightIcon, CheckIcon, CircleAlertIcon, EyeIcon, EyeOffIcon, MailCheckIcon, UserPlusIcon} from "lucide-react";
 
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
@@ -18,7 +18,7 @@ import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/
 import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import GradientBackground from "@/components/styling/GradientBackground";
-import LimitedProfileAvailability from "@/features/profilo/LimitedProfileAvailability";
+import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
 import ProfileDetailsForm from "@/features/profilo/ProfileDetailsForm";
 import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
 import SignupConfirmationResend from "@/features/auth/SignupConfirmationResend";
@@ -50,7 +50,6 @@ import {cn} from "@/lib/utils";
 
 interface RegistratiProps {
 	nextPath: string;
-	contactEmail: string;
 	existingSessionEmail: string | null;
 }
 
@@ -142,7 +141,7 @@ function RegistrationConfirmation({email}: {email: string}) {
 	);
 }
 
-export default function Registrati({nextPath, contactEmail, existingSessionEmail}: RegistratiProps) {
+export default function Registrati({nextPath, existingSessionEmail}: RegistratiProps) {
 	const [state, formAction] = useActionState(signUpWithPassword, INITIAL_AUTH_STATE);
 	const [step, setStep] = useState<RegistrationStep>(1);
 	const [account, setAccount] = useState<AccountDraft>(() => ({
@@ -182,7 +181,6 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 	const selectedProfilesInCatalogOrder = PROFILE_OPTIONS
 		.map((option) => option.value)
 		.filter((type) => selectedProfileTypes.includes(type));
-	const limitedSelectedProfileTypes = selectedProfilesInCatalogOrder.filter(isLimitedProfileType);
 	const registrableProfileTypes = selectedProfilesInCatalogOrder.filter(isRegistrableProfileType);
 	const resolvedPrimaryProfileType = primaryProfileType && isRegistrableProfileType(primaryProfileType)
 		? primaryProfileType
@@ -373,6 +371,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 
 	const toggleProfileType = (type: ProfileType, checked: boolean) => {
 		acknowledgeServerError();
+		if (checked && isLimitedProfileType(type)) return;
 		if (checked && selectedProfileTypes.includes(type)) return;
 		if (checked && selectedProfileTypes.length >= MAX_PROFILE_COUNT) {
 			setProfileSelectionError(`Puoi selezionare al massimo ${MAX_PROFILE_COUNT} profili.`);
@@ -407,7 +406,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 		}
 
 		if (registrableProfileTypes.length === 0) {
-			setProfileSelectionError("Per creare subito l’account, seleziona almeno un profilo senza disponibilità limitata.");
+			setProfileSelectionError("Seleziona almeno una tipologia di profilo disponibile.");
 			return;
 		}
 
@@ -495,7 +494,7 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 
 		if (registrableProfileTypes.length === 0) {
 			event.preventDefault();
-			setProfileSelectionError("Per creare subito l’account, seleziona almeno un profilo senza disponibilità limitata.");
+			setProfileSelectionError("Seleziona almeno una tipologia di profilo disponibile.");
 			setStep(2);
 			return;
 		}
@@ -676,22 +675,14 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 											<FieldGroup data-slot="checkbox-group" className="grid gap-3 sm:grid-cols-2">
 												{PROFILE_OPTIONS.map(({value, label, description: optionDescription, icon: Icon}) => {
 													const checked = selectedProfileTypes.includes(value);
-													const disabled = !checked && selectedProfileTypes.length >= MAX_PROFILE_COUNT;
+													const limited = isLimitedProfileType(value);
+													const disabled = limited || (!checked && selectedProfileTypes.length >= MAX_PROFILE_COUNT);
 
 													return (
 														<div key={value} className="relative">
-															{
-																(value === "professionisti-studi" || value === "creators") && (
-																	<Badge
-																		className="bg-orange-100 text-yellow-700 absolute -top-1 -right-1 z-10 flex items-center gap-1"
-																	>
-																		<FlameIcon aria-hidden="true" />
-																		Posti limitati
-																	</Badge>
-																)
-															}
+															{limited && <ComingSoonBadge className="absolute -right-1 -top-1 z-10" />}
 															<FieldLabel htmlFor={`registration-type-${value}`}>
-																<Field orientation="horizontal" data-disabled={disabled}>
+																<Field orientation="horizontal" data-disabled={disabled} aria-disabled={disabled}>
 																	<Icon aria-hidden="true" />
 																	<FieldContent>
 																		<FieldTitle>{label}</FieldTitle>
@@ -712,21 +703,6 @@ export default function Registrati({nextPath, contactEmail, existingSessionEmail
 											</FieldGroup>
 											{profileSelectionError && <FieldError>{profileSelectionError}</FieldError>}
 										</FieldSet>
-
-										{limitedSelectedProfileTypes.length > 0 && (
-											<FieldSet className="mt-4">
-												<FieldLegend variant="label">Profili con disponibilità limitata</FieldLegend>
-												<FieldDescription>Queste tipologie richiedono una verifica preventiva e non saranno attivate automaticamente con l’account.</FieldDescription>
-												<FieldGroup className="gap-3">
-													{limitedSelectedProfileTypes.map((type) => (
-														<LimitedProfileAvailability key={type} type={type} contactEmail={contactEmail} />
-													))}
-												</FieldGroup>
-												{registrableProfileTypes.length === 0 && (
-													<FieldDescription>Per creare subito l’account, aggiungi almeno un profilo senza disponibilità limitata.</FieldDescription>
-												)}
-											</FieldSet>
-										)}
 
 										{registrableProfileTypes.length > 1 && (
 											<FieldSet className="mt-4">

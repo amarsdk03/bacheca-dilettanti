@@ -7,10 +7,7 @@ import {
 
 export const REGISTRATION_PAYLOAD_VERSION = 1 as const;
 
-export type RegistrableProfileType = Exclude<
-	ProfileType,
-	"professionisti-studi" | "creators"
->;
+export type RegistrableProfileType = ProfileType;
 
 export interface RegistrationProfilePayload {
 	type: RegistrableProfileType;

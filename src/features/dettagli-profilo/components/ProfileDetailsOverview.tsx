@@ -66,7 +66,7 @@ export function ProfileDetailsHeader({
 		>
 			<div
 				aria-hidden="true"
-				className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-br from-[color:var(--profile-accent)]/15 via-[color:var(--profile-accent)]/5 to-transparent"
+				className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-br from-(--profile-accent)/15 via-(--profile-accent)/5 to-transparent"
 			/>
 			<div className="flex flex-col gap-6 sm:flex-row sm:items-center">
 				<Avatar className="size-28 shrink-0 ring-4 ring-background sm:size-36">

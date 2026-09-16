@@ -3,7 +3,7 @@
 import {useState, type ReactNode} from "react";
 import Link from "next/link";
 import {usePathname, useSearchParams} from "next/navigation";
-import {ChevronDownIcon, ClipboardPenIcon, MenuIcon, UserIcon, UserRoundIcon} from "lucide-react";
+import {ChevronDownIcon, ClipboardPenIcon, MenuIcon, UserRoundIcon} from "lucide-react";
 
 import {Button, buttonVariants} from "@/components/ui/button";
 import {
@@ -25,7 +25,11 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import {ANNOUNCEMENT_DIRECTORY_OPTIONS} from "@/features/annunci/announcement-model";
-import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
+import {
+	isLimitedProfileType,
+	PROFILE_OPTIONS,
+	type ProfileType,
+} from "@/features/profilo/profile-model";
 import {cn} from "@/lib/utils";
 import {ViewerDTO} from "@/features/auth/types";
 
@@ -36,6 +40,13 @@ interface NavbarNavigationProps {
 
 const desktopLinkClassName =
 	"relative inline-flex h-11 items-center rounded-lg px-3 text-sm font-bold tracking-wide text-white/75 outline-none transition-colors hover:bg-white/8 hover:text-white focus-visible:ring-3 focus-visible:ring-[#8e72ff]/70";
+
+const ANNOUNCEMENT_NAVIGATION_OPTIONS = ANNOUNCEMENT_DIRECTORY_OPTIONS.filter(
+	({profileType}) => !isLimitedProfileType(profileType),
+);
+const PROFILE_NAVIGATION_OPTIONS = PROFILE_OPTIONS.filter(
+	({value}) => !isLimitedProfileType(value),
+);
 
 function isPathActive(pathname: string, href: string) {
 	return pathname === href || pathname.startsWith(`${href}/`);
@@ -112,7 +123,7 @@ function MobileLink({
 	);
 }
 
-export default function NavbarNavigation({authenticated, viewer}: NavbarNavigationProps) {
+export default function NavbarNavigation({authenticated}: NavbarNavigationProps) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -155,7 +166,7 @@ export default function NavbarNavigation({authenticated, viewer}: NavbarNavigati
 					</DropdownMenuGroup>
 					<DropdownMenuSeparator className="my-1.5 bg-black/10" />
 					<DropdownMenuGroup>
-						{ANNOUNCEMENT_DIRECTORY_OPTIONS.map((option) => {
+						{ANNOUNCEMENT_NAVIGATION_OPTIONS.map((option) => {
 							const matchingProfile = profileOption(option.profileType);
 							const Icon = matchingProfile?.icon ?? option.icon;
 							return (
@@ -194,7 +205,7 @@ export default function NavbarNavigation({authenticated, viewer}: NavbarNavigati
 					</DropdownMenuGroup>
 					<DropdownMenuSeparator className="my-1.5 bg-black/10" />
 					<DropdownMenuGroup>
-						{PROFILE_OPTIONS.map((option) => {
+						{PROFILE_NAVIGATION_OPTIONS.map((option) => {
 							const Icon = option.icon;
 							return (
 								<DropdownMenuItem
@@ -215,6 +226,17 @@ export default function NavbarNavigation({authenticated, viewer}: NavbarNavigati
 				</DesktopDropdown>
 
 				<Link
+					href="/partner"
+					aria-current={isPathActive(pathname, "/partner") ? "page" : undefined}
+					className={cn(
+						desktopLinkClassName,
+						isPathActive(pathname, "/partner") && "bg-white/8 text-white after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-[#8e72ff]",
+					)}
+				>
+					Partner
+				</Link>
+
+				<Link
 					href="/aggiornamenti"
 					aria-current={isPathActive(pathname, "/aggiornamenti") ? "page" : undefined}
 					className={cn(
@@ -224,6 +246,7 @@ export default function NavbarNavigation({authenticated, viewer}: NavbarNavigati
 				>
 					Aggiornamenti
 				</Link>
+
 				<Link
 					href="/contatti"
 					aria-current={isPathActive(pathname, "/contatti") ? "page" : undefined}
@@ -280,7 +303,7 @@ export default function NavbarNavigation({authenticated, viewer}: NavbarNavigati
 						<MobileLink href="/annunci" active={announcementsRootActive} onNavigate={() => setMobileMenuOpen(false)}>
 							Tutti gli annunci
 						</MobileLink>
-						{ANNOUNCEMENT_DIRECTORY_OPTIONS.map((option) => {
+						{ANNOUNCEMENT_NAVIGATION_OPTIONS.map((option) => {
 							const matchingProfile = profileOption(option.profileType);
 							const Icon = matchingProfile?.icon ?? option.icon;
 							return (
@@ -301,7 +324,7 @@ export default function NavbarNavigation({authenticated, viewer}: NavbarNavigati
 						<MobileLink href="/profili" active={profilesRootActive} onNavigate={() => setMobileMenuOpen(false)}>
 							Tutti i profili
 						</MobileLink>
-						{PROFILE_OPTIONS.map((option) => {
+						{PROFILE_NAVIGATION_OPTIONS.map((option) => {
 							const Icon = option.icon;
 							return (
 								<MobileLink

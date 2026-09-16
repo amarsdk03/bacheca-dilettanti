@@ -484,6 +484,10 @@ export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): N
 	if (new Set(selectedProfileTypes).size !== selectedProfileTypes.length) {
 		fail("Le tipologie di profilo non possono essere duplicate.", 2);
 	}
+	const limitedProfileType = selectedProfileTypes.find(isLimitedProfileType);
+	if (limitedProfileType) {
+		fail("Questa tipologia di profilo sarà disponibile prossimamente.", 2, limitedProfileType);
+	}
 	const registrableTypes = selectedProfileTypes.filter(isRegistrableProfileType);
 	if (registrableTypes.length === 0) {
 		fail("Seleziona almeno un profilo attivabile subito.", 2);

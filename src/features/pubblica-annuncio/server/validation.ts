@@ -3,6 +3,7 @@ import "server-only";
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import {
 	createProfileDrafts,
+	isLimitedProfileType,
 	type ProfileDrafts,
 	type ProfileLocationDraft,
 } from "@/features/profilo/profile-model";
@@ -367,6 +368,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 	const visibility = rawValue.visibility;
 	if (typeof rawValue.profileType !== "string" || !isPublishableProfileType(rawValue.profileType)) fail("La tipologia di profilo non è valida.", 1);
 	const profileType = rawValue.profileType;
+	if (isLimitedProfileType(profileType)) fail("Questa tipologia di annuncio sarà disponibile prossimamente.", 1);
 
 	let teamSubtype: TeamAnnouncementSubtype | null = null;
 	if (profileType === "squadra") {

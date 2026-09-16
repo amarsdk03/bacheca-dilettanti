@@ -16,10 +16,14 @@ import {
 	FieldTitle,
 } from "@/components/ui/field";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
+import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
 import {isLimitedProfileType, type ProfileType} from "@/features/profilo/profile-model";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
-import type {PublishableProfileType} from "@/features/pubblica-annuncio/publish-model";
+import {
+	isPublishableProfileType,
+	type PublishableProfileType,
+} from "@/features/pubblica-annuncio/publish-model";
 import {getTipologia, tipologieAnnuncio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type SelezionaTipologiaAnnuncioProps = {
@@ -74,10 +78,11 @@ export default function SelezionaTipologiaAnnuncio({
 							aria-invalid={Boolean(typeError)}
 						>
 							{tipologieAnnuncio.map((opzione) => {
-								const limited = isLimitedProfileType(opzione.valore as ProfileType);
-								const enabledForAccount = enabledProfileTypes.includes(opzione.valore as PublishableProfileType);
-								const disabled = limited || (registered && !enabledForAccount);
 								const profileType = opzione.valore as ProfileType;
+								const limited = isLimitedProfileType(profileType);
+								const supported = isPublishableProfileType(profileType);
+								const enabledForAccount = supported && enabledProfileTypes.includes(profileType);
+								const disabled = limited || !supported || (registered && !enabledForAccount);
 								const accent = getProfileAccent(profileType);
 								return (
 								<ToggleGroupItem
@@ -93,8 +98,8 @@ export default function SelezionaTipologiaAnnuncio({
 										<FieldContent>
 											<FieldTitle className="field-content-title flex-wrap gap-1.5">
 												{opzione.nome}
-												{limited && <Badge variant="secondary" className="text-brand-indigo">Coming soon...</Badge>}
-												{!limited && registered && !enabledForAccount && <Badge variant="outline">Non abilitato</Badge>}
+												{(limited || !supported) && <ComingSoonBadge />}
+												{!limited && supported && registered && !enabledForAccount && <Badge variant="outline">Non abilitato</Badge>}
 											</FieldTitle>
 											<FieldDescription>{opzione.descrizione}</FieldDescription>
 										</FieldContent>

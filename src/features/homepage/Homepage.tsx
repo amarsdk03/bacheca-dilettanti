@@ -12,7 +12,11 @@ import {
 import {buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Skeleton} from "@/components/ui/skeleton";
-import type {ProfileType} from "@/features/profilo/profile-model";
+import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
+import {
+	isLimitedProfileType,
+	type ProfileType,
+} from "@/features/profilo/profile-model";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {cn} from "@/lib/utils";
 import {loadLatestPublicAnnouncements} from "@/features/annunci/server/queries";
@@ -31,24 +35,19 @@ const HOMEPAGE_CATEGORIES = [
 		description: "Trova la tua prossima opportunità",
 	},
 	{
-		type: "staff-sportivo",
-		label: "Staff",
-		description: "Allena il talento, costruisci il futuro",
-	},
-	{
 		type: "squadra",
 		label: "Squadre",
 		description: "Cerca profili e rafforza la tua rosa",
 	},
 	{
-		type: "professionisti-studi",
-		label: "Professionisti",
-		description: "Scopri nuovi talenti e opportunità",
+		type: "staff-sportivo",
+		label: "Staff sportivi",
+		description: "Allena il talento, costruisci il futuro",
 	},
 	{
-		type: "creators",
-		label: "Creators",
-		description: "Racconta il calcio a modo tuo",
+		type: "arbitro",
+		label: "Arbitri",
+		description: "Arbitra e gestisci partite e tornei",
 	},
 	{
 		type: "torneo-evento",
@@ -59,6 +58,16 @@ const HOMEPAGE_CATEGORIES = [
 		type: "campi-impianti-sportivi",
 		label: "Campi / Strutture",
 		description: "Trova o pubblica la tua struttura",
+	},
+	{
+		type: "professionisti-studi",
+		label: "Professionisti",
+		description: "Scopri nuovi talenti e opportunità",
+	},
+	{
+		type: "creators",
+		label: "Creators",
+		description: "Racconta il calcio a modo tuo",
 	},
 ] as const satisfies readonly HomepageCategory[];
 
@@ -118,7 +127,7 @@ const PROMOTIONS = [
 		eyebrow: "Partner ufficiali",
 		title: "Insieme per il nostro calcio",
 		description: "Unisciti ai brand che credono nei valori del calcio dilettantistico.",
-		href: "/contatti",
+		href: "/partner",
 		cta: "Diventa partner",
 		icon: HandshakeIcon,
 		accent: "#111111",
@@ -300,29 +309,27 @@ export default function Homepage() {
 					>
 						Cerca. Connettiti. Cresci.
 					</h2>
-					<div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-7">
+					<div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-4 xl:grid-cols-4">
 						{HOMEPAGE_CATEGORIES.map((category) => {
 							const accent = getProfileAccent(category.type);
-
-							return (
-								<Link
-									key={category.type}
-									href={`/profili?type=${category.type}`}
-									className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-brand-indigo/45 focus-visible:ring-offset-2"
+							const limited = isLimitedProfileType(category.type);
+							const card = (
+								<Card
+									className={cn(
+										"h-full gap-0 border bg-white/85 py-0 shadow-none ring-0 transition-transform duration-200 overflow-visible",
+										limited ? "bg-muted/45 opacity-65" : "group-hover:-translate-y-1",
+									)}
+									style={{borderColor: `${limited ? '#999999' : accent}45`} as CSSProperties}
 								>
-									<Card
-										className="h-full gap-0 border bg-white/85 py-0 shadow-none ring-0 transition-transform duration-200 group-hover:-translate-y-1"
-										style={{borderColor: `${accent}45`} as CSSProperties}
-									>
-										<CardContent className="flex h-full min-h-42 flex-col px-4 py-4">
-											<ProfilePngIcon type={category.type} color={accent} className="size-9" />
-											<h3 className="font-home-display mt-3 text-base font-normal uppercase leading-tight text-black">
-												{category.label}
-											</h3>
-											<p className="mt-2 text-xs leading-5 text-neutral-700">{category.description}</p>
-											<div
-												className="mt-auto transition-transform group-hover:translate-x-1"
-											>
+									<CardContent className="relative flex h-full min-h-42 flex-col px-4 py-4 overflow-visible">
+										{limited && <ComingSoonBadge className="absolute -right-1 -top-1 z-10 text-md font-semibold p-2.5 border-black bg-white text-black" />}
+										<ProfilePngIcon type={category.type} color={limited ? '#cccccc' : accent} className="size-9" />
+										<h3 className="font-home-display mt-3 text-base font-normal uppercase leading-tight text-black">
+											{category.label}
+										</h3>
+										<p className="mt-2 text-xs leading-5 text-neutral-700">{category.description}</p>
+										{!limited && (
+											<div className="mt-auto transition-transform group-hover:translate-x-1">
 												<span
 													className="mt-4 flex size-7 translate-y-1 items-center justify-center rounded-full text-white transition-transform group-hover:translate-x-px"
 													style={{backgroundColor: accent}}
@@ -331,8 +338,22 @@ export default function Homepage() {
 													<ArrowRightIcon className="size-3.5" />
 												</span>
 											</div>
-										</CardContent>
-									</Card>
+										)}
+									</CardContent>
+								</Card>
+							);
+
+							return limited ? (
+								<div key={category.type} aria-disabled="true" className="rounded-xl">
+									{card}
+								</div>
+							) : (
+								<Link
+									key={category.type}
+									href={`/profili?type=${category.type}`}
+									className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-brand-indigo/45 focus-visible:ring-offset-2"
+								>
+									{card}
 								</Link>
 							);
 						})}

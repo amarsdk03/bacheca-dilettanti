@@ -78,7 +78,7 @@ export default async function ArticlePage({params}: PageProps<"/aggiornamenti/[s
 
 				<div className="mx-auto grid max-w-6xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_240px] lg:px-8 lg:py-20">
 					<article className="min-w-0 max-w-3xl"><ArticleBody content={article.content} /></article>
-					<aside className="lg:sticky lg:top-24 lg:self-start">
+					<aside className="lg:sticky lg:top-24 lg:self-start py-10">
 						<ShareButtons title={article.title} url={canonicalUrl} />
 						<div className="mt-8 border-t border-neutral-200 pt-6">
 							<p className="text-xs font-bold uppercase tracking-wider text-neutral-400">Argomenti</p>

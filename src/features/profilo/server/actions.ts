@@ -6,6 +6,7 @@ import {revalidatePath} from "next/cache";
 
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {
+	isLimitedProfileType,
 	isProfileType,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
@@ -23,6 +24,16 @@ import type {Json} from "@/server/supabase";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ANNOUNCEMENT_IMAGES_BUCKET = "immagini_annunci";
+const PROFILE_TABLE_BY_TYPE = {
+	giocatore: "profilo_giocatore",
+	squadra: "profilo_squadra",
+	"staff-sportivo": "profilo_staff_sportivo",
+	"professionisti-studi": "profilo_professionista_studente",
+	arbitro: "profilo_arbitro",
+	creators: "profilo_creator",
+	"torneo-evento": "profilo_torneo_evento",
+	"campi-impianti-sportivi": "profilo_campi_impianti",
+} as const satisfies Record<ProfileType, string>;
 
 function profileRpcErrorMessage(message: string) {
 	if (message.includes("PROFILE_LIMIT_REACHED")) {
@@ -40,11 +51,98 @@ function profileRpcErrorMessage(message: string) {
 	if (message.includes("BASE_PROFILE_NOT_FOUND")) {
 		return "Il profilo principale dell’account non è disponibile.";
 	}
+
+	console.log("Errore: ", message);
 	return "Non è stato possibile aggiornare il profilo. Riprova.";
 }
 
 async function authenticatedUserId() {
-	return (await getAuthenticatedViewer())?.userId ?? null;
+	return (await getAuthenticatedViewer())?.authUserId ?? null;
+}
+
+async function ownedSubprofileExists(
+	profileUserId: string,
+	type: ProfileType,
+) {
+	const admin = createAdminClient();
+	const {data: profile, error: profileError} = await admin
+		.from("profilo")
+		.select("uuid")
+		.eq("uuid_utente", profileUserId)
+		.maybeSingle();
+	if (profileError) throw profileError;
+	if (!profile) return false;
+
+	const {data: subprofile, error: subprofileError} = await admin
+		.from(PROFILE_TABLE_BY_TYPE[type])
+		.select("id")
+		.eq("uuid_profilo", profile.uuid)
+		.maybeSingle();
+	if (subprofileError) throw subprofileError;
+
+	return Boolean(subprofile);
+}
+
+async function syncPlayerHighlights(
+	profileUserId: string,
+	draft: Record<string, Json>,
+) {
+	const videoHighlights = draft.video_highlights;
+	if (typeof videoHighlights !== "string") {
+		return "INVALID_PROFILE_VIDEO_LINK";
+	}
+
+	const admin = createAdminClient();
+	const {data: profile, error: profileError} = await admin
+		.from("profilo")
+		.select("uuid")
+		.eq("uuid_utente", profileUserId)
+		.maybeSingle();
+	if (profileError || !profile) {
+		return profileError?.code ?? "PROFILE_NOT_FOUND";
+	}
+
+	const link = videoHighlights.trim();
+	if (!link) {
+		const {error} = await admin
+			.from("media_profilo")
+			.delete()
+			.eq("uuid_profilo", profile.uuid)
+			.eq("formato_media", "video_highlights");
+		return error?.code ?? null;
+	}
+
+	const {data: existingMedia, error: lookupError} = await admin
+		.from("media_profilo")
+		.select("id")
+		.eq("uuid_profilo", profile.uuid)
+		.eq("formato_media", "video_highlights")
+		.maybeSingle();
+	if (lookupError) return lookupError.code;
+
+	if (existingMedia) {
+		const {error} = await admin
+			.from("media_profilo")
+			.update({link_media: link})
+			.eq("id", existingMedia.id);
+		return error?.code ?? null;
+	}
+
+	const {error: insertError} = await admin
+		.from("media_profilo")
+		.insert({
+			uuid_profilo: profile.uuid,
+			formato_media: "video_highlights",
+			link_media: link,
+		});
+	if (insertError?.code !== "23505") return insertError?.code ?? null;
+
+	const {error: updateError} = await admin
+		.from("media_profilo")
+		.update({link_media: link})
+		.eq("uuid_profilo", profile.uuid)
+		.eq("formato_media", "video_highlights");
+	return updateError?.code ?? null;
 }
 
 function profileTypeFromUnknown(value: unknown): ProfileType | null {
@@ -54,10 +152,11 @@ function profileTypeFromUnknown(value: unknown): ProfileType | null {
 export async function saveProfile(
 	payload: ProfileEditorSavePayload,
 ): Promise<ProfileMutationResult> {
-	const userId = await authenticatedUserId();
-	if (!userId) {
+	const account = await getAuthenticatedViewer();
+	if (!account?.utenteId) {
 		return {status: "error", message: "La sessione non è più valida. Accedi di nuovo."};
 	}
+	const userId = account.authUserId;
 
 	let normalized;
 	try {
@@ -70,6 +169,13 @@ export async function saveProfile(
 	}
 
 	try {
+		if (
+			isLimitedProfileType(normalized.type)
+			&& !await ownedSubprofileExists(account.utenteId, normalized.type)
+		) {
+			return {status: "error", message: "Questa tipologia sarà disponibile prossimamente."};
+		}
+
 		const admin = createAdminClient();
 		const {error} = await admin.rpc("save_owned_subprofile", {
 			p_user_id: userId,
@@ -82,6 +188,20 @@ export async function saveProfile(
 			console.error("[profile-dashboard] Profile save failed", {code: error.code});
 			return {status: "error", message: profileRpcErrorMessage(error.message)};
 		}
+
+		if (normalized.type === "giocatore") {
+			// Highlights live in media_profilo, outside the player profile draft.
+			const highlightsError = await syncPlayerHighlights(account.utenteId, normalized.draft);
+			if (highlightsError) {
+				console.error("[profile-dashboard] Player highlights save failed", {
+					code: highlightsError,
+				});
+				return {
+					status: "error",
+					message: "Il profilo è stato aggiornato, ma non è stato possibile salvare il link degli highlights. Riprova.",
+				};
+			}
+		}
 	} catch (error) {
 		console.error("[profile-dashboard] Profile save request failed", {
 			cause: error instanceof Error ? error.name : "unknown",
@@ -91,6 +211,7 @@ export async function saveProfile(
 	}
 
 	revalidatePath("/il-tuo-profilo");
+	revalidatePath("/dettagli-profilo");
 	return {status: "success", message: "Il sottoprofilo è stato salvato."};
 }
 

@@ -13,6 +13,7 @@ import type {
 	ManagedAnnouncement,
 	ProfileDashboardData,
 } from "@/features/profilo/types";
+import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import type {Database} from "@/server/supabase";
 
@@ -303,6 +304,9 @@ export async function getProfileDashboardData(
 		};
 	}
 
+	// baseProfile was read through the current user's RLS policy. The highlights
+	// link is stored separately and must be available to hydrate this editor.
+	const admin = createAdminClient();
 	const [
 		playerResult,
 		playerMediaResult,
@@ -317,7 +321,7 @@ export async function getProfileDashboardData(
 		announcements,
 	] = await Promise.all([
 		supabase.from("profilo_giocatore").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
-		supabase.from("media_profilo").select("link_media").eq("uuid_profilo", baseProfile.uuid).eq("formato_media", "video_highlights").order("id", {ascending: false}).limit(1).maybeSingle(),
+		admin.from("media_profilo").select("link_media").eq("uuid_profilo", baseProfile.uuid).eq("formato_media", "video_highlights").order("id", {ascending: false}).limit(1).maybeSingle(),
 		supabase.from("profilo_squadra").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_staff_sportivo").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_arbitro").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),

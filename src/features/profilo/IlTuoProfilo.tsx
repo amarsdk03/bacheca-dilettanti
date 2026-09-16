@@ -78,6 +78,7 @@ import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {Progress} from "@/components/ui/progress";
 import GradientBackground from "@/components/styling/GradientBackground";
 import {requestCurrentUserPasswordReset, signOut} from "@/features/auth/server/actions";
+import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
 import {
 	isLimitedProfileType,
 	MAX_PROFILE_COUNT,
@@ -437,9 +438,9 @@ function InactiveProfileCard({
 						<CardTitle>{option.label}</CardTitle>
 					</div>
 				</div>
-				<Badge variant="secondary">
-					{unavailable ? "Non disponibile" : "Non attivato"}
-				</Badge>
+				{unavailable
+					? <ComingSoonBadge />
+					: <Badge variant="secondary">Non attivato</Badge>}
 			</CardHeader>
 			<CardContent>
 				<p className="leading-6 text-muted-foreground">
@@ -449,7 +450,7 @@ function InactiveProfileCard({
 						<>
 							<br/><br/>
 							<span className="text-xs text-muted-foreground">
-								Questa tipologia non può essere abilitata al momento.
+								Questa tipologia sarà disponibile prossimamente.
 							</span>
 						</>
 					)}
