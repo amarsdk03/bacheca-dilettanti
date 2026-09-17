@@ -5,7 +5,7 @@ export default function ComingSoonBadge({className}: {className?: string}) {
 	return (
 		<Badge
 			variant="secondary"
-			className={cn("-rotate-2 border border-brand-indigo/15 bg-brand-indigo/10 text-brand-indigo", className)}
+			className={cn("border border-brand-indigo/15 bg-brand-indigo/10 text-brand-indigo", className)}
 		>
 			Coming soon...
 		</Badge>

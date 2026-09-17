@@ -930,18 +930,24 @@ export type Database = {
           formato_media: string | null
           id: number
           link_media: string
+          sottoprofilo: string | null
+          storage_path: string | null
           uuid_profilo: string
         }
         Insert: {
           formato_media?: string | null
           id?: number
           link_media: string
+          sottoprofilo?: string | null
+          storage_path?: string | null
           uuid_profilo: string
         }
         Update: {
           formato_media?: string | null
           id?: number
           link_media?: string
+          sottoprofilo?: string | null
+          storage_path?: string | null
           uuid_profilo?: string
         }
         Relationships: [
@@ -1698,6 +1704,16 @@ export type Database = {
       }
       consume_publish_email_otp_request_v1: {
         Args: { p_email_hash: string }
+        Returns: Json
+      }
+      submit_segnalazione_v1: {
+        Args: {
+          p_anonymous_key_hash: string | null
+          p_reason: string | null
+          p_reporter_user_uuid: string | null
+          p_target_kind: string
+          p_target_uuid: string
+        }
         Returns: Json
       }
       delete_owned_subprofile: {

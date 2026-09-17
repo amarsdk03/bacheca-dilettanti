@@ -15,6 +15,7 @@ import type {
 	AnnouncementDetail,
 	AnnouncementDetailResult,
 } from "@/features/annunci/announcement-model";
+import DetailActions from "@/features/segnalazioni/DetailActions";
 
 interface DettagliAnnuncioPubblicoProps {
 	result: Exclude<AnnouncementDetailResult, {status: "not-found"}>;
@@ -52,7 +53,15 @@ export default function DettagliAnnuncioPubblico({
 	return (
 		<div className="min-h-[calc(100vh-4rem)] bg-brand-paper">
 			<main className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-				<div><AnnouncementHistoryBackButton /></div>
+				<div className="flex items-center justify-between gap-3">
+					<AnnouncementHistoryBackButton />
+					{result.status === "success" ? (
+						<DetailActions
+							target={{kind: "annuncio", id: result.announcement.id}}
+							href={`/dettagli-annuncio?${new URLSearchParams({id: result.announcement.id}).toString()}`}
+						/>
+					) : null}
+				</div>
 				{result.status === "error" ? <AnnouncementError /> : <AnnouncementContent announcement={result.announcement} />}
 				<div className="flex justify-center pt-2">
 					<AnnouncementHistoryBackButton label="Torna indietro" variant="outline" size="lg" />

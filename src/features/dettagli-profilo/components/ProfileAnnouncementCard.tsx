@@ -16,9 +16,10 @@ import {
 import Link from "next/link";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
-import type {AnnouncementFactKind} from "@/features/annunci/announcement-model";
+import {announcementOption, type AnnouncementFactKind} from "@/features/annunci/announcement-model";
 import type {ProfileAnnouncement} from "@/features/dettagli-profilo/profile-detail-model";
-import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
+import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
+import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 
 const ANNOUNCEMENT_DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {
 	day: "numeric",
@@ -73,23 +74,24 @@ export default function ProfileAnnouncementCard({announcement}: {announcement: P
 	const formattedDate = formatAnnouncementDate(announcement.createdAt);
 	const detailHref = `/dettagli-annuncio?id=${encodeURIComponent(announcement.id)}`;
 	const accent = getProfileAccent(announcement.profileType);
+	const TypeIcon = announcementOption(announcement.type).icon;
 	const facts = announcement.facts.filter(({value}) => isUsefulFact(value)).slice(0, 4);
 
 	return (
-		<Link
-			href={detailHref}
-			aria-label={`Apri l’annuncio: ${announcement.title}`}
-			className="group block h-full rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+		<Card
+			size="sm"
+			className="group relative h-full overflow-hidden border-black/8 bg-card transition duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-within:ring-3 focus-within:ring-ring/50"
 		>
-			<Card
-				size="sm"
-				className="relative h-full overflow-hidden border-black/8 bg-card transition duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg"
-			>
-				<span className="absolute inset-x-0 top-0 h-1" style={{backgroundColor: accent}} aria-hidden="true" />
-				<CardHeader className="pt-5">
+			<Link
+				href={detailHref}
+				aria-label={`Apri l’annuncio: ${announcement.title}`}
+				className="absolute inset-0 z-0 rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+			/>
+			<span className="absolute inset-x-0 top-0 h-1" style={{backgroundColor: accent}} aria-hidden="true" />
+			<CardHeader className="pointer-events-none relative z-10 pt-2">
 					<div className="mb-2 flex items-start gap-3">
 						<span className="flex size-10 shrink-0 items-center justify-center rounded-xl" style={{backgroundColor: `${accent}14`}}>
-							<ProfilePngIcon type={announcement.profileType} color={accent} className="size-6" />
+							<TypeIcon className="size-5" style={{color: accent}} aria-hidden="true" />
 						</span>
 						<div className="flex min-w-0 flex-wrap gap-1.5 pt-0.5">
 							<Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}>{announcement.subtypeLabel}</Badge>
@@ -100,8 +102,8 @@ export default function ProfileAnnouncementCard({announcement}: {announcement: P
 					</div>
 					<CardTitle><h3 className="wrap-anywhere text-lg leading-snug">{announcement.title}</h3></CardTitle>
 					<CardDescription className="line-clamp-3 wrap-anywhere">{announcement.description}</CardDescription>
-				</CardHeader>
-				<CardContent className="mt-auto grid gap-4">
+			</CardHeader>
+			<CardContent className="pointer-events-none relative z-10 mt-auto grid gap-4">
 					{facts.length > 0 && (
 						<dl className="grid gap-2 sm:grid-cols-2">
 							{facts.map((fact) => {
@@ -118,12 +120,15 @@ export default function ProfileAnnouncementCard({announcement}: {announcement: P
 							})}
 						</dl>
 					)}
+					{(announcement.linkedTeams?.length ?? 0) > 0 && (
+						<TeamProfileLinks teams={announcement.linkedTeams ?? []} limit={2} className="pointer-events-auto" />
+					)}
 					<p className="flex items-start gap-2 text-sm text-muted-foreground">
 						<MapPinIcon className="mt-0.5 size-4 shrink-0" style={{color: accent}} aria-hidden="true" />
 						<span className="wrap-anywhere">{announcement.location}</span>
 					</p>
-				</CardContent>
-				<CardFooter className="justify-between gap-3 text-xs text-muted-foreground">
+			</CardContent>
+			<CardFooter className="pointer-events-none relative z-10 justify-between gap-3 text-xs text-muted-foreground">
 					<span className="font-medium">{announcement.typeLabel}</span>
 					{announcement.createdAt ? (
 						<time dateTime={announcement.createdAt} className="flex items-center gap-1.5">
@@ -136,8 +141,7 @@ export default function ProfileAnnouncementCard({announcement}: {announcement: P
 							{formattedDate}
 						</span>
 					)}
-				</CardFooter>
-			</Card>
-		</Link>
+			</CardFooter>
+		</Card>
 	);
 }

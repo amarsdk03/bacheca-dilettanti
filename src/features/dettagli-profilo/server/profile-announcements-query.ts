@@ -2,13 +2,16 @@ import "server-only";
 
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
-import type {
-	AnnouncementFact,
-	AnnouncementFactKind,
+import {
+	isAnnouncementType,
+	type AnnouncementFact,
+	type AnnouncementFactKind,
 } from "@/features/annunci/announcement-model";
 import type {ProfileAnnouncement} from "@/features/dettagli-profilo/profile-detail-model";
 import type {ProfileType} from "@/features/profilo/profile-model";
 import type {Database} from "@/server/supabase";
+import {experienceTeamReferences, type TeamProfileReference} from "@/features/profilo/team-profile";
+import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
 
 const PUBLIC_ANNOUNCEMENT_LIMIT = 4;
 const NOT_SPECIFIED = "Non specificato";
@@ -112,8 +115,8 @@ function publicProfileAnnouncementsQuery(supabase: SupabaseClient<Database>) {
 			annuncio_squadra_cerca_staff(figura_ricercata, settore, compenso_mensile, requisiti, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_partita(categorie_avversario, periodo_dal, periodo_al, disponibilita_trasferta, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_sponsor(categoria_settore, supporto_cercato, offerta_fornita, descrizione_aggiuntiva),
-			annuncio_staff_sportivo(figure_professionali, categorie_ricercate, disponibilita_spostamento, descrizione_aggiuntiva),
-			annuncio_arbitro(categorie_ricercate, disponibilita_occupazione, automunito, descrizione_aggiuntiva),
+			annuncio_staff_sportivo(figure_professionali, categorie_ricercate, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
+			annuncio_arbitro(categorie_ricercate, disponibilita_occupazione, automunito, descrizione_aggiuntiva, lista_esperienze),
 			annuncio_torneo_evento(nome_evento, modalita_iscrizione, tipo_partecipazione, costo_partecipazione, descrizione_aggiuntiva),
 			annuncio_campo_impianto(tipologie_sport, costo_partenza, servizi_inclusi, descrizione_aggiuntiva),
 			localita_annuncio(regione, citta)
@@ -333,7 +336,9 @@ function locationLabel(row: AnnouncementQueryRow) {
 	return locations.length > 1 ? `${first} +${locations.length - 1}` : first;
 }
 
-function toProfileAnnouncement(row: AnnouncementQueryRow, profileType: ProfileType): ProfileAnnouncement {
+function toProfileAnnouncement(row: AnnouncementQueryRow, profileType: ProfileType): {announcement: ProfileAnnouncement; teamReferences: TeamProfileReference[]} | null {
+	if (!isAnnouncementType(row.tipologia_annuncio)) return null;
+
 	const source = row as unknown as Record<string, unknown>;
 	const definition = DETAIL_DEFINITIONS.find(({key}) => firstRelation(source[key]));
 	const detail = definition ? firstRelation(source[definition.key]) : null;
@@ -344,8 +349,9 @@ function toProfileAnnouncement(row: AnnouncementQueryRow, profileType: ProfileTy
 		? firstDetailText(detail, definition.descriptionFields)
 		: null;
 
-	return {
+	return {announcement: {
 		id: row.uuid,
+		type: row.tipologia_annuncio,
 		profileType,
 		typeLabel: humanizeAnnouncementType(row.tipologia_annuncio),
 		subtypeLabel: definition?.subtypeLabel ?? "Annuncio",
@@ -355,7 +361,8 @@ function toProfileAnnouncement(row: AnnouncementQueryRow, profileType: ProfileTy
 		createdAt: row.creato_il,
 		level: firstText(row.livello_annuncio),
 		facts: profileAnnouncementFacts(definition?.key, detail, locationLabel(row)),
-	};
+		linkedTeams: [],
+	}, teamReferences: experienceTeamReferences(detail?.lista_esperienze)};
 }
 
 function errorCode(error: unknown) {
@@ -391,8 +398,39 @@ export async function loadPublicProfileAnnouncements(
 			return {announcements: [], unavailable: true};
 		}
 
+		const mapped = (data ?? []).flatMap((row) => {
+			const announcement = toProfileAnnouncement(row, type);
+			return announcement ? [announcement] : [];
+		});
+		if (type === "giocatore" && mapped.length > 0) {
+			const {data: player, error: playerError} = await supabase
+				.from("profilo_giocatore")
+				.select("storico_carriera")
+				.eq("uuid_profilo", profileId)
+				.maybeSingle();
+			if (playerError) {
+				console.error("[dettagli-profilo] Player announcement team lookup failed", {code: playerError.code});
+			} else {
+				const references = experienceTeamReferences(player?.storico_carriera, "titolo");
+				mapped.forEach((item) => { item.teamReferences = references; });
+			}
+		}
+		let teamsById = new Map<string, Awaited<ReturnType<typeof loadPublicTeamProfiles>>[number]>();
+		try {
+			const teams = await loadPublicTeamProfiles(
+				supabase,
+				mapped.flatMap(({teamReferences}) => teamReferences.map(({profileId}) => profileId)),
+			);
+			teamsById = new Map(teams.map((team) => [team.profileId, team]));
+		} catch (error) {
+			console.error("[dettagli-profilo] Announcement team lookup failed", {code: errorCode(error)});
+		}
+
 		return {
-			announcements: (data ?? []).map((row) => toProfileAnnouncement(row, type)),
+			announcements: mapped.map(({announcement, teamReferences}) => ({
+				...announcement,
+				linkedTeams: teamReferences.map((reference) => teamsById.get(reference.profileId) ?? reference),
+			})),
 			unavailable: false,
 		};
 	} catch (error) {

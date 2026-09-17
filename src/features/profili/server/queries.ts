@@ -14,6 +14,8 @@ import {
 	type ProfileDirectoryResult,
 } from "@/features/profili/profile-directory-model";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
+import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
+import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database, Json} from "@/server/supabase";
 
@@ -206,6 +208,7 @@ function createDirectoryProfile(
 	type: ProfileType,
 	childId: number,
 	content: ProfileContent,
+	profileImages: ReadonlyMap<string, string>,
 ): DirectoryProfile {
 	const locations = scopedLocations(row, type, childId);
 	const title = cleanText(content.title) ?? `Profilo ${profileTypeLabel(type).toLocaleLowerCase("it-IT")}`;
@@ -254,7 +257,7 @@ function createDirectoryProfile(
 		type,
 		title,
 		presentation,
-		imageUrl: cleanText(row.link_foto_profilo),
+		imageUrl: resolvedProfileImageUrl(profileImages, row.uuid, type, cleanText(row.link_foto_profilo)),
 		verified: Boolean(row.verificato_il),
 		updatedAt: row.ultima_modifica_il,
 		sport,
@@ -267,7 +270,7 @@ function createDirectoryProfile(
 	};
 }
 
-function mapProfileRow(row: ProfileDirectoryQueryRow) {
+function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap<string, string>) {
 	const profiles: DirectoryProfile[] = [];
 
 	for (const player of row.profilo_giocatore ?? []) {
@@ -285,7 +288,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow) {
 			searchValues: [...specificRoles, ...categories],
 			filterData: {tipologie: sportTypes, ruoli: primaryRoles},
 			factData: {roles: [...new Set([...primaryRoles, ...specificRoles])]},
-		}));
+		}, profileImages));
 	}
 
 	for (const team of row.profilo_squadra ?? []) {
@@ -299,7 +302,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow) {
 			availability: null,
 			searchValues: [team.sede_principale],
 			filterData: {tipologie: sportTypes},
-		}));
+		}, profileImages));
 	}
 
 	for (const staff of row.profilo_staff_sportivo ?? []) {
@@ -312,7 +315,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow) {
 			highlight: figures[0] ?? null,
 			availability: staff.disponibilita,
 			filterData: {figure: figures},
-		}));
+		}, profileImages));
 	}
 
 	for (const professional of row.profilo_professionista_studente ?? []) {
@@ -335,7 +338,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow) {
 				automunito: cleanText(professional.automunito),
 			},
 			factData: {specializations: cleanText(professional.specializzazioni)},
-		}));
+		}, profileImages));
 	}
 
 	for (const referee of row.profilo_arbitro ?? []) {
@@ -346,7 +349,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow) {
 			sport: referee.sport_principale,
 			highlight: availabilityLabel(referee.disponibilita) ?? "Attività arbitrale",
 			availability: referee.disponibilita,
-		}));
+		}, profileImages));
 	}
 
 	for (const creator of row.profilo_creator ?? []) {
@@ -358,7 +361,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow) {
 			highlight: cleanText(creator.tipologia_contenuti),
 			availability: null,
 			searchValues: [creator.tipologia_contenuti],
-		}));
+		}, profileImages));
 	}
 
 	for (const tournament of row.profilo_torneo_evento ?? []) {
@@ -372,7 +375,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow) {
 			availability: null,
 			searchValues: [tournament.sede_principale],
 			filterData: {tipologie: sportTypes},
-		}));
+		}, profileImages));
 	}
 
 	for (const facility of row.profilo_campi_impianti ?? []) {
@@ -388,7 +391,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow) {
 			searchValues: [facility.sede_principale, facility.servizi_inclusi],
 			filterData: {tipologie: sportTypes, costo: price},
 			factData: {services: cleanText(facility.servizi_inclusi)},
-		}));
+		}, profileImages));
 	}
 
 	return profiles;
@@ -452,9 +455,10 @@ export async function getProfileDirectory(query: ProfileDirectoryQuery): Promise
 			rows.push(...batch);
 			if (batch.length < PROFILE_DIRECTORY_BATCH_SIZE) break;
 		}
+		const profileImages = await loadProfileImageUrlMap(supabase, rows.map(({uuid}) => uuid));
 
 		const filteredProfiles = rows
-			.flatMap(mapProfileRow)
+			.flatMap((row) => mapProfileRow(row, profileImages))
 			.filter((profile) => matchesDirectoryQuery(profile, query))
 			.sort((left, right) => {
 				const byUpdate = right.updatedAt.localeCompare(left.updatedAt);

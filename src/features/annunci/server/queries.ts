@@ -25,6 +25,10 @@ import {
 	type LatestAnnouncementsResult,
 } from "@/features/annunci/announcement-model";
 import type {ProfileType} from "@/features/profilo/profile-model";
+import {experienceTeamReferences, type PublicTeamProfile, type TeamProfileReference} from "@/features/profilo/team-profile";
+import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
+import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
+import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database} from "@/server/supabase";
 
@@ -73,8 +77,8 @@ function publicAnnouncementQuery(
 			annuncio_squadra_cerca_staff(figura_ricercata, settore, compenso_mensile, requisiti, periodo_dal, periodo_al, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_partita(categorie_avversario, disponibilita_trasferta, periodo_dal, periodo_al, orario_dalle, orario_alle, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_sponsor(categoria_settore, supporto_cercato, offerta_fornita, descrizione_aggiuntiva),
-			annuncio_staff_sportivo(figure_professionali, tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, descrizione_aggiuntiva),
-			annuncio_arbitro(tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, automunito, descrizione_aggiuntiva),
+			annuncio_staff_sportivo(figure_professionali, tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
+			annuncio_arbitro(tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, automunito, descrizione_aggiuntiva, lista_esperienze),
 			annuncio_torneo_evento(nome_evento, modalita_iscrizione, annate_ammesse_da, annate_ammesse_a, numero_squadre, costo_partecipazione, tipo_partecipazione, lista_premi_trofei, descrizione_aggiuntiva, tipologie_sport),
 			annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva),
 			localita_annuncio(regione, citta)
@@ -134,6 +138,7 @@ interface MappedAnnouncement {
 	filterData: AnnouncementFilterData;
 	searchText: string;
 	authorId: string | null;
+	teamReferences: TeamProfileReference[];
 }
 
 interface AuthorLoadResult {
@@ -568,12 +573,14 @@ function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 	const detail = detailForType(row, type);
 	const locations = announcementLocations(row);
 	const content = announcementContent(type, detail, locations);
+	const teamReferences = experienceTeamReferences(detail.lista_esperienze);
 	const searchText = normalizeAnnouncementSearchText([
 		content.title,
 		content.description,
 		option.label,
 		content.location,
 		...content.searchValues,
+		...teamReferences.map(({name}) => name),
 		...locations.flatMap(({region, city}) => [region, city ?? ""]),
 	].filter(Boolean).join(" "));
 
@@ -590,12 +597,14 @@ function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 			location: content.location,
 			facts: content.facts,
 			author: anonymousAuthor(option.profileType),
+			linkedTeams: [],
 		},
 		fields: content.fields,
 		playerRoles: content.playerRoles,
 		filterData: content.filters,
 		searchText,
 		authorId: isValidAnnouncementId(row.autore_annuncio) ? row.autore_annuncio : null,
+		teamReferences,
 	};
 }
 
@@ -662,6 +671,7 @@ function fullName(name: unknown, surname: unknown) {
 function registeredAuthor(
 	row: OfficialAuthorQueryRow,
 	profileType: ProfileType,
+	profileImages: ReadonlyMap<string, string>,
 ): AnnouncementAuthor | null {
 	const table = PROFILE_TABLE_BY_TYPE[profileType];
 	if (!table) return null;
@@ -742,7 +752,7 @@ function registeredAuthor(
 		profileId: row.uuid,
 		profileType,
 		title,
-		imageUrl: cleanText(row.link_foto_profilo, 2_000),
+		imageUrl: resolvedProfileImageUrl(profileImages, row.uuid, profileType, cleanText(row.link_foto_profilo, 2_000)),
 		verified: Boolean(row.verificato_il),
 		presentation: cleanText(child.presentazione),
 		location,
@@ -782,7 +792,10 @@ async function loadOfficialAuthors(
 	const authors = new Map<string, AnnouncementAuthor>();
 	for (let offset = 0; offset < ids.length; offset += AUTHOR_BATCH_SIZE) {
 		const chunk = ids.slice(offset, offset + AUTHOR_BATCH_SIZE);
-		const {data, error} = await officialAuthorQuery(supabase).in("uuid", chunk);
+		const [{data, error}, profileImages] = await Promise.all([
+			officialAuthorQuery(supabase).in("uuid", chunk),
+			loadProfileImageUrlMap(supabase, chunk),
+		]);
 		if (error) {
 			logQueryError("authors", error);
 			return {authors: new Map(), error: true};
@@ -792,7 +805,7 @@ async function loadOfficialAuthors(
 			const requestedTypes = requestedTypesById.get(row.uuid);
 			if (!requestedTypes) continue;
 			for (const profileType of requestedTypes) {
-				const author = registeredAuthor(row, profileType);
+				const author = registeredAuthor(row, profileType, profileImages);
 				if (author) authors.set(authorMapKey(row.uuid, profileType), author);
 			}
 		}
@@ -863,6 +876,55 @@ export async function loadLatestPublicAnnouncements(): Promise<LatestAnnouncemen
 	}
 }
 
+async function loadAnnouncementTeams(
+	supabase: SupabaseClient<Database>,
+	announcements: readonly MappedAnnouncement[],
+) {
+	const playerAuthorIds = [...new Set(announcements.flatMap((announcement) => (
+		announcement.item.type === "annuncio_giocatore" && announcement.authorId
+			? [announcement.authorId]
+			: []
+	)))];
+	if (playerAuthorIds.length > 0) {
+		const {data, error} = await supabase
+			.from("profilo_giocatore")
+			.select("uuid_profilo, storico_carriera")
+			.in("uuid_profilo", playerAuthorIds);
+		if (error) {
+			logQueryError("player-linked-teams", error);
+		} else {
+			const referencesByAuthor = new Map((data ?? []).map((profile) => [
+				profile.uuid_profilo,
+				experienceTeamReferences(profile.storico_carriera, "titolo"),
+			]));
+			for (const announcement of announcements) {
+				if (announcement.item.type !== "annuncio_giocatore" || !announcement.authorId) continue;
+				announcement.teamReferences = referencesByAuthor.get(announcement.authorId) ?? [];
+			}
+		}
+	}
+	const ids = announcements.flatMap(({teamReferences}) => teamReferences.map(({profileId}) => profileId));
+	try {
+		const teams = await loadPublicTeamProfiles(supabase, ids);
+		return new Map<string, PublicTeamProfile>(teams.map((team) => [team.profileId, team]));
+	} catch (error) {
+		logQueryError("linked-teams", error);
+		return new Map<string, PublicTeamProfile>();
+	}
+}
+
+function withLoadedRelations(
+	announcement: MappedAnnouncement,
+	authors: Map<string, AnnouncementAuthor>,
+	teams: Map<string, PublicTeamProfile>,
+	authorsUnavailable = false,
+) {
+	return {
+		...withLoadedAuthor(announcement, authors, authorsUnavailable),
+		linkedTeams: announcement.teamReferences.map((reference) => teams.get(reference.profileId) ?? reference),
+	};
+}
+
 const RELATED_ANNOUNCEMENT_TYPES: Record<AnnouncementType, readonly AnnouncementType[]> = {
 	annuncio_giocatore: ["annuncio_squadra_cerca_giocatore"],
 	annuncio_squadra_cerca_giocatore: ["annuncio_giocatore"],
@@ -906,8 +968,11 @@ export async function loadRelatedPublicAnnouncements(
 				return Number(rightLocal) - Number(leftLocal);
 			})
 			.slice(0, 3);
-		const authorResult = await loadOfficialAuthors(supabase, mapped);
-		return mapped.map((item) => withLoadedAuthor(item, authorResult.authors, authorResult.error));
+		const [authorResult, teams] = await Promise.all([
+			loadOfficialAuthors(supabase, mapped),
+			loadAnnouncementTeams(supabase, mapped),
+		]);
+		return mapped.map((item) => withLoadedRelations(item, authorResult.authors, teams, authorResult.error));
 	} catch (error) {
 		logQueryError("related-unexpected", error);
 		return [];
@@ -955,12 +1020,16 @@ export async function loadPublicAnnouncementDirectory(
 			const page = (pageResult.data ?? [])
 				.map(mapAnnouncement)
 				.filter((item): item is MappedAnnouncement => Boolean(item));
-			const authorResult = await loadOfficialAuthors(supabase, page);
+			const [authorResult, teams] = await Promise.all([
+				loadOfficialAuthors(supabase, page),
+				loadAnnouncementTeams(supabase, page),
+			]);
 
 			return {
-				announcements: page.map((item) => withLoadedAuthor(
+				announcements: page.map((item) => withLoadedRelations(
 					item,
 					authorResult.authors,
+					teams,
 					authorResult.error,
 				)),
 				total,
@@ -998,12 +1067,16 @@ export async function loadPublicAnnouncementDirectory(
 		const currentPage = Math.min(query.page, totalPages);
 		const start = (currentPage - 1) * ANNOUNCEMENTS_PER_PAGE;
 		const page = filtered.slice(start, start + ANNOUNCEMENTS_PER_PAGE);
-		const authorResult = await loadOfficialAuthors(supabase, page);
+		const [authorResult, teams] = await Promise.all([
+			loadOfficialAuthors(supabase, page),
+			loadAnnouncementTeams(supabase, page),
+		]);
 
 		return {
-			announcements: page.map((item) => withLoadedAuthor(
+			announcements: page.map((item) => withLoadedRelations(
 				item,
 				authorResult.authors,
+				teams,
 				authorResult.error,
 			)),
 			total,
@@ -1050,8 +1123,9 @@ export async function loadPublicAnnouncementDetail(
 
 		const mapped = mapAnnouncement(data);
 		if (!mapped) return {status: "not-found"};
-		const [authorResult, contactResult] = await Promise.all([
+		const [authorResult, linkedTeams, contactResult] = await Promise.all([
 			loadOfficialAuthors(supabase, [mapped]),
+			loadAnnouncementTeams(supabase, [mapped]),
 			supabase
 				.from("contatto_annuncio")
 				.select("tipo, valore")
@@ -1067,7 +1141,7 @@ export async function loadPublicAnnouncementDetail(
 		return {
 			status: "success",
 			announcement: {
-				...withLoadedAuthor(mapped, authorResult.authors, authorResult.error),
+				...withLoadedRelations(mapped, authorResult.authors, linkedTeams, authorResult.error),
 				fields: mapped.fields,
 				...(mapped.playerRoles ? {playerRoles: mapped.playerRoles} : {}),
 				contacts,

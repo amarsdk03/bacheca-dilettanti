@@ -3,6 +3,7 @@ import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import type {PlayerCareerEntry} from "../../profile-detail-model";
+import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 
 export default function PlayerCareer({entries}: {entries: PlayerCareerEntry[]}) {
 	return (
@@ -29,7 +30,9 @@ export default function PlayerCareer({entries}: {entries: PlayerCareerEntry[]}) 
 									<span aria-hidden="true" className="absolute top-2 -left-1.5 size-3 rounded-full bg-brand-indigo ring-4 ring-card" />
 									<article className="flex flex-col gap-3 rounded-xl bg-muted/40 p-4 sm:p-5">
 										<div className="flex flex-wrap items-start justify-between gap-2">
-											<h3 className="text-lg font-semibold wrap-anywhere">{entry.title}</h3>
+										{entry.linkedTeam
+											? <TeamProfileLinks teams={[entry.linkedTeam]} />
+											: <h3 className="text-lg font-semibold wrap-anywhere">{entry.title}</h3>}
 											{entry.status && <Badge variant={entry.status === "in-corso" ? "default" : "secondary"}>{entry.status === "in-corso" ? "In corso" : "Conseguito"}</Badge>}
 										</div>
 										{entry.organization && <p className="flex items-start gap-2 text-sm"><Building2Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" /><span className="wrap-anywhere">{entry.organization}</span></p>}

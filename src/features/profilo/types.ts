@@ -4,6 +4,7 @@ import type {
 	ProfileType,
 	ProfileDrafts,
 } from "@/features/profilo/profile-model";
+import type {AnnouncementType} from "@/features/annunci/announcement-model";
 
 export type ProfileDashboardSection = "profilo" | "annunci" | "impostazioni" | "info";
 
@@ -11,6 +12,8 @@ export interface ManagedProfile {
 	id: string;
 	type: ProfileType;
 	isPrimary: boolean;
+	imageUrl: string | null;
+	hasCustomImage: boolean;
 }
 
 export type AnnouncementVisibility = "visible" | "hidden";
@@ -18,6 +21,8 @@ export type AnnouncementFilter = "all" | AnnouncementVisibility;
 
 export interface ManagedAnnouncement {
 	id: string;
+	announcementType: AnnouncementType | null;
+	profileType: ProfileType;
 	type: string;
 	subtype: string;
 	title: string;
@@ -37,6 +42,8 @@ export interface ProfileEditorSavePayload {
 }
 
 export interface ProfileDashboardData {
+	mainImageUrl: string | null;
+	hasMainImage: boolean;
 	profiles: ManagedProfile[];
 	drafts: ProfileDrafts;
 	locations: ProfileLocations;
@@ -45,4 +52,8 @@ export interface ProfileDashboardData {
 
 export type ProfileMutationResult =
 	| {status: "success"; message: string}
+	| {status: "error"; message: string};
+
+export type ProfileImageMutationResult =
+	| {status: "success"; message: string; imageUrl: string | null}
 	| {status: "error"; message: string};

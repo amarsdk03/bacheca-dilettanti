@@ -96,7 +96,7 @@ const PROFILE_TYPE_BY_ANNOUNCEMENT = {
 	annuncio_campo_impianto: "campi-impianti-sportivi",
 };
 
-function fixtureAnnouncement(type, facts = FACTS) {
+function fixtureAnnouncement(type, facts = FACTS, linkedTeams = []) {
 	return {
 		id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
 		type,
@@ -108,6 +108,7 @@ function fixtureAnnouncement(type, facts = FACTS) {
 		level: "prioritario",
 		location: "Roma, Lazio",
 		facts,
+		linkedTeams,
 		author: {
 			kind: "registered",
 			profileId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
@@ -139,7 +140,8 @@ test("the dispatcher renders type-specific facts in order for all concrete annou
 	for (const [type, expectedLabels] of Object.entries(EXPECTED_FACTS)) {
 		const html = renderAnnouncement(type);
 		assert.match(html, /Apri annuncio/);
-		assert.match(html, new RegExp(`data-profile-icon="${PROFILE_TYPE_BY_ANNOUNCEMENT[type]}"`));
+		assert.match(html, /data-icon="inline-start"/);
+		assert.doesNotMatch(html, /data-profile-icon=/);
 
 		let previousIndex = -1;
 		for (const label of expectedLabels) {
@@ -190,4 +192,22 @@ test("the detail overlay and author link remain separate interactive links", () 
 	assert.equal((html.match(/<a\b/g) ?? []).length, 2);
 	assert.equal(/<a\b[^>]*>(?:(?!<\/a>).)*<a\b/s.test(html), false);
 	assert.match(html, /pointer-events-auto/);
+});
+
+test("announcement cards render at most two independent linked-team profiles", () => {
+	const linkedTeams = [1, 2, 3].map((index) => ({
+		profileId: `00000000-0000-4000-8000-00000000000${index}`,
+		name: `Squadra ${index}`,
+		imageUrl: null,
+		location: null,
+	}));
+	const html = renderToStaticMarkup(React.createElement(AnnouncementCard, {
+		announcement: fixtureAnnouncement("annuncio_staff_sportivo", FACTS, linkedTeams),
+	}));
+
+	assert.match(html, /Squadra 1/);
+	assert.match(html, /Squadra 2/);
+	assert.doesNotMatch(html, /Squadra 3/);
+	assert.match(html, />\+1</);
+	assert.equal(/<a\b[^>]*>(?:(?!<\/a>).)*<a\b/s.test(html), false);
 });

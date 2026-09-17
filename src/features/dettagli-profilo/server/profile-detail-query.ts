@@ -8,15 +8,19 @@ import type {
 	ProfileDetailField,
 	ProfileDetailResult,
 	PlayerProfileData,
+	PublicProfileExperience,
 } from "@/features/dettagli-profilo/profile-detail-model";
 import {loadPublicProfileAnnouncements} from "@/features/dettagli-profilo/server/profile-announcements-query";
 import {
 	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {toPublicPlayerData} from "./player-profile-data";
+import {parsePlayerCareer, toPublicPlayerData} from "./player-profile-data";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database, Json} from "@/server/supabase";
+import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
+import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
+import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 
 const NOT_SPECIFIED = "Non specificato";
 
@@ -47,6 +51,7 @@ interface ProfileContent {
 	availability: string | null;
 	fields: ProfileDetailField[];
 	player?: PlayerProfileData;
+	experiences?: PublicProfileExperience[];
 }
 
 type ProfileContentResult =
@@ -84,41 +89,6 @@ function asJsonRecord(value: Json | undefined): Record<string, Json | undefined>
 
 function jsonText(record: Record<string, Json | undefined>, key: string) {
 	return cleanText(record[key]);
-}
-
-function formatExperiences(value: Json | null) {
-	if (!Array.isArray(value)) return NOT_SPECIFIED;
-
-	const entries = value.flatMap((entry, index): string[] => {
-		const record = asJsonRecord(entry);
-		if (!record) return [];
-
-		const title = jsonText(record, "titolo");
-		const organization = jsonText(record, "ente");
-		const from = jsonText(record, "periodoDa");
-		const to = jsonText(record, "periodoA");
-		const state = jsonText(record, "stato");
-		const description = jsonText(record, "descrizione");
-		const hasContent = [title, organization, from, to, description]
-			.some(Boolean) || state === "in-corso" || state === "conseguito";
-		if (!hasContent) return [];
-
-		const heading = [title ?? `Esperienza ${index + 1}`, organization]
-			.filter(Boolean)
-			.join(" · ");
-		const periodEnd = to ?? (state === "in-corso" ? "in corso" : null);
-		const period = from && periodEnd
-			? `${from}–${periodEnd}`
-			: from ?? periodEnd;
-		const summary = [heading, period].filter(Boolean).join(" · ");
-		const formatted = description
-			? `${summary}${summary ? " — " : ""}${description}`
-			: summary;
-
-		return formatted ? [formatted] : [];
-	});
-
-	return entries.join("\n\n") || NOT_SPECIFIED;
 }
 
 function formatOpeningHours(value: Json | null) {
@@ -263,8 +233,8 @@ async function loadProfileContent(
 					detailField("Figure professionali", formatList(data.figure_professionali)),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Presentazione", data.presentazione, true),
-					detailField("Storico esperienze", formatExperiences(data.storico_esperienze), true),
 				],
+				experiences: parsePlayerCareer(data.storico_esperienze),
 			},
 		};
 	}
@@ -292,8 +262,8 @@ async function loadProfileContent(
 					detailField("Specializzazioni", data.specializzazioni, true),
 					detailField("Presentazione", data.presentazione, true),
 					detailField("Servizi offerti", data.presentazione_servizi, true),
-					detailField("Storico esperienze", formatExperiences(data.storico_esperienze), true),
 				],
+				experiences: parsePlayerCareer(data.storico_esperienze),
 			},
 		};
 	}
@@ -316,8 +286,8 @@ async function loadProfileContent(
 				fields: [
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Presentazione", data.presentazione, true),
-					detailField("Storico esperienze", formatExperiences(data.storico_esperienze), true),
 				],
+				experiences: parsePlayerCareer(data.storico_esperienze),
 			},
 		};
 	}
@@ -446,11 +416,13 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			.order("citta", {ascending: true});
 		const contentPromise = loadProfileContent(supabase, id, type);
 		const announcementsPromise = loadPublicProfileAnnouncements(supabase, id, type);
-		const [baseResult, locationsResult, contentResult, announcementsResult] = await Promise.all([
+		const profileImagesPromise = loadProfileImageUrlMap(supabase, [id]);
+		const [baseResult, locationsResult, contentResult, announcementsResult, profileImages] = await Promise.all([
 			baseProfilePromise,
 			locationsPromise,
 			contentPromise,
 			announcementsPromise,
+			profileImagesPromise,
 		]);
 
 		if (baseResult.error || locationsResult.error || contentResult.status === "error") {
@@ -467,13 +439,32 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 		}
 
 		const {content} = contentResult;
+		const rawExperiences = type === "giocatore"
+			? content.player?.career ?? []
+			: content.experiences ?? [];
+		let teamProfiles = new Map<string, Awaited<ReturnType<typeof loadPublicTeamProfiles>>[number]>();
+		try {
+			const teams = await loadPublicTeamProfiles(
+				supabase,
+				rawExperiences.flatMap(({teamProfileId}) => teamProfileId ? [teamProfileId] : []),
+			);
+			teamProfiles = new Map(teams.map((team) => [team.profileId, team]));
+		} catch (error) {
+			console.error("[dettagli-profilo] Linked team lookup failed", {
+				cause: error instanceof Error ? error.name : "unknown",
+			});
+		}
+		const experiences = rawExperiences.map((experience) => ({
+			...experience,
+			linkedTeam: experience.teamProfileId ? teamProfiles.get(experience.teamProfileId) ?? null : null,
+		}));
 		const typeLabel = profileTypeLabel(type);
 		const locations = publicLocations(locationsResult.data ?? [], content.childId);
 		const splitFields = splitProfileFields(type, content.fields);
 		const common = {
 			id: baseResult.data.uuid,
 			title: content.title ?? `Profilo ${typeLabel.toLocaleLowerCase("it-IT")}`,
-			imageUrl: cleanText(baseResult.data.link_foto_profilo),
+			imageUrl: resolvedProfileImageUrl(profileImages, id, type, cleanText(baseResult.data.link_foto_profilo)),
 			verified: Boolean(baseResult.data.verificato_il),
 			primary: baseResult.data.tipologia_principale === type,
 			availabilityLabel: availabilityLabel(content.availability),
@@ -486,12 +477,12 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			return {status: "ok", profile: {
 				...common,
 				type,
-				player: content.player,
+				player: {...content.player, career: experiences},
 				locations,
 			}};
 		}
 
-		const profile: ProfileDetail = {...common, type, locations, ...splitFields};
+		const profile: ProfileDetail = {...common, type, locations, ...splitFields, experiences};
 		return {status: "ok", profile};
 	} catch (error) {
 		console.error("[dettagli-profilo] Profile lookup unavailable", {

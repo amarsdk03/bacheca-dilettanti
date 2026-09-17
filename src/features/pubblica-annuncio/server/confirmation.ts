@@ -15,6 +15,8 @@ import {
 } from "@/features/pubblica-annuncio/announcement-preview";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
+import {experienceTeamReferences} from "@/features/profilo/team-profile";
+import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
 
 const ANNOUNCEMENT_IMAGES_BUCKET = "immagini_annunci";
 
@@ -111,8 +113,8 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 				annuncio_squadra_cerca_staff(figura_ricercata, settore, requisiti, descrizione_aggiuntiva),
 				annuncio_squadra_cerca_partita(categorie_avversario, disponibilita_trasferta, descrizione_aggiuntiva),
 				annuncio_squadra_cerca_sponsor(categoria_settore, supporto_cercato, offerta_fornita, descrizione_aggiuntiva),
-				annuncio_staff_sportivo(tipologie_sport, categorie_ricercate, disponibilita_spostamento, descrizione_aggiuntiva),
-				annuncio_arbitro(tipologie_sport, categorie_ricercate, automunito, disponibilita_spostamento, descrizione_aggiuntiva),
+				annuncio_staff_sportivo(tipologie_sport, categorie_ricercate, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
+				annuncio_arbitro(tipologie_sport, categorie_ricercate, automunito, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
 				annuncio_torneo_evento(nome_evento, tipologie_sport, modalita_iscrizione, annate_ammesse_da, annate_ammesse_a, numero_squadre, descrizione_aggiuntiva),
 				annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva),
 				localita_annuncio(regione, citta),
@@ -171,8 +173,33 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			? `${author} cerca una nuova opportunità`
 			: type === "annuncio_staff_sportivo" ? `${author} è disponibile`
 				: cleanText(detail.nome_evento) ?? option.label;
+		let teamReferences = experienceTeamReferences(detail.lista_esperienze);
+		if (type === "annuncio_giocatore") {
+			const {data: player, error: playerError} = await createAdminClient()
+				.from("profilo_giocatore")
+				.select("storico_carriera")
+				.eq("uuid_profilo", String(data.autore_annuncio))
+				.maybeSingle();
+			if (playerError) {
+				console.error("[publish-confirmation] Player team lookup failed", {code: playerError.code});
+			} else {
+				teamReferences = experienceTeamReferences(player?.storico_carriera, "titolo");
+			}
+		}
+		let linkedTeams = teamReferences;
+		try {
+			const resolvedTeams = await loadPublicTeamProfiles(
+				createAdminClient(),
+				teamReferences.map(({profileId}) => profileId),
+			);
+			const teamsById = new Map(resolvedTeams.map((team) => [team.profileId, team]));
+			linkedTeams = teamReferences.map((reference) => teamsById.get(reference.profileId) ?? reference);
+		} catch (error) {
+			console.error("[publish-confirmation] Linked team lookup failed", {cause: error instanceof Error ? error.name : "unknown"});
+		}
 		const preview: AnnouncementPreviewData = {
 			id,
+			announcementType: type,
 			profileType: option.profileType,
 			title,
 			typeLabel: option.label,
@@ -187,6 +214,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			imageLabel: imagePath ? "Immagine allegata" : null,
 			status: formatPreviewStatus(cleanText(data.stato_annuncio)),
 			statusInfo: cleanText(data.info_stato_annuncio),
+			linkedTeams,
 		};
 		const suggestions = await loadRelatedPublicAnnouncements(id, type, locations.map(({region}) => region));
 		return {

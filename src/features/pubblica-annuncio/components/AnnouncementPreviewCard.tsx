@@ -15,8 +15,10 @@ import {
 
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {announcementOption} from "@/features/annunci/announcement-model";
 import type {AnnouncementPreviewData} from "@/features/pubblica-annuncio/announcement-preview";
-import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
+import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
+import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 
 function PreviewFactIcon({label}: {label: string}) {
 	const normalized = label.toLocaleLowerCase("it-IT");
@@ -36,6 +38,7 @@ function PreviewFactIcon({label}: {label: string}) {
 
 export default function AnnouncementPreviewCard({preview}: {preview: AnnouncementPreviewData}) {
 	const accent = getProfileAccent(preview.profileType);
+	const TypeIcon = announcementOption(preview.announcementType).icon;
 	const facts = preview.facts.filter(({value}) => value.trim() && value !== "Non specificato");
 
 	return (
@@ -51,7 +54,7 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 			<CardHeader className="pt-6">
 				<div className="flex items-start gap-3">
 					<span className="flex size-11 shrink-0 items-center justify-center rounded-xl" style={{backgroundColor: `${accent}14`}}>
-						<ProfilePngIcon type={preview.profileType} color={accent} className="size-6" />
+						<TypeIcon className="size-6" style={{color: accent}} aria-hidden="true" />
 					</span>
 					<div className="flex min-w-0 flex-wrap gap-1.5 pt-0.5">
 						<Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}>{preview.typeLabel}</Badge>
@@ -68,6 +71,12 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 					</p>
 				)}
 				{preview.description && <p className="whitespace-pre-line text-sm leading-6 text-foreground">{preview.description}</p>}
+				{preview.linkedTeams.length > 0 && (
+					<div className="grid gap-2">
+						<p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Squadre collegate</p>
+						<TeamProfileLinks teams={preview.linkedTeams} />
+					</div>
+				)}
 				{facts.length > 0 && (
 					<dl className="grid gap-2 sm:grid-cols-2">
 						{facts.map(({label, value}) => (

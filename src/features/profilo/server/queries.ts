@@ -3,12 +3,21 @@ import "server-only";
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
+	announcementOption,
+	isAnnouncementType,
+} from "@/features/annunci/announcement-model";
+import {
 	createProfileDrafts,
 	createProfileLocations,
 	isProfileType,
 	PROFILE_OPTIONS,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
+import {
+	profileImageMapKey,
+	resolvedProfileImageUrl,
+} from "@/features/profilo/profile-image";
+import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import type {
 	ManagedAnnouncement,
 	ProfileDashboardData,
@@ -22,6 +31,7 @@ const ANNOUNCEMENT_PAGE_SIZE = 250;
 const DETAIL_DEFINITIONS = [
 	{
 		key: "annuncio_generico",
+		profileType: "giocatore",
 		subtype: "Generico",
 		fallbackTitle: "Annuncio generico",
 		titleFields: ["titolo"],
@@ -29,6 +39,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_giocatore",
+		profileType: "giocatore",
 		subtype: "Giocatore",
 		fallbackTitle: "Disponibilità giocatore",
 		titleFields: ["ruoli_principali", "categorie_ricercate"],
@@ -36,6 +47,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_squadra_cerca_giocatore",
+		profileType: "squadra",
 		subtype: "Squadra cerca giocatore",
 		fallbackTitle: "Ricerca giocatore",
 		titleFields: ["ruoli_principali"],
@@ -43,6 +55,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_squadra_cerca_staff",
+		profileType: "squadra",
 		subtype: "Squadra cerca staff",
 		fallbackTitle: "Ricerca staff sportivo",
 		titleFields: ["figura_ricercata"],
@@ -50,6 +63,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_squadra_cerca_partita",
+		profileType: "squadra",
 		subtype: "Squadra cerca partita",
 		fallbackTitle: "Ricerca partita",
 		titleFields: ["categorie_avversario"],
@@ -57,6 +71,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_squadra_cerca_sponsor",
+		profileType: "squadra",
 		subtype: "Squadra cerca sponsor",
 		fallbackTitle: "Ricerca sponsor",
 		titleFields: ["categoria_settore"],
@@ -64,6 +79,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_staff_sportivo",
+		profileType: "staff-sportivo",
 		subtype: "Staff sportivo",
 		fallbackTitle: "Disponibilità staff sportivo",
 		titleFields: ["figure_professionali"],
@@ -71,6 +87,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_arbitro",
+		profileType: "arbitro",
 		subtype: "Arbitro",
 		fallbackTitle: "Disponibilità arbitro",
 		titleFields: ["categorie_ricercate"],
@@ -78,6 +95,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_torneo_evento",
+		profileType: "torneo-evento",
 		subtype: "Torneo / evento",
 		fallbackTitle: "Torneo o evento",
 		titleFields: ["nome_evento"],
@@ -85,6 +103,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_campo_impianto",
+		profileType: "campi-impianti-sportivi",
 		subtype: "Campo / impianto",
 		fallbackTitle: "Campo o impianto sportivo",
 		titleFields: ["tipologie_sport"],
@@ -92,6 +111,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_professionista_studente",
+		profileType: "professionisti-studi",
 		subtype: "Professionista / studente",
 		fallbackTitle: "Servizio professionale",
 		titleFields: ["specializzazione", "figura_professionale"],
@@ -99,6 +119,7 @@ const DETAIL_DEFINITIONS = [
 	},
 	{
 		key: "annuncio_creator",
+		profileType: "creators",
 		subtype: "Creator",
 		fallbackTitle: "Contenuto creator",
 		titleFields: ["titolo_post"],
@@ -200,6 +221,10 @@ function locationLabel(row: AnnouncementQueryRow) {
 function toManagedAnnouncement(row: AnnouncementQueryRow): ManagedAnnouncement {
 	const source = row as unknown as Record<string, unknown>;
 	const definition = DETAIL_DEFINITIONS.find(({key}) => firstRelation(source[key]));
+	const announcementType = isAnnouncementType(row.tipologia_annuncio)
+		? row.tipologia_annuncio
+		: null;
+	const option = announcementType ? announcementOption(announcementType) : null;
 	const detail = definition ? firstRelation(source[definition.key]) : null;
 	const title = detail && definition
 		? firstDetailText(detail, definition.titleFields) ?? definition.fallbackTitle
@@ -210,6 +235,8 @@ function toManagedAnnouncement(row: AnnouncementQueryRow): ManagedAnnouncement {
 
 	return {
 		id: row.uuid,
+		announcementType,
+		profileType: option?.profileType ?? definition?.profileType ?? "giocatore",
 		type: humanizeAnnouncementType(row.tipologia_annuncio),
 		subtype: definition?.subtype ?? "Generico",
 		title,
@@ -285,7 +312,7 @@ export async function getProfileDashboardData(
 	const supabase = await createClient();
 	const {data: baseProfile, error: baseProfileError} = await supabase
 		.from("profilo")
-		.select("uuid, tipologia_principale")
+		.select("uuid, tipologia_principale, link_foto_profilo")
 		.eq("uuid_utente", userId)
 		.eq("nascosto", false)
 		.maybeSingle();
@@ -297,6 +324,8 @@ export async function getProfileDashboardData(
 
 	if (!baseProfile) {
 		return {
+			mainImageUrl: null,
+			hasMainImage: false,
 			profiles: [],
 			drafts,
 			locations,
@@ -318,6 +347,7 @@ export async function getProfileDashboardData(
 		professionalResult,
 		creatorResult,
 		locationResult,
+		profileImages,
 		announcements,
 	] = await Promise.all([
 		supabase.from("profilo_giocatore").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
@@ -330,6 +360,7 @@ export async function getProfileDashboardData(
 		supabase.from("profilo_professionista_studente").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
+		loadProfileImageUrlMap(admin, [baseProfile.uuid]),
 		loadAnnouncements(supabase, userId, baseProfile.uuid),
 	]);
 
@@ -371,6 +402,7 @@ export async function getProfileDashboardData(
 	if (facilityResult.data) activeRows.set("campi-impianti-sportivi", facilityResult.data);
 	if (professionalResult.data) activeRows.set("professionisti-studi", professionalResult.data);
 	if (creatorResult.data) activeRows.set("creators", creatorResult.data);
+	const mainImageUrl = firstText(baseProfile.link_foto_profilo);
 
 	const profiles = PROFILE_OPTIONS.flatMap(({value}) => {
 		const row = activeRows.get(value);
@@ -378,8 +410,17 @@ export async function getProfileDashboardData(
 			id: `${value}:${row.id}`,
 			type: value,
 			isPrimary: baseProfile.tipologia_principale === value,
+			imageUrl: resolvedProfileImageUrl(profileImages, baseProfile.uuid, value, mainImageUrl),
+			hasCustomImage: profileImages.has(profileImageMapKey(baseProfile.uuid, value)),
 		}] : [];
 	});
 
-	return {profiles, drafts, locations, announcements};
+	return {
+		mainImageUrl,
+		hasMainImage: Boolean(mainImageUrl),
+		profiles,
+		drafts,
+		locations,
+		announcements,
+	};
 }

@@ -9,6 +9,7 @@ import {
 	type ProfileType,
 } from "@/features/profilo/profile-model";
 import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
+import {UUID_PATTERN} from "@/features/profilo/team-profile";
 import {
 	isRegistrableProfileType,
 	REGISTRATION_PAYLOAD_VERSION,
@@ -176,7 +177,7 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 
 	return value.map((entry) => {
 		if (!isRecord(entry)) fail("Lo storico delle esperienze non è valido.", 3, profileType);
-		assertExactKeys(entry, ["id", "titolo", "ente", "periodoDa", "periodoA", "descrizione", "stato"], profileType);
+		assertExactKeys(entry, ["id", "titolo", "ente", "periodoDa", "periodoA", "descrizione", "stato", "squadraProfiloId"], profileType);
 		const periodoDa = textValue(entry.periodoDa, 4, profileType);
 		const periodoA = textValue(entry.periodoA, 4, profileType);
 		const currentYear = new Date().getFullYear();
@@ -192,6 +193,10 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 			fail("La fine di un’esperienza non può precederne l’inizio.", 3, profileType);
 		}
 		const stato = enumText(entry.stato, EXPERIENCE_STATES, profileType);
+		const squadraProfiloId = textValue(entry.squadraProfiloId, 36, profileType);
+		if (squadraProfiloId && !UUID_PATTERN.test(squadraProfiloId)) {
+			fail("La squadra collegata a un’esperienza non è valida.", 3, profileType);
+		}
 		return {
 			id: textValue(entry.id, 100, profileType) ?? crypto.randomUUID(),
 			titolo: textValue(entry.titolo, 120, profileType) ?? "",
@@ -200,6 +205,7 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 			periodoA: periodoA ?? "",
 			descrizione: textValue(entry.descrizione, MAX_LONG_TEXT, profileType) ?? "",
 			stato: stato ?? "non-specificare",
+			squadraProfiloId: squadraProfiloId?.toLocaleLowerCase("en-US") ?? null,
 		};
 	});
 }

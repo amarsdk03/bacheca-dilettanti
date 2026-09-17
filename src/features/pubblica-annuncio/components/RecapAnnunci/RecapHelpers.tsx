@@ -5,6 +5,7 @@ import {
 	getCanaliContattoCompilati,
 	type ContattiAnnuncio,
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
+import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 
 export function formatDataNascita(giorno: string, mese: string, anno: string) {
 	return [giorno, mese, anno].filter(Boolean).join("/") || "—";
@@ -96,11 +97,14 @@ export function EsperienzeRecap({esperienze}: {esperienze: EsperienzaAnnuncio[]}
 						<li key={esperienza.id}>
 							<p>
 								{esperienza.titolo || `Esperienza ${index + 1}`}
-								{esperienza.ente ? ` · ${esperienza.ente}` : ""}
+								{esperienza.ente && !esperienza.squadraProfiloId ? ` · ${esperienza.ente}` : ""}
 								{esperienza.periodoDa || esperienza.periodoA
 									? ` · ${formatPeriodo(esperienza.periodoDa, esperienza.periodoA)}`
 									: ""}
 							</p>
+							{esperienza.squadraProfiloId && esperienza.ente && (
+								<TeamProfileLinks teams={[{profileId: esperienza.squadraProfiloId, name: esperienza.ente}]} className="mt-1" />
+							)}
 							{esperienza.descrizione.trim() !== "" && (
 								<p className="mt-1 whitespace-pre-wrap text-muted-foreground">
 									{esperienza.descrizione}

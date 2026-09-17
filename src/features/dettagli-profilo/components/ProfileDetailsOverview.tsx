@@ -17,6 +17,7 @@ import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
 import {profileInitials} from "@/features/profilo/public-profile-display";
 import {cn} from "@/lib/utils";
 import type {ProfileDetailPresentation} from "./profile-detail-presentation";
+import ProfileExperienceHistory from "./ProfileExperienceHistory";
 
 function ProfileFieldValue({field}: {field: PublicProfile["fields"][number]}) {
 	if (!field.href) return field.value;
@@ -129,6 +130,7 @@ export default function ProfileDetailsOverview({
 						</CardContent>
 					</Card>
 				)}
+				<ProfileExperienceHistory experiences={profile.experiences ?? []} />
 			</div>
 			<Card className="min-w-0">
 				<CardHeader>

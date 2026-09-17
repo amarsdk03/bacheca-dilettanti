@@ -1,5 +1,6 @@
 import {TriangleAlertIcon} from "lucide-react";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import DetailActions from "@/features/segnalazioni/DetailActions";
 import type {ProfileDetail, ProfileDetailResult} from "./profile-detail-model";
 import ProfileHistoryBackButton from "./components/ProfileHistoryBackButton";
 import DettagliProfiloGiocatore from "./components/types/DettagliProfiloGiocatore";
@@ -27,7 +28,15 @@ function ProfileContent({profile}: {profile: ProfileDetail}) {
 export default function DettagliProfilo({result}: {result: Exclude<ProfileDetailResult, {status: "not-found"}>}) {
 	const content = (
 		<main className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-			<div><ProfileHistoryBackButton /></div>
+			<div className="flex items-center justify-between gap-3">
+				<ProfileHistoryBackButton />
+				{result.status === "ok" ? (
+					<DetailActions
+						target={{kind: "profilo", id: result.profile.id}}
+						href={`/dettagli-profilo?${new URLSearchParams({id: result.profile.id, type: result.profile.type}).toString()}`}
+					/>
+				) : null}
+			</div>
 			{result.status === "error" ? (
 				<Alert variant="destructive">
 					<TriangleAlertIcon aria-hidden="true" />

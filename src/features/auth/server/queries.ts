@@ -33,13 +33,14 @@ function getAuthMethod(user: User) {
 	return "Email";
 }
 
-function toViewer(user: User): ViewerDTO {
+function toViewer(user: User, profileAvatarUrl: string | null = null): ViewerDTO {
 	const email = user.email ?? "Email non disponibile";
 	const fullName = readMetadataString(user, "full_name")
 		?? readMetadataString(user, "name")
 		?? email.split("@")[0]
 		?? "Utente";
-	const avatarUrl = readMetadataString(user, "avatar_url")
+	const avatarUrl = profileAvatarUrl
+		?? readMetadataString(user, "avatar_url")
 		?? readMetadataString(user, "picture");
 	return {
 		fullName,
@@ -88,12 +89,27 @@ export const getAuthenticatedViewer = cache(async (): Promise<AuthenticatedViewe
 		return null;
 	}
 
+	let profileAvatarUrl: string | null = null;
+	if (publicUser?.utente_uuid) {
+		const {data: profile, error: profileError} = await supabase
+			.from("profilo")
+			.select("link_foto_profilo")
+			.eq("uuid_utente", publicUser.utente_uuid)
+			.eq("nascosto", false)
+			.maybeSingle();
+		if (profileError) {
+			console.error("[auth] Profile avatar lookup failed", {code: profileError.code});
+		} else {
+			profileAvatarUrl = profile?.link_foto_profilo?.trim() || null;
+		}
+	}
+
 	return {
 		authUserId: user.id,
 		utenteId: publicUser?.utente_uuid ?? null,
 		registeredAt: publicUser?.registrato_il ?? null,
 		userId: user.id,
-		viewer: toViewer(user),
+		viewer: toViewer(user, profileAvatarUrl),
 	};
 });
 

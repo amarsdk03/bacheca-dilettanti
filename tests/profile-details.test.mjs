@@ -7,6 +7,7 @@ import {fileURLToPath} from "node:url";
 import ts from "typescript";
 import React from "react";
 import {renderToStaticMarkup} from "react-dom/server";
+import sharp from "sharp";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -44,6 +45,7 @@ const {publicPlayerAge, parsePlayerCareer, toPublicPlayerData} = load("src/featu
 const {availabilityLabel} = load("src/features/profilo/public-profile-display.ts");
 const {groupPublicProfileLocations, publicProfileLocationLabel} = load("src/features/profilo/public-profile-locations.ts");
 const {parseProfileDetailParams} = load("src/features/dettagli-profilo/profile-detail-model.ts");
+const {profileImageMapKey, profileImageRowsToMap, resolvedProfileImageUrl} = load("src/features/profilo/profile-image.ts");
 const {getPlayerRolePitchMarkers} = load("src/features/dettagli-profilo/components/player/PlayerRolePitch.tsx");
 const now = new Date("2026-09-14T12:00:00Z");
 const player = {
@@ -126,6 +128,42 @@ test("public locations group cities by region without hiding selections", () => 
 	assert.equal(publicProfileLocationLabel(locations), "2 regioni selezionate");
 });
 
+test("subprofile images override the main image and otherwise inherit it", () => {
+	const profileId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+	const images = profileImageRowsToMap([
+		{uuid_profilo: profileId, sottoprofilo: "squadra", link_media: " https://cdn.test/squadra.webp "},
+		{uuid_profilo: profileId, sottoprofilo: "invalid", link_media: "https://cdn.test/invalid.webp"},
+		{uuid_profilo: profileId, sottoprofilo: null, link_media: "https://cdn.test/main.webp"},
+	]);
+	assert.equal(images.get(profileImageMapKey(profileId, "squadra")), "https://cdn.test/squadra.webp");
+	assert.equal(resolvedProfileImageUrl(images, profileId, "squadra", "https://cdn.test/main.webp"), "https://cdn.test/squadra.webp");
+	assert.equal(resolvedProfileImageUrl(images, profileId, "giocatore", "https://cdn.test/main.webp"), "https://cdn.test/main.webp");
+	assert.equal(resolvedProfileImageUrl(images, profileId, "giocatore", null), null);
+});
+
+test("profile image uploads remain outside the registration flow", () => {
+	const registration = readFileSync(path.join(root, "src/features/registrati/Registrati.tsx"), "utf8");
+	const sharedDetails = readFileSync(path.join(root, "src/features/profilo/ProfileDetailsForm.tsx"), "utf8");
+	assert.doesNotMatch(registration, /ProfileImageEditor|saveProfileImage|type="file"/);
+	assert.doesNotMatch(sharedDetails, /ProfileImageEditor|saveProfileImage|type="file"/);
+});
+
+test("profile images are center-cropped to a square WebP and invalid payloads are rejected", async () => {
+	const {optimizeProfileImage} = load("src/features/profilo/server/profile-image-processing.ts");
+	const source = await sharp({
+		create: {width: 1200, height: 600, channels: 3, background: "#336699"},
+	}).png().toBuffer();
+	const output = await optimizeProfileImage(new File([source], "wide.png", {type: "image/png"}));
+	const metadata = await sharp(output).metadata();
+	assert.equal(metadata.format, "webp");
+	assert.equal(metadata.width, 1024);
+	assert.equal(metadata.height, 1024);
+	await assert.rejects(
+		optimizeProfileImage(new File(["not an image"], "fake.png", {type: "image/png"})),
+		/INVALID_PROFILE_IMAGE/,
+	);
+});
+
 test("location details use a dialog instead of an accordion", () => {
 	const source = readFileSync(path.join(root, "src/features/dettagli-profilo/components/ProfileLocationSummary.tsx"), "utf8");
 	assert.doesNotMatch(source, /Accordion/);
@@ -137,7 +175,7 @@ test("location details use a dialog instead of an accordion", () => {
 test("player role pitch prioritizes specific roles and falls back to primary roles", () => {
 	assert.deepEqual(
 		getPlayerRolePitchMarkers(["Difensore"], ["Non mappato", "Terzino destro", "Terzino destro"]),
-		[{role: "Terzino destro", abbreviation: "TD", left: 81, top: 70}],
+		[{role: "Terzino destro", abbreviation: "TD", left: 82, top: 70}],
 	);
 	assert.deepEqual(
 		getPlayerRolePitchMarkers(["Portiere", "Attaccante"], []),

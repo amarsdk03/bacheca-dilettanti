@@ -1,6 +1,7 @@
 import {isProfileType, type ProfileType} from "@/features/profilo/profile-model";
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
-import type {AnnouncementFact} from "@/features/annunci/announcement-model";
+import type {AnnouncementFact, AnnouncementType} from "@/features/annunci/announcement-model";
+import type {PublicTeamProfile, TeamProfileReference} from "@/features/profilo/team-profile";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -20,6 +21,7 @@ export interface ProfileDetailField {
 
 export interface ProfileAnnouncement {
 	id: string;
+	type: AnnouncementType;
 	profileType: ProfileType;
 	typeLabel: string;
 	subtypeLabel: string;
@@ -29,6 +31,7 @@ export interface ProfileAnnouncement {
 	createdAt: string | null;
 	level: string | null;
 	facts: AnnouncementFact[];
+	linkedTeams: TeamProfileReference[];
 }
 
 interface ProfileDetailBase {
@@ -52,7 +55,11 @@ export interface PlayerCareerEntry {
 	to: string | null;
 	status: "in-corso" | "conseguito" | null;
 	description: string | null;
+	teamProfileId: string | null;
+	linkedTeam: PublicTeamProfile | null;
 }
+
+export type PublicProfileExperience = PlayerCareerEntry;
 
 export interface PlayerProfileData {
 	age: number | null;
@@ -79,6 +86,7 @@ export type GenericProfileDetail<Type extends NonPlayerProfileType = NonPlayerPr
 	locations: PublicProfileLocation[];
 	primaryFields: ProfileDetailField[];
 	fields: ProfileDetailField[];
+	experiences: PublicProfileExperience[];
 };
 
 export type ProfileDetail = PlayerProfileDetail | {

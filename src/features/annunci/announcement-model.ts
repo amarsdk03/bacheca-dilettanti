@@ -21,6 +21,7 @@ import {
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import type {ProfileType} from "@/features/profilo/profile-model";
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
+import type {TeamProfileReference} from "@/features/profilo/team-profile";
 
 export const ANNOUNCEMENTS_PER_PAGE = 12;
 
@@ -333,6 +334,7 @@ export interface AnnouncementDirectoryItem {
 	location: string;
 	facts: AnnouncementFact[];
 	author: AnnouncementAuthor;
+	linkedTeams: TeamProfileReference[];
 }
 
 export interface AnnouncementDirectoryResult {

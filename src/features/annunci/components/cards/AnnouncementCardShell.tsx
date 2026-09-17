@@ -24,12 +24,14 @@ import {
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import AnnouncementAuthorHoverCard from "@/features/annunci/AnnouncementAuthorHoverCard";
-import type {
-	AnnouncementFact,
-	AnnouncementFactKind,
+import {
+	announcementOption,
+	type AnnouncementFact,
+	type AnnouncementFactKind,
 } from "@/features/annunci/announcement-model";
-import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
+import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import type {AnnouncementCardData} from "./announcement-card-model";
+import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 
 const ANNOUNCEMENT_DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {
 	day: "numeric",
@@ -110,6 +112,7 @@ export default function AnnouncementCardShell({
 	facts: readonly AnnouncementFact[];
 }) {
 	const accent = getProfileAccent(announcement.profileType);
+	const TypeIcon = announcementOption(announcement.type).icon;
 	const detailHref = `/dettagli-annuncio?${new URLSearchParams({id: announcement.id}).toString()}`;
 	const formattedDate = formatAnnouncementDate(announcement.createdAt);
 	const style = {"--announcement-accent": accent} as CSSProperties;
@@ -127,8 +130,8 @@ export default function AnnouncementCardShell({
 			<div aria-hidden="true" className="absolute inset-x-0 top-0 z-10 h-1 bg-[color:var(--announcement-accent)]" />
 			<CardHeader className="pointer-events-none relative z-10 gap-4">
 				<div className="flex flex-wrap items-center gap-2">
-					<Badge variant="outline" style={{borderColor: accent, color: accent}}>
-						<ProfilePngIcon type={announcement.profileType} color={accent} className="size-3" />
+					<Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}>
+						<TypeIcon data-icon="inline-start" aria-hidden="true" />
 						{announcement.typeLabel}
 					</Badge>
 					{announcement.level && <Badge variant="secondary">{humanizeValue(announcement.level)}</Badge>}
@@ -143,6 +146,9 @@ export default function AnnouncementCardShell({
 			</CardHeader>
 			<CardContent className="pointer-events-none relative z-10 mt-auto">
 				<AnnouncementFactGrid facts={facts} />
+				{(announcement.linkedTeams?.length ?? 0) > 0 && (
+					<TeamProfileLinks teams={announcement.linkedTeams ?? []} limit={2} className="pointer-events-auto mt-3" />
+				)}
 				{announcement.createdAt ? (
 					<time dateTime={announcement.createdAt} className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
 						<CalendarDaysIcon className="size-3.5" aria-hidden="true" />

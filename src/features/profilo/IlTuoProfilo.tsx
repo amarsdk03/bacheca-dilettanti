@@ -1,6 +1,6 @@
 "use client";
 
-import {useActionState, useState, useTransition} from "react";
+import {type ReactNode, useActionState, useState, useTransition} from "react";
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
 import {
@@ -45,7 +45,6 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {
@@ -77,6 +76,8 @@ import {toast} from "@/components/ui/toast";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {Progress} from "@/components/ui/progress";
 import GradientBackground from "@/components/styling/GradientBackground";
+import {CONTACT_EMAIL} from "@/const/contactConstants";
+import {announcementOption} from "@/features/annunci/announcement-model";
 import {requestCurrentUserPasswordReset, signOut} from "@/features/auth/server/actions";
 import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
 import {
@@ -88,8 +89,10 @@ import {
 	type ProfileType,
 } from "@/features/profilo/profile-model";
 import {getProfileCompletion} from "@/features/profilo/profile-completion";
+import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {INITIAL_AUTH_STATE, type ViewerDTO} from "@/features/auth/types";
 import ProfileEditorDialog from "@/features/profilo/ProfileEditorDialog";
+import ProfileImageEditor from "@/features/profilo/ProfileImageEditor";
 import {
 	removeAnnouncement,
 	removeProfile,
@@ -113,8 +116,103 @@ const DASHBOARD_ITEMS = [
 	{value: "profilo", label: "Il tuo profilo", icon: UserRoundIcon},
 	{value: "annunci", label: "Lista annunci", icon: ListChecksIcon},
 	{value: "impostazioni", label: "Impostazioni", icon: SettingsIcon},
-	{value: "info", label: "Info varie", icon: CircleHelpIcon},
+	{value: "info", label: "FAQ", icon: CircleHelpIcon},
 ] as const;
+
+interface FaqItem {
+	value: string;
+	question: string;
+	answer: ReactNode;
+}
+
+interface FaqGroup {
+	id: string;
+	title: string;
+	description: string;
+	items: readonly FaqItem[];
+}
+
+const FAQ_GROUPS = [
+	{
+		id: "profiles",
+		title: "Profili e sottoprofili",
+		description: "Gestione delle diverse identità con cui puoi presentarti sulla piattaforma.",
+		items: [
+			{
+				value: "profile-count",
+				question: "Quanti sottoprofili posso creare?",
+				answer: "Puoi configurare fino a cinque sottoprofili attivi, uno per ciascuna tipologia, e scegliere quello che rappresenta il tuo profilo principale.",
+			},
+			{
+				value: "profile-manage",
+				question: "Come abilito o modifico un sottoprofilo?",
+				answer: "Nella sezione Il tuo profilo seleziona Abilita su una tipologia non attiva oppure Modifica su un sottoprofilo già configurato. Le tipologie contrassegnate come “Coming soon” non possono ancora essere abilitate.",
+			},
+			{
+				value: "profile-remove",
+				question: "Cosa succede se rimuovo un sottoprofilo?",
+				answer: "Deve rimanere attivo almeno un sottoprofilo. Se rimuovi quello principale, un altro sottoprofilo attivo verrà promosso automaticamente; gli annunci già pubblicati resteranno disponibili.",
+			},
+		],
+	},
+	{
+		id: "announcements",
+		title: "Annunci",
+		description: "Pubblicazione, revisione e gestione delle opportunità in bacheca.",
+		items: [
+			{
+				value: "profile-vs-announcement",
+				question: "Qual è la differenza tra profilo e annuncio?",
+				answer: "Il profilo presenta in modo stabile la tua identità, esperienza e disponibilità. Un annuncio descrive invece una singola opportunità, ricerca o proposta pubblicata nella bacheca con dettagli e contatti dedicati.",
+			},
+			{
+				value: "announcement-review",
+				question: "Cosa succede dopo aver inviato un annuncio?",
+				answer: "Un annuncio gratuito entra direttamente in revisione. Per un annuncio prioritario devi prima completare il pagamento: dopo l’approvazione avrà priorità per sette giorni. Puoi controllarne lo stato nella sezione Lista annunci.",
+			},
+			{
+				value: "announcement-edit",
+				question: "Posso modificare un annuncio pubblicato?",
+				answer: "No. Puoi nasconderlo temporaneamente oppure eliminarlo. Per cambiare i contenuti devi pubblicare un nuovo annuncio.",
+			},
+			{
+				value: "announcement-visibility",
+				question: "Cosa succede quando nascondo un annuncio?",
+				answer: "L’annuncio resta nella tua area personale ma non è visibile nella bacheca pubblica. Puoi mostrarlo nuovamente in qualsiasi momento.",
+			},
+		],
+	},
+	{
+		id: "account",
+		title: "Account e assistenza",
+		description: "Accesso, cancellazione dei dati e richieste allo staff.",
+		items: [
+			{
+				value: "password",
+				question: "Come cambio la password?",
+				answer: "Apri Impostazioni e richiedi il link di ripristino. Riceverai un’email all’indirizzo associato al tuo account.",
+			},
+			{
+				value: "account-removal",
+				question: "Come posso eliminare il mio account e i miei dati?",
+				answer: (
+					<>
+						La cancellazione completa viene gestita dallo staff. Apri la <Link href="/contatti">pagina Contatti</Link> e scrivici tramite Instagram o WhatsApp: ti indicheremo i passaggi necessari per completare la richiesta.
+					</>
+				),
+			},
+			{
+				value: "report-content",
+				question: "Come segnalo un problema o un contenuto inappropriato?",
+				answer: (
+					<>
+						Scrivi a <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> oppure usa uno dei canali nella <Link href="/contatti">pagina Contatti</Link>. Indica il link interessato e descrivi il problema senza inviare password o altri dati sensibili.
+					</>
+				),
+			},
+		],
+	},
+] as const satisfies readonly FaqGroup[];
 
 const MOBILE_DASHBOARD_ITEMS = DASHBOARD_ITEMS.map(({value, label}) => ({value, label}));
 const DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {
@@ -243,14 +341,24 @@ function MobileDashboardNavigation({section, onSectionChange}: {
 	);
 }
 
-function AccountOverview({viewer}: {viewer: ViewerDTO}) {
+function AccountOverview({viewer, imageUrl, hasMainImage}: {
+	viewer: ViewerDTO;
+	imageUrl: string | null;
+	hasMainImage: boolean;
+}) {
 	return (
 		<Card>
 			<CardContent className="grid gap-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
-				<Avatar className="size-16 text-lg">
-					{viewer.avatarUrl && <AvatarImage src={viewer.avatarUrl} alt="" referrerPolicy="no-referrer" />}
-					<AvatarFallback className="text-lg">{viewer.initials}</AvatarFallback>
-				</Avatar>
+				<ProfileImageEditor
+					scope="main"
+					imageUrl={imageUrl ?? viewer.avatarUrl}
+					hasCustomImage={hasMainImage}
+					fallback={<span className="text-lg">{viewer.initials}</span>}
+					title="Foto profilo principale"
+					description="Questa foto rappresenta il tuo account e viene usata come fallback per i sottoprofili senza una foto dedicata."
+					alt={`Foto profilo di ${viewer.fullName}`}
+					avatarClassName="size-16 text-lg"
+				/>
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
 						<h2 className="truncate text-xl font-semibold tracking-tight">{viewer.fullName}</h2>
@@ -279,7 +387,7 @@ function ProfileCard({
 	onRemove: () => Promise<ProfileMutationResult>;
 }) {
 	const option = PROFILE_OPTIONS.find(({value}) => value === profile.type);
-	const Icon = option?.icon ?? UserRoundIcon;
+	const accent = getProfileAccent(profile.type);
 	const profileCompletion = getProfileCompletion(profile.type, drafts, locations);
 	const [removeOpen, setRemoveOpen] = useState(false);
 	const [pendingAction, setPendingAction] = useState<"primary" | "remove" | null>(null);
@@ -319,18 +427,25 @@ function ProfileCard({
 		<Card className="h-full">
 			<CardHeader className="flex justify-between items-center pb-3 border-b-2 border-neutral-100">
 				<div className="flex min-w-0 items-center gap-3">
-					<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-						<Icon aria-hidden="true" />
-					</div>
+					<ProfileImageEditor
+							scope={profile.type}
+							imageUrl={profile.imageUrl}
+							hasCustomImage={profile.hasCustomImage}
+						fallback={<ProfilePngIcon type={profile.type} color={accent} className="size-7" />}
+						title={`Foto profilo ${option?.label ?? "sottoprofilo"}`}
+						description="Puoi usare una foto diversa da quella principale per questa tipologia di profilo."
+						alt={`Foto del profilo ${option?.label ?? profile.type}`}
+						avatarClassName="size-10"
+					/>
 					<div className="min-w-0">
 						<CardTitle className="truncate">{option?.label}</CardTitle>
 					</div>
 				</div>
 				{
 					profile.isPrimary ? (
-						<Badge><StarIcon aria-hidden="true" /> Principale</Badge>
+						<Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}><StarIcon aria-hidden="true" /> Principale</Badge>
 					) : (
-						<Badge variant="outline"><CheckIcon aria-hidden="true" /> Attivato</Badge>
+						<Badge variant="outline" style={{borderColor: accent, color: accent}}><CheckIcon aria-hidden="true" /> Attivato</Badge>
 					)
 				}
 			</CardHeader>
@@ -338,7 +453,7 @@ function ProfileCard({
 				<p className="leading-6 text-muted-foreground">
 					{option?.description}
 				</p>
-				<Card size="sm" className="border-primary/20 bg-muted/30 shadow-none">
+				<Card size="sm" className="border-black/8 bg-muted/30 shadow-none">
 					<CardHeader className="gap-2">
 						<div className="flex items-center justify-between gap-3">
 							<CardTitle className="text-sm">{profileCompletion.percentage}% completamento</CardTitle>
@@ -349,7 +464,7 @@ function ProfileCard({
 						<Progress
 							value={profileCompletion.percentage}
 							aria-label={`Completamento profilo: ${profileCompletion.percentage}%`}
-							className={"bg-brand-indigo"}
+							indicatorStyle={{backgroundColor: accent}}
 						/>
 						<CardDescription className="text-xs">
 							{profileCompletion.percentage === 100
@@ -424,15 +539,16 @@ function InactiveProfileCard({
 	const option = PROFILE_OPTIONS.find(({value}) => value === type);
 	if (!option) return null;
 
-	const Icon = option.icon;
 	const unavailable = isLimitedProfileType(type);
+	const accent = getProfileAccent(type);
+	const iconColor = unavailable ? "#cccccc" : accent;
 
 	return (
 		<Card className="h-full">
 			<CardHeader className="flex justify-between items-center pb-3 border-b-2 border-neutral-100">
 				<div className="flex min-w-0 items-center gap-3">
-					<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-						<Icon aria-hidden="true" />
+					<div className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{backgroundColor: unavailable ? "#f3f4f6" : `${accent}14`}}>
+						<ProfilePngIcon type={type} color={iconColor} className="size-7" />
 					</div>
 					<div className="min-w-0">
 						<CardTitle>{option.label}</CardTitle>
@@ -440,7 +556,7 @@ function InactiveProfileCard({
 				</div>
 				{unavailable
 					? <ComingSoonBadge />
-					: <Badge variant="secondary">Non attivato</Badge>}
+					: <Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}>Non attivato</Badge>}
 			</CardHeader>
 			<CardContent>
 				<p className="leading-6 text-muted-foreground">
@@ -468,6 +584,8 @@ function InactiveProfileCard({
 
 function ProfilesSection({
 	viewer,
+	mainImageUrl,
+	hasMainImage,
 	profiles,
 	drafts,
 	locations,
@@ -477,6 +595,8 @@ function ProfilesSection({
 	onRemove,
 }: {
 	viewer: ViewerDTO;
+	mainImageUrl: string | null;
+	hasMainImage: boolean;
 	profiles: ManagedProfile[];
 	drafts: ProfileDrafts;
 	locations: ProfileLocations;
@@ -489,7 +609,7 @@ function ProfilesSection({
 
 	return (
 		<section aria-labelledby="profiles-heading" className="grid gap-6">
-			<AccountOverview viewer={viewer} />
+			<AccountOverview viewer={viewer} imageUrl={mainImageUrl} hasMainImage={hasMainImage} />
 
 			<div className={"mt-2"}>
 				<div className="flex items-center gap-2">
@@ -550,6 +670,11 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 	onToggleVisibility: () => Promise<ProfileMutationResult>;
 	onRemove: () => Promise<ProfileMutationResult>;
 }) {
+	const accent = getProfileAccent(announcement.profileType);
+	const profileOption = PROFILE_OPTIONS.find(({value}) => value === announcement.profileType);
+	const TypeIcon = announcement.announcementType
+		? announcementOption(announcement.announcementType).icon
+		: profileOption?.icon ?? UserRoundIcon;
 	const isHidden = announcement.visibility === "hidden";
 	const paymentPending = announcement.moderationStatus === "in_attesa_pagamento";
 	const [removeOpen, setRemoveOpen] = useState(false);
@@ -590,16 +715,16 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 
 	return (
 		<Card className={cn("relative overflow-hidden border-black/8", isHidden && !paymentPending && "opacity-75")}>
-			<span className="absolute inset-x-0 top-0 h-1 bg-brand-indigo" aria-hidden="true" />
-			<CardHeader className="border-b border-black/8 pt-5">
+			<span className="absolute inset-x-0 top-0 h-1" style={{backgroundColor: accent}} aria-hidden="true" />
+			<CardHeader className="border-b border-black/8 pt-2">
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 					<div className="flex min-w-0 gap-3">
-						<span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-indigo/10 text-brand-indigo">
-							<FileTextIcon className="size-5" aria-hidden="true" />
+						<span className="flex size-10 shrink-0 items-center justify-center rounded-xl" style={{backgroundColor: `${accent}14`, color: accent}}>
+							<TypeIcon className="size-5" aria-hidden="true" />
 						</span>
 						<div className="min-w-0">
 							<div className="mb-2 flex flex-wrap gap-1.5">
-								<Badge className="border-0 bg-brand-indigo/12 text-brand-indigo">{announcement.type}</Badge>
+								<Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}>{announcement.type}</Badge>
 								<Badge variant="outline">{announcement.subtype}</Badge>
 								<Badge variant={moderationVariant(announcement.moderationStatus)}>{moderationLabel(announcement.moderationStatus)}</Badge>
 								{announcement.level === "prioritario" && <Badge variant="secondary">Prioritario</Badge>}
@@ -614,7 +739,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 			<CardContent className="grid gap-4">
 				<p className="leading-6 text-muted-foreground">{announcement.description}</p>
 				{announcement.moderationInfo && (
-					<p className="rounded-xl border border-brand-indigo/15 bg-brand-indigo/5 px-3 py-2.5 text-sm leading-6 text-foreground">
+					<p className="rounded-xl border px-3 py-2.5 text-sm leading-6 text-foreground" style={{backgroundColor: `${accent}0d`, borderColor: `${accent}28`}}>
 						{announcement.moderationInfo}
 					</p>
 				)}
@@ -628,7 +753,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 						<dd className="mt-1 text-sm font-medium">{isHidden ? "Nascosto" : "Visibile"}</dd>
 					</div>
 					<div className="min-w-0 rounded-xl border border-black/7 bg-muted/25 px-3 py-2.5">
-						<dt className="flex items-center gap-1 text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground"><MapPinIcon className="size-3.5 text-brand-indigo" aria-hidden="true" />Località</dt>
+						<dt className="flex items-center gap-1 text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground"><MapPinIcon className="size-3.5" style={{color: accent}} aria-hidden="true" />Località</dt>
 						<dd className="mt-1 truncate text-sm font-medium" title={announcement.location}>{announcement.location}</dd>
 					</div>
 					<div className="rounded-xl border border-black/7 bg-muted/25 px-3 py-2.5">
@@ -828,43 +953,33 @@ function SettingsSection({viewer, passwordUpdated}: {viewer: ViewerDTO; password
 	);
 }
 
-function InfoSection() {
+function FaqSection() {
 	return (
-		<section aria-labelledby="info-heading" className="grid gap-6">
+		<section aria-labelledby="faq-heading" className="grid gap-6">
 			<div>
-				<h2 id="info-heading" className="text-xl font-semibold tracking-tight">Info varie</h2>
-				<p className="mt-1 text-muted-foreground">Le risposte rapide alle domande più comuni.</p>
+				<h2 id="faq-heading" className="text-xl font-semibold tracking-tight">Domande frequenti</h2>
+				<p className="mt-1 text-muted-foreground">Le informazioni utili per gestire profili, annunci e richieste di assistenza.</p>
 			</div>
-			<Card>
-				<CardHeader className="border-b">
-					<CardTitle>Come funziona Bacheca Dilettanti</CardTitle>
-					<CardDescription>Profili, annunci e sicurezza del tuo account.</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<Accordion defaultValue={["profiles"]}>
-						<AccordionItem value="profiles">
-							<AccordionTrigger>Quanti sottoprofili posso creare?</AccordionTrigger>
-							<AccordionContent className="text-muted-foreground">Puoi configurare fino a cinque sottoprofili, uno per ciascuna tipologia. Puoi anche indicare quale rappresenta il tuo profilo principale.</AccordionContent>
-						</AccordionItem>
-						<AccordionItem value="enable-profile">
-							<AccordionTrigger>Come abilito un’altra tipologia?</AccordionTrigger>
-							<AccordionContent className="text-muted-foreground">Tutte le tipologie restano visibili nella griglia. Seleziona Abilita, compila i dettagli che desideri e salva il sottoprofilo.</AccordionContent>
-						</AccordionItem>
-						<AccordionItem value="announcements">
-							<AccordionTrigger>Posso modificare un annuncio pubblicato?</AccordionTrigger>
-							<AccordionContent className="text-muted-foreground">No. Puoi nasconderlo temporaneamente o eliminarlo. Per cambiare i contenuti dovrai pubblicare un nuovo annuncio.</AccordionContent>
-						</AccordionItem>
-						<AccordionItem value="visibility">
-							<AccordionTrigger>Cosa succede quando nascondo un annuncio?</AccordionTrigger>
-							<AccordionContent className="text-muted-foreground">L’annuncio resta nella tua area personale ma non è visibile nella bacheca pubblica. Puoi mostrarlo nuovamente in qualsiasi momento.</AccordionContent>
-						</AccordionItem>
-						<AccordionItem value="password">
-							<AccordionTrigger>Come cambio la password?</AccordionTrigger>
-							<AccordionContent className="text-muted-foreground">Apri Impostazioni e richiedi il link di ripristino. Riceverai un’email all’indirizzo associato al tuo account.</AccordionContent>
-						</AccordionItem>
-					</Accordion>
-				</CardContent>
-			</Card>
+			<div className="grid gap-4">
+				{FAQ_GROUPS.map((group) => (
+					<Card key={group.id}>
+						<CardHeader className="border-b">
+							<CardTitle>{group.title}</CardTitle>
+							<CardDescription>{group.description}</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<Accordion defaultValue={group.id === "profiles" ? [group.items[0].value] : []}>
+								{group.items.map((item) => (
+									<AccordionItem key={item.value} value={item.value}>
+										<AccordionTrigger>{item.question}</AccordionTrigger>
+										<AccordionContent className="text-muted-foreground">{item.answer}</AccordionContent>
+									</AccordionItem>
+								))}
+							</Accordion>
+						</CardContent>
+					</Card>
+				))}
+			</div>
 		</section>
 	);
 }
@@ -875,7 +990,7 @@ export default function IlTuoProfilo({
 	passwordUpdated,
 	initialSection,
 }: IlTuoProfiloProps) {
-	const {profiles, drafts, locations, announcements} = data;
+	const {mainImageUrl, hasMainImage, profiles, drafts, locations, announcements} = data;
 	const [section, setSection] = useState<ProfileDashboardSection>(initialSection);
 	const [editor, setEditor] = useState<ProfileEditorState | null>(null);
 
@@ -911,6 +1026,8 @@ export default function IlTuoProfilo({
 						<TabsContent value="profilo">
 							<ProfilesSection
 								viewer={viewer}
+								mainImageUrl={mainImageUrl}
+								hasMainImage={hasMainImage}
 								profiles={profiles}
 								drafts={drafts}
 								locations={locations}
@@ -922,7 +1039,7 @@ export default function IlTuoProfilo({
 						</TabsContent>
 						<TabsContent value="annunci"><AnnouncementsSection announcements={announcements} onToggleVisibility={handleToggleAnnouncement} onRemove={handleRemoveAnnouncement} /></TabsContent>
 						<TabsContent value="impostazioni"><SettingsSection viewer={viewer} passwordUpdated={passwordUpdated} /></TabsContent>
-						<TabsContent value="info"><InfoSection /></TabsContent>
+						<TabsContent value="info"><FaqSection /></TabsContent>
 					</div>
 				</Tabs>
 			</main>

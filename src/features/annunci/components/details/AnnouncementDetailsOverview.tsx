@@ -30,6 +30,7 @@ import {
 	isSpecifiedAnnouncementValue,
 	type AnnouncementDetailPresentation,
 } from "./announcement-detail-presentation";
+import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 
 const ANNOUNCEMENT_FACT_ICONS: Record<AnnouncementFactKind, LucideIcon> = {
 	availability: CalendarCheckIcon,
@@ -147,6 +148,16 @@ export default function AnnouncementDetailsOverview({
 						<CardDescription>{presentation.summary}</CardDescription>
 					</CardHeader>
 					<CardContent><AnnouncementFactGrid facts={facts} /></CardContent>
+				</Card>
+			)}
+
+			{(announcement.linkedTeams?.length ?? 0) > 0 && (
+				<Card>
+					<CardHeader>
+						<CardTitle><h2 className="font-home-display text-2xl uppercase">Squadre collegate</h2></CardTitle>
+						<CardDescription>Società indicate nelle esperienze dell’autore.</CardDescription>
+					</CardHeader>
+					<CardContent><TeamProfileLinks teams={announcement.linkedTeams ?? []} /></CardContent>
 				</Card>
 			)}
 

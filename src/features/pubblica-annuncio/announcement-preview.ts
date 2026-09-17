@@ -1,6 +1,8 @@
 import type {ProfileDrafts, ProfileType} from "@/features/profilo/profile-model";
+import type {AnnouncementType} from "@/features/annunci/announcement-model";
 import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";
 import {getTipologia} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {experienceTeamReferences, type TeamProfileReference} from "@/features/profilo/team-profile";
 
 export interface AnnouncementPreviewFact {
 	label: string;
@@ -9,6 +11,7 @@ export interface AnnouncementPreviewFact {
 
 export interface AnnouncementPreviewData {
 	id?: string;
+	announcementType: AnnouncementType;
 	profileType: ProfileType;
 	title: string;
 	typeLabel: string;
@@ -23,6 +26,7 @@ export interface AnnouncementPreviewData {
 	imageLabel: string | null;
 	status: string | null;
 	statusInfo: string | null;
+	linkedTeams: TeamProfileReference[];
 }
 
 function joined(value: string[] | null | undefined) {
@@ -56,6 +60,11 @@ export function buildPublishPreview(
 	const option = getTipologia(payload.profileType);
 	const subtype = option?.sottotipologie?.find(({valore}) => valore === payload.teamSubtype);
 	const detail = payload.announcement.detail as unknown as Record<string, unknown>;
+	const profileExperiences = payload.profileType === "giocatore"
+		? drafts.giocatore.storico_carriera
+		: payload.profileType === "staff-sportivo"
+			? drafts["staff-sportivo"].storico_esperienze
+			: payload.profileType === "arbitro" ? drafts.arbitro.storico_esperienze : [];
 	const facts: AnnouncementPreviewFact[] = [];
 	const addFact = (label: string, value: string | null | undefined) => {
 		if (value) facts.push({label, value});
@@ -87,6 +96,7 @@ export function buildPublishPreview(
 				: (detail.nome_evento as string | undefined) || subtype?.nome || profile;
 
 	return {
+		announcementType: payload.announcement.type,
 		profileType: payload.profileType,
 		title,
 		typeLabel: subtype?.nome ?? option?.nome ?? payload.profileType,
@@ -101,5 +111,9 @@ export function buildPublishPreview(
 		imageLabel,
 		status: "In revisione dopo l’invio",
 		statusInfo: null,
+		linkedTeams: experienceTeamReferences(
+			profileExperiences,
+			payload.profileType === "giocatore" ? "titolo" : "ente",
+		),
 	};
 }

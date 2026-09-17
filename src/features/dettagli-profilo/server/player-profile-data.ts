@@ -4,6 +4,7 @@ import {birthMonthNumber, getItalyDateParts, isCompleteValidBirthDate, type Birt
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import type {Tables} from "@/server/supabase";
 import type {PlayerCareerEntry, PlayerProfileData} from "../profile-detail-model";
+import {UUID_PATTERN} from "@/features/profilo/team-profile";
 
 type PlayerRow = Pick<Tables<"profilo_giocatore">,
 	"giorno_nascita" | "mese_nascita" | "anno_nascita" | "tipologie_sport" | "ruoli_sport" |
@@ -43,9 +44,21 @@ export function parsePlayerCareer(value: unknown): PlayerCareerEntry[] {
 		const from = cleanText(entry.periodoDa);
 		const to = cleanText(entry.periodoA);
 		const description = cleanText(entry.descrizione);
+		const storedId = cleanText(entry.id);
+		const teamProfileId = cleanText(entry.squadraProfiloId)?.toLocaleLowerCase("en-US") ?? null;
 		const status = entry.stato === "in-corso" || entry.stato === "conseguito" ? entry.stato : null;
 		if (![title, organization, from, to, description, status].some(Boolean)) return [];
-		return [{id: `career-${index}`, title: title ?? `Esperienza ${index + 1}`, organization, from, to, status, description}];
+		return [{
+			id: storedId ?? `career-${index}`,
+			title: title ?? `Esperienza ${index + 1}`,
+			organization,
+			from,
+			to,
+			status,
+			description,
+			teamProfileId: teamProfileId && UUID_PATTERN.test(teamProfileId) ? teamProfileId : null,
+			linkedTeam: null,
+		}];
 	});
 }
 

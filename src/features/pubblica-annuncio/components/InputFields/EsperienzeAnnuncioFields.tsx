@@ -4,6 +4,7 @@ import {Plus, Trash2} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
+import TeamProfileComboboxField from "@/features/profilo/TeamProfileComboboxField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import {
@@ -21,6 +22,7 @@ export type EsperienzaAnnuncio = {
 	periodoA: string;
 	descrizione: string;
 	stato: StatoEsperienza;
+	squadraProfiloId: string | null;
 };
 
 export function createEsperienzaAnnuncio(): EsperienzaAnnuncio {
@@ -36,6 +38,7 @@ export function createEsperienzaAnnuncio(): EsperienzaAnnuncio {
 		periodoA: "",
 		descrizione: "",
 		stato: "non-specificare",
+		squadraProfiloId: null,
 	};
 }
 
@@ -125,15 +128,18 @@ export default function EsperienzeAnnuncioFields({
 
 								<Field>
 									<FieldLabel htmlFor={`${idPrefix}-ente-${esperienza.id}`}>
-										Ente di origine / rilascio <OptionalLabel />
+										Squadra / società / ente <OptionalLabel />
 									</FieldLabel>
-									<Input
+									<TeamProfileComboboxField
 										id={`${idPrefix}-ente-${esperienza.id}`}
 										value={esperienza.ente}
-										onChange={(event) =>
-											updateEsperienza(esperienza.id, "ente", event.target.value)
-										}
-										placeholder="FIGC, LND, società..."
+										profileId={esperienza.squadraProfiloId}
+										onValueChange={(value, profileId) => {
+											setEsperienze((previous) => previous.map((item) => item.id === esperienza.id
+												? {...item, ente: value, squadraProfiloId: profileId}
+												: item));
+										}}
+										placeholder="Cerca una società o inserisci un ente"
 									/>
 								</Field>
 							</div>

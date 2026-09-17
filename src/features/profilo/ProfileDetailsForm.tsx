@@ -9,6 +9,7 @@ import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/co
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
 import ProfileLocationsField from "@/features/profilo/ProfileLocationsField";
+import TeamProfileComboboxField from "@/features/profilo/TeamProfileComboboxField";
 import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
 import type {
 	ProfileLocationDraft,
@@ -260,7 +261,15 @@ function toAvailability(value: string | null): DisponibilitaProfilo {
 }
 
 function toExperiences(value: Json | null): EsperienzaAnnuncio[] {
-	return Array.isArray(value) ? value as unknown as EsperienzaAnnuncio[] : [];
+	if (!Array.isArray(value)) return [];
+	return value.flatMap((item): EsperienzaAnnuncio[] => {
+		if (!item || Array.isArray(item) || typeof item !== "object") return [];
+		const experience = item as Record<string, Json | undefined>;
+		return [{
+			...(experience as unknown as Omit<EsperienzaAnnuncio, "squadraProfiloId">),
+			squadraProfiloId: typeof experience.squadraProfiloId === "string" ? experience.squadraProfiloId : null,
+		}];
+	});
 }
 
 function experienceSetter(
@@ -378,14 +387,18 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze}: CareerHistor
 									</Select>
 								</Field>
 
-								<ProfileTextField
-									id={`${idPrefix}-squadra-${esperienza.id}`}
-									label="Squadra"
-									value={esperienza.titolo}
-									onChange={(value) => updateEsperienza(esperienza.id, {titolo: value})}
-									placeholder="Nome squadra"
-									maxLength={120}
-								/>
+								<Field>
+									<FieldLabel htmlFor={`${idPrefix}-squadra-${esperienza.id}`}>Squadra <OptionalLabel /></FieldLabel>
+									<TeamProfileComboboxField
+										id={`${idPrefix}-squadra-${esperienza.id}`}
+										value={esperienza.titolo}
+										profileId={esperienza.squadraProfiloId}
+										onValueChange={(value, profileId) => updateEsperienza(esperienza.id, {
+											titolo: value,
+											squadraProfiloId: profileId,
+										})}
+									/>
+								</Field>
 								<ProfileTextField
 									id={`${idPrefix}-categoria-${esperienza.id}`}
 									label="Categoria"
