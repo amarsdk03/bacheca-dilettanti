@@ -63,6 +63,7 @@
 
 :root {
     --brand-indigo: #8e72ff;
+    --brand-indigo-light: #ad99ff;
     --brand-ink: #111111;
     --brand-paper: #FBFAFF;
     --background: oklch(1 0 0);

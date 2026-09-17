@@ -66,8 +66,10 @@ export default function SelezionaTipologiaAnnuncio({
 		<div className="grid gap-8">
 			<FieldGroup className="w-full">
 				<FieldSet>
-					<FieldLegend variant="label" className="field-legend-title mb-0">Seleziona il tipo di profilo: <RequiredMark /></FieldLegend>
-						<Field data-invalid={Boolean(typeError)} className="mt-4">
+					<FieldLegend variant="label" className="field-legend-title mb-0">
+						Chi pubblica l'annuncio? <RequiredMark />
+					</FieldLegend>
+					<Field data-invalid={Boolean(typeError)} className="mt-4">
 						{typeError && <FieldError>{typeError}</FieldError>}
 
 						<ToggleGroup
@@ -95,7 +97,7 @@ export default function SelezionaTipologiaAnnuncio({
 										<span className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{backgroundColor: `${accent}14`}}>
 											<ProfilePngIcon type={profileType} color={accent} className="size-7" />
 										</span>
-										<FieldContent>
+										<FieldContent className="ms-1">
 											<FieldTitle className="field-content-title flex-wrap gap-1.5">
 												{opzione.nome}
 												{(limited || !supported) && <ComingSoonBadge />}

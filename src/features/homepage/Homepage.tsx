@@ -3,10 +3,10 @@ import Link from "next/link";
 import {
 	ArrowRightIcon,
 	BriefcaseBusinessIcon,
-	CameraIcon,
+	CameraIcon, ClipboardListIcon,
 	HandshakeIcon,
-	MapPinIcon,
-	RocketIcon,
+	MapPinIcon, MegaphoneIcon, PickaxeIcon,
+	RocketIcon, UserPlusIcon, UsersIcon,
 } from "lucide-react";
 
 import {buttonVariants} from "@/components/ui/button";
@@ -26,48 +26,57 @@ interface HomepageCategory {
 	type: ProfileType;
 	label: string;
 	description: string;
+	comingSoon: boolean;
 }
 
 const HOMEPAGE_CATEGORIES = [
 	{
 		type: "giocatore",
 		label: "Giocatori",
-		description: "Trova la tua prossima opportunità",
+		description: "Sfoglia i profili e trova i giocatori per la tua squadra.",
+		comingSoon: false,
 	},
 	{
 		type: "squadra",
 		label: "Squadre",
-		description: "Cerca profili e rafforza la tua rosa",
+		description: "Scopri le squadre e trova nuove opportunità.",
+		comingSoon: false,
 	},
 	{
 		type: "staff-sportivo",
 		label: "Staff sportivi",
-		description: "Allena il talento, costruisci il futuro",
+		description: "Sfoglia i profili e trova le figure giuste per il tuo staff.",
+		comingSoon: false,
 	},
 	{
 		type: "arbitro",
 		label: "Arbitri",
-		description: "Arbitra e gestisci partite e tornei",
+		description: "Presto in arrivo...",
+		comingSoon: true,
 	},
 	{
 		type: "torneo-evento",
 		label: "Tornei / Eventi",
-		description: "Promuovi i tuoi eventi e raggiungi tutti",
+		description: "Presto in arrivo...",
+		comingSoon: true,
 	},
 	{
 		type: "campi-impianti-sportivi",
 		label: "Campi / Strutture",
-		description: "Trova o pubblica la tua struttura",
+		description: "Presto in arrivo...",
+		comingSoon: true,
 	},
 	{
 		type: "professionisti-studi",
 		label: "Professionisti",
-		description: "Scopri nuovi talenti e opportunità",
+		description: "Presto in arrivo...",
+		comingSoon: true,
 	},
 	{
 		type: "creators",
 		label: "Creators",
-		description: "Racconta il calcio a modo tuo",
+		description: "Presto in arrivo...",
+		comingSoon: true,
 	},
 ] as const satisfies readonly HomepageCategory[];
 
@@ -106,29 +115,29 @@ function formatPublishedAt(createdAt: string | null) {
 
 const PROMOTIONS = [
 	{
-		eyebrow: "Per i professionisti",
-		title: "Osserva. Collabora. Cresci",
-		description: "Scopri talenti, entra in contatto con realtà affidabili e nuove opportunità.",
+		eyebrow: "Bacheca",
+		title: "Trova o pubblica un'opportunità",
+		description: "Sfoglia gli annunci oppure pubblica gratuitamente quello che stai cercando.",
+		href: "/annunci",
+		cta: "Vai alla bacheca",
+		icon: ClipboardListIcon,
+		accent: "#8e72ff",
+	},
+	{
+		eyebrow: "Professionisti",
+		title: "Trova il professionista giusto",
+		description: "Scopri professionisti dello sport e trova quello più adatto alle tue esigenze.",
 		href: "/profili?type=professionisti-studi",
 		cta: "Scopri di più",
 		icon: BriefcaseBusinessIcon,
-		accent: "#111111",
+		accent: "#D4B21F",
 	},
 	{
-		eyebrow: "Per i creators",
-		title: "Il tuo contenuto ha valore",
-		description: "Condividi la tua passione, racconta storie, intervista e analizza il calcio.",
-		href: "/profili?type=creators",
-		cta: "Scopri di più",
-		icon: CameraIcon,
-		accent: "#E53935",
-	},
-	{
-		eyebrow: "Partner ufficiali",
-		title: "Insieme per il nostro calcio",
-		description: "Unisciti ai brand che credono nei valori del calcio dilettantistico.",
+		eyebrow: "Partner",
+		title: "Entra nel programma founding",
+		description: "Entra tra i partner che scelgono di affiancare Bacheca Dilettanti fin dal lancio e accedi alle condizioni riservate ai primi ingressi.",
 		href: "/partner",
-		cta: "Diventa partner",
+		cta: "Scopri il programma founding",
 		icon: HandshakeIcon,
 		accent: "#111111",
 	},
@@ -238,9 +247,9 @@ export default function Homepage() {
 							className="font-home-display text-[clamp(2.65rem,4.25vw,4rem)] text-black font-bold uppercase leading-[0.99] tracking-[-0.035em]"
 						/>
 						<p className="mt-6 max-w-2xl text-base leading-7 text-neutral-700 sm:text-lg sm:leading-8">
-							Bacheca Dilettanti è la piattaforma dedicata a giocatori, staff, società,
-							professionisti e appassionati che vivono il calcio ogni giorno. Opportunità,
-							connessioni e visibilità, tutto in un unico spazio.
+							Bacheca Dilettanti è la piattaforma dedicata a giocatori, staff, società e professionisti
+							che vivono il calcio ogni giorno. Profili, annunci, opportunità e visibilità. Tutto in un
+							unico spazio.
 						</p>
 						<div className="mt-7 flex flex-col gap-3 min-[430px]:flex-row">
 							<Link
@@ -307,12 +316,14 @@ export default function Homepage() {
 						id="categories-title"
 						className="font-home-display mb-3 text-lg font-normal uppercase tracking-[-0.01em] sm:text-xl"
 					>
-						Cerca. Connettiti. Cresci.
+						Trova quello che cerchi:
 					</h2>
 					<div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-4 xl:grid-cols-4">
 						{HOMEPAGE_CATEGORIES.map((category) => {
 							const accent = getProfileAccent(category.type);
-							const limited = isLimitedProfileType(category.type);
+							// const limited = isLimitedProfileType(category.type);
+							const limited = category.comingSoon;
+
 							const card = (
 								<Card
 									className={cn(
@@ -367,16 +378,20 @@ export default function Homepage() {
 						<article className="bg-[linear-gradient(135deg,#f0ecff_0%,#ffffff_100%)] p-5 sm:pt-6 sm:pb-4">
 							<div className="flex items-start gap-4">
 								<span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-indigo/15 text-[#6445de]">
-									<RocketIcon className="size-6" aria-hidden="true" />
+									<UserPlusIcon className="size-6" aria-hidden="true" />
 								</span>
 								<div className="min-w-0">
-									<p className="font-home-display text-base font-normal uppercase text-[#6445de]">Il lancio è vicino</p>
-									<h2 className="font-home-display mt-1 text-2xl font-medium uppercase leading-none">Preparati al decollo</h2>
+									<p className="font-home-display text-base font-normal uppercase text-[#6445de]">
+										Il tuo profilo
+									</p>
+									<h2 className="font-home-display mt-1 text-2xl font-medium uppercase leading-none">
+										Fatti conoscere
+									</h2>
 									<p className="mt-3 text-sm leading-5 text-neutral-700">
-										Bacheca Dilettanti sta per arrivare. Unisciti alla community e sii tra i primi a vivere l’esperienza completa.
+										Crea il tuo profilo e presenta esperienza, ruolo e percorso calcistico.
 									</p>
 									<Link
-										href="https://www.instagram.com/bachecadilettanti/"
+										href="/registrati"
 										className={buttonVariants({
 											variant: "outline",
 											size: "sm",
@@ -384,7 +399,7 @@ export default function Homepage() {
 										})}
 										target="_blank"
 									>
-										Rimani aggiornato
+										Crea il tuo profilo
 										<ArrowRightIcon aria-hidden="true" />
 									</Link>
 								</div>

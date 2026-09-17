@@ -252,7 +252,8 @@ export default function PubblicaAnnuncio({
 						<ClipboardPenIcon className="size-7" />
 						<h1 id="publish-title" className="text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">Pubblica un annuncio</h1>
 					</div>
-					<p className="mt-3 text-base text-muted-foreground">Scegli il profilo, controlla i dati e decidi la visibilità dell’annuncio.</p>
+					<p className="mt-3 text-base text-muted-foreground">
+						Scegli la categoria, inserisci le informazioni e pubblica il tuo annuncio.</p>
 				</section>
 
 				{registered && enabledProfileTypes.length === 0 && (

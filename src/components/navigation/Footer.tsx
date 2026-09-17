@@ -103,8 +103,10 @@ export default function Footer(
 					</div>
 				</div>
 
+				{ /* TODO: aggiungere copyright quando confermato deposito marchio */ }
 				<div className="mt-5 border-t border-neutral-200 pt-6 text-xs text-neutral-400">
-					© 2026 Bacheca Dilettanti. Tutti i diritti riservati.
+					Bacheca Dilettanti - 2026. Tutti i diritti riservati. Zaniboni Gabriele. Via Alessandro Volta, 56,
+					38123, Trento, Italia. p.IVA: 02802870226.
 				</div>
 			</div>
 		</footer>

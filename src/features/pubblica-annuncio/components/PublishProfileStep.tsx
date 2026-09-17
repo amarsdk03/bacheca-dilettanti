@@ -62,9 +62,12 @@ export default function PublishProfileStep({
 			) : (
 				<Alert>
 					<InfoIcon />
-					<AlertTitle>Dati del profilo per questo annuncio</AlertTitle>
+					<AlertTitle>
+						Prima pubblicazione su Bacheca?
+					</AlertTitle>
 					<AlertDescription>
-						Questi dati verranno associati all’annuncio dopo la verifica dell’indirizzo email. Sono richiesti i dati essenziali e almeno una località.
+						Con questi dati creerai anche il tuo profilo, oltre all'annuncio. Dopo la verifica dell'email
+						potrai completarlo e modificarlo quando vuoi.
 					</AlertDescription>
 				</Alert>
 			)}

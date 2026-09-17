@@ -63,7 +63,7 @@ export default function AnnouncementTypeSelector({
 						key={type}
 						value={type}
 						aria-label={label}
-						className="h-11 rounded-full px-4 data-pressed:border-fuchsia-600 data-pressed:bg-fuchsia-600 data-pressed:text-white data-pressed:hover:bg-fuchsia-700"
+						className="h-11 rounded-full px-4 data-pressed:border-brand-indigo data-pressed:bg-brand-indigo data-pressed:text-white data-pressed:hover:border-brand-indigo-light"
 					>
 						<Icon className={"ms-2 me-1"} data-icon="inline-start" aria-hidden="true" />
 						{label}
