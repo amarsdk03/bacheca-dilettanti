@@ -393,7 +393,7 @@ export default function Profili({query, result}: ProfiliProps) {
 					</p>
 				</header>
 
-				<div className="mt-7">
+				<div className="mt-3 sm:mt-6">
 					<ProfileSearch query={query} />
 				</div>
 
@@ -401,7 +401,7 @@ export default function Profili({query, result}: ProfiliProps) {
 					<h2 id="profile-types-title" className="sr-only">Tipologie di profilo</h2>
 					<div className="mt-3 flex items-center justify-between gap-4">
 						{query.types.length > 0 && (
-							<Link href={buildProfilesHref({...query, types: [], filters: createEmptyProfileFilters(), page: 1})} className="mt-1 mb-2 text-sm font-medium text-fuchsia-700 underline-offset-4 hover:underline">
+							<Link href={buildProfilesHref({...query, types: [], filters: createEmptyProfileFilters(), page: 1})} className="mb-3 ms-1 text-sm font-medium text-brand-indigo underline-offset-4 hover:underline">
 								Mostra tutti
 							</Link>
 						)}

@@ -80,11 +80,11 @@ export const MAX_PROFILE_COUNT = 5;
 export const PROFILI_LIMITATI = true;
 
 export const LIMITED_PROFILE_TYPES = [
-	// "arbitro",
-	// "torneo-evento",
-	// "campi-impianti-sportivi",
-	// "professionisti-studi",
-	// "creators",
+	"arbitro",
+	"torneo-evento",
+	"campi-impianti-sportivi",
+	"professionisti-studi",
+	"creators",
 ] as const satisfies readonly ProfileType[];
 
 export type LimitedProfileType = typeof LIMITED_PROFILE_TYPES[number];

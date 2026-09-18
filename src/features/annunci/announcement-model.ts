@@ -1,4 +1,4 @@
-import type {LucideIcon} from "lucide-react";
+import {LucideIcon, SparklesIcon} from "lucide-react";
 import {
 	BadgeCheckIcon,
 	BriefcaseBusinessIcon,
@@ -35,6 +35,8 @@ export const ANNOUNCEMENT_TYPES = [
 	"annuncio_arbitro",
 	"annuncio_torneo_evento",
 	"annuncio_campo_impianto",
+	"annuncio_professionisti_studi",
+	"annuncio_creators",
 ] as const;
 
 export type AnnouncementType = typeof ANNOUNCEMENT_TYPES[number];
@@ -73,6 +75,8 @@ export const ANNOUNCEMENT_DIRECTORY_TYPES = [
 	"annuncio_arbitro",
 	"annuncio_torneo_evento",
 	"annuncio_campo_impianto",
+	"annuncio_professionisti_studi",
+	"annuncio_creators"
 ] as const;
 
 export type AnnouncementDirectoryType = typeof ANNOUNCEMENT_DIRECTORY_TYPES[number];
@@ -202,6 +206,20 @@ export const ANNOUNCEMENT_DIRECTORY_OPTIONS: readonly AnnouncementDirectoryOptio
 		description: "Campi e impianti disponibili per attività ed eventi",
 		icon: MapPinIcon,
 	},
+	{
+		value: "annuncio_professionisti_studi",
+		profileType: "professionisti-studi",
+		label: "Professionisti e studi",
+		description: "Offri i tuoi servizi professionali a squadre, atleti e società sportive",
+		icon: BriefcaseBusinessIcon,
+	},
+	{
+		value: "annuncio_creators",
+		profileType: "creators",
+		label: "Creators",
+		description: "Condividi il tuo profilo e i tuoi contenuti con la nostra community",
+		icon: SparklesIcon,
+	},
 ];
 
 export const ANNOUNCEMENT_TEAM_SEARCH_OPTIONS = [
@@ -235,6 +253,8 @@ export const ANNOUNCEMENT_FILTERS_BY_TYPE = {
 	annuncio_arbitro: ["regione", "tipologia", "categoria", "automunito"],
 	annuncio_torneo_evento: ["regione", "tipologia", "costoMax"],
 	annuncio_campo_impianto: ["regione", "tipologia", "costoMax"],
+	annuncio_professionisti_studi: ["regione"],
+	annuncio_creators: ["regione"],
 } as const satisfies Record<AnnouncementType, readonly AnnouncementFilterParam[]>;
 
 const CATEGORY_OPTIONS = [...new Set(

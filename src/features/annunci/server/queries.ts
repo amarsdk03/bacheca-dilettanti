@@ -935,6 +935,8 @@ const RELATED_ANNOUNCEMENT_TYPES: Record<AnnouncementType, readonly Announcement
 	annuncio_arbitro: ["annuncio_torneo_evento", "annuncio_squadra_cerca_partita"],
 	annuncio_torneo_evento: ["annuncio_arbitro", "annuncio_campo_impianto"],
 	annuncio_campo_impianto: ["annuncio_torneo_evento", "annuncio_squadra_cerca_partita"],
+	annuncio_professionisti_studi: ["annuncio_squadra_cerca_staff", "annuncio_torneo_evento"],
+	annuncio_creators: ["annuncio_torneo_evento"]
 };
 
 export async function loadRelatedPublicAnnouncements(

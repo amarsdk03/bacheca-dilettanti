@@ -164,6 +164,176 @@
     }
 }
 
+.homepage-notice-stripes {
+    --homepage-notice-stripe-mask: linear-gradient(
+        to right,
+        transparent 0%,
+        transparent 45%,
+        rgb(0 0 0 / 18%) 55%,
+        rgb(0 0 0 / 72%) 75%,
+        #000 100%
+    );
+
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    -webkit-mask-image: var(--homepage-notice-stripe-mask);
+    mask-image: var(--homepage-notice-stripe-mask);
+}
+
+.homepage-notice-stripes::before {
+    /* One 32px gradient period projected on the X axis: 32 / sin(55deg). */
+    --homepage-notice-stripe-loop-start: -39.065px;
+
+    position: absolute;
+    inset-block: 0;
+    right: -4rem;
+    left: -4rem;
+    content: "";
+    background: repeating-linear-gradient(
+        -55deg,
+        rgb(248 232 167 / 72%) 0,
+        rgb(248 232 167 / 72%) 15px,
+        rgb(255 247 211 / 78%) 15px,
+        rgb(255 247 211 / 78%) 32px
+    );
+    animation: homepageNoticeStripes 1.1s linear infinite;
+    will-change: transform;
+}
+
+.homepage-navbar-notice-stripes {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.homepage-navbar-notice-stripes::before {
+    /* One 32px gradient period projected on the X axis: 32 / sin(55deg). */
+    --homepage-notice-stripe-loop-start: -39.065px;
+
+    position: absolute;
+    inset-block: 0;
+    right: -4rem;
+    left: -4rem;
+    content: "";
+    background: repeating-linear-gradient(
+        -55deg,
+        rgb(248 232 167 / 60%) 0,
+        rgb(248 232 167 / 60%) 15px,
+        rgb(255 247 211 / 90%) 15px,
+        rgb(255 247 211 / 90%) 32px
+    );
+    animation: homepageNoticeStripes 1.1s linear infinite;
+    will-change: transform;
+}
+
+@keyframes homepageNoticeStripes {
+    from {
+        transform: translate3d(var(--homepage-notice-stripe-loop-start), 0, 0);
+    }
+    to {
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .homepage-notice-stripes::before,
+    .homepage-navbar-notice-stripes::before {
+        animation: none;
+        transform: none;
+    }
+}
+
+.homepage-notices {
+    --card: #fff;
+    --card-foreground: var(--brand-ink);
+    --foreground: var(--brand-ink);
+    --muted-foreground: #62616a;
+    --border: #e9e6ef;
+    --notice-news-accent: #6445de;
+    --notice-event-accent: #16704c;
+    --notice-problem-accent: #936000;
+
+    border-top: 3px solid var(--brand-indigo);
+}
+
+.homepage-notices-header {
+    --muted-foreground: #d1cbdc;
+
+    color: #fff;
+    background: radial-gradient(ellipse at 95% 0%, rgb(142 114 255 / 28%), transparent 65%), #29164c;
+}
+
+.homepage-notices-emblem {
+    color: var(--brand-indigo-light);
+}
+
+.homepage-notices-count {
+    color: var(--brand-indigo-light);
+}
+
+.homepage-notices-news {
+    --notice-accent: var(--notice-news-accent);
+}
+
+.homepage-notices-event {
+    --notice-accent: var(--notice-event-accent);
+}
+
+.homepage-notices-problem {
+    --notice-accent: var(--notice-problem-accent);
+}
+
+.homepage-notices-item {
+    --ring: var(--notice-accent);
+
+    border-left: 3px solid var(--notice-accent);
+    transition: background-color 180ms ease;
+}
+
+.homepage-notices-item[data-open] {
+    background: color-mix(in srgb, var(--notice-accent) 5%, var(--card));
+}
+
+.homepage-notices-trigger:hover {
+    text-decoration: none;
+    background: color-mix(in srgb, var(--notice-accent) 4%, transparent);
+}
+
+.homepage-notices-trigger:focus-visible {
+    outline: 2px solid var(--notice-accent);
+    outline-offset: -3px;
+    box-shadow: none;
+}
+
+.homepage-notices-icon,
+.homepage-notices-type {
+    color: var(--notice-accent);
+    background: color-mix(in srgb, var(--notice-accent) 9%, var(--card));
+}
+
+.homepage-notices-type {
+    border-color: color-mix(in srgb, var(--notice-accent) 25%, transparent);
+}
+
+.homepage-notices-action,
+.homepage-notices-action:hover {
+    color: var(--notice-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .homepage-notices-item,
+    .homepage-notices [data-slot="accordion-trigger"],
+    .homepage-notices [data-slot="accordion-content"] {
+        animation: none;
+        transition: none;
+    }
+}
+
 .navbar-div {
     background-color: #e6e6e6;
 }

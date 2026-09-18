@@ -455,7 +455,7 @@ export default function Annunci({query, result}: AnnunciProps) {
 					</p>
 				</header>
 
-				<div className="mt-7">
+				<div className="mt-3 sm:mt-6">
 					<AnnouncementSearch query={query} />
 				</div>
 
@@ -465,7 +465,7 @@ export default function Annunci({query, result}: AnnunciProps) {
 						{query.types.length > 0 && (
 							<Link
 								href={showAllHref(query)}
-								className="mt-1 mb-2 text-sm font-medium text-fuchsia-700 underline-offset-4 hover:underline"
+								className="mb-3 ms-1 text-sm font-medium text-brand-indigo underline-offset-4 hover:underline"
 							>
 								Mostra tutti
 							</Link>

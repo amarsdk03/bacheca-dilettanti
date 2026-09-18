@@ -95,6 +95,24 @@ export const ANNOUNCEMENT_DETAIL_PRESENTATIONS = {
 		primaryFactKinds: ["types", "price", "services", "location"],
 		detailFieldLabels: ["Orari"],
 	},
+	annuncio_professionisti_studi: {
+		intro: "Un libero professionista o studente che offre servizi.",
+		summary: "TODO",
+		narrativeTitle: "TODO",
+		emptyNarrative: "TODO",
+		detailsTitle: "TODO",
+		primaryFactKinds: [],
+		detailFieldLabels: [],
+	},
+	annuncio_creators: {
+		intro: "Un creator digitale della community online.",
+		summary: "TODO",
+		narrativeTitle: "TODO",
+		emptyNarrative: "TODO",
+		detailsTitle: "TODO",
+		primaryFactKinds: [],
+		detailFieldLabels: [],
+	}
 } as const satisfies Record<AnnouncementType, AnnouncementDetailPresentation>;
 
 export function isSpecifiedAnnouncementValue(value: string) {

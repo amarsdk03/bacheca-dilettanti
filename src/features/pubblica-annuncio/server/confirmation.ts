@@ -60,6 +60,8 @@ const DETAIL_TABLE_BY_TYPE: Record<AnnouncementType, string> = {
 	annuncio_arbitro: "annuncio_arbitro",
 	annuncio_torneo_evento: "annuncio_torneo_evento",
 	annuncio_campo_impianto: "annuncio_campo_impianto",
+	annuncio_professionisti_studi: "annuncio_professionisti_studi",
+	annuncio_creators: "annuncio_creators",
 };
 
 async function loadAuthorName(profileId: string, type: AnnouncementType) {

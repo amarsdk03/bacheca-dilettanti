@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
 	ArrowRightIcon,
 	BriefcaseBusinessIcon,
+	CalendarDaysIcon,
 	CameraIcon, ClipboardListIcon,
 	HandshakeIcon,
 	MapPinIcon, MegaphoneIcon, PickaxeIcon,
@@ -21,6 +22,11 @@ import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIco
 import {cn} from "@/lib/utils";
 import {loadLatestPublicAnnouncements} from "@/features/annunci/server/queries";
 import HomepageTitle from "@/features/homepage/components/HomepageTitle";
+import HomepageNotices from "@/features/homepage/components/HomepageNotices";
+import {HOMEPAGE_NOTICES} from "@/features/homepage/homepage-notices";
+import HomepageWorkInProgressNotice from "@/features/homepage/components/HomepageWorkInProgressNotice";
+import ArticleImage from "@/features/aggiornamenti/ArticleImage";
+import {formatArticleDate, getAllArticles, getArticleCover} from "@/lib/articles";
 
 interface HomepageCategory {
 	type: ProfileType;
@@ -234,13 +240,17 @@ async function LatestOpportunitiesContent() {
 }
 
 export default function Homepage() {
+	const latestArticles = getAllArticles().slice(0, 3);
+
 	return (
 		<div
 			id="main-content"
 			className="font-home-body overflow-x-clip bg-[radial-gradient(circle_at_55%_0%,rgba(142,114,255,0.10),transparent_34rem),linear-gradient(180deg,#ffffff_0%,#fbfaff_72%,#ffffff_100%)] text-brand-ink antialiased"
 		>
+			<HomepageWorkInProgressNotice />
+
 			<section aria-labelledby="homepage-title">
-				<div className="mx-auto grid max-w-370 gap-10 px-4 pb-10 pt-10 sm:px-6 sm:pb-12 sm:pt-14 lg:px-8 min-[1120px]:grid-cols-[1.02fr_0.98fr] min-[1120px]:items-center min-[1120px]:pb-12 min-[1120px]:pt-16">
+				<div className="mx-auto grid max-w-370 gap-10 px-4 sm:px-6 pb-10 sm:pb-12 pt-10 sm:pt-14 lg:px-8 min-[1120px]:grid-cols-[1.02fr_0.98fr] min-[1120px]:items-center min-[1120px]:pb-12 min-[1120px]:pt-16">
 					<div className="max-w-2xl">
 						<HomepageTitle
 							title="Il punto d’incontro del calcio dilettantistico"
@@ -321,8 +331,7 @@ export default function Homepage() {
 					<div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-4 xl:grid-cols-4">
 						{HOMEPAGE_CATEGORIES.map((category) => {
 							const accent = getProfileAccent(category.type);
-							// const limited = isLimitedProfileType(category.type);
-							const limited = category.comingSoon;
+							const limited = isLimitedProfileType(category.type);
 
 							const card = (
 								<Card
@@ -372,31 +381,37 @@ export default function Homepage() {
 				</div>
 			</section>
 
+			<HomepageNotices notices={HOMEPAGE_NOTICES} />
+
 			<section aria-label="Scopri Bacheca Dilettanti">
 				<div className="mx-auto max-w-370 px-4 pb-12 sm:px-6 sm:pb-16 lg:px-8">
 					<Card className="grid gap-px overflow-hidden bg-black/10 py-0 shadow-none ring-1 ring-black/10 md:grid-cols-2 xl:grid-cols-[1.25fr_repeat(3,minmax(0,1fr))]">
 						<article className="bg-[linear-gradient(135deg,#f0ecff_0%,#ffffff_100%)] p-5 sm:pt-6 sm:pb-4">
-							<div className="flex items-start gap-4">
+							<div className="flex items-start gap-4 h-full">
 								<span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-indigo/15 text-[#6445de]">
 									<UserPlusIcon className="size-6" aria-hidden="true" />
 								</span>
-								<div className="min-w-0">
-									<p className="font-home-display text-base font-normal uppercase text-[#6445de]">
-										Il tuo profilo
-									</p>
-									<h2 className="font-home-display mt-1 text-2xl font-medium uppercase leading-none">
-										Fatti conoscere
-									</h2>
-									<p className="mt-3 text-sm leading-5 text-neutral-700">
-										Crea il tuo profilo e presenta esperienza, ruolo e percorso calcistico.
-									</p>
+								<div className="min-w-0 h-full flex flex-col justify-between">
+									<div className={"mb-6 xl:mb-0"}>
+										<p className="font-home-display text-base font-normal uppercase text-[#6445de]">
+											Il tuo profilo
+										</p>
+										<h2 className="font-home-display mt-1 text-2xl font-medium uppercase leading-none">
+											Fatti conoscere
+										</h2>
+										<p className="mt-3 text-sm leading-5 text-neutral-700">
+											Crea il tuo profilo e presenta esperienza, ruolo e percorso calcistico.
+										</p>
+									</div>
 									<Link
 										href="/registrati"
-										className={buttonVariants({
-											variant: "outline",
-											size: "sm",
-											className: "mt-4 sm:mt-10 h-9 border-[#8e72ff]/60 bg-white px-4 font-bold uppercase text-[#6445de]",
-										})}
+										className={cn(
+											buttonVariants({
+												variant: "outline",
+												size: "sm",
+											}),
+											"h-9 w-48 border-[#8e72ff]/60 bg-white px-4 font-bold uppercase text-[#6445de] hover:underline"
+										)}
 										target="_blank"
 									>
 										Crea il tuo profilo
@@ -427,7 +442,7 @@ export default function Homepage() {
 											</h2>
 											<p className="mt-3 text-sm leading-5 text-neutral-700">{promotion.description}</p>
 											<div
-												className="mt-auto"
+												className="mt-auto pt-4 xl:pt-0"
 											>
 												<Link
 													href={promotion.href}
@@ -445,6 +460,68 @@ export default function Homepage() {
 							);
 						})}
 					</Card>
+				</div>
+			</section>
+
+			<section aria-labelledby="latest-news-title">
+				<div className="mx-auto max-w-370 px-4 pb-12 sm:px-6 sm:pb-16 lg:px-8">
+					<div className="mb-4 flex flex-col md:flex-row items-start md:items-end justify-between md:gap-4 sm:mb-5">
+						<div>
+							<p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6445de]">Aggiornamenti</p>
+							<h2 id="latest-news-title" className="font-home-display mt-1 text-2xl font-medium uppercase leading-none sm:text-3xl">
+								Ultimi articoli della Bacheca
+							</h2>
+						</div>
+						<Link
+							href="/aggiornamenti"
+							className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-md md:px-2 text-xs font-bold uppercase text-[#6445de] outline-none transition-colors hover:bg-brand-indigo/10 focus-visible:ring-3 focus-visible:ring-brand-indigo/35"
+						>
+							Tutti gli aggiornamenti
+							<ArrowRightIcon className="size-3.5" aria-hidden="true" />
+						</Link>
+					</div>
+
+					<div className="grid gap-3 md:grid-cols-3">
+						{latestArticles.map((article) => (
+							<article key={article.slug} className="group max-h-96">
+								<Link
+									href={`/aggiornamenti/${article.slug}`}
+									className="block h-full rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-brand-indigo/45 focus-visible:ring-offset-2"
+								>
+									<Card className="h-full gap-0 border border-black/10 bg-white/85 py-0 shadow-none ring-0 transition-transform duration-200 group-hover:-translate-y-1">
+										<div className="relative aspect-video overflow-hidden bg-brand-indigo/10">
+											<ArticleImage
+												src={getArticleCover(article.coverImage)}
+												alt=""
+												sizes="(max-width: 768px) 100vw, 33vw"
+												className="absolute inset-0 size-full object-cover transition duration-500 group-hover:scale-105"
+											/>
+											<div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+											<span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-wide text-[#6445de] backdrop-blur">
+												{article.category}
+											</span>
+										</div>
+										<CardContent className="h-full flex flex-col justify-between min-h-45 px-4 py-4 sm:px-5">
+											<div>
+												<time dateTime={article.date} className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
+													<CalendarDaysIcon className="size-3.5" aria-hidden="true" />
+													{formatArticleDate(article.date)}
+												</time>
+												<h3 className="font-home-display mt-3 text-xl font-medium uppercase leading-[1.05]">
+													{article.title}
+												</h3>
+												<p className="mt-3 line-clamp-3 text-sm leading-5 text-neutral-700">{article.description}</p>
+											</div>
+											<span className="pt-4 inline-flex items-center gap-1 text-xs font-bold uppercase text-[#6445de]">
+												Leggi l&apos;aggiornamento
+												<ArrowRightIcon className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+											</span>
+										</CardContent>
+									</Card>
+								</Link>
+							</article>
+						))}
+					</div>
 				</div>
 			</section>
 		</div>

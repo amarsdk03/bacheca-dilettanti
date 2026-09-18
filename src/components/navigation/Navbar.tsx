@@ -4,11 +4,12 @@ import {ArrowLeftIcon, ClipboardPenIcon, UserIcon} from "lucide-react";
 
 import NavbarNavigation from "@/components/navigation/NavbarNavigation";
 import UserAvatar from "@/components/navigation/UserAvatar";
-import {Button, buttonVariants} from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button";
 import {DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
 import {getCurrentViewer} from "@/features/auth/server/queries";
 import {cn} from "@/lib/utils";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {Avatar, AvatarFallback} from "@/components/ui/avatar";
+import HomepageWorkInProgressNotice from "@/features/homepage/components/HomepageWorkInProgressNotice";
 
 interface NavbarProps {
 	minimal?: boolean;
@@ -23,6 +24,7 @@ export default async function Navbar({minimal = false, backToHome = false}: Navb
 
 	return (
 		<header className="font-home-body sticky top-0 z-50 border-b border-white/10 bg-[#050505] text-white">
+			<HomepageWorkInProgressNotice onNavbar={true} />
 			<div className="mx-auto flex h-16 w-full max-w-370 items-center gap-4 ps-4 lg:px-8 lg:h-24 lg:gap-6">
 				<Link
 					href="/"
