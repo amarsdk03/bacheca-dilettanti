@@ -1,13 +1,6 @@
-import type {
-	ProfileDraft,
-	ProfileDrafts,
-	ProfileLocationDraft,
-	ProfileType,
-} from "@/features/profilo/profile-model";
-import {
-	getProfileRequiredFieldErrors,
-	type ProfileValidationErrors,
-} from "@/features/profilo/profile-required-fields";
+import type {ProfileDraft, ProfileDrafts, ProfileLocationDraft, ProfileType,} from "@/features/profilo/profile-model";
+import type {ProfileSocialLinks, ProfileSocialLinksByType,} from "@/features/profilo/profile-social-links";
+import {getProfileRequiredFieldErrors, type ProfileValidationErrors,} from "@/features/profilo/profile-required-fields";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 
@@ -131,6 +124,7 @@ export interface AnonymousProfilePayload {
 	type: PublishableProfileType;
 	draft: ProfileDraft;
 	locations: ProfileLocationDraft[];
+	socialLinks: ProfileSocialLinks;
 }
 
 export type RegisteredProfileUpdatePayload = AnonymousProfilePayload;
@@ -224,6 +218,7 @@ export interface PublishProfileContext {
 	enabledProfileTypes: PublishableProfileType[];
 	drafts: ProfileDrafts;
 	locations: Record<ProfileType, ProfileLocationDraft[]>;
+	socialLinks: ProfileSocialLinksByType;
 }
 
 export type PublishAnnouncementResult =
@@ -472,4 +467,10 @@ export function cloneProfileLocations(
 	locations: Record<ProfileType, ProfileLocationDraft[]>,
 ): Record<ProfileType, ProfileLocationDraft[]> {
 	return structuredClone(locations);
+}
+
+export function cloneProfileSocialLinks(
+	socialLinks: ProfileSocialLinksByType,
+): ProfileSocialLinksByType {
+	return structuredClone(socialLinks);
 }

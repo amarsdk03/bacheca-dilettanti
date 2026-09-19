@@ -1,9 +1,6 @@
 import "server-only";
 
-import {
-	AUTH_EMAIL_FLOW_METADATA_KEY,
-	type AuthEmailFlow,
-} from "@/features/auth/email-flow";
+import {AUTH_EMAIL_FLOW_METADATA_KEY, type AuthEmailFlow,} from "@/features/auth/email-flow";
 import {createAdminClient} from "@/lib/supabase/admin";
 
 export type RegistrationEmailIdentity =

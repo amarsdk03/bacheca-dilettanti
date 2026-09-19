@@ -1,11 +1,7 @@
 "use client";
 
 import {useState, useTransition} from "react";
-import {
-	CirclePlusIcon,
-	LoaderCircleIcon,
-	PencilIcon,
-} from "lucide-react";
+import {CirclePlusIcon, LoaderCircleIcon, PencilIcon,} from "lucide-react";
 
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {
@@ -23,21 +19,20 @@ import {toast} from "@/components/ui/toast";
 import ProfileDetailsForm from "@/features/profilo/ProfileDetailsForm";
 import {
 	PROFILE_OPTIONS,
-	type ProfileLocationDraft,
 	type ProfileDrafts,
+	type ProfileLocationDraft,
 	type ProfileLocations,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
-import type {
-	ProfileEditorSavePayload,
-	ProfileMutationResult,
-} from "@/features/profilo/types";
+import type {ProfileSocialLinksByType, ProfileSocialPlatform,} from "@/features/profilo/profile-social-links";
+import type {ProfileEditorSavePayload, ProfileMutationResult,} from "@/features/profilo/types";
 
 interface ProfileEditorDialogProps {
 	mode: "add" | "edit";
 	profileType: ProfileType;
 	drafts: ProfileDrafts;
 	locations: ProfileLocations;
+	socialLinks: ProfileSocialLinksByType;
 	onClose: () => void;
 	onSave: (payload: ProfileEditorSavePayload) => Promise<ProfileMutationResult>;
 }
@@ -47,11 +42,13 @@ export default function ProfileEditorDialog({
 	profileType,
 	drafts,
 	locations,
+	socialLinks,
 	onClose,
 	onSave,
 }: ProfileEditorDialogProps) {
 	const [workingDrafts, setWorkingDrafts] = useState<ProfileDrafts>(() => structuredClone(drafts));
 	const [workingLocations, setWorkingLocations] = useState<ProfileLocations>(() => structuredClone(locations));
+	const [workingSocialLinks, setWorkingSocialLinks] = useState<ProfileSocialLinksByType>(() => structuredClone(socialLinks));
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [pending, startTransition] = useTransition();
 	const selectedOption = PROFILE_OPTIONS.find(({value}) => value === profileType);
@@ -70,6 +67,13 @@ export default function ProfileEditorDialog({
 		setWorkingLocations((previous) => ({...previous, [type]: value}));
 	};
 
+	const updateProfileSocialLinks = (platform: ProfileSocialPlatform, value: string) => {
+		setWorkingSocialLinks((previous) => ({
+			...previous,
+			[profileType]: {...previous[profileType], [platform]: value},
+		}));
+	};
+
 	const handleSave = () => {
 		setErrorMessage(null);
 		startTransition(async () => {
@@ -79,6 +83,7 @@ export default function ProfileEditorDialog({
 					type: profileType,
 					draft: workingDrafts[profileType],
 					locations: workingLocations[profileType],
+					socialLinks: workingSocialLinks[profileType],
 				});
 			} catch {
 				setErrorMessage("La richiesta non è stata completata. Riprova.");
@@ -135,6 +140,8 @@ export default function ProfileEditorDialog({
 							locations={workingLocations}
 							onChange={updateProfileDraft}
 							onLocationsChange={updateProfileLocations}
+							socialLinks={workingSocialLinks[profileType]}
+							onSocialLinksChange={updateProfileSocialLinks}
 						/>
 					</div>
 				</ScrollArea>

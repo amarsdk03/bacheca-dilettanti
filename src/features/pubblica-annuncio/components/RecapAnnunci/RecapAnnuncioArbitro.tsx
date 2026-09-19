@@ -1,10 +1,10 @@
 import {useAnnuncioArbitroStore} from "@/features/pubblica-annuncio/state/AnnuncioArbitro.store";
 import {
+	AnnouncementImageRecap,
+	AnnouncementLinkRecap,
 	EsperienzeRecap,
 	formatContatti,
 	formatDataNascita,
-	AnnouncementImageRecap,
-	AnnouncementLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";

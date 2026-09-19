@@ -12,6 +12,7 @@ import type {
 	ProfileLocationDraft,
 	ProfileLocations,
 } from "@/features/profilo/profile-model";
+import type {ProfileSocialLinks, ProfileSocialPlatform} from "@/features/profilo/profile-social-links";
 import type {ProfileValidationErrors, PublishableProfileType} from "@/features/pubblica-annuncio/publish-model";
 
 interface PublishProfileStepProps {
@@ -23,6 +24,8 @@ interface PublishProfileStepProps {
 	locations: ProfileLocations;
 	onChange: ProfileDraftUpdater;
 	onLocationsChange: (type: PublishableProfileType, value: ProfileLocationDraft[]) => void;
+	socialLinks: ProfileSocialLinks;
+	onSocialLinksChange: (platform: ProfileSocialPlatform, value: string) => void;
 	errors?: ProfileValidationErrors;
 }
 
@@ -35,6 +38,8 @@ export default function PublishProfileStep({
 	locations,
 	onChange,
 	onLocationsChange,
+	socialLinks,
+	onSocialLinksChange,
 	errors = {},
 }: PublishProfileStepProps) {
 	return (
@@ -66,7 +71,7 @@ export default function PublishProfileStep({
 						Prima pubblicazione su Bacheca?
 					</AlertTitle>
 					<AlertDescription>
-						Con questi dati creerai anche il tuo profilo, oltre all'annuncio. Dopo la verifica dell'email
+						Con questi dati creerai anche il tuo profilo, oltre all’annuncio. Dopo la verifica dell’email
 						potrai completarlo e modificarlo quando vuoi.
 					</AlertDescription>
 				</Alert>
@@ -79,6 +84,8 @@ export default function PublishProfileStep({
 					locations={locations}
 					onChange={onChange}
 					onLocationsChange={(type, value) => onLocationsChange(type as PublishableProfileType, value)}
+					socialLinks={socialLinks}
+					onSocialLinksChange={onSocialLinksChange}
 					requiredFields
 					errors={errors}
 				/>

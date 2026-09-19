@@ -4,18 +4,18 @@ import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import DettagliAnnuncioArbitro from "@/features/annunci/components/details/DettagliAnnuncioArbitro";
 import DettagliAnnuncioCampoImpianto from "@/features/annunci/components/details/DettagliAnnuncioCampoImpianto";
 import DettagliAnnuncioGiocatore from "@/features/annunci/components/details/DettagliAnnuncioGiocatore";
-import DettagliAnnuncioSquadraCercaGiocatore from "@/features/annunci/components/details/DettagliAnnuncioSquadraCercaGiocatore";
-import DettagliAnnuncioSquadraCercaPartita from "@/features/annunci/components/details/DettagliAnnuncioSquadraCercaPartita";
-import DettagliAnnuncioSquadraCercaSponsor from "@/features/annunci/components/details/DettagliAnnuncioSquadraCercaSponsor";
+import DettagliAnnuncioSquadraCercaGiocatore
+	from "@/features/annunci/components/details/DettagliAnnuncioSquadraCercaGiocatore";
+import DettagliAnnuncioSquadraCercaPartita
+	from "@/features/annunci/components/details/DettagliAnnuncioSquadraCercaPartita";
+import DettagliAnnuncioSquadraCercaSponsor
+	from "@/features/annunci/components/details/DettagliAnnuncioSquadraCercaSponsor";
 import DettagliAnnuncioSquadraCercaStaff from "@/features/annunci/components/details/DettagliAnnuncioSquadraCercaStaff";
 import DettagliAnnuncioStaffSportivo from "@/features/annunci/components/details/DettagliAnnuncioStaffSportivo";
 import DettagliAnnuncioTorneoEvento from "@/features/annunci/components/details/DettagliAnnuncioTorneoEvento";
 import AnnouncementHistoryBackButton from "@/features/annunci/AnnouncementHistoryBackButton";
-import type {
-	AnnouncementDetail,
-	AnnouncementDetailResult,
-} from "@/features/annunci/announcement-model";
-import DetailActions from "@/features/segnalazioni/DetailActions";
+import type {AnnouncementDetail, AnnouncementDetailResult,} from "@/features/annunci/announcement-model";
+import DetailActions from "@/features/interazioni/DetailActions";
 
 interface DettagliAnnuncioPubblicoProps {
 	result: Exclude<AnnouncementDetailResult, {status: "not-found"}>;

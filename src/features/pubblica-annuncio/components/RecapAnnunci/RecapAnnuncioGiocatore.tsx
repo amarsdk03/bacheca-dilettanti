@@ -1,16 +1,13 @@
 import {useAnnuncioGiocatoreStore} from "@/features/pubblica-annuncio/state/AnnuncioGiocatore.store";
 import {
-	formatContatti,
-	formatDataNascita,
 	AnnouncementImageRecap,
 	AnnouncementLinkRecap,
+	formatContatti,
+	formatDataNascita,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
-import {
-	DISPONIBILITA_PROFILO_OPTIONS,
-	getOptionLabel,
-} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {DISPONIBILITA_PROFILO_OPTIONS, getOptionLabel,} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export default function RecapAnnuncioGiocatore() {
 	const data = useAnnuncioGiocatoreStore();

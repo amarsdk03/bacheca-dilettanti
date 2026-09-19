@@ -1,7 +1,4 @@
-import {
-	isProfileType,
-	type ProfileType,
-} from "@/features/profilo/profile-model";
+import {isProfileType, type ProfileType,} from "@/features/profilo/profile-model";
 
 export const PROFILE_IMAGES_BUCKET = "immagini_profili";
 export const PROFILE_IMAGE_MEDIA_FORMAT = "foto_profilo";

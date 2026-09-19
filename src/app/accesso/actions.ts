@@ -1,13 +1,10 @@
 "use server";
 
-import { createHash, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import {createHash, timingSafeEqual} from "node:crypto";
+import {cookies} from "next/headers";
+import {redirect} from "next/navigation";
 
-import {
-	createSiteAccessToken,
-	SITE_ACCESS_COOKIE,
-} from "@/lib/site-access";
+import {createSiteAccessToken, SITE_ACCESS_COOKIE,} from "@/lib/site-access";
 
 type AccessState = {
 	error?: string;

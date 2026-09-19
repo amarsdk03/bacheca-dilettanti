@@ -1,23 +1,20 @@
-import {Suspense, type CSSProperties} from "react";
+import {type CSSProperties, Suspense} from "react";
 import Link from "next/link";
 import {
 	ArrowRightIcon,
 	BriefcaseBusinessIcon,
 	CalendarDaysIcon,
-	CameraIcon, ClipboardListIcon,
+	ClipboardListIcon,
 	HandshakeIcon,
-	MapPinIcon, MegaphoneIcon, PickaxeIcon,
-	RocketIcon, UserPlusIcon, UsersIcon,
+	MapPinIcon,
+	UserPlusIcon,
 } from "lucide-react";
 
 import {buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Skeleton} from "@/components/ui/skeleton";
 import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
-import {
-	isLimitedProfileType,
-	type ProfileType,
-} from "@/features/profilo/profile-model";
+import {isLimitedProfileType, type ProfileType,} from "@/features/profilo/profile-model";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {cn} from "@/lib/utils";
 import {loadLatestPublicAnnouncements} from "@/features/annunci/server/queries";

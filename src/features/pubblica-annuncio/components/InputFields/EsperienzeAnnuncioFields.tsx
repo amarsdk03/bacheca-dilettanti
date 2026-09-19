@@ -1,5 +1,5 @@
 import {type Dispatch, type SetStateAction} from "react";
-import {Plus, Trash2} from "lucide-react";
+import {PlusIcon, Trash2} from "lucide-react";
 
 import {Button} from "@/components/ui/button";
 import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
@@ -7,10 +7,7 @@ import {Input} from "@/components/ui/input";
 import TeamProfileComboboxField from "@/features/profilo/TeamProfileComboboxField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
-import {
-	STATO_ESPERIENZA_OPTIONS,
-	type StatoEsperienza,
-} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {STATO_ESPERIENZA_OPTIONS, type StatoEsperienza,} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export type {StatoEsperienza} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
@@ -77,15 +74,13 @@ export default function EsperienzeAnnuncioFields({
 
 	return (
 		<FieldSet>
-			<div className="mt-4 flex items-start justify-between gap-3">
-				<div>
-					<FieldLegend variant="label" className="field-legend-title mb-0">
-						{titolo} <OptionalLabel />
-					</FieldLegend>
+			<div className="flex items-center justify-between gap-3 mt-4">
+				<div className="flex flex-col items-start">
+					<FieldLegend variant="label" className="field-legend-title mb-0">{titolo} <OptionalLabel /></FieldLegend>
 					<FieldDescription>Licenze, patentini, incarichi o esperienze rilevanti.</FieldDescription>
 				</div>
 				<Button type="button" variant="outline" size="sm" onClick={addEsperienza}>
-					<Plus />
+					<PlusIcon data-icon="inline-start" />
 					Aggiungi
 				</Button>
 			</div>

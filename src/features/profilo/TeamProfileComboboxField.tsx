@@ -12,10 +12,7 @@ import {
 	ComboboxItem,
 	ComboboxList,
 } from "@/components/ui/combobox";
-import {
-	TEAM_PROFILE_SEARCH_MIN_LENGTH,
-	type PublicTeamProfile,
-} from "@/features/profilo/team-profile";
+import {type PublicTeamProfile, TEAM_PROFILE_SEARCH_MIN_LENGTH,} from "@/features/profilo/team-profile";
 
 interface TeamProfileComboboxFieldProps {
 	id: string;
@@ -106,7 +103,9 @@ export default function TeamProfileComboboxField({
 			itemToStringValue={(item: PublicTeamProfile) => item.profileId}
 			isItemEqualToValue={(item: PublicTeamProfile, candidate: PublicTeamProfile) => item.profileId === candidate.profileId}
 			onInputValueChange={(nextValue, details) => {
-				if (details.reason === "item-press" || details.reason === "none") return;
+				// Base UI clears the search query when an unselected combobox closes.
+				// Keep free text and only propagate edits or an explicit clear action.
+				if (details.reason !== "input-change" && details.reason !== "clear-press") return;
 				onValueChange(nextValue.slice(0, 120), null);
 			}}
 			onValueChange={(item) => {

@@ -1,14 +1,15 @@
-import {LucideIcon, SparklesIcon} from "lucide-react";
 import {
 	BadgeCheckIcon,
 	BriefcaseBusinessIcon,
 	CalendarDaysIcon,
 	HandshakeIcon,
+	LucideIcon,
 	MapPinIcon,
+	SparklesIcon,
 	TrophyIcon,
 	UserIcon,
 	UserSearchIcon,
-	UsersIcon,
+	UsersIcon
 } from "lucide-react";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";

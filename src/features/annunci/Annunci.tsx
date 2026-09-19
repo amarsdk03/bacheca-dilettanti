@@ -1,24 +1,11 @@
 import Link from "next/link";
-import {
-	ArrowLeftIcon,
-	ArrowRightIcon,
-	InfoIcon,
-	SearchIcon,
-	SlidersHorizontalIcon,
-} from "lucide-react";
+import {ArrowLeftIcon, ArrowRightIcon, InfoIcon, SearchIcon, SlidersHorizontalIcon,} from "lucide-react";
 
 import GradientBackground from "@/components/styling/GradientBackground";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
 import {Button, buttonVariants} from "@/components/ui/button";
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/components/ui/empty";
+import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle,} from "@/components/ui/empty";
 import {Field, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {
 	InputGroup,
@@ -27,37 +14,23 @@ import {
 	InputGroupInput,
 	InputGroupText,
 } from "@/components/ui/input-group";
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {Separator} from "@/components/ui/separator";
-import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "@/components/ui/sheet";
+import {Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger,} from "@/components/ui/sheet";
 import AnnouncementCard from "@/features/annunci/components/cards/AnnouncementCard";
 import AnnouncementFiltersResetButton from "@/features/annunci/AnnouncementFiltersResetButton";
 import {
 	ANNOUNCEMENT_FILTER_OPTIONS,
 	ANNOUNCEMENT_TEAM_SEARCH_OPTIONS,
 	announcementDirectoryOption,
-	buildAnnouncementsHref,
-	createEmptyAnnouncementFilters,
-	getActiveAnnouncementFilterCount,
-	getAnnouncementFiltersForDirectoryType,
-	getAnnouncementFilterEntries,
 	type AnnouncementDirectoryQuery,
 	type AnnouncementDirectoryResult,
 	type AnnouncementDirectoryType,
+	buildAnnouncementsHref,
+	createEmptyAnnouncementFilters,
+	getActiveAnnouncementFilterCount,
+	getAnnouncementFilterEntries,
+	getAnnouncementFiltersForDirectoryType,
 } from "@/features/annunci/announcement-model";
 import AnnouncementTypeSelector from "@/features/annunci/AnnouncementTypeSelector";
 import Image from "next/image";

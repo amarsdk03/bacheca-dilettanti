@@ -14,17 +14,20 @@ import HomepageWorkInProgressNotice from "@/features/homepage/components/Homepag
 interface NavbarProps {
 	minimal?: boolean;
 	backToHome?: boolean;
+	workInProgress?: boolean;
 }
 
 const inverseButtonClassName =
 	"h-10 rounded-md px-4 font-bold uppercase";
 
-export default async function Navbar({minimal = false, backToHome = false}: NavbarProps) {
+export default async function Navbar({minimal = false, backToHome = false, workInProgress = true}: NavbarProps) {
 	const viewer = await getCurrentViewer();
 
 	return (
 		<header className="font-home-body sticky top-0 z-50 border-b border-white/10 bg-[#050505] text-white">
-			<HomepageWorkInProgressNotice onNavbar={true} />
+			{
+				workInProgress && (<HomepageWorkInProgressNotice onNavbar={true} />)
+			}
 			<div className="mx-auto flex h-16 w-full max-w-370 items-center gap-4 ps-4 lg:px-8 lg:h-24 lg:gap-6">
 				<Link
 					href="/"

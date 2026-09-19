@@ -3,14 +3,7 @@ import "server-only";
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
-	ANNOUNCEMENTS_PER_PAGE,
 	ANNOUNCEMENT_TYPES,
-	announcementOption,
-	getAnnouncementFilterEntries,
-	getAnnouncementStorageTypes,
-	isAnnouncementType,
-	isValidAnnouncementId,
-	normalizeAnnouncementSearchText,
 	type AnnouncementAuthor,
 	type AnnouncementContact,
 	type AnnouncementDetailField,
@@ -20,12 +13,23 @@ import {
 	type AnnouncementDirectoryResult,
 	type AnnouncementFact,
 	type AnnouncementFactKind,
+	announcementOption,
 	type AnnouncementPlayerRoles,
+	ANNOUNCEMENTS_PER_PAGE,
 	type AnnouncementType,
+	getAnnouncementFilterEntries,
+	getAnnouncementStorageTypes,
+	isAnnouncementType,
+	isValidAnnouncementId,
 	type LatestAnnouncementsResult,
+	normalizeAnnouncementSearchText,
 } from "@/features/annunci/announcement-model";
 import type {ProfileType} from "@/features/profilo/profile-model";
-import {experienceTeamReferences, type PublicTeamProfile, type TeamProfileReference} from "@/features/profilo/team-profile";
+import {
+	experienceTeamReferences,
+	type PublicTeamProfile,
+	type TeamProfileReference
+} from "@/features/profilo/team-profile";
 import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
 import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
@@ -841,6 +845,24 @@ function emptyDirectoryResult(error = false): AnnouncementDirectoryResult {
 		totalPages: 1,
 		error,
 	};
+}
+
+/** Used by private bookmarks; public visibility and DTO allowlists still apply. */
+export async function loadPublicAnnouncementsByIds(ids: readonly string[]): Promise<AnnouncementDirectoryItem[]> {
+	const supabase = createAdminClient();
+	const announcements: AnnouncementDirectoryItem[] = [];
+	const uniqueIds = [...new Set(ids)];
+	for (let offset = 0; offset < uniqueIds.length; offset += 200) {
+		const {data, error} = await publicAnnouncementQuery(supabase).in("uuid", uniqueIds.slice(offset, offset + 200));
+		if (error) throw new Error("SAVED_ANNOUNCEMENT_CONTENT_UNAVAILABLE");
+		const mapped = (data ?? []).map(mapAnnouncement).filter((item): item is MappedAnnouncement => Boolean(item));
+		const [authors, teams] = await Promise.all([
+			loadOfficialAuthors(supabase, mapped),
+			loadAnnouncementTeams(supabase, mapped),
+		]);
+		announcements.push(...mapped.map((item) => withLoadedRelations(item, authors.authors, teams, authors.error)));
+	}
+	return announcements;
 }
 
 export async function loadLatestPublicAnnouncements(): Promise<LatestAnnouncementsResult> {

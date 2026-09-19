@@ -1,6 +1,11 @@
 import "server-only";
 
-import {birthMonthNumber, getItalyDateParts, isCompleteValidBirthDate, type BirthDateValue} from "@/features/profilo/birth-date";
+import {
+	type BirthDateValue,
+	birthMonthNumber,
+	getItalyDateParts,
+	isCompleteValidBirthDate
+} from "@/features/profilo/birth-date";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import type {Tables} from "@/server/supabase";
 import type {PlayerCareerEntry, PlayerProfileData} from "../profile-detail-model";

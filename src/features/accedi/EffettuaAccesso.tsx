@@ -1,23 +1,9 @@
 import Link from "next/link";
-import {
-	ArrowRightIcon,
-	CheckIcon,
-	ClipboardPenIcon,
-	MailCheckIcon,
-	LogInIcon,
-	UserPlusIcon,
-} from "lucide-react";
+import {ArrowRightIcon, CheckIcon, ClipboardPenIcon, LogInIcon, MailCheckIcon, UserPlusIcon,} from "lucide-react";
 
 import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card";
 import GradientBackground from "@/components/styling/GradientBackground";
 
 const choices = [

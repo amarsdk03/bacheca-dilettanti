@@ -1,17 +1,14 @@
 import {useAnnuncioStaffStore} from "@/features/pubblica-annuncio/state/AnnuncioStaff.store";
 import {
+	AnnouncementImageRecap,
+	AnnouncementLinkRecap,
 	EsperienzeRecap,
 	formatContatti,
 	formatDataNascita,
-	AnnouncementImageRecap,
-	AnnouncementLinkRecap,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
-import {
-	DISPONIBILITA_PROFILO_OPTIONS,
-	getOptionLabel,
-} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {DISPONIBILITA_PROFILO_OPTIONS, getOptionLabel,} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export default function RecapAnnuncioStaff() {
 	const data = useAnnuncioStaffStore();

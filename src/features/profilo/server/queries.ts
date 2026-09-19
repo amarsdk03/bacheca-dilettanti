@@ -2,10 +2,7 @@ import "server-only";
 
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
-import {
-	announcementOption,
-	isAnnouncementType,
-} from "@/features/annunci/announcement-model";
+import {announcementOption, isAnnouncementType,} from "@/features/annunci/announcement-model";
 import {
 	createProfileDrafts,
 	createProfileLocations,
@@ -13,18 +10,14 @@ import {
 	PROFILE_OPTIONS,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
-import {
-	profileImageMapKey,
-	resolvedProfileImageUrl,
-} from "@/features/profilo/profile-image";
+import {createProfileSocialLinks, profileSocialLinksFromRows,} from "@/features/profilo/profile-social-links";
+import {profileImageMapKey, resolvedProfileImageUrl,} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
-import type {
-	ManagedAnnouncement,
-	ProfileDashboardData,
-} from "@/features/profilo/types";
+import type {ManagedAnnouncement, ProfileDashboardData,} from "@/features/profilo/types";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import type {Database} from "@/server/supabase";
+import {getDashboardInteractions} from "@/features/interazioni/server/queries";
 
 const ANNOUNCEMENT_PAGE_SIZE = 250;
 
@@ -321,14 +314,17 @@ export async function getProfileDashboardData(
 
 	const drafts = createProfileDrafts();
 	const locations = createProfileLocations();
+	const socialLinks = createProfileSocialLinks();
 
 	if (!baseProfile) {
 		return {
+			interactions: await getDashboardInteractions(supabase, userId, null),
 			mainImageUrl: null,
 			hasMainImage: false,
 			profiles: [],
 			drafts,
 			locations,
+			socialLinks,
 			announcements: await loadAnnouncements(supabase, userId, null),
 		};
 	}
@@ -347,8 +343,10 @@ export async function getProfileDashboardData(
 		professionalResult,
 		creatorResult,
 		locationResult,
+		socialLinksResult,
 		profileImages,
 		announcements,
+		interactions,
 	] = await Promise.all([
 		supabase.from("profilo_giocatore").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		admin.from("media_profilo").select("link_media").eq("uuid_profilo", baseProfile.uuid).eq("formato_media", "video_highlights").order("id", {ascending: false}).limit(1).maybeSingle(),
@@ -360,8 +358,10 @@ export async function getProfileDashboardData(
 		supabase.from("profilo_professionista_studente").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
+		admin.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["instagram", "facebook", "youtube", "linkedin"]),
 		loadProfileImageUrlMap(admin, [baseProfile.uuid]),
 		loadAnnouncements(supabase, userId, baseProfile.uuid),
+		getDashboardInteractions(supabase, userId, baseProfile.uuid),
 	]);
 
 	queryFailed(playerResult.error, "profilo_giocatore");
@@ -374,6 +374,7 @@ export async function getProfileDashboardData(
 	queryFailed(professionalResult.error, "profilo_professionista_studente");
 	queryFailed(creatorResult.error, "profilo_creator");
 	queryFailed(locationResult.error, "localita_profilo");
+	queryFailed(socialLinksResult.error, "link_social_profilo");
 
 	drafts.giocatore = hydrateDraft(drafts.giocatore, playerResult.data);
 	drafts.giocatore.video_highlights = playerMediaResult.data?.link_media ?? "";
@@ -391,6 +392,12 @@ export async function getProfileDashboardData(
 			regione: location.regione,
 			citta: location.citta,
 		});
+	}
+
+	for (const type of PROFILE_OPTIONS.map(({value}) => value)) {
+		socialLinks[type] = profileSocialLinksFromRows(
+			(socialLinksResult.data ?? []).filter((link) => link.sottoprofilo === type),
+		);
 	}
 
 	const activeRows = new Map<ProfileType, {id: number}>();
@@ -416,11 +423,13 @@ export async function getProfileDashboardData(
 	});
 
 	return {
+		interactions,
 		mainImageUrl,
 		hasMainImage: Boolean(mainImageUrl),
 		profiles,
 		drafts,
 		locations,
+		socialLinks,
 		announcements,
 	};
 }

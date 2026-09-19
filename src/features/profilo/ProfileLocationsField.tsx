@@ -1,4 +1,4 @@
-import {useEffect, useRef, type Dispatch, type SetStateAction} from "react";
+import {type Dispatch, type SetStateAction, useEffect, useRef} from "react";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import type {ProfileLocationDraft} from "@/features/profilo/profile-model";

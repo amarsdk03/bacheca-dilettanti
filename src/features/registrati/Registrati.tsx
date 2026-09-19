@@ -4,21 +4,38 @@ import {type SubmitEvent, useActionState, useRef, useState} from "react";
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
 import {REGEXP_ONLY_DIGITS} from "input-otp";
-import {ArrowLeftIcon, ArrowRightIcon, CheckIcon, CircleAlertIcon, EyeIcon, EyeOffIcon, MailCheckIcon, UserPlusIcon} from "lucide-react";
+import {
+	ArrowLeftIcon,
+	ArrowRightIcon,
+	CheckIcon,
+	CircleAlertIcon,
+	EyeIcon,
+	EyeOffIcon,
+	MailCheckIcon,
+	UserPlusIcon
+} from "lucide-react";
 
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
 import {Button, buttonVariants} from "@/components/ui/button";
-import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import {Checkbox} from "@/components/ui/checkbox";
 import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
-import {Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet, FieldTitle} from "@/components/ui/field";
+import {
+	Field,
+	FieldContent,
+	FieldDescription,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+	FieldTitle
+} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group";
 import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
-import GradientBackground from "@/components/styling/GradientBackground";
-import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
 import ProfileDetailsForm from "@/features/profilo/ProfileDetailsForm";
 import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
 import SignupConfirmationResend from "@/features/auth/SignupConfirmationResend";
@@ -26,15 +43,15 @@ import {signUpWithPassword} from "@/features/auth/server/actions";
 import {
 	createProfileDrafts,
 	createProfileLocations,
-	isLimitedProfileType,
 	isProfileType,
 	MAX_PROFILE_COUNT,
 	PROFILE_OPTIONS,
-	type ProfileLocationDraft,
 	type ProfileDrafts,
+	type ProfileLocationDraft,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
-import {INITIAL_AUTH_STATE, type AuthActionState, type AuthFieldErrors} from "@/features/auth/types";
+import {createProfileSocialLinks, type ProfileSocialPlatform,} from "@/features/profilo/profile-social-links";
+import {type AuthActionState, type AuthFieldErrors, INITIAL_AUTH_STATE} from "@/features/auth/types";
 import {hasFieldErrors, validateRegistration} from "@/features/auth/validation";
 import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import {
@@ -42,10 +59,7 @@ import {
 	isRegistrableProfileType,
 	type RegistrableProfileType,
 } from "@/features/registrati/registration-payload";
-import {
-	requestRegistrationEmailRecovery,
-	verifyRegistrationEmailRecovery,
-} from "@/features/registrati/server/actions";
+import {requestRegistrationEmailRecovery, verifyRegistrationEmailRecovery,} from "@/features/registrati/server/actions";
 import {cn} from "@/lib/utils";
 
 interface RegistratiProps {
@@ -110,34 +124,28 @@ function RegistrationProgress({step}: {step: RegistrationStep}) {
 
 function RegistrationConfirmation({email}: {email: string}) {
 	return (
-		<GradientBackground className="min-h-svh px-4 py-8 sm:px-6 md:py-10">
-			<div className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-3xl items-start justify-center py-6">
-				<Card className="w-full bg-card/95 shadow-xl backdrop-blur-sm">
-					<CardContent className="p-6 sm:p-10">
-						<Empty role="status" aria-live="polite">
-							<EmptyHeader>
-								<EmptyMedia variant="icon">
-									<MailCheckIcon aria-hidden="true" />
-								</EmptyMedia>
-								<EmptyTitle>Controlla la tua email</EmptyTitle>
-								<EmptyDescription>
-									Se l’indirizzo può essere registrato, riceverai un link di verifica a{" "}
-									<span className="font-medium text-foreground">{email}</span>.
-									 Aprilo per confermare l’account prima di accedere.
-								</EmptyDescription>
-							</EmptyHeader>
-							<EmptyContent>
-								<SignupConfirmationResend email={email} />
-								<Link href="/accedi" className={buttonVariants({size: "lg"})}>
-									Vai ad accedi
-									<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-								</Link>
-							</EmptyContent>
-						</Empty>
-					</CardContent>
-				</Card>
-			</div>
-		</GradientBackground>
+		<CardContent>
+			<Empty role="status" aria-live="polite" className="w-full">
+				<EmptyHeader>
+					<EmptyMedia variant="icon">
+						<MailCheckIcon aria-hidden="true" />
+					</EmptyMedia>
+					<EmptyTitle>Controlla la tua email</EmptyTitle>
+					<EmptyDescription>
+						Se l’indirizzo può essere registrato, riceverai un link di verifica a{" "}
+						<span className="font-medium text-foreground">{email}</span>.
+						 Aprilo per confermare l’account prima di accedere.
+					</EmptyDescription>
+				</EmptyHeader>
+				<EmptyContent>
+					<SignupConfirmationResend email={email} />
+					<Link href="/accedi" className={buttonVariants({size: "lg"})}>
+						Vai ad accedi
+						<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
+					</Link>
+				</EmptyContent>
+			</Empty>
+		</CardContent>
 	);
 }
 
@@ -166,6 +174,7 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 	const [primaryProfileType, setPrimaryProfileType] = useState<ProfileType | "">("");
 	const [profileDrafts, setProfileDrafts] = useState(createProfileDrafts);
 	const [profileLocations, setProfileLocations] = useState(createProfileLocations);
+	const [profileSocialLinks, setProfileSocialLinks] = useState(createProfileSocialLinks);
 	const [profileSelectionError, setProfileSelectionError] = useState<string>();
 	const [showPrimaryProfileError, setShowPrimaryProfileError] = useState(false);
 	const [profileDetailIndex, setProfileDetailIndex] = useState(0);
@@ -220,6 +229,7 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 		primaryProfileType,
 		profileDrafts,
 		profileLocations,
+		profileSocialLinks,
 	);
 
 	const scrollToHeader = () => {
@@ -371,7 +381,6 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 
 	const toggleProfileType = (type: ProfileType, checked: boolean) => {
 		acknowledgeServerError();
-		if (checked && isLimitedProfileType(type)) return;
 		if (checked && selectedProfileTypes.includes(type)) return;
 		if (checked && selectedProfileTypes.length >= MAX_PROFILE_COUNT) {
 			setProfileSelectionError(`Puoi selezionare al massimo ${MAX_PROFILE_COUNT} profili.`);
@@ -436,6 +445,14 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 	const updateProfileLocations = (type: ProfileType, locations: ProfileLocationDraft[]) => {
 		acknowledgeServerError();
 		setProfileLocations((previous) => ({...previous, [type]: locations}));
+	};
+
+	const updateProfileSocialLinks = (type: ProfileType, platform: ProfileSocialPlatform, value: string) => {
+		acknowledgeServerError();
+		setProfileSocialLinks((previous) => ({
+			...previous,
+			[type]: {...previous[type], [platform]: value},
+		}));
 	};
 
 	const continueFromProfileDetails = () => {
@@ -540,10 +557,7 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 			: "Compila i dati essenziali indicati. I campi facoltativi potranno essere modificati anche in seguito.";
 
 	return (
-		<GradientBackground className="min-h-svh px-4 py-8 sm:px-6 md:py-10">
-			<div className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-5xl flex-col">
-				<div className="flex flex-1 items-start justify-center py-6">
-					<form action={formAction} onSubmit={handleSubmit} className="w-full max-w-3xl">
+		<form action={formAction} onSubmit={handleSubmit} className="flex w-full flex-col gap-6">
 						<input
 							type="hidden"
 							name="registrationPayload"
@@ -557,8 +571,10 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 							</>
 						)}
 
-						<Card className="bg-card/95 shadow-xl backdrop-blur-sm">
-							<CardHeader ref={registrationHeaderRef} className="scroll-mt-24 px-6 sm:px-12 flex flex-col items-stretch gap-8 pt-4">
+			<CardHeader
+				ref={registrationHeaderRef}
+				className="scroll-mt-4 flex flex-col items-stretch gap-6"
+			>
 								<RegistrationProgress step={visibleStep} />
 								<div className="flex flex-col gap-1 text-center mb-4">
 									{visibleStep === 3 && currentProfileType && (
@@ -566,12 +582,14 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 										<Badge variant="secondary">Profilo {visibleProfileDetailIndex + 1} di {orderedSelectedProfileTypes.length}</Badge>
 										</div>
 									)}
-									<CardTitle className="text-2xl font-medium">{title}</CardTitle>
-									<CardDescription>{description}</CardDescription>
+					<CardTitle>
+						<h1 className="text-2xl font-medium">{title}</h1>
+					</CardTitle>
+					<CardDescription className="text-balance">{description}</CardDescription>
 								</div>
-							</CardHeader>
+			</CardHeader>
 
-							<CardContent className="px-8 sm:px-12 pb-8">
+			<CardContent>
 								{hasUnhandledServerError && state.message && (
 									<Alert variant="destructive" className="mb-6" aria-live="polite">
 										<CircleAlertIcon aria-hidden="true" />
@@ -675,12 +693,10 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 											<FieldGroup data-slot="checkbox-group" className="grid gap-3 sm:grid-cols-2">
 												{PROFILE_OPTIONS.map(({value, label, description: optionDescription, icon: Icon}) => {
 													const checked = selectedProfileTypes.includes(value);
-													const limited = isLimitedProfileType(value);
-													const disabled = limited || (!checked && selectedProfileTypes.length >= MAX_PROFILE_COUNT);
+													const disabled = !checked && selectedProfileTypes.length >= MAX_PROFILE_COUNT;
 
 													return (
 														<div key={value} className="relative">
-															{limited && <ComingSoonBadge className="absolute -right-1 -top-1 z-10" />}
 															<FieldLabel htmlFor={`registration-type-${value}`}>
 																<Field orientation="horizontal" data-disabled={disabled} aria-disabled={disabled}>
 																	<Icon aria-hidden="true" />
@@ -743,13 +759,15 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 										locations={profileLocations}
 										onChange={updateProfileDraft}
 										onLocationsChange={updateProfileLocations}
+										socialLinks={profileSocialLinks[currentProfileType]}
+										onSocialLinksChange={(platform, value) => updateProfileSocialLinks(currentProfileType, platform, value)}
 										requiredFields
 										errors={currentProfileErrors}
 									/>
 								)}
-							</CardContent>
+			</CardContent>
 
-							<CardFooter className={cn("flex gap-3", visibleStep === 1 ? "justify-end" : "justify-between")}>
+			<CardFooter className={cn("flex-wrap gap-3", visibleStep === 1 ? "justify-end" : "justify-between")}>
 								{visibleStep > 1 && (
 									<Button type="button" variant="outline" size="lg" onClick={goBack}>
 										<ArrowLeftIcon data-icon="inline-start" />
@@ -775,11 +793,7 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 									</Button>
 								)}
 								{visibleStep === 3 && isLastProfileDetail && <SubmitButton />}
-							</CardFooter>
-						</Card>
-					</form>
-				</div>
-			</div>
-		</GradientBackground>
+			</CardFooter>
+		</form>
 	);
 }

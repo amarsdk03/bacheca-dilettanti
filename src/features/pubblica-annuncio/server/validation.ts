@@ -1,35 +1,28 @@
 import "server-only";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
+import {createProfileDrafts, type ProfileDrafts, type ProfileLocationDraft,} from "@/features/profilo/profile-model";
+import type {ProfileSocialLinks} from "@/features/profilo/profile-social-links";
 import {
-	createProfileDrafts,
-	isLimitedProfileType,
-	type ProfileDrafts,
-	type ProfileLocationDraft,
-} from "@/features/profilo/profile-model";
-import {
+	type AnnouncementContacts,
+	type AnnouncementDetailsDrafts,
+	type AnnouncementExtras,
+	type DatabaseAnnouncementType,
 	getAnnouncementValidationMessage,
 	getDatabaseAnnouncementType,
 	getProfileValidationMessage,
-	isPublishVisibility,
 	isPublishableProfileType,
+	isPublishVisibility,
 	isTeamAnnouncementSubtype,
-	type AnnouncementContacts,
-	type AnnouncementDetailsDrafts,
-	type DatabaseAnnouncementType,
-	type AnnouncementExtras,
-	type PublishVisibility,
+	PUBLISH_PAYLOAD_VERSION,
 	type PublishableProfileType,
 	type PublishAnnouncementPayload,
+	type PublishVisibility,
 	type TeamAnnouncementSubtype,
-	PUBLISH_PAYLOAD_VERSION,
 } from "@/features/pubblica-annuncio/publish-model";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
-import {
-	parseProfileEditorPayload,
-	RegistrationPayloadError,
-} from "@/features/registrati/server/registration";
+import {parseProfileEditorPayload, RegistrationPayloadError,} from "@/features/registrati/server/registration";
 import type {Json} from "@/server/supabase";
 
 const MAX_PAYLOAD_BYTES = 256_000;
@@ -60,6 +53,7 @@ export interface NormalizedPublishPayload {
 	announcementType: DatabaseAnnouncementType;
 	profileDraft: Record<string, Json> | null;
 	profileLocations: ProfileLocationDraft[];
+	profileSocialLinks: ProfileSocialLinks | null;
 	profileUpdate: {
 		type: PublishableProfileType;
 		draft: Record<string, Json>;
@@ -368,7 +362,6 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 	const visibility = rawValue.visibility;
 	if (typeof rawValue.profileType !== "string" || !isPublishableProfileType(rawValue.profileType)) fail("La tipologia di profilo non è valida.", 1);
 	const profileType = rawValue.profileType;
-	if (isLimitedProfileType(profileType)) fail("Questa tipologia di annuncio sarà disponibile prossimamente.", 1);
 
 	let teamSubtype: TeamAnnouncementSubtype | null = null;
 	if (profileType === "squadra") {
@@ -385,6 +378,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 
 	let profileDraft: Record<string, Json> | null = null;
 	let profileLocations: ProfileLocationDraft[] = [];
+	let profileSocialLinks: ProfileSocialLinks | null = null;
 	let profileUpdate: NormalizedPublishPayload["profileUpdate"] = null;
 	if (registered) {
 		if (rawValue.anonymousProfile !== null) fail("I dati del profilo anonimo non sono previsti per questo account.", 2);
@@ -402,6 +396,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 				} as Record<keyof ProfileDrafts, ProfileLocationDraft[]>);
 				if (profileMessage) fail(profileMessage, 2);
 				profileUpdate = {type: profileType, draft: update.draft, locations};
+				profileSocialLinks = update.socialLinks;
 			} catch (error) {
 				if (error instanceof PublishPayloadError) throw error;
 				if (error instanceof RegistrationPayloadError) fail(error.message, 2);
@@ -416,6 +411,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 			if (profile.type !== profileType || !isPublishableProfileType(profile.type)) fail("I dati del profilo non corrispondono alla tipologia selezionata.", 2);
 			profileDraft = profile.draft;
 			profileLocations = normalizeLocations(profile.locations, 2);
+			profileSocialLinks = profile.socialLinks;
 			const drafts = createProfileDrafts();
 			assignNormalizedProfileDraft(drafts, profileType, profile.draft);
 			const profileMessage = getProfileValidationMessage(profileType, drafts, {
@@ -464,6 +460,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		announcementType: expectedAnnouncementType,
 		profileDraft,
 		profileLocations,
+		profileSocialLinks,
 		profileUpdate,
 		detail,
 		announcementLocations,

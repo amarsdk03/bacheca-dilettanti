@@ -4,10 +4,7 @@ import {notFound} from "next/navigation";
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
 import DettagliAnnuncioPubblico from "@/features/annunci/DettagliAnnuncioPubblico";
-import {
-	isValidAnnouncementId,
-	type RawAnnouncementSearchParams,
-} from "@/features/annunci/announcement-model";
+import {isValidAnnouncementId, type RawAnnouncementSearchParams,} from "@/features/annunci/announcement-model";
 import {loadPublicAnnouncementDetail} from "@/features/annunci/server/queries";
 import {dynamicMetadata} from "@/server/metadata";
 

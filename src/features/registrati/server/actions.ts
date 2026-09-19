@@ -12,10 +12,7 @@ import type {
 	RequestRegistrationEmailRecoveryResult,
 	VerifyRegistrationEmailRecoveryResult,
 } from "@/features/registrati/registration-recovery";
-import {
-	getRegistrationEmailIdentity,
-	setAuthEmailFlow,
-} from "@/features/registrati/server/email-identity";
+import {getRegistrationEmailIdentity, setAuthEmailFlow,} from "@/features/registrati/server/email-identity";
 import {createClient} from "@/lib/supabase/server";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

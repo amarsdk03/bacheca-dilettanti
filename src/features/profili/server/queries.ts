@@ -5,15 +5,15 @@ import {availabilityLabel} from "@/features/profilo/public-profile-display";
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
-	normalizeDirectorySearchText,
-	PROFILE_DIRECTORY_PAGE_SIZE,
 	type DirectoryProfile,
 	type DirectoryProfileFact,
 	type DirectoryProfileFilterData,
+	normalizeDirectorySearchText,
+	PROFILE_DIRECTORY_PAGE_SIZE,
 	type ProfileDirectoryQuery,
 	type ProfileDirectoryResult,
 } from "@/features/profili/profile-directory-model";
-import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
+import {isLimitedProfileType, PROFILE_OPTIONS, type ProfileType,} from "@/features/profilo/profile-model";
 import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {createAdminClient} from "@/lib/supabase/admin";
@@ -29,6 +29,7 @@ function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: numbe
 		.from("profilo")
 		.select(`
 			uuid,
+			tipologia_principale,
 			link_foto_profilo,
 			verificato_il,
 			ultima_modifica_il,
@@ -438,6 +439,27 @@ function emptyDirectoryResult(error = false): ProfileDirectoryResult {
 	};
 }
 
+/** Resolve one public identity per account, without loading the entire directory. */
+export async function loadPublicPrimaryProfiles(ids: readonly string[]): Promise<DirectoryProfile[]> {
+	const supabase = createAdminClient();
+	const profiles: DirectoryProfile[] = [];
+	const uniqueIds = [...new Set(ids)];
+	for (let offset = 0; offset < uniqueIds.length; offset += 200) {
+		const chunk = uniqueIds.slice(offset, offset + 200);
+		const [{data, error}, images] = await Promise.all([
+			profileDirectoryQuery(supabase, 0).in("uuid", chunk),
+			loadProfileImageUrlMap(supabase, chunk),
+		]);
+		if (error) throw new Error("PUBLIC_PRIMARY_PROFILES_UNAVAILABLE");
+		for (const row of data ?? []) {
+			const candidates = mapProfileRow(row, images);
+			const primary = candidates.find(({type}) => type === row.tipologia_principale) ?? candidates[0];
+			if (primary) profiles.push(primary);
+		}
+	}
+	return profiles;
+}
+
 export async function getProfileDirectory(query: ProfileDirectoryQuery): Promise<ProfileDirectoryResult> {
 	try {
 		const supabase = createAdminClient();
@@ -459,6 +481,7 @@ export async function getProfileDirectory(query: ProfileDirectoryQuery): Promise
 
 		const filteredProfiles = rows
 			.flatMap((row) => mapProfileRow(row, profileImages))
+			.filter((profile) => !isLimitedProfileType(profile.type))
 			.filter((profile) => matchesDirectoryQuery(profile, query))
 			.sort((left, right) => {
 				const byUpdate = right.updatedAt.localeCompare(left.updatedAt);

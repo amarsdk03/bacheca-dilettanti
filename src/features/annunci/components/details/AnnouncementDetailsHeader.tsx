@@ -4,8 +4,8 @@ import {CalendarDaysIcon, MapPinIcon} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import AnnouncementAuthorHoverCard from "@/features/annunci/AnnouncementAuthorHoverCard";
 import {
-	announcementOption,
 	type AnnouncementDetail,
+	announcementOption,
 	type AnnouncementPlayerRoles,
 } from "@/features/annunci/announcement-model";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";

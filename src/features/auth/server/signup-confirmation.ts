@@ -6,10 +6,7 @@ import {AUTH_EMAIL_FLOW} from "@/features/auth/email-flow";
 import {getAuthErrorMessage} from "@/features/auth/errors";
 import type {AuthActionState} from "@/features/auth/types";
 import {getAuthConfirmUrl} from "@/features/auth/utils";
-import {
-	getRegistrationEmailIdentity,
-	setAuthEmailFlow,
-} from "@/features/registrati/server/email-identity";
+import {getRegistrationEmailIdentity, setAuthEmailFlow,} from "@/features/registrati/server/email-identity";
 import {createClient} from "@/lib/supabase/server";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -24,7 +24,7 @@ export default async function Page({searchParams}: PageProps) {
 
 	return (
 		<>
-			<Navbar />
+			<Navbar workInProgress={false} />
 			<Homepage />
 			<Footer />
 		</>

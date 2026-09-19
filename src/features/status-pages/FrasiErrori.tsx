@@ -1,7 +1,7 @@
 // src/components/ErrorPhrase.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import {useEffect, useState} from "react";
 
 const frasiErrori = [
 	"Il pallone è uscito dal campo. Anche questa pagina.",

@@ -4,19 +4,13 @@ import {useOptimistic, useTransition} from "react";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
-import {
-	ANNOUNCEMENT_DIRECTORY_OPTIONS,
-	type AnnouncementDirectoryType,
-} from "@/features/annunci/announcement-model";
-import {isLimitedProfileType} from "@/features/profilo/profile-model";
+import {ANNOUNCEMENT_DIRECTORY_OPTIONS, type AnnouncementDirectoryType,} from "@/features/annunci/announcement-model";
 
 interface AnnouncementTypeSelectorProps {
 	selectedTypes: AnnouncementDirectoryType[];
 }
 
-const DIRECTORY_ANNOUNCEMENT_OPTIONS = ANNOUNCEMENT_DIRECTORY_OPTIONS.filter(
-	({profileType}) => !isLimitedProfileType(profileType),
-);
+const DIRECTORY_ANNOUNCEMENT_OPTIONS = ANNOUNCEMENT_DIRECTORY_OPTIONS;
 
 export default function AnnouncementTypeSelector({
 	selectedTypes,

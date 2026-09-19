@@ -5,15 +5,11 @@ import type {CSSProperties} from 'react';
 import type {Variants} from "motion/react";
 import {motion, useReducedMotion} from "motion/react";
 import {Bricolage_Grotesque, IBM_Plex_Mono, Manrope} from 'next/font/google';
-import {
-	ArrowRight,
-	Sparkles,
-} from 'lucide-react';
+import {ArrowRight, Sparkles,} from 'lucide-react';
 import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import Image from "next/image";
-import {DEFAULT_BANNER_PATH, DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
+import {DEFAULT_BANNER_PATH} from "@/const/defaultConstants";
 import AccessForm from "@/app/accesso/access-form";
-
 
 
 /**

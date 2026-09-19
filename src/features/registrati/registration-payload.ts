@@ -1,9 +1,10 @@
 import {
-	isLimitedProfileType,
+	PROFILE_TYPES,
 	type ProfileDrafts,
 	type ProfileLocations,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
+import type {ProfileSocialLinks, ProfileSocialLinksByType,} from "@/features/profilo/profile-social-links";
 
 export const REGISTRATION_PAYLOAD_VERSION = 1 as const;
 
@@ -13,6 +14,7 @@ export interface RegistrationProfilePayload {
 	type: RegistrableProfileType;
 	draft: ProfileDrafts[RegistrableProfileType];
 	locations: ProfileLocations[RegistrableProfileType];
+	socialLinks: ProfileSocialLinks;
 }
 
 export interface RegistrationPayload {
@@ -25,7 +27,7 @@ export interface RegistrationPayload {
 export function isRegistrableProfileType(
 	type: ProfileType,
 ): type is RegistrableProfileType {
-	return !isLimitedProfileType(type);
+	return (PROFILE_TYPES as readonly ProfileType[]).includes(type);
 }
 
 export function createRegistrationPayload(
@@ -33,6 +35,7 @@ export function createRegistrationPayload(
 	primaryProfileType: ProfileType | "",
 	drafts: ProfileDrafts,
 	locations: ProfileLocations,
+	socialLinks: ProfileSocialLinksByType,
 ): RegistrationPayload | null {
 	if (!primaryProfileType || !isRegistrableProfileType(primaryProfileType)) {
 		return null;
@@ -44,6 +47,7 @@ export function createRegistrationPayload(
 			type,
 			draft: drafts[type],
 			locations: locations[type],
+			socialLinks: socialLinks[type],
 		}));
 
 	return {

@@ -2,14 +2,12 @@
 
 import {useActionState} from "react";
 import {useFormStatus} from "react-dom";
-import Image from "next/image";
 import Link from "next/link";
 
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
-import {DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
 import {requestPasswordReset} from "@/features/auth/server/actions";
 import {INITIAL_AUTH_STATE} from "@/features/auth/types";
 import GradientBackground from "@/components/styling/GradientBackground";

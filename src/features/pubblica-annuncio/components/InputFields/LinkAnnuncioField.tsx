@@ -3,10 +3,7 @@ import type {ReactNode} from "react";
 import {Field, FieldDescription, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
-import {
-	isLinkAnnuncioValid,
-	MAX_LINK_ANNUNCIO_LENGTH,
-} from "@/features/pubblica-annuncio/types/announcementExtras";
+import {isLinkAnnuncioValid, MAX_LINK_ANNUNCIO_LENGTH,} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/components/ui/input-group";
 
 type LinkAnnuncioFieldProps = {
@@ -21,6 +18,7 @@ type LinkAnnuncioFieldProps = {
 	labelAddon?: ReactNode;
 	inputAddon?: string;
 	error?: string;
+	disabled?: boolean;
 };
 
 export default function LinkAnnuncioField({
@@ -33,12 +31,13 @@ export default function LinkAnnuncioField({
 	labelAddon,
 	inputAddon,
 	error,
+	disabled = false,
 }: LinkAnnuncioFieldProps) {
 	const id = `${idPrefix}-link-annuncio`;
 	const linkValido = isLinkAnnuncioValid(value);
 
 	return (
-		<Field data-invalid={!linkValido || Boolean(error)}>
+		<Field data-invalid={!linkValido || Boolean(error)} data-disabled={disabled}>
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<FieldLabel htmlFor={id}>
 					<span className="inline-flex items-center gap-1.5">{label} {labelAddon}</span> <OptionalLabel />
@@ -58,6 +57,7 @@ export default function LinkAnnuncioField({
 							onChange={(event) => onValueChange(event.target.value.slice(0, MAX_LINK_ANNUNCIO_LENGTH))}
 							placeholder={placeholder}
 							maxLength={MAX_LINK_ANNUNCIO_LENGTH}
+							disabled={disabled}
 							aria-invalid={!linkValido || Boolean(error)}
 						/>
 					</InputGroup>
@@ -70,6 +70,7 @@ export default function LinkAnnuncioField({
 						onChange={(event) => onValueChange(event.target.value.slice(0, MAX_LINK_ANNUNCIO_LENGTH))}
 						placeholder={placeholder}
 						maxLength={MAX_LINK_ANNUNCIO_LENGTH}
+						disabled={disabled}
 						aria-invalid={!linkValido || Boolean(error)}
 					/>
 				)
@@ -79,7 +80,6 @@ export default function LinkAnnuncioField({
 					{error ?? "Inserisci un link completo"}
 				</FieldDescription>
 			)}
-			<FieldDescription>{description}</FieldDescription>
 		</Field>
 	);
 }

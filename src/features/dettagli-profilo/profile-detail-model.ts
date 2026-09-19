@@ -2,6 +2,7 @@ import {isProfileType, type ProfileType} from "@/features/profilo/profile-model"
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 import type {AnnouncementFact, AnnouncementType} from "@/features/annunci/announcement-model";
 import type {PublicTeamProfile, TeamProfileReference} from "@/features/profilo/team-profile";
+import type {ProfileSocialLinks} from "@/features/profilo/profile-social-links";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -41,6 +42,7 @@ interface ProfileDetailBase {
 	verified: boolean;
 	primary: boolean;
 	availabilityLabel: string | null;
+	socialLinks: ProfileSocialLinks;
 	announcements: ProfileAnnouncement[];
 	announcementsUnavailable: boolean;
 }

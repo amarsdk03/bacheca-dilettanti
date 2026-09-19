@@ -1,17 +1,17 @@
 import "server-only";
 
 import {
+	type AnnouncementDirectoryItem,
 	announcementOption,
+	type AnnouncementType,
 	isAnnouncementType,
 	isValidAnnouncementId,
-	type AnnouncementDirectoryItem,
-	type AnnouncementType,
 } from "@/features/annunci/announcement-model";
 import {loadRelatedPublicAnnouncements} from "@/features/annunci/server/queries";
 import {
-	formatPreviewStatus,
 	type AnnouncementPreviewData,
 	type AnnouncementPreviewFact,
+	formatPreviewStatus,
 } from "@/features/pubblica-annuncio/announcement-preview";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";

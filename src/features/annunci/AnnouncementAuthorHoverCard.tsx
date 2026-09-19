@@ -13,19 +13,12 @@ import {
 
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
-import {
-	HoverCard,
-	HoverCardContent,
-	HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import {HoverCard, HoverCardContent, HoverCardTrigger,} from "@/components/ui/hover-card";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import type {AnnouncementAuthor, AnnouncementFactKind} from "@/features/annunci/announcement-model";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
-import {
-	groupPublicProfileLocations,
-	type PublicProfileLocation,
-} from "@/features/profilo/public-profile-locations";
+import {groupPublicProfileLocations, type PublicProfileLocation,} from "@/features/profilo/public-profile-locations";
 
 const AUTHOR_FACT_ICONS: Partial<Record<AnnouncementFactKind, typeof ListChecksIcon>> = {
 	availability: CalendarCheckIcon,

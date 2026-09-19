@@ -1,7 +1,7 @@
 import React from "react";
 import "./globals.css";
 
-import type { Metadata } from "next";
+import type {Metadata} from "next";
 import {dynamicMetadata} from "@/server/metadata";
 import {Analytics} from "@vercel/analytics/next";
 import {SpeedInsights} from "@vercel/speed-insights/next"

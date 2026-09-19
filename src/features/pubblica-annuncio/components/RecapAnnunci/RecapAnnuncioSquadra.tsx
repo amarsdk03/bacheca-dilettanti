@@ -1,9 +1,9 @@
 import {useAnnuncioSquadraStore} from "@/features/pubblica-annuncio/state/AnnuncioSquadra.store";
 import {
-	formatContatti,
-	formatPeriodo,
 	AnnouncementImageRecap,
 	AnnouncementLinkRecap,
+	formatContatti,
+	formatPeriodo,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";

@@ -19,10 +19,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import {toast} from "@/components/ui/toast";
-import {
-	PROFILE_IMAGE_MAX_SOURCE_BYTES,
-	type ProfileImageScope,
-} from "@/features/profilo/profile-image";
+import {PROFILE_IMAGE_MAX_SOURCE_BYTES, type ProfileImageScope,} from "@/features/profilo/profile-image";
 import {removeProfileImage, saveProfileImage} from "@/features/profilo/server/actions";
 import {cn} from "@/lib/utils";
 

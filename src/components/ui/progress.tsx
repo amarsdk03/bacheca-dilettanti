@@ -1,7 +1,7 @@
 "use client"
 
-import { Progress as ProgressPrimitive } from "@base-ui/react/progress"
-import { cn } from "cn"
+import {Progress as ProgressPrimitive} from "@base-ui/react/progress"
+import {cn} from "cn"
 
 type ProgressProps = ProgressPrimitive.Root.Props & {
   indicatorClassName?: string

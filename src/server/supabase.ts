@@ -39,6 +39,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      profilo_follow: {
+        Row: {
+          uuid_profilo_follower: string
+          uuid_profilo_seguito: string
+          creato_il: string
+        }
+        Insert: {
+          uuid_profilo_follower: string
+          uuid_profilo_seguito: string
+          creato_il?: string
+        }
+        Update: {
+          uuid_profilo_follower?: string
+          uuid_profilo_seguito?: string
+          creato_il?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profilo_follow_uuid_profilo_follower_fkey"
+            columns: ["uuid_profilo_follower"]
+            isOneToOne: false
+            referencedRelation: "profilo"
+            referencedColumns: ["uuid"]
+          },
+          {
+            foreignKeyName: "profilo_follow_uuid_profilo_seguito_fkey"
+            columns: ["uuid_profilo_seguito"]
+            isOneToOne: false
+            referencedRelation: "profilo"
+            referencedColumns: ["uuid"]
+          },
+        ]
+      }
+      annuncio_salvato: {
+        Row: {
+          uuid_utente: string
+          uuid_annuncio: string
+          salvato_il: string
+        }
+        Insert: {
+          uuid_utente: string
+          uuid_annuncio: string
+          salvato_il?: string
+        }
+        Update: {
+          uuid_utente?: string
+          uuid_annuncio?: string
+          salvato_il?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annuncio_salvato_uuid_utente_fkey"
+            columns: ["uuid_utente"]
+            isOneToOne: false
+            referencedRelation: "utente"
+            referencedColumns: ["utente_uuid"]
+          },
+          {
+            foreignKeyName: "annuncio_salvato_uuid_annuncio_fkey"
+            columns: ["uuid_annuncio"]
+            isOneToOne: false
+            referencedRelation: "annuncio"
+            referencedColumns: ["uuid"]
+          },
+        ]
+      }
       annuncio: {
         Row: {
           autore_annuncio: string | null
@@ -1204,6 +1270,7 @@ export type Database = {
           peso: string | null
           piede_principale: string | null
           presentazione: string | null
+          richiede_caricamento_highlights: boolean
           ruoli_sport: Json | null
           sport_principale: string | null
           storico_carriera: Json | null
@@ -1224,6 +1291,7 @@ export type Database = {
           peso?: string | null
           piede_principale?: string | null
           presentazione?: string | null
+          richiede_caricamento_highlights?: boolean
           ruoli_sport?: Json | null
           sport_principale?: string | null
           storico_carriera?: Json | null
@@ -1244,6 +1312,7 @@ export type Database = {
           peso?: string | null
           piede_principale?: string | null
           presentazione?: string | null
+          richiede_caricamento_highlights?: boolean
           ruoli_sport?: Json | null
           sport_principale?: string | null
           storico_carriera?: Json | null
@@ -1812,6 +1881,14 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      save_owned_profile_social_links_v1: {
+        Args: {
+          p_profile_type: string
+          p_social_links: Json
+          p_user_id: string
+        }
+        Returns: undefined
       }
       set_owned_primary_subprofile: {
         Args: { p_profile_type: string; p_user_id: string }

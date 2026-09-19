@@ -2,7 +2,7 @@
 
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
-import {ListChecksIcon, LoaderCircleIcon, LogOutIcon, SettingsIcon, UserIcon} from "lucide-react";
+import {HeartIcon, ListChecksIcon, LoaderCircleIcon, LogOutIcon, SettingsIcon, UserIcon} from "lucide-react";
 
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Button} from "@/components/ui/button";
@@ -54,7 +54,10 @@ export default function UserAvatar({viewer}: {viewer: ViewerDTO}) {
 						<UserIcon /> Profilo
 					</DropdownMenuItem>
 					<DropdownMenuItem render={<Link href="/il-tuo-profilo?sezione=annunci" />}>
-						<ListChecksIcon /> Annunci
+						<ListChecksIcon /> I miei annunci
+					</DropdownMenuItem>
+					<DropdownMenuItem render={<Link href="/il-tuo-profilo?sezione=salvati" />}>
+						<HeartIcon /> Annunci salvati
 					</DropdownMenuItem>
 					<DropdownMenuItem render={<Link href="/il-tuo-profilo?sezione=impostazioni" />}>
 						<SettingsIcon /> Impostazioni

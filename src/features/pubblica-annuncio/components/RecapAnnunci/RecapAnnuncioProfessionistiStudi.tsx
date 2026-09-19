@@ -1,13 +1,15 @@
 "use client";
 
 import {
-	formatContatti,
 	AnnouncementImageRecap,
 	AnnouncementLinkRecap,
+	formatContatti,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
-import {useAnnuncioProfessionistiStudiStore} from "@/features/pubblica-annuncio/state/AnnuncioProfessionistiStudi.store";
+import {
+	useAnnuncioProfessionistiStudiStore
+} from "@/features/pubblica-annuncio/state/AnnuncioProfessionistiStudi.store";
 import {
 	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
 	getOptionLabel,

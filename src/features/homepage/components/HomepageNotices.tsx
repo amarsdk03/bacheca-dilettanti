@@ -5,10 +5,10 @@ import Link from "next/link";
 import {
 	ArrowRightIcon,
 	CalendarDaysIcon,
-	MegaphoneIcon,
-	TriangleAlertIcon,
+	FlameIcon,
 	type LucideIcon,
-	FlameIcon
+	MegaphoneIcon,
+	TriangleAlertIcon
 } from "lucide-react";
 
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";

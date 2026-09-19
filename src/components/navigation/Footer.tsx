@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import {DEFAULT_BANNER_PATH, DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
+import {DEFAULT_BANNER_PATH} from "@/const/defaultConstants";
 import {SiInstagram, SiWhatsapp} from "@icons-pack/react-simple-icons";
 
 

@@ -2,10 +2,7 @@ import "server-only";
 
 import sharp from "sharp";
 
-import {
-	PROFILE_IMAGE_MAX_SOURCE_BYTES,
-	PROFILE_IMAGE_OUTPUT_SIZE,
-} from "@/features/profilo/profile-image";
+import {PROFILE_IMAGE_MAX_SOURCE_BYTES, PROFILE_IMAGE_OUTPUT_SIZE,} from "@/features/profilo/profile-image";
 
 const PROFILE_IMAGE_OUTPUT_MAX_BYTES = 2 * 1024 * 1024;
 const PROFILE_IMAGE_ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);

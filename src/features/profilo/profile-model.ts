@@ -77,6 +77,8 @@ interface ProfileOption {
 
 export const MAX_PROFILE_COUNT = 5;
 
+export const PROFILE_DIRECTORY_UNLOCK_PROFILE_COUNT = 20;
+
 export const PROFILI_LIMITATI = true;
 
 export const LIMITED_PROFILE_TYPES = [
@@ -178,6 +180,7 @@ export function createProfileDrafts(): ProfileDrafts {
 			storico_carriera: [],
 			tipologie_sport: [],
 			video_highlights: "",
+			richiede_caricamento_highlights: false,
 		},
 		squadra: {
 			nome_societa: "",

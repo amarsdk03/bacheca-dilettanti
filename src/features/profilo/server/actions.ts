@@ -6,11 +6,7 @@ import {revalidatePath} from "next/cache";
 import {randomUUID} from "node:crypto";
 
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
-import {
-	isLimitedProfileType,
-	isProfileType,
-	type ProfileType,
-} from "@/features/profilo/profile-model";
+import {isProfileType, type ProfileType,} from "@/features/profilo/profile-model";
 import {
 	isProfileImageScope,
 	PROFILE_IMAGE_MEDIA_FORMAT,
@@ -23,10 +19,7 @@ import type {
 	ProfileImageMutationResult,
 	ProfileMutationResult,
 } from "@/features/profilo/types";
-import {
-	parseProfileEditorPayload,
-	RegistrationPayloadError,
-} from "@/features/registrati/server/registration";
+import {parseProfileEditorPayload, RegistrationPayloadError,} from "@/features/registrati/server/registration";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import type {Json} from "@/server/supabase";
@@ -131,91 +124,6 @@ function profileRpcErrorMessage(message: string) {
 
 async function authenticatedUserId() {
 	return (await getAuthenticatedViewer())?.authUserId ?? null;
-}
-
-async function ownedSubprofileExists(
-	profileUserId: string,
-	type: ProfileType,
-) {
-	const admin = createAdminClient();
-	const {data: profile, error: profileError} = await admin
-		.from("profilo")
-		.select("uuid")
-		.eq("uuid_utente", profileUserId)
-		.maybeSingle();
-	if (profileError) throw profileError;
-	if (!profile) return false;
-
-	const {data: subprofile, error: subprofileError} = await admin
-		.from(PROFILE_TABLE_BY_TYPE[type])
-		.select("id")
-		.eq("uuid_profilo", profile.uuid)
-		.maybeSingle();
-	if (subprofileError) throw subprofileError;
-
-	return Boolean(subprofile);
-}
-
-async function syncPlayerHighlights(
-	profileUserId: string,
-	draft: Record<string, Json>,
-) {
-	const videoHighlights = draft.video_highlights;
-	if (typeof videoHighlights !== "string") {
-		return "INVALID_PROFILE_VIDEO_LINK";
-	}
-
-	const admin = createAdminClient();
-	const {data: profile, error: profileError} = await admin
-		.from("profilo")
-		.select("uuid")
-		.eq("uuid_utente", profileUserId)
-		.maybeSingle();
-	if (profileError || !profile) {
-		return profileError?.code ?? "PROFILE_NOT_FOUND";
-	}
-
-	const link = videoHighlights.trim();
-	if (!link) {
-		const {error} = await admin
-			.from("media_profilo")
-			.delete()
-			.eq("uuid_profilo", profile.uuid)
-			.eq("formato_media", "video_highlights");
-		return error?.code ?? null;
-	}
-
-	const {data: existingMedia, error: lookupError} = await admin
-		.from("media_profilo")
-		.select("id")
-		.eq("uuid_profilo", profile.uuid)
-		.eq("formato_media", "video_highlights")
-		.maybeSingle();
-	if (lookupError) return lookupError.code;
-
-	if (existingMedia) {
-		const {error} = await admin
-			.from("media_profilo")
-			.update({link_media: link})
-			.eq("id", existingMedia.id);
-		return error?.code ?? null;
-	}
-
-	const {error: insertError} = await admin
-		.from("media_profilo")
-		.insert({
-			uuid_profilo: profile.uuid,
-			formato_media: "video_highlights",
-			link_media: link,
-		});
-	if (insertError?.code !== "23505") return insertError?.code ?? null;
-
-	const {error: updateError} = await admin
-		.from("media_profilo")
-		.update({link_media: link})
-		.eq("uuid_profilo", profile.uuid)
-		.eq("formato_media", "video_highlights");
-	return updateError?.code ?? null;
 }
 
 function profileTypeFromUnknown(value: unknown): ProfileType | null {
@@ -385,13 +293,6 @@ export async function saveProfile(
 	}
 
 	try {
-		if (
-			isLimitedProfileType(normalized.type)
-			&& !await ownedSubprofileExists(account.utenteId, normalized.type)
-		) {
-			return {status: "error", message: "Questa tipologia sarà disponibile prossimamente."};
-		}
-
 		const admin = createAdminClient();
 		const {error} = await admin.rpc("save_owned_subprofile", {
 			p_user_id: userId,
@@ -405,18 +306,17 @@ export async function saveProfile(
 			return {status: "error", message: profileRpcErrorMessage(error.message)};
 		}
 
-		if (normalized.type === "giocatore") {
-			// Highlights live in media_profilo, outside the player profile draft.
-			const highlightsError = await syncPlayerHighlights(account.utenteId, normalized.draft);
-			if (highlightsError) {
-				console.error("[profile-dashboard] Player highlights save failed", {
-					code: highlightsError,
-				});
-				return {
-					status: "error",
-					message: "Il profilo è stato aggiornato, ma non è stato possibile salvare il link degli highlights. Riprova.",
-				};
-			}
+		const {error: socialLinksError} = await admin.rpc("save_owned_profile_social_links_v1", {
+			p_user_id: userId,
+			p_profile_type: normalized.type,
+			p_social_links: normalized.socialLinks as Json,
+		});
+		if (socialLinksError) {
+			console.error("[profile-dashboard] Profile social links save failed", {code: socialLinksError.code});
+			return {
+				status: "error",
+				message: "Il profilo è stato aggiornato, ma non è stato possibile salvare i link social. Riprova.",
+			};
 		}
 	} catch (error) {
 		console.error("[profile-dashboard] Profile save request failed", {

@@ -1,7 +1,4 @@
-import type {
-	AnnouncementFactKind,
-	AnnouncementType,
-} from "@/features/annunci/announcement-model";
+import type {AnnouncementFactKind, AnnouncementType,} from "@/features/annunci/announcement-model";
 
 export interface AnnouncementDetailPresentation {
 	intro: string;

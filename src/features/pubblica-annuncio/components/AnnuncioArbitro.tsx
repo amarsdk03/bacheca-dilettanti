@@ -1,21 +1,16 @@
 "use client";
 
-import {
-	Field,
-	FieldDescription,
-	FieldGroup,
-	FieldLabel,
-	FieldLegend,
-	FieldSet,
-} from "@/components/ui/field";
+import {Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet,} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {useAnnuncioArbitroStore} from "@/features/pubblica-annuncio/state/AnnuncioArbitro.store";
 import DataNascitaFields from "@/features/pubblica-annuncio/components/InputFields/DataNascitaFields";
-import DisponibilitaSpostamentoSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaSpostamentoSelect";
+import DisponibilitaSpostamentoSelect
+	from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaSpostamentoSelect";
 import EsperienzeAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/EsperienzeAnnuncioFields";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
-import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
+import TipologiaCalcioMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";

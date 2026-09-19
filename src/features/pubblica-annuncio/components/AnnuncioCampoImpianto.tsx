@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	Field,
-	FieldGroup,
-	FieldLabel,
-	FieldLegend,
-	FieldSet,
-} from "@/components/ui/field";
+import {Field, FieldGroup, FieldLabel, FieldLegend, FieldSet,} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {
@@ -19,7 +13,8 @@ import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/co
 import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
-import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
+import TipologiaCalcioMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 
 export default function AnnuncioCampoImpianto() {
 	const {

@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, type ReactNode} from "react";
+import {type ReactNode, useState} from "react";
 import Link from "next/link";
 import {usePathname, useSearchParams} from "next/navigation";
 import {ChevronDownIcon, ClipboardPenIcon, MenuIcon, UserRoundIcon} from "lucide-react";
@@ -25,11 +25,7 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import {ANNOUNCEMENT_DIRECTORY_OPTIONS} from "@/features/annunci/announcement-model";
-import {
-	isLimitedProfileType,
-	PROFILE_OPTIONS,
-	type ProfileType,
-} from "@/features/profilo/profile-model";
+import {isLimitedProfileType, PROFILE_OPTIONS, type ProfileType,} from "@/features/profilo/profile-model";
 import {cn} from "@/lib/utils";
 import {ViewerDTO} from "@/features/auth/types";
 
@@ -41,9 +37,7 @@ interface NavbarNavigationProps {
 const desktopLinkClassName =
 	"relative inline-flex h-11 items-center rounded-lg px-3 text-sm font-bold tracking-wide text-white/75 outline-none transition-colors hover:bg-white/8 hover:text-white focus-visible:ring-3 focus-visible:ring-[#8e72ff]/70";
 
-const ANNOUNCEMENT_NAVIGATION_OPTIONS = ANNOUNCEMENT_DIRECTORY_OPTIONS.filter(
-	({profileType}) => !isLimitedProfileType(profileType),
-);
+const ANNOUNCEMENT_NAVIGATION_OPTIONS = ANNOUNCEMENT_DIRECTORY_OPTIONS;
 const PROFILE_NAVIGATION_OPTIONS = PROFILE_OPTIONS.filter(
 	({value}) => !isLimitedProfileType(value),
 );

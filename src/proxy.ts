@@ -1,10 +1,7 @@
 import type {NextRequest} from 'next/server';
 import {NextResponse} from 'next/server';
 
-import {
-	SITE_ACCESS_COOKIE,
-	verifySiteAccessToken,
-} from '@/lib/site-access';
+import {SITE_ACCESS_COOKIE, verifySiteAccessToken,} from '@/lib/site-access';
 import {updateSession} from '@/lib/supabase/proxy';
 
 const MAINTENANCE_MODE =

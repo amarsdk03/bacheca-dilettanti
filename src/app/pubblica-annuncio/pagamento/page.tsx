@@ -10,10 +10,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import PriorityCheckoutRedirect, {
 	type PriorityCheckoutResult,
 } from "@/features/pubblica-annuncio/components/PriorityCheckoutRedirect";
-import {
-	isValidAnnouncementId,
-	isValidCheckoutSessionId,
-} from "@/features/pubblica-annuncio/server/stripe-checkout";
+import {isValidAnnouncementId, isValidCheckoutSessionId,} from "@/features/pubblica-annuncio/server/stripe-checkout";
 import {cn} from "@/lib/utils";
 import {dynamicMetadata} from "@/server/metadata";
 

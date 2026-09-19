@@ -15,8 +15,8 @@ import {Badge} from "@/components/ui/badge";
 import {cn} from "@/lib/utils";
 import {
 	groupPublicProfileLocations,
-	publicProfileLocationLabel,
 	type PublicProfileLocation,
+	publicProfileLocationLabel,
 } from "@/features/profilo/public-profile-locations";
 
 export default function ProfileLocationSummary({

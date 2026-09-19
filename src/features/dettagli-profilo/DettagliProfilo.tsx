@@ -1,6 +1,6 @@
 import {TriangleAlertIcon} from "lucide-react";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
-import DetailActions from "@/features/segnalazioni/DetailActions";
+import DetailActions from "@/features/interazioni/DetailActions";
 import type {ProfileDetail, ProfileDetailResult} from "./profile-detail-model";
 import ProfileHistoryBackButton from "./components/ProfileHistoryBackButton";
 import DettagliProfiloGiocatore from "./components/types/DettagliProfiloGiocatore";

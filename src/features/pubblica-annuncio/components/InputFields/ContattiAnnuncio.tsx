@@ -4,9 +4,9 @@ import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {
-	SOCIAL_CONTACT_OPTIONS,
 	type CanaleContattoAnnuncio,
 	type ContattiAnnuncio,
+	SOCIAL_CONTACT_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export {

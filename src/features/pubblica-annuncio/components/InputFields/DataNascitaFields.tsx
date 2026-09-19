@@ -1,13 +1,7 @@
 import {type Dispatch, type SetStateAction} from "react";
 
 import {Field, FieldDescription, FieldLabel} from "@/components/ui/field";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {
 	birthMonthNumber,
 	daysInBirthMonth,
@@ -15,10 +9,7 @@ import {
 	MINIMUM_PROFILE_AGE,
 } from "@/features/profilo/birth-date";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
-import {
-	DATA_NASCITA_PLACEHOLDERS,
-	MESI_OPTIONS,
-} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {DATA_NASCITA_PLACEHOLDERS, MESI_OPTIONS,} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 const {anno: ANNO_PLACEHOLDER, mese: MESE_PLACEHOLDER, giorno: GIORNO_PLACEHOLDER} = DATA_NASCITA_PLACEHOLDERS;
 

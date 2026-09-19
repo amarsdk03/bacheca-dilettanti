@@ -4,12 +4,14 @@ import {type ReactNode, useActionState, useState, useTransition} from "react";
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
 import {
-	BadgeCheckIcon, CheckIcon,
+	BadgeCheckIcon,
+	CheckIcon,
 	CircleHelpIcon,
 	CirclePlusIcon,
 	EyeIcon,
 	EyeOffIcon,
 	FileTextIcon,
+	HeartIcon,
 	InfoIcon,
 	KeyRoundIcon,
 	ListChecksIcon,
@@ -24,14 +26,10 @@ import {
 	StarIcon,
 	Trash2Icon,
 	UserRoundIcon,
+	UsersIcon,
 } from "lucide-react";
 
-import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from "@/components/ui/accordion";
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger,} from "@/components/ui/accordion";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {
 	AlertDialog,
@@ -47,30 +45,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/components/ui/empty";
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card";
+import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle,} from "@/components/ui/empty";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {toast} from "@/components/ui/toast";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
@@ -79,9 +56,7 @@ import GradientBackground from "@/components/styling/GradientBackground";
 import {CONTACT_EMAIL} from "@/const/contactConstants";
 import {announcementOption} from "@/features/annunci/announcement-model";
 import {requestCurrentUserPasswordReset, signOut} from "@/features/auth/server/actions";
-import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
 import {
-	isLimitedProfileType,
 	MAX_PROFILE_COUNT,
 	PROFILE_OPTIONS,
 	type ProfileDrafts,
@@ -110,11 +85,14 @@ import type {
 	ProfileMutationResult,
 } from "@/features/profilo/types";
 import {cn} from "@/lib/utils";
+import {RelationshipsSection, SavedAnnouncementsSection} from "@/features/interazioni/DashboardSections";
 import {Separator} from "@base-ui/react";
 
 const DASHBOARD_ITEMS = [
 	{value: "profilo", label: "Il tuo profilo", icon: UserRoundIcon},
-	{value: "annunci", label: "Lista annunci", icon: ListChecksIcon},
+	{value: "annunci", label: "I miei annunci", icon: ListChecksIcon},
+	{value: "salvati", label: "Annunci salvati", icon: HeartIcon},
+	{value: "relazioni", label: "Follower e seguiti", icon: UsersIcon},
 	{value: "impostazioni", label: "Impostazioni", icon: SettingsIcon},
 	{value: "info", label: "FAQ", icon: CircleHelpIcon},
 ] as const;
@@ -146,7 +124,7 @@ const FAQ_GROUPS = [
 			{
 				value: "profile-manage",
 				question: "Come abilito o modifico un sottoprofilo?",
-				answer: "Nella sezione Il tuo profilo seleziona Abilita su una tipologia non attiva oppure Modifica su un sottoprofilo già configurato. Le tipologie contrassegnate come “Coming soon” non possono ancora essere abilitate.",
+				answer: "Nella sezione Il tuo profilo seleziona Abilita su una tipologia non attiva oppure Modifica su un sottoprofilo già configurato.",
 			},
 			{
 				value: "profile-remove",
@@ -168,7 +146,7 @@ const FAQ_GROUPS = [
 			{
 				value: "announcement-review",
 				question: "Cosa succede dopo aver inviato un annuncio?",
-				answer: "Un annuncio gratuito entra direttamente in revisione. Per un annuncio prioritario devi prima completare il pagamento: dopo l’approvazione avrà priorità per sette giorni. Puoi controllarne lo stato nella sezione Lista annunci.",
+				answer: "Un annuncio gratuito entra direttamente in revisione. Per un annuncio prioritario devi prima completare il pagamento: dopo l’approvazione avrà priorità per sette giorni. Puoi controllarne lo stato nella sezione I miei annunci.",
 			},
 			{
 				value: "announcement-edit",
@@ -539,41 +517,26 @@ function InactiveProfileCard({
 	const option = PROFILE_OPTIONS.find(({value}) => value === type);
 	if (!option) return null;
 
-	const unavailable = isLimitedProfileType(type);
 	const accent = getProfileAccent(type);
-	const iconColor = unavailable ? "#cccccc" : accent;
 
 	return (
 		<Card className="h-full">
 			<CardHeader className="flex justify-between items-center pb-3 border-b-2 border-neutral-100">
 				<div className="flex min-w-0 items-center gap-3">
-					<div className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{backgroundColor: unavailable ? "#f3f4f6" : `${accent}14`}}>
-						<ProfilePngIcon type={type} color={iconColor} className="size-7" />
+					<div className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{backgroundColor: `${accent}14`}}>
+						<ProfilePngIcon type={type} color={accent} className="size-7" />
 					</div>
 					<div className="min-w-0">
 						<CardTitle>{option.label}</CardTitle>
 					</div>
 				</div>
-				{unavailable
-					? <ComingSoonBadge />
-					: <Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}>Non attivato</Badge>}
+				<Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}>Non attivato</Badge>
 			</CardHeader>
 			<CardContent>
-				<p className="leading-6 text-muted-foreground">
-					{option.description}
-					{unavailable && "."}
-					{unavailable && (
-						<>
-							<br/><br/>
-							<span className="text-xs text-muted-foreground">
-								Questa tipologia sarà disponibile prossimamente.
-							</span>
-						</>
-					)}
-				</p>
+				<p className="leading-6 text-muted-foreground">{option.description}</p>
 			</CardContent>
 			<CardFooter className="mt-auto justify-end">
-				<Button type="button" onClick={onEnable} disabled={disabled || unavailable}>
+				<Button type="button" onClick={onEnable} disabled={disabled}>
 					<PlusIcon data-icon="inline-start" aria-hidden="true" />
 					Abilita
 				</Button>
@@ -832,7 +795,7 @@ function AnnouncementsSection({announcements, onToggleVisibility, onRemove}: {
 		<section aria-labelledby="announcements-heading" className="grid gap-6">
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 				<div>
-					<h2 id="announcements-heading" className="text-xl font-semibold tracking-tight">Lista annunci</h2>
+					<h2 id="announcements-heading" className="text-xl font-semibold tracking-tight">I miei annunci</h2>
 					<p className="mt-1 text-muted-foreground">Puoi gestirne la visibilità o eliminarli; la modifica non è disponibile.</p>
 				</div>
 				<Button render={<Link href="/pubblica-annuncio" />} nativeButton={false}>
@@ -990,7 +953,7 @@ export default function IlTuoProfilo({
 	passwordUpdated,
 	initialSection,
 }: IlTuoProfiloProps) {
-	const {mainImageUrl, hasMainImage, profiles, drafts, locations, announcements} = data;
+	const {mainImageUrl, hasMainImage, profiles, drafts, locations, socialLinks, announcements} = data;
 	const [section, setSection] = useState<ProfileDashboardSection>(initialSection);
 	const [editor, setEditor] = useState<ProfileEditorState | null>(null);
 
@@ -1038,6 +1001,8 @@ export default function IlTuoProfilo({
 							/>
 						</TabsContent>
 						<TabsContent value="annunci"><AnnouncementsSection announcements={announcements} onToggleVisibility={handleToggleAnnouncement} onRemove={handleRemoveAnnouncement} /></TabsContent>
+						<TabsContent value="salvati"><SavedAnnouncementsSection list={data.interactions.savedAnnouncements} /></TabsContent>
+						<TabsContent value="relazioni"><RelationshipsSection followers={data.interactions.followers} following={data.interactions.following} /></TabsContent>
 						<TabsContent value="impostazioni"><SettingsSection viewer={viewer} passwordUpdated={passwordUpdated} /></TabsContent>
 						<TabsContent value="info"><FaqSection /></TabsContent>
 					</div>
@@ -1051,6 +1016,7 @@ export default function IlTuoProfilo({
 					profileType={editor.profileType}
 					drafts={drafts}
 					locations={locations}
+					socialLinks={socialLinks}
 					onClose={() => setEditor(null)}
 					onSave={handleSaveProfile}
 				/>

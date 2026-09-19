@@ -1,5 +1,5 @@
+import type {LucideProps} from "lucide-react";
 import * as Icons from "lucide-react";
-import type { LucideProps } from "lucide-react";
 
 import {FC} from "react";
 

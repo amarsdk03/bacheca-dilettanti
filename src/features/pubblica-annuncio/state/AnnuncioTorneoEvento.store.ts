@@ -1,7 +1,7 @@
 import {
 	CONTATTI_ANNUNCIO_DEFAULT,
-	hasContattoPubblico,
 	type ContattiAnnuncio,
+	hasContattoPubblico,
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
 import {createAnnuncioStore} from "@/features/pubblica-annuncio/state/createAnnuncioStore";

@@ -6,11 +6,7 @@ import {
 	RUOLO_PRINCIPALE_OPTIONS,
 	TIPOLOGIA_CALCIO_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {
-	isProfileType,
-	PROFILE_TYPES,
-	type ProfileType,
-} from "@/features/profilo/profile-model";
+import {isLimitedProfileType, isProfileType, PROFILE_TYPES, type ProfileType,} from "@/features/profilo/profile-model";
 
 export const PROFILE_DIRECTORY_PAGE_SIZE = 12;
 
@@ -166,7 +162,9 @@ function supportsFilter(type: ProfileType, filter: ProfileFilterParam) {
 
 export function parseProfileDirectoryQuery(params: RawProfileSearchParams): ProfileDirectoryQuery {
 	const requestedTypes = new Set(asValues(params.type).filter(isProfileType));
-	const types = PROFILE_TYPES.filter((type) => requestedTypes.has(type));
+	const types = PROFILE_TYPES.filter(
+		(type) => requestedTypes.has(type) && !isLimitedProfileType(type),
+	);
 	const selectedType = types.length === 1 ? types[0] : null;
 	const filters = createEmptyProfileFilters();
 

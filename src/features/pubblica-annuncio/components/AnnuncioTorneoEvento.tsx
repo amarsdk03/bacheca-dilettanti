@@ -11,7 +11,8 @@ import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFiel
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import PremiTrofeiFields from "@/features/pubblica-annuncio/components/InputFields/PremiTrofeiFields";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
-import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
+import TipologiaCalcioMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 import {useAnnuncioTorneoEventoStore} from "@/features/pubblica-annuncio/state/AnnuncioTorneoEvento.store";
 import {ANNATE_OPTIONS, MODALITA_ISCRIZIONE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 

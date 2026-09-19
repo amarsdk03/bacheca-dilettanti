@@ -1,5 +1,5 @@
 import AnnouncementCardShell from "./AnnouncementCardShell";
-import {getAnnouncementFacts, type AnnouncementCardData} from "./announcement-card-model";
+import {type AnnouncementCardData, getAnnouncementFacts} from "./announcement-card-model";
 
 export default function AnnouncementTeamSponsorSearchCard({announcement}: {announcement: AnnouncementCardData<"annuncio_squadra_cerca_sponsor">}) {
 	return (

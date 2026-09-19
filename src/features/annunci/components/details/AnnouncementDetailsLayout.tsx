@@ -1,7 +1,4 @@
-import type {
-	AnnouncementDetail,
-	AnnouncementPlayerRoles,
-} from "@/features/annunci/announcement-model";
+import type {AnnouncementDetail, AnnouncementPlayerRoles,} from "@/features/annunci/announcement-model";
 import AnnouncementDetailsContacts from "./AnnouncementDetailsContacts";
 import AnnouncementDetailsHeader from "./AnnouncementDetailsHeader";
 import AnnouncementDetailsOverview from "./AnnouncementDetailsOverview";

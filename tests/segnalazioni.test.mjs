@@ -71,7 +71,7 @@ test("detail pages render the shared action bar for their displayed element", ()
 	assert.match(profile, /kind: "profilo"/);
 	assert.match(actions, /Link copiato negli appunti/);
 	assert.match(actions, /<DialogTrigger[\s\S]+Segnala[\s\S]+<\/DialogTrigger>/);
-	assert.match(actions, /<Toggle[\s\S]+hidden[\s\S]+aria-label=\{toggleLabel\}/);
+	assert.match(actions, /<InteractionButton target=\{target\} state=\{interaction\} href=\{href\}/);
 	assert.match(actions, /maxLength=\{REPORT_REASON_MAX_LENGTH\}/);
 });
 

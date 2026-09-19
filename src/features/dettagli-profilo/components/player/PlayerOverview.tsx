@@ -1,5 +1,14 @@
-import {ArrowUpRightIcon, FootprintsIcon, RulerIcon, ScaleIcon, ShirtIcon, TagsIcon, TargetIcon, VideoIcon} from "lucide-react";
 import type {LucideIcon} from "lucide-react";
+import {
+	ArrowUpRightIcon,
+	FootprintsIcon,
+	RulerIcon,
+	ScaleIcon,
+	ShirtIcon,
+	TagsIcon,
+	TargetIcon,
+	VideoIcon
+} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";

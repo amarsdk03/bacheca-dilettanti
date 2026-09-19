@@ -3,10 +3,7 @@ import type {Metadata} from "next";
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
 import Profili from "@/features/profili/Profili";
-import {
-	parseProfileDirectoryQuery,
-	type RawProfileSearchParams,
-} from "@/features/profili/profile-directory-model";
+import {parseProfileDirectoryQuery, type RawProfileSearchParams,} from "@/features/profili/profile-directory-model";
 import {getProfileDirectory} from "@/features/profili/server/queries";
 import {dynamicMetadata} from "@/server/metadata";
 

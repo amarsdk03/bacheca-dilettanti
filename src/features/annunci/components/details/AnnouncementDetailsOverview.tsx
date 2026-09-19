@@ -26,10 +26,7 @@ import type {
 	AnnouncementFactKind,
 } from "@/features/annunci/announcement-model";
 import {cn} from "@/lib/utils";
-import {
-	isSpecifiedAnnouncementValue,
-	type AnnouncementDetailPresentation,
-} from "./announcement-detail-presentation";
+import {type AnnouncementDetailPresentation, isSpecifiedAnnouncementValue,} from "./announcement-detail-presentation";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 
 const ANNOUNCEMENT_FACT_ICONS: Record<AnnouncementFactKind, LucideIcon> = {

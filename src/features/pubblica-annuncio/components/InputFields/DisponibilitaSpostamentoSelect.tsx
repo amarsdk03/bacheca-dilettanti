@@ -1,13 +1,7 @@
 import {type Dispatch, type SetStateAction} from "react";
 
 import {Field, FieldLabel} from "@/components/ui/field";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import {DISPONIBILITA_SPOSTAMENTO_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 

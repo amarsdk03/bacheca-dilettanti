@@ -4,9 +4,9 @@ import type {SupabaseClient} from "@supabase/supabase-js";
 
 import {
 	normalizeTeamSearchQuery,
+	type PublicTeamProfile,
 	TEAM_PROFILE_SEARCH_LIMIT,
 	TEAM_PROFILE_SEARCH_MIN_LENGTH,
-	type PublicTeamProfile,
 	UUID_PATTERN,
 } from "@/features/profilo/team-profile";
 import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";

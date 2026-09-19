@@ -2,24 +2,17 @@ import "server-only";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import {getBirthDateError} from "@/features/profilo/birth-date";
-import {
-	isLimitedProfileType,
-	isProfileType,
-	MAX_PROFILE_COUNT,
-	type ProfileType,
-} from "@/features/profilo/profile-model";
+import {isProfileType, MAX_PROFILE_COUNT, type ProfileType,} from "@/features/profilo/profile-model";
+import {PROFILE_SOCIAL_PLATFORMS, type ProfileSocialLinks,} from "@/features/profilo/profile-social-links";
 import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
 import {UUID_PATTERN} from "@/features/profilo/team-profile";
 import {
 	isRegistrableProfileType,
-	REGISTRATION_PAYLOAD_VERSION,
 	type RegistrableProfileType,
+	REGISTRATION_PAYLOAD_VERSION,
 } from "@/features/registrati/registration-payload";
 import type {Json} from "@/server/supabase";
-import {
-	isLinkAnnuncioValid,
-	MAX_LINK_ANNUNCIO_LENGTH,
-} from "@/features/pubblica-annuncio/types/announcementExtras";
+import {isLinkAnnuncioValid, MAX_LINK_ANNUNCIO_LENGTH,} from "@/features/pubblica-annuncio/types/announcementExtras";
 
 const MAX_PAYLOAD_BYTES = 256_000;
 const MAX_SHORT_TEXT = 160;
@@ -60,6 +53,7 @@ export interface NormalizedRegistrationProfile {
 	type: RegistrableProfileType;
 	draft: Record<string, Json>;
 	locations: Array<{regione: string; citta: string | null}>;
+	socialLinks: ProfileSocialLinks;
 }
 
 export interface NormalizedRegistrationPayload {
@@ -167,6 +161,28 @@ function profileVideoLink(value: unknown, profileType: ProfileType) {
 		fail("Inserisci un link video completo che inizi con http:// o https://.", 3, profileType);
 	}
 	return normalized;
+}
+
+function profileSocialLink(value: unknown, profileType: ProfileType) {
+	const normalized = textValue(value, MAX_LINK_ANNUNCIO_LENGTH, profileType);
+	if (normalized && !isLinkAnnuncioValid(normalized)) {
+		fail("Inserisci un link social completo che inizi con http:// o https://.", 3, profileType);
+	}
+	return normalized ?? "";
+}
+
+function normalizeSocialLinks(value: unknown, profileType: ProfileType): ProfileSocialLinks {
+	if (value === null || value === undefined) {
+		return {instagram: "", facebook: "", youtube: "", linkedin: ""};
+	}
+	if (!isRecord(value)) fail("I link social del profilo non sono validi.", 3, profileType);
+	assertExactKeys(value, PROFILE_SOCIAL_PLATFORMS, profileType);
+	return Object.fromEntries(
+		PROFILE_SOCIAL_PLATFORMS.map((platform) => [
+			platform,
+			profileSocialLink(value[platform], profileType),
+		]),
+	) as ProfileSocialLinks;
 }
 
 function experiences(value: unknown, profileType: ProfileType): Json[] {
@@ -277,8 +293,12 @@ function normalizeDraft(
 	if (!isRecord(value)) fail("I dati del profilo non sono validi.", 3, type);
 
 	if (type === "giocatore") {
-		assertExactKeys(value, ["altezza", "anno_nascita", "categorie_ricercate", "cognome", "disponibilita", "giorno_nascita", "mese_nascita", "nome", "peso", "piede_principale", "presentazione", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport", "video_highlights"], type);
+		assertExactKeys(value, ["altezza", "anno_nascita", "categorie_ricercate", "cognome", "disponibilita", "giorno_nascita", "mese_nascita", "nome", "peso", "piede_principale", "presentazione", "richiede_caricamento_highlights", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport", "video_highlights"], type);
 		const normalizedBirthDate = birthDate(value, type);
+		const highlightsUploadRequested = value.richiede_caricamento_highlights ?? false;
+		if (typeof highlightsUploadRequested !== "boolean") {
+			fail("La richiesta relativa agli highlights non è valida.", 3, type);
+		}
 		return {
 			altezza: textValue(value.altezza, MAX_SHORT_TEXT, type),
 			anno_nascita: normalizedBirthDate.year,
@@ -295,7 +315,8 @@ function normalizeDraft(
 			sport_principale: baseSport(value.sport_principale, type),
 			storico_carriera: experiences(value.storico_carriera, type),
 			tipologie_sport: stringList(value.tipologie_sport, type),
-			video_highlights: profileVideoLink(value.video_highlights, type),
+			video_highlights: highlightsUploadRequested ? "" : profileVideoLink(value.video_highlights, type),
+			richiede_caricamento_highlights: highlightsUploadRequested,
 		};
 	}
 
@@ -427,6 +448,7 @@ export interface NormalizedProfileEditorPayload {
 	type: ProfileType;
 	draft: Record<string, Json>;
 	locations: Array<{regione: string; citta: string | null}>;
+	socialLinks: ProfileSocialLinks;
 }
 
 export function parseProfileEditorPayload(
@@ -452,12 +474,13 @@ export function parseProfileEditorPayload(
 	if (typeof rawType !== "string" || !isProfileType(rawType)) {
 		fail("La tipologia di profilo non è valida.", 3);
 	}
-	assertExactKeys(rawValue, ["type", "draft", "locations"], rawType);
+	assertExactKeys(rawValue, ["type", "draft", "locations", "socialLinks"], rawType);
 
 	return {
 		type: rawType,
 		draft: normalizeDraft(rawType, rawValue.draft),
 		locations: locations(rawValue.locations, rawType),
+		socialLinks: normalizeSocialLinks(rawValue.socialLinks, rawType),
 	};
 }
 
@@ -490,15 +513,11 @@ export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): N
 	if (new Set(selectedProfileTypes).size !== selectedProfileTypes.length) {
 		fail("Le tipologie di profilo non possono essere duplicate.", 2);
 	}
-	const limitedProfileType = selectedProfileTypes.find(isLimitedProfileType);
-	if (limitedProfileType) {
-		fail("Questa tipologia di profilo sarà disponibile prossimamente.", 2, limitedProfileType);
-	}
 	const registrableTypes = selectedProfileTypes.filter(isRegistrableProfileType);
 	if (registrableTypes.length === 0) {
-		fail("Seleziona almeno un profilo attivabile subito.", 2);
+		fail("Seleziona almeno un profilo.", 2);
 	}
-	if (typeof parsed.primaryProfileType !== "string" || !isProfileType(parsed.primaryProfileType) || isLimitedProfileType(parsed.primaryProfileType) || !selectedProfileTypes.includes(parsed.primaryProfileType)) {
+	if (typeof parsed.primaryProfileType !== "string" || !isProfileType(parsed.primaryProfileType) || !selectedProfileTypes.includes(parsed.primaryProfileType)) {
 		fail("Seleziona un profilo principale valido.", 2);
 	}
 	const primaryProfileType = parsed.primaryProfileType as RegistrableProfileType;
@@ -509,7 +528,7 @@ export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): N
 	const seenProfiles = new Set<RegistrableProfileType>();
 	const profiles = parsed.profiles.map((entry): NormalizedRegistrationProfile => {
 		if (!isRecord(entry)) fail("I dati di uno dei profili non sono validi.", 3, primaryProfileType);
-		assertExactKeys(entry, ["type", "draft", "locations"], primaryProfileType);
+		assertExactKeys(entry, ["type", "draft", "locations", "socialLinks"], primaryProfileType);
 		if (typeof entry.type !== "string" || !isProfileType(entry.type) || !isRegistrableProfileType(entry.type) || !registrableTypes.includes(entry.type) || seenProfiles.has(entry.type)) {
 			fail("I dati di uno dei profili non corrispondono alla selezione.", 3, primaryProfileType);
 		}
@@ -524,6 +543,7 @@ export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): N
 			type: entry.type,
 			draft: normalizedDraft,
 			locations: normalizedLocations,
+			socialLinks: normalizeSocialLinks(entry.socialLinks, entry.type),
 		};
 	});
 

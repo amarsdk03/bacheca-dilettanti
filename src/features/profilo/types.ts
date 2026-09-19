@@ -1,12 +1,9 @@
-import type {
-	ProfileDraft,
-	ProfileLocations,
-	ProfileType,
-	ProfileDrafts,
-} from "@/features/profilo/profile-model";
+import type {ProfileDraft, ProfileDrafts, ProfileLocations, ProfileType,} from "@/features/profilo/profile-model";
+import type {ProfileSocialLinks, ProfileSocialLinksByType} from "@/features/profilo/profile-social-links";
 import type {AnnouncementType} from "@/features/annunci/announcement-model";
+import type {DashboardInteractions} from "@/features/interazioni/interaction-model";
 
-export type ProfileDashboardSection = "profilo" | "annunci" | "impostazioni" | "info";
+export type ProfileDashboardSection = "profilo" | "annunci" | "relazioni" | "salvati" | "impostazioni" | "info";
 
 export interface ManagedProfile {
 	id: string;
@@ -39,14 +36,17 @@ export interface ProfileEditorSavePayload {
 	type: ProfileType;
 	draft: ProfileDraft;
 	locations: ProfileLocations[ProfileType];
+	socialLinks: ProfileSocialLinks;
 }
 
 export interface ProfileDashboardData {
+	interactions: DashboardInteractions;
 	mainImageUrl: string | null;
 	hasMainImage: boolean;
 	profiles: ManagedProfile[];
 	drafts: ProfileDrafts;
 	locations: ProfileLocations;
+	socialLinks: ProfileSocialLinksByType;
 	announcements: ManagedAnnouncement[];
 }
 

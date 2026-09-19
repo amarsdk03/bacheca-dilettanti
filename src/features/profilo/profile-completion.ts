@@ -1,9 +1,5 @@
 import {isCompleteValidBirthDate} from "@/features/profilo/birth-date";
-import type {
-	ProfileDrafts,
-	ProfileLocations,
-	ProfileType,
-} from "@/features/profilo/profile-model";
+import type {ProfileDrafts, ProfileLocations, ProfileType,} from "@/features/profilo/profile-model";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 
 export interface ProfileCompletion {

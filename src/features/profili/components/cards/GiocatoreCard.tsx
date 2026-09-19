@@ -1,8 +1,5 @@
 import ProfileCardShell from "./ProfileCardShell";
-import {
-	getProfileFacts,
-	type PlayerCardData,
-} from "./profile-card-model";
+import {getProfileFacts, type PlayerCardData,} from "./profile-card-model";
 
 export default function GiocatoreCard({profile}: {profile: PlayerCardData}) {
 	return (

@@ -5,10 +5,7 @@ import "server-only";
 import {createHash} from "node:crypto";
 import {revalidatePath} from "next/cache";
 
-import {
-	AUTH_EMAIL_FLOW,
-	createAuthEmailFlowMetadata,
-} from "@/features/auth/email-flow";
+import {AUTH_EMAIL_FLOW, createAuthEmailFlowMetadata,} from "@/features/auth/email-flow";
 import {getAuthErrorMessage} from "@/features/auth/errors";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import type {
@@ -19,19 +16,13 @@ import type {
 	VerifyPublishEmailOtpResult,
 	VerifyPublishOtpActionInput,
 } from "@/features/pubblica-annuncio/publish-model";
-import {
-	parsePublishPayload,
-	PublishPayloadError,
-} from "@/features/pubblica-annuncio/server/validation";
+import {parsePublishPayload, PublishPayloadError,} from "@/features/pubblica-annuncio/server/validation";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {
 	ANNOUNCEMENT_IMAGE_MIME_TYPES,
 	MAX_ANNOUNCEMENT_IMAGE_BYTES,
 } from "@/features/pubblica-annuncio/types/announcementExtras";
-import {
-	getRegistrationEmailIdentity,
-	setAuthEmailFlow,
-} from "@/features/registrati/server/email-identity";
+import {getRegistrationEmailIdentity, setAuthEmailFlow,} from "@/features/registrati/server/email-identity";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import type {Json} from "@/server/supabase";
@@ -419,6 +410,7 @@ export async function publishAnnouncement(
 			announcement_type: payload.announcementType,
 			profile_draft: payload.profileDraft,
 			profile_locations: payload.profileLocations,
+			profile_social_links: payload.profileSocialLinks,
 			profile_update: payload.profileUpdate ? {
 				profile_type: payload.profileUpdate.type,
 				draft: payload.profileUpdate.draft,

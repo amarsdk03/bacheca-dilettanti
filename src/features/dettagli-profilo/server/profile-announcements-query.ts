@@ -3,9 +3,9 @@ import "server-only";
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
-	isAnnouncementType,
 	type AnnouncementFact,
 	type AnnouncementFactKind,
+	isAnnouncementType,
 } from "@/features/annunci/announcement-model";
 import type {ProfileAnnouncement} from "@/features/dettagli-profilo/profile-detail-model";
 import type {ProfileType} from "@/features/profilo/profile-model";

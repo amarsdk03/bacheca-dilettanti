@@ -1,13 +1,7 @@
 "use client";
 
 import {useActionState, useCallback, useEffect, useState} from "react";
-import {
-	FlagIcon,
-	HeartIcon,
-	LoaderCircleIcon,
-	Share2Icon,
-	UserPlusIcon,
-} from "lucide-react";
+import {FlagIcon, LoaderCircleIcon, Share2Icon,} from "lucide-react";
 
 import {Button} from "@/components/ui/button";
 import {
@@ -24,7 +18,8 @@ import {
 import {Field, FieldError, FieldLabel} from "@/components/ui/field";
 import {Textarea} from "@/components/ui/textarea";
 import {toast} from "@/components/ui/toast";
-import {Toggle} from "@/components/ui/toggle";
+import InteractionButton from "@/features/interazioni/InteractionButton";
+import type {InteractionState} from "@/features/interazioni/interaction-model";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {
 	INITIAL_REPORT_ACTION_STATE,
@@ -37,6 +32,7 @@ import {submitReport} from "@/features/segnalazioni/server/actions";
 interface DetailActionsProps {
 	href: string;
 	target: ReportTarget;
+	interaction: InteractionState;
 }
 
 async function copyText(value: string) {
@@ -121,11 +117,9 @@ function ReportForm({
 	);
 }
 
-export default function DetailActions({href, target}: DetailActionsProps) {
+export default function DetailActions({href, target, interaction}: DetailActionsProps) {
 	const [reportOpen, setReportOpen] = useState(false);
 	const [reportPending, setReportPending] = useState(false);
-	const toggleLabel = target.kind === "annuncio" ? "Aggiungi ai preferiti" : "Segui profilo";
-	const ToggleIcon = target.kind === "annuncio" ? HeartIcon : UserPlusIcon;
 
 	const handleReportComplete = useCallback((state: Extract<ReportActionState, {status: "success" | "rate_limited"}>) => {
 		setReportPending(false);
@@ -154,22 +148,7 @@ export default function DetailActions({href, target}: DetailActionsProps) {
 				<TooltipContent>Condividi</TooltipContent>
 			</Tooltip>
 
-			<Tooltip>
-				<TooltipTrigger
-					render={(
-						<Toggle
-							variant="outline"
-							size="default"
-							hidden
-							aria-label={toggleLabel}
-							className="size-8 px-0 data-pressed:border-brand-indigo/40 data-pressed:bg-brand-indigo/10 data-pressed:text-brand-indigo"
-						/>
-					)}
-				>
-					<ToggleIcon aria-hidden="true" />
-				</TooltipTrigger>
-				<TooltipContent>{toggleLabel}</TooltipContent>
-			</Tooltip>
+			<InteractionButton target={target} state={interaction} href={href} />
 
 			<Dialog
 				open={reportOpen}

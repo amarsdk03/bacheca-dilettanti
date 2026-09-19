@@ -1,9 +1,17 @@
 "use client";
 
-import {useMemo, type Dispatch, type SetStateAction} from "react";
+import {type Dispatch, type SetStateAction, useMemo} from "react";
 import {CircleHelpIcon, MailIcon, PhoneIcon} from "lucide-react";
 
-import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {
+	Field,
+	FieldDescription,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+	FieldLegend,
+	FieldSet
+} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/components/ui/input-group";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
@@ -12,27 +20,32 @@ import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import ProfileLocationsField from "@/features/profilo/ProfileLocationsField";
 import type {ProfileLocationDraft} from "@/features/profilo/profile-model";
 import AnnateMultiselectField from "@/features/pubblica-annuncio/components/InputFields/AnnateMultiselectField";
-import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
-import FieldRequirementIndicator, {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
+import CategorieCalcioMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
+import FieldRequirementIndicator, {
+	RequiredMark
+} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
 import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import PremiTrofeiFields from "@/features/pubblica-annuncio/components/InputFields/PremiTrofeiFields";
-import RuoloPrincipaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
-import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
+import RuoloPrincipaleMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
+import TipologiaCalcioMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 import type {
 	AnnouncementContacts,
 	AnnouncementDetailsDrafts,
-	AnnouncementValidationErrors,
 	AnnouncementExtras,
+	AnnouncementValidationErrors,
 	PublishableProfileType,
 	TeamAnnouncementSubtype,
 	TournamentPrize,
 } from "@/features/pubblica-annuncio/publish-model";
 import {
-	CATEGORIE_CALCIO_GROUPS,
 	ANNATE_OPTIONS,
+	CATEGORIE_CALCIO_GROUPS,
 	MODALITA_ISCRIZIONE_OPTIONS,
 	RUOLI_SPECIFICI_PER_RUOLO,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";

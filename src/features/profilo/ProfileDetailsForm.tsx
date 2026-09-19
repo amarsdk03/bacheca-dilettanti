@@ -3,40 +3,58 @@ import {CircleHelpIcon, PlusIcon, Trash2Icon} from "lucide-react";
 
 import {Button} from "@/components/ui/button";
 import {Checkbox} from "@/components/ui/checkbox";
-import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {
+	Field,
+	FieldContent,
+	FieldDescription,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+	FieldLegend,
+	FieldSet
+} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/components/ui/input-group";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
 import ProfileLocationsField from "@/features/profilo/ProfileLocationsField";
 import TeamProfileComboboxField from "@/features/profilo/TeamProfileComboboxField";
-import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
+import CategorieCalcioMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
 import type {
-	ProfileLocationDraft,
 	ProfileDrafts,
 	ProfileDraftUpdater,
+	ProfileLocationDraft,
 	ProfileLocations,
 	ProfileType,
 } from "@/features/profilo/profile-model";
+import {
+	PROFILE_SOCIAL_LINK_OPTIONS,
+	type ProfileSocialLinks,
+	type ProfileSocialPlatform,
+} from "@/features/profilo/profile-social-links";
 import DataNascitaFields from "@/features/pubblica-annuncio/components/InputFields/DataNascitaFields";
 import DisponibilitaProfiloSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaProfiloSelect";
 import EsperienzeAnnuncioFields, {
 	createEsperienzaAnnuncio,
 	type EsperienzaAnnuncio,
 } from "@/features/pubblica-annuncio/components/InputFields/EsperienzeAnnuncioFields";
-import FiguraProfessionaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/FiguraProfessionaleMultiselectField";
+import FiguraProfessionaleMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/FiguraProfessionaleMultiselectField";
 import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
-import RuoloPrincipaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
-import TipologiaCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
+import RuoloPrincipaleMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
+import TipologiaCalcioMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 import type {ProfileValidationErrors} from "@/features/profilo/profile-required-fields";
 import {
+	CATEGORIE_CALCIO_GROUPS,
 	DISPONIBILITA_PROFILO_OPTIONS,
 	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
-	CATEGORIE_CALCIO_GROUPS,
-	RUOLI_SPECIFICI_PER_RUOLO,
 	type DisponibilitaProfilo,
+	RUOLI_SPECIFICI_PER_RUOLO,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import type {Json} from "@/server/supabase";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
@@ -48,6 +66,8 @@ interface ProfileDetailsFormProps {
 	locations: ProfileLocations;
 	onChange: ProfileDraftUpdater;
 	onLocationsChange: (type: ProfileType, value: ProfileLocationDraft[]) => void;
+	socialLinks: ProfileSocialLinks;
+	onSocialLinksChange: (platform: ProfileSocialPlatform, value: string) => void;
 	requiredFields?: boolean;
 	errors?: ProfileValidationErrors;
 }
@@ -309,9 +329,11 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze}: CareerHistor
 
 	return (
 		<FieldSet>
-			<FieldLegend variant="label" className="field-legend-title mb-0">Storico carriera <OptionalLabel /></FieldLegend>
-			<div className="flex items-start justify-between gap-3">
-				<FieldDescription>Inserisci le stagioni, le squadre e le categorie più rilevanti.</FieldDescription>
+			<div className="flex items-center justify-between gap-3 mt-4">
+				<div className="flex flex-col items-start">
+					<FieldLegend variant="label" className="field-legend-title mb-0">Storico carriera <OptionalLabel /></FieldLegend>
+					<FieldDescription>Inserisci le stagioni, le squadre e le categorie più rilevanti.</FieldDescription>
+				</div>
 				<Button type="button" variant="outline" size="sm" onClick={addEsperienza}>
 					<PlusIcon data-icon="inline-start" />
 					Aggiungi
@@ -319,7 +341,12 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze}: CareerHistor
 			</div>
 
 			<FieldGroup className="gap-4">
-				{esperienze.map((esperienza, index) => {
+
+				{esperienze.length === 0 ? (
+					<div className="rounded-lg border border-dashed bg-background p-4 text-sm text-muted-foreground">
+						Nessun storico carriera inserito.
+					</div>
+				) : (esperienze.map((esperienza, index) => {
 					const endYearOptions = esperienza.periodoDa
 						? CAREER_YEAR_OPTIONS.filter((year) => Number(year) >= Number(esperienza.periodoDa))
 						: CAREER_YEAR_OPTIONS;
@@ -410,7 +437,7 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze}: CareerHistor
 							</FieldGroup>
 						</Field>
 					);
-				})}
+				}))}
 			</FieldGroup>
 		</FieldSet>
 	);
@@ -680,6 +707,7 @@ function GiocatoreFields({
 				description="Inserisci il link pubblico a un video con le tue azioni migliori"
 				value={draft.video_highlights}
 				onValueChange={(value) => onChange("giocatore", "video_highlights", value)}
+				disabled={draft.richiede_caricamento_highlights}
 				labelAddon={(
 					<Tooltip>
 						<TooltipTrigger render={<button type="button" className="inline-flex size-5 items-center justify-center rounded-full text-brand-indigo outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo/40" aria-label="Informazioni sul link video highlights" />}>
@@ -692,12 +720,56 @@ function GiocatoreFields({
 					</Tooltip>
 				)}
 			/>
+			<Field orientation="horizontal">
+				<Checkbox
+					id={`${prefix}-richiede-caricamento-highlights`}
+					checked={draft.richiede_caricamento_highlights}
+					onCheckedChange={(checked) => {
+						const requested = Boolean(checked);
+						onChange("giocatore", "richiede_caricamento_highlights", requested);
+						if (requested) onChange("giocatore", "video_highlights", "");
+					}}
+				/>
+				<FieldContent>
+					<FieldLabel htmlFor={`${prefix}-richiede-caricamento-highlights`} className="font-normal">
+						Possiedo dei video ma non ho possibilità di caricarli online (ti contatteremo noi!)
+					</FieldLabel>
+				</FieldContent>
+			</Field>
 			<CareerHistoryFields
 				idPrefix={`${prefix}-storico-carriera`}
 				esperienze={toExperiences(draft.storico_carriera)}
 				setEsperienze={experienceSetter(draft.storico_carriera, (value) => onChange("giocatore", "storico_carriera", value))}
 			/>
 		</>
+	);
+}
+
+function ProfileSocialLinksFields({
+	socialLinks,
+	onSocialLinksChange,
+}: {
+	socialLinks: ProfileSocialLinks;
+	onSocialLinksChange: (platform: ProfileSocialPlatform, value: string) => void;
+}) {
+	return (
+		<FieldSet>
+			<FieldLegend variant="label" className="field-legend-title mb-1">Social</FieldLegend>
+			<FieldDescription>Mostra i profili che vuoi rendere pubblici sul tuo sottoprofilo.</FieldDescription>
+			<FieldGroup className="grid gap-4 sm:grid-cols-2">
+				{PROFILE_SOCIAL_LINK_OPTIONS.map(({platform, label, placeholder}) => (
+					<LinkAnnuncioField
+						key={platform}
+						idPrefix={`profile-social-${platform}`}
+						label={label}
+						placeholder={placeholder}
+						description={`Inserisci il link completo del tuo profilo ${label}.`}
+						value={socialLinks[platform]}
+						onValueChange={(value) => onSocialLinksChange(platform, value)}
+					/>
+				))}
+			</FieldGroup>
+		</FieldSet>
 	);
 }
 
@@ -874,6 +946,8 @@ export default function ProfileDetailsForm({
 	locations,
 	onChange,
 	onLocationsChange,
+	socialLinks,
+	onSocialLinksChange,
 	requiredFields = false,
 	errors = {},
 }: ProfileDetailsFormProps) {
@@ -884,6 +958,7 @@ export default function ProfileDetailsForm({
 			<FieldLegend variant="label" className="field-legend-title mb-2">Inserisci i dati del tuo profilo:</FieldLegend>
 			<FieldGroup className="mt-2 grid gap-4">
 				<ProfileFields type={type} drafts={drafts} prefix={prefix} onChange={onChange} requiredFields={requiredFields} errors={errors} />
+				<ProfileSocialLinksFields socialLinks={socialLinks} onSocialLinksChange={onSocialLinksChange} />
 				<LocationsField
 					type={type}
 					prefix={prefix}

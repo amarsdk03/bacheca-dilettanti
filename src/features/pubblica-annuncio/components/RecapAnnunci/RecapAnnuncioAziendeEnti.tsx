@@ -1,9 +1,9 @@
 "use client";
 
 import {
-	formatContatti,
 	AnnouncementImageRecap,
 	AnnouncementLinkRecap,
+	formatContatti,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";

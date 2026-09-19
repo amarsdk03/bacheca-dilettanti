@@ -4,8 +4,8 @@ import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/component
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {
 	CONTATTI_ANNUNCIO_DEFAULT,
-	hasContattoPubblico,
 	type ContattiAnnuncio,
+	hasContattoPubblico,
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 
 export type AnnuncioArbitroData = {

@@ -1,25 +1,12 @@
 import Link from "next/link";
 import ProfileCard from "@/features/profili/components/cards/ProfileCard";
-import {
-	ArrowLeftIcon,
-	ArrowRightIcon,
-	InfoIcon,
-	SearchIcon,
-	SlidersHorizontalIcon,
-} from "lucide-react";
+import {ArrowLeftIcon, ArrowRightIcon, InfoIcon, SearchIcon, SlidersHorizontalIcon,} from "lucide-react";
 
 import GradientBackground from "@/components/styling/GradientBackground";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
 import {Button, buttonVariants} from "@/components/ui/button";
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/components/ui/empty";
+import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle,} from "@/components/ui/empty";
 import {Field, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {
 	InputGroup,
@@ -28,22 +15,8 @@ import {
 	InputGroupInput,
 	InputGroupText,
 } from "@/components/ui/input-group";
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "@/components/ui/sheet";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger,} from "@/components/ui/sheet";
 import {
 	buildProfilesHref,
 	createEmptyProfileFilters,
@@ -400,11 +373,13 @@ export default function Profili({query, result}: ProfiliProps) {
 				<section aria-labelledby="profile-types-title" className="mt-1">
 					<h2 id="profile-types-title" className="sr-only">Tipologie di profilo</h2>
 					<div className="mt-3 flex items-center justify-between gap-4">
-						{query.types.length > 0 && (
-							<Link href={buildProfilesHref({...query, types: [], filters: createEmptyProfileFilters(), page: 1})} className="mb-3 ms-1 text-sm font-medium text-brand-indigo underline-offset-4 hover:underline">
-								Mostra tutti
-							</Link>
-						)}
+						{
+							query.types.length > 0 && (
+								<Link href={buildProfilesHref({...query, types: [], filters: createEmptyProfileFilters(), page: 1})} className="mb-3 ms-1 text-sm font-medium text-brand-indigo underline-offset-4 hover:underline">
+									Mostra tutti
+								</Link>
+							)
+						}
 					</div>
 					<ProfileTypeSelector selectedTypes={query.types} />
 				</section>

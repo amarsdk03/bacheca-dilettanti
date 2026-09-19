@@ -1,4 +1,3 @@
-import AccessForm from "./access-form";
 import ComingSoon from "@/components/redirects/ComingSoon";
 
 type AccessPageProps = {

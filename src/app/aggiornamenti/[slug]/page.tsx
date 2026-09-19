@@ -7,7 +7,13 @@ import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
 import ArticleBody from "@/features/aggiornamenti/ArticleBody";
 import ShareButtons from "@/features/aggiornamenti/ShareButtons";
-import {formatArticleDate, getAllArticles, getArticleBySlug, getArticleCover, getPlaceholderViews} from "@/lib/articles";
+import {
+	formatArticleDate,
+	getAllArticles,
+	getArticleBySlug,
+	getArticleCover,
+	getPlaceholderViews
+} from "@/lib/articles";
 import {dynamicMetadata} from "@/server/metadata";
 
 export const dynamicParams = false;

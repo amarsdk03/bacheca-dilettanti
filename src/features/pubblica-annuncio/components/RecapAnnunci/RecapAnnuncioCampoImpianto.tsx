@@ -1,8 +1,8 @@
 import {useAnnuncioCampoImpiantoStore} from "@/features/pubblica-annuncio/state/AnnuncioCampoImpianto.store";
 import {
-	formatContatti,
 	AnnouncementImageRecap,
 	AnnouncementLinkRecap,
+	formatContatti,
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";

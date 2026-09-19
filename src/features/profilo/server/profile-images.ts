@@ -2,10 +2,7 @@ import "server-only";
 
 import type {SupabaseClient} from "@supabase/supabase-js";
 
-import {
-	PROFILE_IMAGE_MEDIA_FORMAT,
-	profileImageRowsToMap,
-} from "@/features/profilo/profile-image";
+import {PROFILE_IMAGE_MEDIA_FORMAT, profileImageRowsToMap,} from "@/features/profilo/profile-image";
 import type {Database} from "@/server/supabase";
 
 export async function loadProfileImageUrlMap(

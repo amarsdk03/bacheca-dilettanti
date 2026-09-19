@@ -2,8 +2,8 @@ import type {ReactNode} from "react";
 
 import {type EsperienzaAnnuncio} from "@/features/pubblica-annuncio/components/InputFields/EsperienzeAnnuncioFields";
 import {
-	getCanaliContattoCompilati,
 	type ContattiAnnuncio,
+	getCanaliContattoCompilati,
 } from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 

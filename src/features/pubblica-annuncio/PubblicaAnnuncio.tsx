@@ -2,12 +2,12 @@
 
 import {useEffect, useMemo, useRef, useState} from "react";
 import Link from "next/link";
-import {ClipboardPenIcon, InfoIcon, MailCheckIcon} from "lucide-react";
+import {ClipboardPenIcon} from "lucide-react";
 
 import GradientBackground from "@/components/styling/GradientBackground";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardContent} from "@/components/ui/card";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {
@@ -18,13 +18,17 @@ import {
 	type ProfileLocationDraft,
 	type ProfileLocations,
 } from "@/features/profilo/profile-model";
+import {createProfileSocialLinks, type ProfileSocialPlatform,} from "@/features/profilo/profile-social-links";
 import AnnouncementDetailsForm from "@/features/pubblica-annuncio/components/AnnouncementDetailsForm";
 import ConfermaInvioAnnuncio from "@/features/pubblica-annuncio/components/ConfermaInvioAnnuncio";
 import PublishProfileStep from "@/features/pubblica-annuncio/components/PublishProfileStep";
 import SelezionaTipologiaAnnuncio from "@/features/pubblica-annuncio/components/SelezionaTipologiaAnnuncio";
 import {
+	type AnnouncementContacts,
+	type AnnouncementExtras,
 	cloneProfileDrafts,
 	cloneProfileLocations,
+	cloneProfileSocialLinks,
 	createAnnouncementDetailsDrafts,
 	getAnnouncementDetail,
 	getAnnouncementValidationErrors,
@@ -35,12 +39,10 @@ import {
 	isPublishableProfileType,
 	isTeamAnnouncementSubtype,
 	PUBLISH_PAYLOAD_VERSION,
-	type AnnouncementContacts,
-	type AnnouncementExtras,
-	type PublishVisibility,
 	type PublishableProfileType,
 	type PublishAnnouncementPayload,
 	type PublishProfileContext,
+	type PublishVisibility,
 	type TeamAnnouncementSubtype,
 } from "@/features/pubblica-annuncio/publish-model";
 import {getAnnouncementImageError} from "@/features/pubblica-annuncio/types/announcementExtras";
@@ -65,6 +67,9 @@ export default function PubblicaAnnuncio({
 	const [profileLocations, setProfileLocations] = useState<ProfileLocations>(() => (
 		registered && profileContext ? cloneProfileLocations(profileContext.locations) : createProfileLocations()
 	));
+	const [profileSocialLinks, setProfileSocialLinks] = useState(() => (
+		registered && profileContext ? cloneProfileSocialLinks(profileContext.socialLinks) : createProfileSocialLinks()
+	));
 	const [announcementDrafts, setAnnouncementDrafts] = useState(createAnnouncementDetailsDrafts);
 	const [announcementLocations, setAnnouncementLocations] = useState<ProfileLocationDraft[]>([]);
 	const [contacts, setContacts] = useState<AnnouncementContacts>({email: "", phone: ""});
@@ -83,8 +88,15 @@ export default function PubblicaAnnuncio({
 		registered
 		&& profileContext
 		&& profileType
-		&& JSON.stringify({draft: profileDrafts[profileType], locations: profileLocations[profileType]})
-			!== JSON.stringify({draft: profileContext.drafts[profileType], locations: profileContext.locations[profileType]}),
+		&& JSON.stringify({
+			draft: profileDrafts[profileType],
+			locations: profileLocations[profileType],
+			socialLinks: profileSocialLinks[profileType],
+		}) !== JSON.stringify({
+			draft: profileContext.drafts[profileType],
+			locations: profileContext.locations[profileType],
+			socialLinks: profileContext.socialLinks[profileType],
+		}),
 	);
 	const imageError = getAnnouncementImageError(announcementImage);
 
@@ -119,11 +131,13 @@ export default function PubblicaAnnuncio({
 				type: profileType,
 				draft: profileDrafts[profileType],
 				locations: profileLocations[profileType],
+				socialLinks: profileSocialLinks[profileType],
 			},
 			profileUpdate: registered && profileUnlocked && profileDirty ? {
 				type: profileType,
 				draft: profileDrafts[profileType],
 				locations: profileLocations[profileType],
+				socialLinks: profileSocialLinks[profileType],
 			} : null,
 			announcement: {
 				type: announcementType,
@@ -134,7 +148,7 @@ export default function PubblicaAnnuncio({
 			},
 			consents: {dataConfirmed: false, termsAccepted: false, privacyAccepted: false},
 		};
-	}, [announcementDrafts, announcementLocations, contacts, extras, profileDirty, profileDrafts, profileLocations, profileType, profileUnlocked, registered, submissionId, teamSubtype, visibility]);
+	}, [announcementDrafts, announcementLocations, contacts, extras, profileDirty, profileDrafts, profileLocations, profileSocialLinks, profileType, profileUnlocked, registered, submissionId, teamSubtype, visibility]);
 
 	const scrollToTop = () => window.scrollTo({top: 0, behavior: "smooth"});
 	const updateAnnouncementImage = (image: File | null) => {
@@ -186,6 +200,13 @@ export default function PubblicaAnnuncio({
 
 	const updateProfileLocations = (type: PublishableProfileType, value: ProfileLocationDraft[]) => {
 		setProfileLocations((previous) => ({...previous, [type]: value}));
+	};
+
+	const updateProfileSocialLinks = (type: PublishableProfileType, platform: ProfileSocialPlatform, value: string) => {
+		setProfileSocialLinks((previous) => ({
+			...previous,
+			[type]: {...previous[type], [platform]: value},
+		}));
 	};
 
 	const prepareAnnouncementStep = () => {
@@ -327,6 +348,8 @@ export default function PubblicaAnnuncio({
 										locations={profileLocations}
 										onChange={updateProfileDraft}
 										onLocationsChange={updateProfileLocations}
+										socialLinks={profileSocialLinks[profileType]}
+										onSocialLinksChange={(platform, value) => updateProfileSocialLinks(profileType, platform, value)}
 										errors={profileValidationVisible ? profileValidationErrors : {}}
 									/>
 								)}

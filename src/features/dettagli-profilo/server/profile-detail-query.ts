@@ -4,23 +4,27 @@ import type {SupabaseClient} from "@supabase/supabase-js";
 
 import {availabilityLabel} from "@/features/profilo/public-profile-display";
 import type {
+	PlayerProfileData,
 	ProfileDetail,
 	ProfileDetailField,
 	ProfileDetailResult,
-	PlayerProfileData,
 	PublicProfileExperience,
 } from "@/features/dettagli-profilo/profile-detail-model";
 import {loadPublicProfileAnnouncements} from "@/features/dettagli-profilo/server/profile-announcements-query";
-import {
-	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
-} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {parsePlayerCareer, toPublicPlayerData} from "./player-profile-data";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
+import {
+	PROFILE_SOCIAL_PLATFORMS,
+	type ProfileSocialLinks,
+	profileSocialLinksFromRows,
+} from "@/features/profilo/profile-social-links";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database, Json} from "@/server/supabase";
 import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
 import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
+import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 
 const NOT_SPECIFIED = "Non specificato";
 
@@ -67,6 +71,16 @@ interface ProfileLocation {
 
 function cleanText(value: unknown) {
 	return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function publicSocialLinks(
+	rows: readonly {piattaforma: string | null; sublink: string}[],
+): ProfileSocialLinks {
+	const links = profileSocialLinksFromRows(rows);
+	for (const platform of PROFILE_SOCIAL_PLATFORMS) {
+		if (!isLinkAnnuncioValid(links[platform])) links[platform] = "";
+	}
+	return links;
 }
 
 function fullName(name: string | null, surname: string | null) {
@@ -414,21 +428,29 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			.eq("sottoprofilo", type)
 			.order("regione", {ascending: true})
 			.order("citta", {ascending: true});
+		const socialLinksPromise = supabase
+			.from("link_social_profilo")
+			.select("piattaforma, sublink")
+			.eq("uuid_profilo", id)
+			.eq("sottoprofilo", type)
+			.in("piattaforma", PROFILE_SOCIAL_PLATFORMS);
 		const contentPromise = loadProfileContent(supabase, id, type);
 		const announcementsPromise = loadPublicProfileAnnouncements(supabase, id, type);
 		const profileImagesPromise = loadProfileImageUrlMap(supabase, [id]);
-		const [baseResult, locationsResult, contentResult, announcementsResult, profileImages] = await Promise.all([
+		const [baseResult, locationsResult, socialLinksResult, contentResult, announcementsResult, profileImages] = await Promise.all([
 			baseProfilePromise,
 			locationsPromise,
+			socialLinksPromise,
 			contentPromise,
 			announcementsPromise,
 			profileImagesPromise,
 		]);
 
-		if (baseResult.error || locationsResult.error || contentResult.status === "error") {
+		if (baseResult.error || locationsResult.error || socialLinksResult.error || contentResult.status === "error") {
 			console.error("[dettagli-profilo] Profile lookup failed", {
 				baseCode: baseResult.error?.code,
 				locationsCode: locationsResult.error?.code,
+				socialLinksCode: socialLinksResult.error?.code,
 				contentCode: contentResult.status === "error" ? contentResult.code : undefined,
 			});
 			return {status: "error"};
@@ -468,6 +490,7 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			verified: Boolean(baseResult.data.verificato_il),
 			primary: baseResult.data.tipologia_principale === type,
 			availabilityLabel: availabilityLabel(content.availability),
+			socialLinks: publicSocialLinks(socialLinksResult.data ?? []),
 			announcements: announcementsResult.announcements,
 			announcementsUnavailable: announcementsResult.unavailable,
 		};

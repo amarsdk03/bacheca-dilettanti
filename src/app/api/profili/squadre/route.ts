@@ -1,10 +1,7 @@
-import {NextResponse, type NextRequest} from "next/server";
+import {type NextRequest, NextResponse} from "next/server";
 
 import {createAdminClient} from "@/lib/supabase/admin";
-import {
-	loadPublicTeamProfiles,
-	searchPublicTeamProfiles,
-} from "@/features/profilo/server/public-team-profiles";
+import {loadPublicTeamProfiles, searchPublicTeamProfiles,} from "@/features/profilo/server/public-team-profiles";
 import {
 	normalizeTeamSearchQuery,
 	TEAM_PROFILE_RESOLVE_LIMIT,

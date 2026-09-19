@@ -16,7 +16,7 @@ import {
 import Link from "next/link";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
-import {announcementOption, type AnnouncementFactKind} from "@/features/annunci/announcement-model";
+import {type AnnouncementFactKind, announcementOption} from "@/features/annunci/announcement-model";
 import type {ProfileAnnouncement} from "@/features/dettagli-profilo/profile-detail-model";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";

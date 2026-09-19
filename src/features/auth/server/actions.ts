@@ -5,10 +5,7 @@ import "server-only";
 import {revalidatePath} from "next/cache";
 import {redirect} from "next/navigation";
 
-import {
-	AUTH_EMAIL_FLOW,
-	createAuthEmailFlowMetadata,
-} from "@/features/auth/email-flow";
+import {AUTH_EMAIL_FLOW, createAuthEmailFlowMetadata,} from "@/features/auth/email-flow";
 import {getAuthErrorMessage} from "@/features/auth/errors";
 import {sendSignupConfirmationEmail} from "@/features/auth/server/signup-confirmation";
 import type {AuthActionState} from "@/features/auth/types";
@@ -20,10 +17,7 @@ import {
 	validateNewPassword,
 	validateRegistration,
 } from "@/features/auth/validation";
-import {
-	parseRegistrationPayload,
-	RegistrationPayloadError,
-} from "@/features/registrati/server/registration";
+import {parseRegistrationPayload, RegistrationPayloadError,} from "@/features/registrati/server/registration";
 import {getRegistrationEmailIdentity} from "@/features/registrati/server/email-identity";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";

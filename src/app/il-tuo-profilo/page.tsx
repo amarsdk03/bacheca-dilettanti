@@ -21,7 +21,7 @@ interface IlTuoProfiloPageProps {
 
 function getDashboardSection(value: string | string[] | undefined): ProfileDashboardSection {
 	const section = Array.isArray(value) ? value[0] : value;
-	return section === "annunci" || section === "impostazioni" || section === "info"
+	return section === "annunci" || section === "relazioni" || section === "salvati" || section === "impostazioni" || section === "info"
 		? section
 		: "profilo";
 }

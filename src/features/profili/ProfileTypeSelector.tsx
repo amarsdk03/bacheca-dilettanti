@@ -5,8 +5,8 @@ import {usePathname, useRouter, useSearchParams} from "next/navigation";
 
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {
-	isProfileType,
 	isLimitedProfileType,
+	isProfileType,
 	PROFILE_OPTIONS,
 	type ProfileType,
 } from "@/features/profilo/profile-model";

@@ -2,29 +2,11 @@
 
 import {type SetStateAction} from "react";
 
-import {
-	Field,
-	FieldDescription,
-	FieldGroup,
-	FieldLabel,
-	FieldLegend,
-	FieldSet,
-} from "@/components/ui/field";
+import {Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet,} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
-import {
-	InputGroup,
-	InputGroupAddon,
-	InputGroupInput,
-	InputGroupText,
-} from "@/components/ui/input-group";
+import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText,} from "@/components/ui/input-group";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
 import AnnateMultiselectField from "@/features/pubblica-annuncio/components/InputFields/AnnateMultiselectField";
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
@@ -32,12 +14,14 @@ import DateRangeFields from "@/features/pubblica-annuncio/components/InputFields
 import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
-import RuoloPrincipaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
+import RuoloPrincipaleMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/RuoloPrincipaleMultiselectField";
 import {
 	type AnnuncioSquadraData,
 	useAnnuncioSquadraStore,
 } from "@/features/pubblica-annuncio/state/AnnuncioSquadra.store";
-import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
+import CategorieCalcioMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
 import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
 import OrarioIndicativoFields from "@/features/pubblica-annuncio/components/InputFields/OrarioIndicativoFields";

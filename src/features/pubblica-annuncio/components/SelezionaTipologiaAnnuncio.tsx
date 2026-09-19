@@ -17,13 +17,14 @@ import {
 } from "@/components/ui/field";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
-import {isLimitedProfileType, type ProfileType} from "@/features/profilo/profile-model";
+import {
+	isLimitedProfileType,
+	PROFILE_DIRECTORY_UNLOCK_PROFILE_COUNT,
+	type ProfileType,
+} from "@/features/profilo/profile-model";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
-import {
-	isPublishableProfileType,
-	type PublishableProfileType,
-} from "@/features/pubblica-annuncio/publish-model";
+import {isPublishableProfileType, type PublishableProfileType,} from "@/features/pubblica-annuncio/publish-model";
 import {getTipologia, tipologieAnnuncio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type SelezionaTipologiaAnnuncioProps = {
@@ -67,7 +68,7 @@ export default function SelezionaTipologiaAnnuncio({
 			<FieldGroup className="w-full">
 				<FieldSet>
 					<FieldLegend variant="label" className="field-legend-title mb-0">
-						Chi pubblica l'annuncio? <RequiredMark />
+						Chi pubblica l&apos;annuncio? <RequiredMark />
 					</FieldLegend>
 					<Field data-invalid={Boolean(typeError)} className="mt-4">
 						{typeError && <FieldError>{typeError}</FieldError>}
@@ -84,7 +85,7 @@ export default function SelezionaTipologiaAnnuncio({
 								const limited = isLimitedProfileType(profileType);
 								const supported = isPublishableProfileType(profileType);
 								const enabledForAccount = supported && enabledProfileTypes.includes(profileType);
-								const disabled = limited || !supported || (registered && !enabledForAccount);
+								const disabled = !supported || (registered && !enabledForAccount);
 								const accent = getProfileAccent(profileType);
 								return (
 								<ToggleGroupItem
@@ -100,10 +101,14 @@ export default function SelezionaTipologiaAnnuncio({
 										<FieldContent className="ms-1">
 											<FieldTitle className="field-content-title flex-wrap gap-1.5">
 												{opzione.nome}
-												{(limited || !supported) && <ComingSoonBadge />}
-												{!limited && supported && registered && !enabledForAccount && <Badge variant="outline">Non abilitato</Badge>}
+												{!supported && <ComingSoonBadge />}
+												{supported && registered && !enabledForAccount && <Badge variant="outline">Non abilitato</Badge>}
 											</FieldTitle>
-											<FieldDescription>{opzione.descrizione}</FieldDescription>
+											<FieldDescription>
+												{limited
+													? `La directory dei profili ${opzione.nome} sarà sbloccata al raggiungimento di ${PROFILE_DIRECTORY_UNLOCK_PROFILE_COUNT} profili.`
+													: opzione.descrizione}
+											</FieldDescription>
 										</FieldContent>
 									</Field>
 								</ToggleGroupItem>

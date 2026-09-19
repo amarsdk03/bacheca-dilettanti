@@ -1,11 +1,11 @@
-import { cn } from "@/lib/utils";
+import {cn} from "@/lib/utils";
 import Link from "next/link";
-import { ArrowLeft, SearchX } from "lucide-react";
+import {ArrowLeft, SearchX} from "lucide-react";
 
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
 import FrasiErrori from "@/features/status-pages/FrasiErrori";
-import { buttonVariants } from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button";
 
 export default function Errore404() {
 	return (

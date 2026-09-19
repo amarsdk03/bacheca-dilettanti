@@ -4,11 +4,7 @@ import {useEffect, useMemo, useState} from "react";
 import Link from "next/link";
 
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {
-	teamProfileHref,
-	type PublicTeamProfile,
-	type TeamProfileReference,
-} from "@/features/profilo/team-profile";
+import {type PublicTeamProfile, teamProfileHref, type TeamProfileReference,} from "@/features/profilo/team-profile";
 import {cn} from "@/lib/utils";
 
 type TeamItem = TeamProfileReference | PublicTeamProfile;

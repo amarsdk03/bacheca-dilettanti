@@ -2,10 +2,12 @@ import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import {Button} from "@/components/ui/button";
 import {FieldGroup, FieldLegend, FieldSet} from "@/components/ui/field";
 import RecapAnnuncioArbitro from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioArbitro";
-import RecapAnnuncioCampoImpianto from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioCampoImpianto";
+import RecapAnnuncioCampoImpianto
+	from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioCampoImpianto";
 import RecapAnnuncioGiocatore from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioGiocatore";
 import RecapAnnuncioAziendeEnti from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioAziendeEnti";
-import RecapAnnuncioProfessionistiStudi from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioProfessionistiStudi";
+import RecapAnnuncioProfessionistiStudi
+	from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioProfessionistiStudi";
 import RecapAnnuncioTorneoEvento from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioTorneoEvento";
 import RecapAnnuncioSquadra from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioSquadra";
 import RecapAnnuncioStaff from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioStaff";

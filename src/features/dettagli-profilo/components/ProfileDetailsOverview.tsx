@@ -1,11 +1,5 @@
 import type {CSSProperties} from "react";
-import {
-	BadgeCheckIcon,
-	CircleDotIcon,
-	ExternalLinkIcon,
-	InfoIcon,
-	StarIcon,
-} from "lucide-react";
+import {BadgeCheckIcon, CircleDotIcon, ExternalLinkIcon, InfoIcon, StarIcon,} from "lucide-react";
 
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";

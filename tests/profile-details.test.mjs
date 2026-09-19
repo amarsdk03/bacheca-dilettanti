@@ -271,6 +271,7 @@ test("every non-player detail page preserves its configured content", () => {
 		const html = renderToStaticMarkup(React.createElement(Component, {profile: {
 			id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type, title: "Profilo dimostrativo",
 			imageUrl: null, verified: true, primary: true, availabilityLabel: null,
+			socialLinks: {instagram: "", facebook: "", youtube: "", linkedin: ""},
 			locations: [{region: "Lazio", city: "Città dimostrativa"}],
 			primaryFields: [{label: "Località", value: "Città dimostrativa"}],
 			fields: [{label: "Presentazione", value: "Descrizione dimostrativa", wide: true}],

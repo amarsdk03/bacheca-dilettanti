@@ -1,8 +1,4 @@
-import type {
-	DirectoryProfile,
-	DirectoryProfileFact,
-	DirectoryProfileFactKind,
-} from "../../profile-directory-model";
+import type {DirectoryProfile, DirectoryProfileFact, DirectoryProfileFactKind,} from "../../profile-directory-model";
 import type {ProfileType} from "@/features/profilo/profile-model";
 
 export type ProfileCardData<Type extends ProfileType = ProfileType> = Pick<DirectoryProfile,

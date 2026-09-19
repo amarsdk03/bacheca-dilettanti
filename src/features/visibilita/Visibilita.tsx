@@ -1,14 +1,15 @@
 'use client';
 
+import type {ReactNode} from "react";
 import {useState} from 'react';
 import Link from "next/link";
-import type {ReactNode} from "react";
 import {
 	ArrowRight,
 	BadgeCheck,
 	BadgeEuro,
 	Building2,
 	Check,
+	ClipboardList,
 	GraduationCap,
 	Handshake,
 	MapPin,
@@ -16,8 +17,7 @@ import {
 	Repeat2,
 	Shield,
 	Sparkles,
-	User,
-	ClipboardList
+	User
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
