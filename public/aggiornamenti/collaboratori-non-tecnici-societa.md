@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Società"
 tags: ["volontariato sportivo", "segreteria societaria", "comunicazione sportiva", "gestione impianti", "collaboratori società"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/staff-sportivo.jpg"
 readingTime: "10 min"
 ---
 

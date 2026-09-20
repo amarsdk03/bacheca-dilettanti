@@ -5,7 +5,7 @@ import path from "node:path";
 import matter from "gray-matter";
 
 const articlesDirectory = path.join(process.cwd(), "public", "aggiornamenti");
-const fallbackCoverImage = "/backgrounds/homepage-hero.jpg";
+const fallbackCoverImage = "/sfondi/homepage-hero.jpg";
 
 export interface ArticleMetadata {
 	title: string;

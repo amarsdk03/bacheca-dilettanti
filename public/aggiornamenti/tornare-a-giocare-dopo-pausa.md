@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Giocatori"
 tags: ["ripresa attività sportiva", "certificato medico sportivo", "calcio amatoriale", "condizione fisica", "rientro dopo infortunio"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/calcio7.jpg"
 readingTime: "10 min"
 ---
 

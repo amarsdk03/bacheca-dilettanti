@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Staff tecnico"
 tags: ["staff tecnico", "preparatore atletico", "match analyst", "team manager", "settore tecnico FIGC"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/calcio5.jpg"
 readingTime: "11 min"
 ---
 

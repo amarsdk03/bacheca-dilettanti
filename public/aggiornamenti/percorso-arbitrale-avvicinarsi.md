@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Arbitri"
 tags: ["arbitro di calcio", "corso AIA", "diventare arbitro", "designazioni arbitrali", "percorso arbitrale"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/arbitro.jpg"
 readingTime: "9 min"
 ---
 

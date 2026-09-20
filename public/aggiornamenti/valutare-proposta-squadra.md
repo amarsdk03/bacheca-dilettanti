@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Giocatori"
 tags: ["scelta squadra", "provino", "tesseramento", "vita di spogliatoio", "giocatori dilettanti"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/calcio6.jpg"
 readingTime: "9 min"
 ---
 

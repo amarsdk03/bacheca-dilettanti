@@ -32,6 +32,7 @@ import {ViewerDTO} from "@/features/auth/types";
 interface NavbarNavigationProps {
 	authenticated: boolean;
 	viewer: ViewerDTO | null;
+	backToHome: boolean;
 }
 
 const desktopLinkClassName =
@@ -117,7 +118,7 @@ function MobileLink({
 	);
 }
 
-export default function NavbarNavigation({authenticated}: NavbarNavigationProps) {
+export default function NavbarNavigation({authenticated, backToHome}: NavbarNavigationProps) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -253,142 +254,148 @@ export default function NavbarNavigation({authenticated}: NavbarNavigationProps)
 				</Link>
 			</nav>
 
-			<div className={"block lg:hidden"}>
-				<Link
-					href="/pubblica-annuncio"
-					aria-label="Pubblica un annuncio"
-					className={cn(
-						buttonVariants({variant: "outline", size: "lg"}),
-						"text-black rounded-md",
-					)}
-				>
-					<ClipboardPenIcon aria-hidden="true" />
-					<span className="block sm:hidden">Pubblica</span>
-					<span className="hidden sm:block">Pubblica annuncio</span>
-				</Link>
-			</div>
+			{
+				!backToHome && (
+					<>
+						<div className={"block lg:hidden"}>
+							<Link
+								href="/pubblica-annuncio"
+								aria-label="Pubblica un annuncio"
+								className={cn(
+									buttonVariants({variant: "outline", size: "lg"}),
+									"text-black rounded-md",
+								)}
+							>
+								<ClipboardPenIcon aria-hidden="true" />
+								<span className="block sm:hidden">Pubblica</span>
+								<span className="hidden sm:block">Pubblica annuncio</span>
+							</Link>
+						</div>
 
-			<Sheet open={mobileMenuOpen} onOpenChange={(open) => setMobileMenuOpen(open)}>
-				<SheetTrigger
-					render={(
-						<Button
-							type="button"
-							variant="ghost"
-							size="icon-lg"
-							className="size-11 ms-1 rounded-xl text-white hover:bg-white/10 hover:text-white focus-visible:ring-[#8e72ff]/70 lg:hidden"
-						/>
-					)}
-					aria-label="Apri il menu di navigazione"
-				>
-					<MenuIcon className="size-5" aria-hidden="true" />
-				</SheetTrigger>
-				<SheetContent className="font-home-body w-[min(90vw,25rem)] gap-0 border-black/10 bg-[#fbfaff] text-[#111111]">
-					<SheetHeader className="border-b border-black/10 px-5 py-5 pr-14">
-						<SheetTitle className="font-home-display text-2xl font-bold uppercase text-[#111111]">
-							Menu
-						</SheetTitle>
-						<SheetDescription className="text-[#111111]/65">
-							Esplora Bacheca Dilettanti
-						</SheetDescription>
-					</SheetHeader>
+						<Sheet open={mobileMenuOpen} onOpenChange={(open) => setMobileMenuOpen(open)}>
+							<SheetTrigger
+								render={(
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon-lg"
+										className="size-11 ms-1 rounded-xl text-white hover:bg-white/10 hover:text-white focus-visible:ring-[#8e72ff]/70 lg:hidden"
+									/>
+								)}
+								aria-label="Apri il menu di navigazione"
+							>
+								<MenuIcon className="size-5" aria-hidden="true" />
+							</SheetTrigger>
+							<SheetContent className="font-home-body w-[min(90vw,25rem)] gap-0 border-black/10 bg-[#fbfaff] text-[#111111]">
+								<SheetHeader className="border-b border-black/10 px-5 py-5 pr-14">
+									<SheetTitle className="font-home-display text-2xl font-bold uppercase text-[#111111]">
+										Menu
+									</SheetTitle>
+									<SheetDescription className="text-[#111111]/65">
+										Esplora Bacheca Dilettanti
+									</SheetDescription>
+								</SheetHeader>
 
-					<nav aria-label="Navigazione mobile" className="flex-1 overflow-y-auto px-4 py-5">
-						<p className="px-3 pb-2 text-xs font-bold uppercase tracking-[0.14em] text-[#111111]/50">Annunci</p>
-						<MobileLink href="/annunci" active={announcementsRootActive} onNavigate={() => setMobileMenuOpen(false)}>
-							Tutti gli annunci
-						</MobileLink>
-						{ANNOUNCEMENT_NAVIGATION_OPTIONS.map((option) => {
-							const matchingProfile = profileOption(option.profileType);
-							const Icon = matchingProfile?.icon ?? option.icon;
-							return (
-								<MobileLink
-									key={option.value}
-									href={`/annunci?type=${option.value}`}
-									active={announcementTypeActive(option.value)}
-									onNavigate={() => setMobileMenuOpen(false)}
-								>
-									<Icon className="size-4 text-[#8e72ff]" aria-hidden="true" />
-									{matchingProfile?.label ?? option.label}
-								</MobileLink>
-							);
-						})}
+								<nav aria-label="Navigazione mobile" className="flex-1 overflow-y-auto px-4 py-5">
+									<p className="px-3 pb-2 text-xs font-bold uppercase tracking-[0.14em] text-[#111111]/50">Annunci</p>
+									<MobileLink href="/annunci" active={announcementsRootActive} onNavigate={() => setMobileMenuOpen(false)}>
+										Tutti gli annunci
+									</MobileLink>
+									{ANNOUNCEMENT_NAVIGATION_OPTIONS.map((option) => {
+										const matchingProfile = profileOption(option.profileType);
+										const Icon = matchingProfile?.icon ?? option.icon;
+										return (
+											<MobileLink
+												key={option.value}
+												href={`/annunci?type=${option.value}`}
+												active={announcementTypeActive(option.value)}
+												onNavigate={() => setMobileMenuOpen(false)}
+											>
+												<Icon className="size-4 text-[#8e72ff]" aria-hidden="true" />
+												{matchingProfile?.label ?? option.label}
+											</MobileLink>
+										);
+									})}
 
-						<div className="my-4 h-px bg-black/10" />
-						<p className="px-3 pb-2 text-xs font-bold uppercase tracking-[0.14em] text-[#111111]/50">Profili</p>
-						<MobileLink href="/profili" active={profilesRootActive} onNavigate={() => setMobileMenuOpen(false)}>
-							Tutti i profili
-						</MobileLink>
-						{PROFILE_NAVIGATION_OPTIONS.map((option) => {
-							const Icon = option.icon;
-							return (
-								<MobileLink
-									key={option.value}
-									href={`/profili?type=${option.value}`}
-									active={profileTypeActive(option.value)}
-									onNavigate={() => setMobileMenuOpen(false)}
-								>
-									<Icon className="size-4 text-[#8e72ff]" aria-hidden="true" />
-									{option.label}
-								</MobileLink>
-							);
-						})}
+									<div className="my-4 h-px bg-black/10" />
+									<p className="px-3 pb-2 text-xs font-bold uppercase tracking-[0.14em] text-[#111111]/50">Profili</p>
+									<MobileLink href="/profili" active={profilesRootActive} onNavigate={() => setMobileMenuOpen(false)}>
+										Tutti i profili
+									</MobileLink>
+									{PROFILE_NAVIGATION_OPTIONS.map((option) => {
+										const Icon = option.icon;
+										return (
+											<MobileLink
+												key={option.value}
+												href={`/profili?type=${option.value}`}
+												active={profileTypeActive(option.value)}
+												onNavigate={() => setMobileMenuOpen(false)}
+											>
+												<Icon className="size-4 text-[#8e72ff]" aria-hidden="true" />
+												{option.label}
+											</MobileLink>
+										);
+									})}
 
-						<div className="my-4 h-px bg-black/10" />
-						<MobileLink href="/aggiornamenti" active={isPathActive(pathname, "/aggiornamenti")} onNavigate={() => setMobileMenuOpen(false)}>
-							Aggiornamenti
-						</MobileLink>
-						<MobileLink href="/contatti" active={isPathActive(pathname, "/contatti")} onNavigate={() => setMobileMenuOpen(false)}>
-							Contatti
-						</MobileLink>
-					</nav>
+									<div className="my-4 h-px bg-black/10" />
+									<MobileLink href="/aggiornamenti" active={isPathActive(pathname, "/aggiornamenti")} onNavigate={() => setMobileMenuOpen(false)}>
+										Aggiornamenti
+									</MobileLink>
+									<MobileLink href="/contatti" active={isPathActive(pathname, "/contatti")} onNavigate={() => setMobileMenuOpen(false)}>
+										Contatti
+									</MobileLink>
+								</nav>
 
-					<SheetFooter className="border-t border-black/10 bg-white p-4">
-						{authenticated ? (
-							<>
-								<Link
-									href="/il-tuo-profilo?sezione=profilo"
-									onClick={() => setMobileMenuOpen(false)}
-									className={cn(buttonVariants({variant: "outline", size: "lg"}), "h-11 w-full rounded-xl border-black/20 font-bold")}
-								>
-									<UserRoundIcon data-icon="inline-start" aria-hidden="true" />
-									Il tuo profilo
-								</Link>
-								<Link
-									href="/registrati"
-									onClick={() => setMobileMenuOpen(false)}
-									className={cn(
-										buttonVariants({variant: "brand", size: "lg"}),
-										"h-11 w-full rounded-xl text-white font-bold",
+								<SheetFooter className="border-t border-black/10 bg-white p-4">
+									{authenticated ? (
+										<>
+											<Link
+												href="/il-tuo-profilo?sezione=profilo"
+												onClick={() => setMobileMenuOpen(false)}
+												className={cn(buttonVariants({variant: "outline", size: "lg"}), "h-11 w-full rounded-xl border-black/20 font-bold")}
+											>
+												<UserRoundIcon data-icon="inline-start" aria-hidden="true" />
+												Il tuo profilo
+											</Link>
+											<Link
+												href="/registrati"
+												onClick={() => setMobileMenuOpen(false)}
+												className={cn(
+													buttonVariants({variant: "brand", size: "lg"}),
+													"h-11 w-full rounded-xl text-white font-bold",
+												)}
+											>
+												<ClipboardPenIcon data-icon="inline-start" aria-hidden="true" />
+												Pubblica annuncio
+											</Link>
+										</>
+									) : (
+										<>
+											<Link
+												href="/registrati"
+												onClick={() => setMobileMenuOpen(false)}
+												className={cn(
+													buttonVariants({variant: "brand", size: "lg"}),
+													"h-11 w-full rounded-xl text-white font-bold",
+												)}
+											>
+												Registrati
+											</Link>
+											<Link
+												href="/accedi"
+												onClick={() => setMobileMenuOpen(false)}
+												className={cn(buttonVariants({variant: "outline", size: "lg"}), "h-11 w-full rounded-xl border-black/20 font-bold")}
+											>
+												Accedi
+											</Link>
+										</>
 									)}
-								>
-									<ClipboardPenIcon data-icon="inline-start" aria-hidden="true" />
-									Pubblica annuncio
-								</Link>
-							</>
-						) : (
-							<>
-								<Link
-									href="/registrati"
-									onClick={() => setMobileMenuOpen(false)}
-									className={cn(
-										buttonVariants({variant: "brand", size: "lg"}),
-										"h-11 w-full rounded-xl text-white font-bold",
-									)}
-								>
-									Registrati
-								</Link>
-								<Link
-									href="/accedi"
-									onClick={() => setMobileMenuOpen(false)}
-									className={cn(buttonVariants({variant: "outline", size: "lg"}), "h-11 w-full rounded-xl border-black/20 font-bold")}
-								>
-									Accedi
-								</Link>
-							</>
-						)}
-					</SheetFooter>
-				</SheetContent>
-			</Sheet>
+								</SheetFooter>
+							</SheetContent>
+						</Sheet>
+					</>
+				)
+			}
 		</div>
 	);
 }

@@ -6,6 +6,7 @@ import {ArrowLeft, CalendarDays, Clock, Eye, UserRound} from "lucide-react";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
 import ArticleBody from "@/features/aggiornamenti/ArticleBody";
+import ArticleNavigation from "@/features/aggiornamenti/ArticleNavigation";
 import ShareButtons from "@/features/aggiornamenti/ShareButtons";
 import {
 	formatArticleDate,
@@ -45,7 +46,8 @@ export async function generateMetadata({params}: PageProps<"/aggiornamenti/[slug
 
 export default async function ArticlePage({params}: PageProps<"/aggiornamenti/[slug]">) {
 	const {slug} = await params;
-	const article = getArticleBySlug(slug);
+	const articles = getAllArticles();
+	const article = articles.find((item) => item.slug === slug);
 	if (!article) notFound();
 
 	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -61,10 +63,10 @@ export default async function ArticlePage({params}: PageProps<"/aggiornamenti/[s
 				<header className="relative isolate overflow-hidden bg-neutral-950">
 					<div
 						className="absolute inset-0 -z-20 bg-cover bg-center"
-						style={{backgroundImage: `url(${coverImage})`, filter: "blur(1px)"}}
+						style={{backgroundImage: `url(${coverImage})`}}
 					/>
-					<div className="absolute inset-0 -z-10 bg-neutral-950/35" />
-					<div className="absolute inset-0 -z-10 bg-linear-to-b from-transparent via-neutral-950/75 to-black" />
+					<div className="absolute inset-0 -z-10 bg-neutral-950/25" />
+					<div className="absolute inset-0 -z-10 bg-linear-to-b from-transparent via-neutral-950/75 to-black/80" />
 					<div className="mx-auto max-w-6xl px-4 pb-12 pt-8 sm:px-6 lg:px-8 lg:pb-16">
 						<Link href="/aggiornamenti" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-300 transition hover:text-white"><ArrowLeft className="size-4" /> Tutti gli aggiornamenti</Link>
 						<div className="mt-10">
@@ -83,10 +85,13 @@ export default async function ArticlePage({params}: PageProps<"/aggiornamenti/[s
 				</header>
 
 				<div className="mx-auto grid max-w-6xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_240px] lg:px-8 lg:py-20">
-					<article className="min-w-0 max-w-3xl"><ArticleBody content={article.content} /></article>
+					<article className="min-w-0 max-w-3xl">
+						<ArticleBody content={article.content} />
+						<ArticleNavigation articles={articles} currentSlug={article.slug} />
+					</article>
 					<aside className="lg:sticky lg:top-24 lg:self-start py-10">
 						<ShareButtons title={article.title} url={canonicalUrl} />
-						<div className="mt-8 border-t border-neutral-200 pt-6">
+						<div className="mt-6 border-t border-neutral-200 pt-6">
 							<p className="text-xs font-bold uppercase tracking-wider text-neutral-400">Argomenti</p>
 							<div className="mt-3 flex flex-wrap gap-2">{article.tags.map((tag) => <span key={tag} className="rounded-full bg-neutral-100 px-3 py-1.5 text-xs text-neutral-600">#{tag}</span>)}</div>
 						</div>

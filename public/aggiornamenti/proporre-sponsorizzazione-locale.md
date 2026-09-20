@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Società"
 tags: ["sponsorizzazioni sportive", "raccolta fondi", "società dilettantistiche", "marketing sportivo locale", "gestione societaria"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/calcio8.jpg"
 readingTime: "12 min"
 ---
 

@@ -28,7 +28,7 @@ export default async function Navbar({minimal = false, backToHome = false, workI
 			{
 				workInProgress && (<HomepageWorkInProgressNotice onNavbar={true} />)
 			}
-			<div className="mx-auto flex h-16 w-full max-w-370 items-center gap-4 ps-4 lg:px-8 lg:h-24 lg:gap-6">
+			<div className="mx-auto flex items-center justify-between h-16 w-full max-w-370 gap-4 ps-4 lg:px-8 lg:h-24 lg:gap-6">
 				<Link
 					href="/"
 					aria-label="Bacheca Dilettanti, torna alla homepage"
@@ -46,54 +46,56 @@ export default async function Navbar({minimal = false, backToHome = false, workI
 					/>
 				</Link>
 
-				{!minimal && <NavbarNavigation authenticated={Boolean(viewer)} viewer={viewer} />}
+				{!minimal && <NavbarNavigation authenticated={Boolean(viewer)} viewer={viewer} backToHome={backToHome} />}
 
 				<div className={cn("flex shrink-0 items-center gap-2", minimal ? "ml-auto" : "lg:ml-0")}>
-					{backToHome ? (
-						<Link
-							href="/"
-							className={cn(buttonVariants({variant: "inverse-outline", size: "lg"}), inverseButtonClassName, "me-3 sm:me-0")}
-						>
-							<ArrowLeftIcon data-icon="inline-start" aria-hidden="true" className="ms-2" />
-							<span className="hidden sm:inline">Torna alla Home</span>
-							<span className="sm:hidden">Home</span>
-						</Link>
-					) : (
-						<div className={"flex items-center gap-3"}>
-							<div className={"hidden lg:block"}>
-								<Link
-									href="/pubblica-annuncio"
-									aria-label="Pubblica un annuncio"
-									className={cn(
-										buttonVariants({variant: "outline", size: "lg"}),
-										"text-black rounded-md",
-									)}
-								>
-									<ClipboardPenIcon aria-hidden="true" />
-									Pubblica annuncio
-								</Link>
-							</div>
-							<div className="hidden lg:block">
-								{viewer ? (
-									<UserAvatar viewer={viewer} />
-								) : (
+					{
+						backToHome ? (
+							<Link
+								href="/"
+								className={cn(buttonVariants({variant: "inverse-outline", size: "lg"}), inverseButtonClassName, "me-3 sm:me-5 lg:me-0")}
+							>
+								<ArrowLeftIcon data-icon="inline-start" aria-hidden="true" className="ms-2" />
+								<span className="hidden sm:inline">Torna alla Home</span>
+								<span className="sm:hidden">Home</span>
+							</Link>
+						) : (
+							<>
+								<div className={"hidden lg:flex items-center gap-3"}>
 									<Link
-										href="/accedi"
+										href="/pubblica-annuncio"
+										aria-label="Pubblica un annuncio"
 										className={cn(
-											buttonVariants({variant: "ghost", size: "icon-lg"}),
-											"rounded-full"
+											buttonVariants({variant: "outline", size: "lg"}),
+											"text-black rounded-md",
 										)}
 									>
-										<Avatar className="size-9">
-											<AvatarFallback>
-												<UserIcon className="size-5" aria-hidden="true" />
-											</AvatarFallback>
-										</Avatar>
+										<ClipboardPenIcon aria-hidden="true" />
+										Pubblica annuncio
 									</Link>
-								)}
-							</div>
-						</div>
-					)}
+								</div>
+								<div className="hidden lg:block">
+									{viewer ? (
+										<UserAvatar viewer={viewer} />
+									) : (
+										<Link
+											href="/accedi"
+											className={cn(
+												buttonVariants({variant: "ghost", size: "icon-lg"}),
+												"rounded-full"
+											)}
+										>
+											<Avatar className="size-9">
+												<AvatarFallback>
+													<UserIcon className="size-5" aria-hidden="true" />
+												</AvatarFallback>
+											</Avatar>
+										</Link>
+									)}
+								</div>
+							</>
+						)
+					}
 				</div>
 			</div>
 		</header>

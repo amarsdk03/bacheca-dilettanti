@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Creators"
 tags: ["content creator", "calcio dilettantistico", "collaborazioni sportive", "comunicazione sportiva", "creators sportivi"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/creators.jpg"
 readingTime: "9 min"
 ---
 

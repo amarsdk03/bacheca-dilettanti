@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Giocatori"
 tags: ["provino", "primo contatto", "giocatori", "calcio dilettantistico", "preparazione", "tesseramento"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/calcio2.jpg"
 readingTime: "13 min"
 ---
 

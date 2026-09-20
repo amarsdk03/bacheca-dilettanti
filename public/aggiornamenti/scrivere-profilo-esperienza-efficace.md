@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Guide"
 tags: ["profilo sportivo", "curriculum sportivo", "esperienza calcistica", "comunicazione personale", "giocatori dilettanti"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/calcio4.jpg"
 readingTime: "9 min"
 ---
 

@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Impianti sportivi"
 tags: ["campi sportivi", "impianti", "gestione impianti", "affitto campo", "omologazione"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/campo-bandierina.jpg"
 readingTime: "10 min"
 ---
 

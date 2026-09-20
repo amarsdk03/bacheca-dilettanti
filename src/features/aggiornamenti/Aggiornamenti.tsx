@@ -11,7 +11,7 @@ export default function Aggiornamenti() {
 	return (
 		<main className="bg-neutral-50 text-neutral-900">
 			<section className="relative overflow-hidden border-b border-neutral-200 bg-neutral-950">
-				<Image src="/backgrounds/homepage-hero.jpg" alt="" fill priority className="object-cover opacity-25 blur-[2px]" />
+				<Image src="/sfondi/homepage-hero.jpg" alt="" fill priority className="object-cover opacity-20 blur-[2px]" />
 				<div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
 					<p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-fuchsia-300">Dal mondo dilettantistico</p>
 					<h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-6xl">Aggiornamenti, guide e storie dal campo.</h1>
@@ -36,7 +36,7 @@ export default function Aggiornamenti() {
 									</div>
 									<h2 className={`mt-4 font-bold leading-tight tracking-tight ${index === 0 ? "text-2xl sm:text-3xl" : "text-xl"}`}>{article.title}</h2>
 									<p className="mt-3 line-clamp-3 text-sm leading-6 text-neutral-600">{article.description}</p>
-									<span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-fuchsia-600">Leggi l&apos;articolo <ArrowUpRight className="size-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
+									<span className="mt-auto pt-6 sm:pt-8 inline-flex items-center gap-1 text-sm font-semibold text-fuchsia-600">Leggi l&apos;articolo <ArrowUpRight className="size-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
 								</div>
 							</Link>
 						</article>

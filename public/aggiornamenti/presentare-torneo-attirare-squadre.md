@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Organizzatori"
 tags: ["tornei", "organizzazione eventi", "regolamento torneo", "iscrizioni squadre", "settore giovanile"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/calcio3.jpg"
 readingTime: "16 min"
 ---
 

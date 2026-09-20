@@ -6,7 +6,7 @@ date: "2026-09-19"
 author: "Redazione Bacheca Dilettanti"
 category: "Società"
 tags: ["amichevoli", "organizzazione societaria", "dirigenti", "preparazione precampionato", "arbitraggio", "annunci società"]
-coverImage: "/sfondi/homepage-hero.jpg"
+coverImage: "/sfondi/aggiornamenti/calcio1.jpg"
 readingTime: "22 min"
 ---
 
