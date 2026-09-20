@@ -6,7 +6,7 @@ import {revalidatePath} from "next/cache";
 import {randomUUID} from "node:crypto";
 
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
-import {isProfileType, type ProfileType,} from "@/features/profilo/profile-model";
+import {isComingSoonProfileType, isProfileType, type ProfileType,} from "@/features/profilo/profile-model";
 import {
 	isProfileImageScope,
 	PROFILE_IMAGE_MEDIA_FORMAT,
@@ -294,6 +294,28 @@ export async function saveProfile(
 
 	try {
 		const admin = createAdminClient();
+		if (isComingSoonProfileType(normalized.type)) {
+			const {data: baseProfile, error: baseProfileError} = await admin
+				.from("profilo")
+				.select("uuid")
+				.eq("uuid_utente", account.utenteId)
+				.eq("nascosto", false)
+				.maybeSingle();
+			if (baseProfileError) throw baseProfileError;
+
+			const {data: existingProfile, error: existingProfileError} = baseProfile
+				? await admin
+					.from(PROFILE_TABLE_BY_TYPE[normalized.type])
+					.select("id")
+					.eq("uuid_profilo", baseProfile.uuid)
+					.eq("nascosto", false)
+					.maybeSingle()
+				: {data: null, error: null};
+			if (existingProfileError) throw existingProfileError;
+			if (!existingProfile) {
+				return {status: "error", message: "Questa tipologia sarÃ  disponibile prossimamente."};
+			}
+		}
 		const {error} = await admin.rpc("save_owned_subprofile", {
 			p_user_id: userId,
 			p_profile_type: normalized.type,

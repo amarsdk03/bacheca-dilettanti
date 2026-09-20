@@ -371,3 +371,230 @@
     color: white;
     border-color: #53b324;
 }
+
+.profile-dashboard {
+    --ring: var(--brand-indigo);
+    --dashboard-tint: color-mix(in srgb, var(--brand-indigo) 7%, var(--card));
+    --dashboard-accent-foreground: color-mix(in srgb, var(--brand-indigo) 72%, var(--foreground));
+}
+
+.profile-dashboard .profile-dashboard-card {
+    --card-spacing: 1.25rem;
+
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) * 1.8);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--foreground) 3%, transparent);
+}
+
+.profile-dashboard .profile-dashboard-overview {
+    border-top: 3px solid var(--brand-indigo);
+    background: radial-gradient(ellipse at top right, color-mix(in srgb, var(--brand-indigo) 10%, transparent), transparent 65%), var(--card);
+}
+
+.profile-dashboard .profile-dashboard-overview > [data-slot="card-header"] {
+    grid-template-rows: auto;
+}
+
+.profile-dashboard-faq-card > [data-slot="card-header"] {
+    align-content: start;
+}
+
+.profile-dashboard .profile-dashboard-available-card {
+    --card-spacing: 1rem;
+}
+
+.profile-dashboard .profile-dashboard-interactive-card {
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.profile-dashboard .profile-dashboard-saved-card > div > [data-slot="card"] {
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) * 1.8);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--foreground) 3%, transparent);
+    font-family: inherit;
+    translate: none;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.profile-dashboard-saved-card [data-slot="card-title"] > h3 {
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5;
+    text-transform: none;
+}
+
+.profile-dashboard-eyebrow {
+    color: var(--dashboard-accent-foreground);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.profile-dashboard-emblem {
+    color: var(--dashboard-accent-foreground);
+    background: var(--dashboard-tint);
+}
+
+.profile-dashboard-type-icon,
+.profile-dashboard .profile-dashboard-type-badge {
+    color: color-mix(in srgb, var(--profile-accent) 75%, var(--foreground));
+    background: color-mix(in srgb, var(--profile-accent) 9%, var(--card));
+}
+
+.profile-dashboard .profile-dashboard-type-badge {
+    border-color: color-mix(in srgb, var(--profile-accent) 20%, var(--border));
+}
+
+.profile-dashboard-navigation {
+    border-bottom: 1px solid var(--border);
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--brand-indigo) 25%, var(--border)) transparent;
+    scroll-padding-inline: 6px;
+}
+
+.profile-dashboard .profile-dashboard-tab-list {
+    width: max-content;
+    min-width: 100%;
+    height: auto;
+    justify-content: flex-start;
+    gap: 0.25rem;
+    padding: 0.25rem;
+}
+
+.profile-dashboard .profile-dashboard-tab {
+    flex: 1 0 auto;
+    height: 2.75rem;
+    gap: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    transition: color 180ms ease, background-color 180ms ease;
+}
+
+.profile-dashboard .profile-dashboard-tab::after {
+    inset-inline: 0.875rem;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--brand-indigo);
+    transform: scaleX(0.75);
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.profile-dashboard .profile-dashboard-tab[data-active] {
+    color: var(--foreground);
+    background: var(--dashboard-tint);
+}
+
+.profile-dashboard .profile-dashboard-tab[data-active]::after {
+    transform: scaleX(1);
+}
+
+.profile-dashboard .profile-dashboard-tab:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+    box-shadow: none;
+}
+
+.profile-dashboard .profile-dashboard-secondary-tabs {
+    height: auto;
+    min-height: 2.75rem;
+}
+
+.profile-dashboard-filters [data-slot="toggle-group-item"] {
+    min-height: 2.5rem;
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.profile-dashboard [data-slot="button"] {
+    transition-duration: 180ms;
+}
+
+.profile-dashboard-action-arrow {
+    transition: transform 180ms ease;
+}
+
+.profile-dashboard .profile-dashboard-empty {
+    min-height: 15rem;
+    padding: 2.5rem 1.25rem;
+    border: 1px dashed var(--border);
+    border-radius: calc(var(--radius) * 1.8);
+    background: var(--card);
+}
+
+.profile-dashboard .profile-dashboard-empty [data-slot="empty-icon"] {
+    color: var(--dashboard-accent-foreground);
+    background: var(--dashboard-tint);
+}
+
+.profile-dashboard-account-details > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding-top: 0.875rem;
+    border-top: 1px solid var(--border);
+}
+
+.profile-dashboard-account-details dt {
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+}
+
+.profile-dashboard-account-details dd {
+    font-weight: 500;
+}
+
+.profile-dashboard-faq-card [data-slot="accordion-trigger"] {
+    transition: color 180ms ease;
+}
+
+.profile-dashboard-faq-card [data-slot="accordion-content"] a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (min-width: 640px) {
+    .profile-dashboard .profile-dashboard-overview {
+        --card-spacing: 1.5rem;
+    }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .profile-dashboard .profile-dashboard-interactive-card:not([data-limit-reached]):hover,
+    .profile-dashboard-saved-card:hover > div > [data-slot="card"] {
+        border-color: color-mix(in srgb, var(--brand-indigo) 30%, var(--border));
+        box-shadow: 0 6px 20px -12px color-mix(in srgb, var(--foreground) 22%, transparent);
+    }
+
+    .profile-dashboard .profile-dashboard-tab:hover {
+        background: var(--dashboard-tint);
+    }
+
+    .profile-dashboard-action:hover .profile-dashboard-action-arrow {
+        transform: translateX(2px);
+    }
+
+    .profile-dashboard-faq-card [data-slot="accordion-trigger"]:hover {
+        color: var(--dashboard-accent-foreground);
+        text-decoration: none;
+    }
+}
+
+.profile-dashboard-action:focus-visible .profile-dashboard-action-arrow {
+    transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .profile-dashboard :is(.profile-dashboard-interactive-card, .profile-dashboard-action-arrow, [data-slot="tabs-trigger"], [data-slot="button"], [data-slot="toggle-group-item"], [data-slot="progress-indicator"], [data-slot="accordion-trigger"], [data-slot="accordion-content"]),
+    .profile-dashboard .profile-dashboard-tab::after,
+    .profile-dashboard .profile-dashboard-saved-card > div > [data-slot="card"] {
+        animation: none;
+        transition: none;
+    }
+
+    .profile-dashboard-action .profile-dashboard-action-arrow {
+        transform: none;
+    }
+}

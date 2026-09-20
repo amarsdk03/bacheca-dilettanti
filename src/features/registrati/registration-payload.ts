@@ -1,5 +1,6 @@
 import {
-	PROFILE_TYPES,
+	isComingSoonProfileType,
+	type ComingSoonProfileType,
 	type ProfileDrafts,
 	type ProfileLocations,
 	type ProfileType,
@@ -8,7 +9,7 @@ import type {ProfileSocialLinks, ProfileSocialLinksByType,} from "@/features/pro
 
 export const REGISTRATION_PAYLOAD_VERSION = 1 as const;
 
-export type RegistrableProfileType = ProfileType;
+export type RegistrableProfileType = Exclude<ProfileType, ComingSoonProfileType>;
 
 export interface RegistrationProfilePayload {
 	type: RegistrableProfileType;
@@ -19,7 +20,7 @@ export interface RegistrationProfilePayload {
 
 export interface RegistrationPayload {
 	version: typeof REGISTRATION_PAYLOAD_VERSION;
-	selectedProfileTypes: ProfileType[];
+	selectedProfileTypes: RegistrableProfileType[];
 	primaryProfileType: RegistrableProfileType;
 	profiles: RegistrationProfilePayload[];
 }
@@ -27,7 +28,7 @@ export interface RegistrationPayload {
 export function isRegistrableProfileType(
 	type: ProfileType,
 ): type is RegistrableProfileType {
-	return (PROFILE_TYPES as readonly ProfileType[]).includes(type);
+	return !isComingSoonProfileType(type);
 }
 
 export function createRegistrationPayload(
@@ -37,12 +38,17 @@ export function createRegistrationPayload(
 	locations: ProfileLocations,
 	socialLinks: ProfileSocialLinksByType,
 ): RegistrationPayload | null {
-	if (!primaryProfileType || !isRegistrableProfileType(primaryProfileType)) {
+	const registrableProfileTypes = selectedProfileTypes.filter(isRegistrableProfileType);
+	if (
+		registrableProfileTypes.length !== selectedProfileTypes.length
+		|| !primaryProfileType
+		|| !isRegistrableProfileType(primaryProfileType)
+		|| !registrableProfileTypes.includes(primaryProfileType)
+	) {
 		return null;
 	}
 
-	const profiles = selectedProfileTypes
-		.filter(isRegistrableProfileType)
+	const profiles = registrableProfileTypes
 		.map((type) => ({
 			type,
 			draft: drafts[type],
@@ -52,7 +58,7 @@ export function createRegistrationPayload(
 
 	return {
 		version: REGISTRATION_PAYLOAD_VERSION,
-		selectedProfileTypes,
+		selectedProfileTypes: registrableProfileTypes,
 		primaryProfileType,
 		profiles,
 	};

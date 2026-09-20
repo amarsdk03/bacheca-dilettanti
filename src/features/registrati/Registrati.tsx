@@ -43,6 +43,7 @@ import {signUpWithPassword} from "@/features/auth/server/actions";
 import {
 	createProfileDrafts,
 	createProfileLocations,
+	isComingSoonProfileType,
 	isProfileType,
 	MAX_PROFILE_COUNT,
 	PROFILE_OPTIONS,
@@ -51,6 +52,7 @@ import {
 	type ProfileType,
 } from "@/features/profilo/profile-model";
 import {createProfileSocialLinks, type ProfileSocialPlatform,} from "@/features/profilo/profile-social-links";
+import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
 import {type AuthActionState, type AuthFieldErrors, INITIAL_AUTH_STATE} from "@/features/auth/types";
 import {hasFieldErrors, validateRegistration} from "@/features/auth/validation";
 import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
@@ -693,7 +695,8 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 											<FieldGroup data-slot="checkbox-group" className="grid gap-3 sm:grid-cols-2">
 												{PROFILE_OPTIONS.map(({value, label, description: optionDescription, icon: Icon}) => {
 													const checked = selectedProfileTypes.includes(value);
-													const disabled = !checked && selectedProfileTypes.length >= MAX_PROFILE_COUNT;
+													const comingSoon = isComingSoonProfileType(value);
+													const disabled = comingSoon || (!checked && selectedProfileTypes.length >= MAX_PROFILE_COUNT);
 
 													return (
 														<div key={value} className="relative">
@@ -701,7 +704,10 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 																<Field orientation="horizontal" data-disabled={disabled} aria-disabled={disabled}>
 																	<Icon aria-hidden="true" />
 																	<FieldContent>
-																		<FieldTitle>{label}</FieldTitle>
+																		<FieldTitle className="flex-wrap">
+																			<span>{label}</span>
+																			{comingSoon && <ComingSoonBadge />}
+																		</FieldTitle>
 																		<FieldDescription>{optionDescription}</FieldDescription>
 																	</FieldContent>
 																	<Checkbox
@@ -712,7 +718,7 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 																		aria-invalid={Boolean(profileSelectionError)}
 																	/>
 																</Field>
-															</FieldLabel>
+																</FieldLabel>
 														</div>
 													);
 												})}

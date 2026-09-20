@@ -1,13 +1,14 @@
 "use client";
 
-import {type ReactNode, useActionState, useState, useTransition} from "react";
+import {type CSSProperties, type ReactNode, useActionState, useEffect, useRef, useState, useTransition} from "react";
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
 import {
+	ArrowRightIcon,
 	BadgeCheckIcon,
 	CheckIcon,
 	CircleHelpIcon,
-	CirclePlusIcon,
+	ClipboardPenIcon,
 	EyeIcon,
 	EyeOffIcon,
 	FileTextIcon,
@@ -47,16 +48,17 @@ import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card";
 import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle,} from "@/components/ui/empty";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {Separator} from "@/components/ui/separator";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {toast} from "@/components/ui/toast";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
-import {Progress} from "@/components/ui/progress";
+import {Progress, ProgressLabel, ProgressValue} from "@/components/ui/progress";
 import GradientBackground from "@/components/styling/GradientBackground";
 import {CONTACT_EMAIL} from "@/const/contactConstants";
 import {announcementOption} from "@/features/annunci/announcement-model";
 import {requestCurrentUserPasswordReset, signOut} from "@/features/auth/server/actions";
 import {
+	isComingSoonProfileType,
 	MAX_PROFILE_COUNT,
 	PROFILE_OPTIONS,
 	type ProfileDrafts,
@@ -64,6 +66,7 @@ import {
 	type ProfileType,
 } from "@/features/profilo/profile-model";
 import {getProfileCompletion} from "@/features/profilo/profile-completion";
+import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {INITIAL_AUTH_STATE, type ViewerDTO} from "@/features/auth/types";
 import ProfileEditorDialog from "@/features/profilo/ProfileEditorDialog";
@@ -84,9 +87,7 @@ import type {
 	ProfileEditorSavePayload,
 	ProfileMutationResult,
 } from "@/features/profilo/types";
-import {cn} from "@/lib/utils";
 import {RelationshipsSection, SavedAnnouncementsSection} from "@/features/interazioni/DashboardSections";
-import {Separator} from "@base-ui/react";
 
 const DASHBOARD_ITEMS = [
 	{value: "profilo", label: "Il tuo profilo", icon: UserRoundIcon},
@@ -192,7 +193,6 @@ const FAQ_GROUPS = [
 	},
 ] as const satisfies readonly FaqGroup[];
 
-const MOBILE_DASHBOARD_ITEMS = DASHBOARD_ITEMS.map(({value, label}) => ({value, label}));
 const DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {
 	day: "2-digit",
 	month: "long",
@@ -241,110 +241,122 @@ function moderationVariant(value: string | null): "default" | "secondary" | "des
 	return "outline";
 }
 
-function LogoutButton({compact = false}: {compact?: boolean}) {
+function LogoutButton() {
 	const {pending} = useFormStatus();
 
 	return (
 		<Button
 			type="submit"
 			variant="ghost"
-			size={compact ? "icon" : "default"}
-			className={compact ? "text-destructive" : "w-full justify-start text-destructive"}
+			size="sm"
 			disabled={pending}
-			aria-label={compact ? "Logout" : undefined}
 		>
-			{pending ? <LoaderCircleIcon className="animate-spin" aria-hidden="true" /> : <LogOutIcon aria-hidden="true" />}
-			{!compact && (pending ? "Uscita in corso…" : "Logout")}
+			{pending ? <LoaderCircleIcon className="animate-spin" data-icon="inline-start" aria-hidden="true" /> : <LogOutIcon data-icon="inline-start" aria-hidden="true" />}
+			{pending ? "Uscita in corso…" : "Esci"}
 		</Button>
 	);
 }
 
-function DashboardNavigation() {
+function revealDashboardTab(viewport: HTMLDivElement, tab: HTMLElement) {
+	const viewportBounds = viewport.getBoundingClientRect();
+	const tabBounds = tab.getBoundingClientRect();
+	const inset = 6;
+
+	// Only move this strip: scrollIntoView can also move the entire page.
+	if (tabBounds.left < viewportBounds.left + inset) {
+		viewport.scrollLeft += tabBounds.left - viewportBounds.left - inset;
+	} else if (tabBounds.right > viewportBounds.right - inset) {
+		viewport.scrollLeft += tabBounds.right - viewportBounds.right + inset;
+	}
+}
+
+function DashboardNavigation({section}: {section: ProfileDashboardSection}) {
+	const viewportRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const viewport = viewportRef.current;
+		if (!viewport) return;
+
+		const revealActiveTab = () => {
+			const tab = viewport.querySelector<HTMLElement>(`[data-dashboard-section="${section}"]`);
+			if (tab) revealDashboardTab(viewport, tab);
+		};
+
+		revealActiveTab();
+		const observer = new ResizeObserver(revealActiveTab);
+		observer.observe(viewport);
+		return () => observer.disconnect();
+	}, [section]);
+
 	return (
-		<Card className="sticky top-24">
-			<CardHeader className="px-6 pt-1">
-				<CardTitle>Area personale</CardTitle>
-				<CardDescription>Gestisci profili e annunci</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<TabsList variant="line" className="w-full items-stretch gap-1 p-0">
-					{DASHBOARD_ITEMS.map(({value, label, icon: Icon}) => (
-						<TabsTrigger key={value} value={value} className="min-h-9">
-							<Icon aria-hidden="true" />
-							{label}
-						</TabsTrigger>
-					))}
-				</TabsList>
-			</CardContent>
-			<CardFooter>
-				<form action={signOut} className="w-full">
-					<LogoutButton />
-				</form>
-			</CardFooter>
-		</Card>
+		<div
+			ref={viewportRef}
+			className="profile-dashboard-navigation min-w-0 overflow-x-auto"
+			onFocusCapture={(event) => {
+				const tab = event.target.closest<HTMLElement>("[role=tab]");
+				if (tab) revealDashboardTab(event.currentTarget, tab);
+			}}
+		>
+			<TabsList variant="line" className="profile-dashboard-tab-list" aria-label="Sezioni dell’area personale">
+				{DASHBOARD_ITEMS.map(({value, label, icon: Icon}) => (
+					<TabsTrigger key={value} value={value} data-dashboard-section={value} className="profile-dashboard-tab">
+						<Icon data-icon="inline-start" aria-hidden="true" />
+						{label}
+					</TabsTrigger>
+				))}
+			</TabsList>
+		</div>
 	);
 }
 
-function MobileDashboardNavigation({section, onSectionChange}: {
-	section: ProfileDashboardSection;
-	onSectionChange: (section: ProfileDashboardSection) => void;
-}) {
-	return (
-		<Card size="sm">
-			<CardContent className="flex items-center gap-2">
-				<Select
-					items={MOBILE_DASHBOARD_ITEMS}
-					value={section}
-					onValueChange={(value) => isDashboardSection(value) && onSectionChange(value)}
-				>
-					<SelectTrigger className="w-full" aria-label="Sezione dell'area personale">
-						<SelectValue />
-					</SelectTrigger>
-					<SelectContent align="start">
-						<SelectGroup>
-							{DASHBOARD_ITEMS.map(({value, label, icon: Icon}) => (
-								<SelectItem key={value} value={value}>
-									<Icon aria-hidden="true" />
-									{label}
-								</SelectItem>
-							))}
-						</SelectGroup>
-					</SelectContent>
-				</Select>
-				<form action={signOut}>
-					<LogoutButton compact />
-				</form>
-			</CardContent>
-		</Card>
-	);
-}
-
-function AccountOverview({viewer, imageUrl, hasMainImage}: {
+function AccountOverview({viewer, imageUrl, hasMainImage, profiles}: {
 	viewer: ViewerDTO;
 	imageUrl: string | null;
 	hasMainImage: boolean;
+	profiles: ManagedProfile[];
 }) {
+	const primaryProfile = profiles.find(({isPrimary}) => isPrimary);
+	const primaryLabel = PROFILE_OPTIONS.find(({value}) => value === primaryProfile?.type)?.label;
+
 	return (
-		<Card>
-			<CardContent className="grid gap-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
-				<ProfileImageEditor
-					scope="main"
-					imageUrl={imageUrl ?? viewer.avatarUrl}
-					hasCustomImage={hasMainImage}
-					fallback={<span className="text-lg">{viewer.initials}</span>}
-					title="Foto profilo principale"
-					description="Questa foto rappresenta il tuo account e viene usata come fallback per i sottoprofili senza una foto dedicata."
-					alt={`Foto profilo di ${viewer.fullName}`}
-					avatarClassName="size-16 text-lg"
-				/>
-				<div className="min-w-0">
-					<div className="flex flex-wrap items-center gap-2">
-						<h2 className="truncate text-xl font-semibold tracking-tight">{viewer.fullName}</h2>
-						<Badge variant="secondary"><ShieldCheckIcon aria-hidden="true" /> Account autenticato</Badge>
+		<Card className="profile-dashboard-card profile-dashboard-overview">
+			<CardHeader className="gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+				<div className="flex min-w-0 items-center gap-4 sm:gap-5">
+					<ProfileImageEditor
+						scope="main"
+						imageUrl={imageUrl ?? viewer.avatarUrl}
+						hasCustomImage={hasMainImage}
+						fallback={<span>{viewer.initials}</span>}
+						title="Foto profilo principale"
+						description="Questa foto rappresenta il tuo account e viene usata come fallback per i sottoprofili senza una foto dedicata."
+						alt={`Foto profilo di ${viewer.fullName}`}
+						avatarClassName="size-16 text-lg sm:size-20 sm:text-xl"
+					/>
+					<div className="flex min-w-0 flex-col gap-1.5">
+						<p className="profile-dashboard-eyebrow">Area personale</p>
+						<h1 className="wrap-anywhere text-2xl font-semibold tracking-tight sm:text-3xl">{viewer.fullName}</h1>
+						<CardDescription className="break-all">{viewer.email}</CardDescription>
 					</div>
-					<p className="mt-1 truncate text-muted-foreground">{viewer.email}</p>
 				</div>
-			</CardContent>
+				<div className="grid gap-2 sm:grid-cols-2 md:grid-cols-1">
+					<Button variant={"outline"} render={<Link href="/pubblica-annuncio" />} nativeButton={false} className="min-h-11 px-5">
+						<ClipboardPenIcon data-icon="inline-start" className="ms-3" aria-hidden="true" />
+						Pubblica annuncio
+					</Button>
+				</div>
+			</CardHeader>
+			<CardFooter className="flex-wrap gap-x-3 gap-y-2">
+				<div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+					<Badge variant="secondary"><ShieldCheckIcon data-icon="inline-start" aria-hidden="true" /> Account autenticato</Badge>
+					{primaryLabel && (
+						<Badge variant="outline" className="max-w-full" title={`Profilo principale: ${primaryLabel}`}>
+							<StarIcon data-icon="inline-start" aria-hidden="true" /><span className="truncate">Principale: {primaryLabel}</span>
+						</Badge>
+					)}
+					<span className="text-xs text-muted-foreground"><span className="font-medium text-foreground">{profiles.length}/{MAX_PROFILE_COUNT}</span> sottoprofili attivi</span>
+				</div>
+				<form action={signOut} className="ml-auto"><LogoutButton /></form>
+			</CardFooter>
 		</Card>
 	);
 }
@@ -402,55 +414,46 @@ function ProfileCard({
 	};
 
 	return (
-		<Card className="h-full">
-			<CardHeader className="flex justify-between items-center pb-3 border-b-2 border-neutral-100">
+		<Card className="profile-dashboard-card profile-dashboard-interactive-card h-full" style={{"--profile-accent": accent} as CSSProperties}>
+			<CardHeader className="flex flex-wrap items-center justify-between gap-3">
 				<div className="flex min-w-0 items-center gap-3">
 					<ProfileImageEditor
-							scope={profile.type}
-							imageUrl={profile.imageUrl}
-							hasCustomImage={profile.hasCustomImage}
+						scope={profile.type}
+						imageUrl={profile.imageUrl}
+						hasCustomImage={profile.hasCustomImage}
 						fallback={<ProfilePngIcon type={profile.type} color={accent} className="size-7" />}
 						title={`Foto profilo ${option?.label ?? "sottoprofilo"}`}
 						description="Puoi usare una foto diversa da quella principale per questa tipologia di profilo."
 						alt={`Foto del profilo ${option?.label ?? profile.type}`}
-						avatarClassName="size-10"
+						avatarClassName="size-12"
 					/>
 					<div className="min-w-0">
-						<CardTitle className="truncate">{option?.label}</CardTitle>
+						<CardTitle className="wrap-anywhere">{option?.label}</CardTitle>
 					</div>
 				</div>
 				{
 					profile.isPrimary ? (
-						<Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}><StarIcon aria-hidden="true" /> Principale</Badge>
+						<Badge variant="secondary" className="profile-dashboard-type-badge"><StarIcon data-icon="inline-start" aria-hidden="true" /> Principale</Badge>
 					) : (
-						<Badge variant="outline" style={{borderColor: accent, color: accent}}><CheckIcon aria-hidden="true" /> Attivato</Badge>
+						<Badge variant="outline"><CheckIcon data-icon="inline-start" aria-hidden="true" /> Attivo</Badge>
 					)
 				}
 			</CardHeader>
-			<CardContent className="grid gap-4">
+			<CardContent className="flex flex-1 flex-col gap-5">
 				<p className="leading-6 text-muted-foreground">
 					{option?.description}
 				</p>
-				<Card size="sm" className="border-black/8 bg-muted/30 shadow-none">
-					<CardHeader className="gap-2">
-						<div className="flex items-center justify-between gap-3">
-							<CardTitle className="text-sm">{profileCompletion.percentage}% completamento</CardTitle>
-							<span className="text-xs text-muted-foreground">
-								{profileCompletion.completed}/{profileCompletion.total}
-							</span>
-						</div>
-						<Progress
-							value={profileCompletion.percentage}
-							aria-label={`Completamento profilo: ${profileCompletion.percentage}%`}
-							indicatorStyle={{backgroundColor: accent}}
-						/>
-						<CardDescription className="text-xs">
-							{profileCompletion.percentage === 100
-								? "Profilo completo: ben fatto!"
-								: "Hai più possibilità di essere visto se completi il tuo profilo!"}
-						</CardDescription>
-					</CardHeader>
-				</Card>
+				<div className="mt-auto flex flex-col gap-2">
+					<Progress value={profileCompletion.percentage} indicatorStyle={{backgroundColor: accent}}>
+						<ProgressLabel>Completamento profilo</ProgressLabel>
+						<ProgressValue />
+					</Progress>
+					<p className="text-xs leading-5 text-muted-foreground">
+						{profileCompletion.percentage === 100
+							? "Profilo completo: ben fatto!"
+							: `${profileCompletion.completed} di ${profileCompletion.total} informazioni completate. Arricchisci il profilo per farti conoscere meglio.`}
+					</p>
+				</div>
 			</CardContent>
 			<CardFooter className="flex flex-wrap justify-between gap-2">
 				<div>
@@ -461,6 +464,8 @@ function ProfileCard({
 							size="icon"
 							onClick={() => runMutation("primary", onMakePrimary)}
 							disabled={pending}
+							aria-label={`Imposta ${option?.label ?? profile.type} come profilo principale`}
+							title="Imposta come principale"
 						>
 							{pending && pendingAction === "primary"
 								? <LoaderCircleIcon className="animate-spin" data-icon="inline-start" aria-hidden="true" />
@@ -469,11 +474,11 @@ function ProfileCard({
 					)}
 				</div>
 				<div className="flex flex-wrap justify-end gap-2">
-					<Button type="button" variant="outline" onClick={onEdit} disabled={pending}>
+					<Button type="button" variant="outline" onClick={onEdit} disabled={pending} aria-label={`Aggiorna il profilo ${option?.label ?? profile.type}`}>
 						<PencilIcon data-icon="inline-start" aria-hidden="true" /> Aggiorna
 					</Button>
 					<AlertDialog open={removeOpen} onOpenChange={(open) => !pending && setRemoveOpen(open)}>
-						<AlertDialogTrigger render={<Button type="button" variant="destructive" disabled={pending} />}>
+						<AlertDialogTrigger render={<Button type="button" variant="destructive" size="icon" disabled={pending} />} aria-label={`Rimuovi il profilo ${option?.label ?? profile.type}`} title="Rimuovi sottoprofilo">
 							<Trash2Icon data-icon="inline-start" aria-hidden="true" />
 						</AlertDialogTrigger>
 						<AlertDialogContent>
@@ -518,37 +523,37 @@ function InactiveProfileCard({
 	if (!option) return null;
 
 	const accent = getProfileAccent(type);
+	const comingSoon = isComingSoonProfileType(type);
 
 	return (
-		<Card className="h-full">
-			<CardHeader className="flex justify-between items-center pb-3 border-b-2 border-neutral-100">
+		<Card size="sm" className="profile-dashboard-card profile-dashboard-interactive-card profile-dashboard-available-card h-full" style={{"--profile-accent": accent} as CSSProperties} data-limit-reached={disabled || comingSoon || undefined}>
+			<CardHeader>
 				<div className="flex min-w-0 items-center gap-3">
-					<div className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{backgroundColor: `${accent}14`}}>
-						<ProfilePngIcon type={type} color={accent} className="size-7" />
+					<div className="profile-dashboard-type-icon flex size-10 shrink-0 items-center justify-center rounded-xl">
+						<ProfilePngIcon type={type} color={accent} className="size-6" />
 					</div>
 					<div className="min-w-0">
-						<CardTitle>{option.label}</CardTitle>
+						<CardTitle className="wrap-anywhere">{option.label}</CardTitle>
 					</div>
 				</div>
-				<Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}>Non attivato</Badge>
 			</CardHeader>
 			<CardContent>
 				<p className="leading-6 text-muted-foreground">{option.description}</p>
 			</CardContent>
-			<CardFooter className="mt-auto justify-end">
-				<Button type="button" onClick={onEnable} disabled={disabled}>
-					<PlusIcon data-icon="inline-start" aria-hidden="true" />
-					Abilita
-				</Button>
+			<CardFooter className="mt-auto flex-wrap justify-between gap-2">
+				{comingSoon ? <ComingSoonBadge /> : <Badge variant="outline">Non attivo</Badge>}
+				{!comingSoon && (
+					<Button type="button" variant="outline" size="sm" onClick={onEnable} disabled={disabled} aria-label={`Abilita il profilo ${option.label}`}>
+						<PlusIcon data-icon="inline-start" aria-hidden="true" />
+						Abilita
+					</Button>
+				)}
 			</CardFooter>
 		</Card>
 	);
 }
 
 function ProfilesSection({
-	viewer,
-	mainImageUrl,
-	hasMainImage,
 	profiles,
 	drafts,
 	locations,
@@ -557,9 +562,6 @@ function ProfilesSection({
 	onMakePrimary,
 	onRemove,
 }: {
-	viewer: ViewerDTO;
-	mainImageUrl: string | null;
-	hasMainImage: boolean;
 	profiles: ManagedProfile[];
 	drafts: ProfileDrafts;
 	locations: ProfileLocations;
@@ -571,60 +573,58 @@ function ProfilesSection({
 	const limitReached = profiles.length >= MAX_PROFILE_COUNT;
 
 	return (
-		<section aria-labelledby="profiles-heading" className="grid gap-6">
-			<AccountOverview viewer={viewer} imageUrl={mainImageUrl} hasMainImage={hasMainImage} />
-
-			<div className={"mt-2"}>
-				<div className="flex items-center gap-2">
-					<h2 id="profiles-heading" className="text-2xl font-semibold tracking-tight">Sottoprofili attivi</h2>
-					<Badge variant="secondary">{profiles.length}/{MAX_PROFILE_COUNT}</Badge>
+		<div className="grid gap-8">
+			<section aria-labelledby="profiles-heading" className="grid gap-5">
+				<div className="flex flex-col gap-1.5">
+					<div className="flex items-center gap-2">
+						<h2 id="profiles-heading" className="text-xl font-semibold tracking-tight">Sottoprofili attivi</h2>
+						<Badge variant="secondary">{profiles.length}/{MAX_PROFILE_COUNT}</Badge>
+					</div>
+					<p className="text-sm leading-6 text-muted-foreground">Le identità con cui ti presenti su Bacheca. Aggiorna le informazioni e scegli il tuo profilo principale.</p>
 				</div>
-				<p className="mt-1 text-muted-foreground">Un solo sottoprofilo per tipologia, fino a un massimo di cinque.</p>
-			</div>
 
-			<div className="grid gap-4 md:grid-cols-2">
-				{profiles.map((profile) => (
-					<ProfileCard
-						key={profile.type}
-						profile={profile}
-						drafts={drafts}
-						locations={locations}
-						onEdit={() => onEdit(profile.type)}
-						onMakePrimary={() => onMakePrimary(profile.type)}
-						onRemove={() => onRemove(profile.type)}
-					/>
-				))}
-			</div>
+				<div className="grid gap-4 md:grid-cols-2">
+					{profiles.map((profile) => (
+						<ProfileCard
+							key={profile.type}
+							profile={profile}
+							drafts={drafts}
+							locations={locations}
+							onEdit={() => onEdit(profile.type)}
+							onMakePrimary={() => onMakePrimary(profile.type)}
+							onRemove={() => onRemove(profile.type)}
+						/>
+					))}
+				</div>
+			</section>
+			<Separator />
 
-			<Separator className={"mt-8 border-b"} />
-			
-			<div className={"mt-4"}>
-				<div className="flex items-center gap-2">
-					<h2 id="profiles-heading" className="text-2xl font-semibold tracking-tight">Sottoprofili non attivi</h2>
+			<section aria-labelledby="available-profiles-heading" className="grid gap-5">
+				<div className="flex flex-col gap-1.5">
+					<h2 id="available-profiles-heading" className="text-xl font-semibold tracking-tight">Altri sottoprofili</h2>
+					<p className="text-sm leading-6 text-muted-foreground">Aggiungi una nuova tipologia: puoi attivare fino a {MAX_PROFILE_COUNT} sottoprofili, uno per categoria.</p>
 				</div>
 
 				{limitReached && (
-					<Alert className={"mt-2"}>
+					<Alert>
 						<InfoIcon aria-hidden="true" />
 						<AlertTitle>Hai raggiunto il limite di sottoprofili</AlertTitle>
 						<AlertDescription>Rimuovine uno per configurare una nuova tipologia.</AlertDescription>
 					</Alert>
 				)}
-			</div>
 
-			<div className="grid gap-4 md:grid-cols-2">
-				{PROFILE_OPTIONS.filter(({value}) => !profiles.find(({type}) => type === value)).map(({value}) => {
-					return (
+				<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+					{PROFILE_OPTIONS.filter(({value}) => !profiles.some(({type}) => type === value)).map(({value}) => (
 						<InactiveProfileCard
 							key={value}
 							type={value}
 							disabled={limitReached}
 							onEnable={() => onEnable(value)}
 						/>
-					);
-				})}
-			</div>
-		</section>
+					))}
+				</div>
+			</section>
+		</div>
 	);
 }
 
@@ -677,58 +677,53 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 	};
 
 	return (
-		<Card className={cn("relative overflow-hidden border-black/8", isHidden && !paymentPending && "opacity-75")}>
-			<span className="absolute inset-x-0 top-0 h-1" style={{backgroundColor: accent}} aria-hidden="true" />
-			<CardHeader className="border-b border-black/8 pt-2">
-				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-					<div className="flex min-w-0 gap-3">
-						<span className="flex size-10 shrink-0 items-center justify-center rounded-xl" style={{backgroundColor: `${accent}14`, color: accent}}>
-							<TypeIcon className="size-5" aria-hidden="true" />
-						</span>
-						<div className="min-w-0">
-							<div className="mb-2 flex flex-wrap gap-1.5">
-								<Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}>{announcement.type}</Badge>
-								<Badge variant="outline">{announcement.subtype}</Badge>
-								<Badge variant={moderationVariant(announcement.moderationStatus)}>{moderationLabel(announcement.moderationStatus)}</Badge>
-								{announcement.level === "prioritario" && <Badge variant="secondary">Prioritario</Badge>}
-								{isHidden && !paymentPending && <Badge variant="secondary"><EyeOffIcon aria-hidden="true" /> Nascosto</Badge>}
-							</div>
-							<CardTitle className="wrap-anywhere text-lg leading-snug">{announcement.title}</CardTitle>
+		<Card className="profile-dashboard-card profile-dashboard-interactive-card" style={{"--profile-accent": accent} as CSSProperties}>
+			<CardHeader>
+				<div className="flex min-w-0 items-start gap-3">
+					<span className="profile-dashboard-type-icon flex size-10 shrink-0 items-center justify-center rounded-xl">
+						<TypeIcon className="size-5" aria-hidden="true" />
+					</span>
+					<div className="flex min-w-0 flex-1 flex-col gap-3">
+						<div className="flex flex-wrap gap-1.5">
+							<Badge variant="secondary" className="profile-dashboard-type-badge">{announcement.type}</Badge>
+							<Badge variant="outline">{announcement.subtype}</Badge>
+							<Badge variant={moderationVariant(announcement.moderationStatus)}>{moderationLabel(announcement.moderationStatus)}</Badge>
+							{announcement.level === "prioritario" && <Badge variant="secondary"><StarIcon data-icon="inline-start" aria-hidden="true" /> Prioritario</Badge>}
 						</div>
+						<CardTitle className="wrap-anywhere">{announcement.title}</CardTitle>
 					</div>
-					<span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">{formatDate(announcement.createdAt)}</span>
 				</div>
 			</CardHeader>
 			<CardContent className="grid gap-4">
-				<p className="leading-6 text-muted-foreground">{announcement.description}</p>
+				<p className="wrap-anywhere leading-6 text-muted-foreground">{announcement.description}</p>
 				{announcement.moderationInfo && (
-					<p className="rounded-xl border px-3 py-2.5 text-sm leading-6 text-foreground" style={{backgroundColor: `${accent}0d`, borderColor: `${accent}28`}}>
-						{announcement.moderationInfo}
-					</p>
+					<Alert>
+						<InfoIcon aria-hidden="true" />
+						<AlertTitle>Nota di moderazione</AlertTitle>
+						<AlertDescription className="wrap-anywhere">{announcement.moderationInfo}</AlertDescription>
+					</Alert>
 				)}
-				<dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-					<div className="rounded-xl border border-black/7 bg-muted/25 px-3 py-2.5">
-						<dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Stato</dt>
-						<dd className="mt-1 text-sm font-medium">{moderationLabel(announcement.moderationStatus)}</dd>
+				<Separator />
+				<dl className="grid gap-4 sm:grid-cols-3">
+					<div className="flex min-w-0 flex-col gap-1">
+						<dt className="text-xs text-muted-foreground">Località</dt>
+						<dd className="flex items-start gap-1.5 font-medium"><MapPinIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" /><span className="wrap-anywhere">{announcement.location}</span></dd>
 					</div>
-					<div className="rounded-xl border border-black/7 bg-muted/25 px-3 py-2.5">
-						<dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Visibilità</dt>
-						<dd className="mt-1 text-sm font-medium">{isHidden ? "Nascosto" : "Visibile"}</dd>
+					<div className="flex flex-col gap-1">
+						<dt className="text-xs text-muted-foreground">Creato il</dt>
+						<dd className="font-medium">{formatDate(announcement.createdAt)}</dd>
 					</div>
-					<div className="min-w-0 rounded-xl border border-black/7 bg-muted/25 px-3 py-2.5">
-						<dt className="flex items-center gap-1 text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground"><MapPinIcon className="size-3.5" style={{color: accent}} aria-hidden="true" />Località</dt>
-						<dd className="mt-1 truncate text-sm font-medium" title={announcement.location}>{announcement.location}</dd>
-					</div>
-					<div className="rounded-xl border border-black/7 bg-muted/25 px-3 py-2.5">
-						<dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Pubblicato</dt>
-						<dd className="mt-1 text-sm font-medium">{formatDate(announcement.createdAt)}</dd>
+					<div className="flex flex-col gap-1">
+						<dt className="text-xs text-muted-foreground">Visibilità</dt>
+						<dd className="flex items-center gap-1.5 font-medium">{isHidden ? <EyeOffIcon className="size-4 text-muted-foreground" aria-hidden="true" /> : <EyeIcon className="size-4 text-muted-foreground" aria-hidden="true" />}{isHidden ? "Nascosto" : "Visibile"}</dd>
 					</div>
 				</dl>
 			</CardContent>
 			<CardFooter className="flex flex-wrap justify-end gap-2">
 				{paymentPending ? (
-					<Button render={<Link href={`/pubblica-annuncio/pagamento?id=${encodeURIComponent(announcement.id)}`} />} nativeButton={false}>
+					<Button render={<Link href={`/pubblica-annuncio/pagamento?id=${encodeURIComponent(announcement.id)}`} />} nativeButton={false} className="profile-dashboard-action" disabled={pending}>
 						Completa pagamento
+						<ArrowRightIcon data-icon="inline-end" className="profile-dashboard-action-arrow" aria-hidden="true" />
 					</Button>
 				) : (
 					<Button
@@ -738,14 +733,14 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 						disabled={pending}
 					>
 						{pending && pendingAction === "visibility"
-							? <LoaderCircleIcon className="animate-spin" aria-hidden="true" />
-							: isHidden ? <EyeIcon aria-hidden="true" /> : <EyeOffIcon aria-hidden="true" />}
+							? <LoaderCircleIcon className="animate-spin" data-icon="inline-start" aria-hidden="true" />
+							: isHidden ? <EyeIcon data-icon="inline-start" aria-hidden="true" /> : <EyeOffIcon data-icon="inline-start" aria-hidden="true" />}
 						{isHidden ? "Mostra" : "Nascondi"}
 					</Button>
 				)}
 				<AlertDialog open={removeOpen} onOpenChange={(open) => !pending && setRemoveOpen(open)}>
 					<AlertDialogTrigger render={<Button type="button" variant="destructive" disabled={pending} />}>
-						<Trash2Icon aria-hidden="true" /> Elimina
+						<Trash2Icon data-icon="inline-start" aria-hidden="true" /> Elimina
 					</AlertDialogTrigger>
 					<AlertDialogContent>
 						<AlertDialogHeader>
@@ -793,14 +788,9 @@ function AnnouncementsSection({announcements, onToggleVisibility, onRemove}: {
 
 	return (
 		<section aria-labelledby="announcements-heading" className="grid gap-6">
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-				<div>
-					<h2 id="announcements-heading" className="text-xl font-semibold tracking-tight">I miei annunci</h2>
-					<p className="mt-1 text-muted-foreground">Puoi gestirne la visibilità o eliminarli; la modifica non è disponibile.</p>
-				</div>
-				<Button render={<Link href="/pubblica-annuncio" />} nativeButton={false}>
-					<CirclePlusIcon aria-hidden="true" /> Pubblica annuncio
-				</Button>
+			<div className="flex flex-col gap-1.5">
+				<h2 id="announcements-heading" className="text-xl font-semibold tracking-tight">I miei annunci</h2>
+				<p className="text-sm leading-6 text-muted-foreground">Controlla lo stato dei tuoi annunci, gestiscine la visibilità o eliminali. Per cambiare i contenuti, pubblica un nuovo annuncio.</p>
 			</div>
 
 			<ToggleGroup
@@ -811,7 +801,7 @@ function AnnouncementsSection({announcements, onToggleVisibility, onRemove}: {
 				}}
 				variant="outline"
 				spacing={1}
-				className="w-full justify-start overflow-x-auto"
+				className="profile-dashboard-filters w-full justify-start overflow-x-auto p-1"
 				aria-label="Filtra gli annunci"
 			>
 				<ToggleGroupItem value="all">Tutti <Badge variant="secondary">{counts.all}</Badge></ToggleGroupItem>
@@ -831,7 +821,7 @@ function AnnouncementsSection({announcements, onToggleVisibility, onRemove}: {
 					))}
 				</div>
 			) : (
-				<Empty className="border bg-card py-12">
+				<Empty className="profile-dashboard-empty">
 					<EmptyHeader>
 						<EmptyMedia variant="icon"><FileTextIcon aria-hidden="true" /></EmptyMedia>
 						<EmptyTitle>Nessun annuncio in questa vista</EmptyTitle>
@@ -852,8 +842,8 @@ function PasswordResetButton() {
 	const {pending} = useFormStatus();
 
 	return (
-		<Button type="submit" disabled={pending}>
-			{pending ? <LoaderCircleIcon className="animate-spin" aria-hidden="true" /> : <KeyRoundIcon aria-hidden="true" />}
+		<Button type="submit" disabled={pending} className="min-h-10 w-full sm:w-auto">
+			{pending ? <LoaderCircleIcon className="animate-spin" data-icon="inline-start" aria-hidden="true" /> : <KeyRoundIcon data-icon="inline-start" aria-hidden="true" />}
 			{pending ? "Invio in corso…" : "Invia link di ripristino"}
 		</Button>
 	);
@@ -864,9 +854,9 @@ function SettingsSection({viewer, passwordUpdated}: {viewer: ViewerDTO; password
 
 	return (
 		<section aria-labelledby="settings-heading" className="grid gap-6">
-			<div>
+			<div className="flex flex-col gap-1.5">
 				<h2 id="settings-heading" className="text-xl font-semibold tracking-tight">Impostazioni</h2>
-				<p className="mt-1 text-muted-foreground">Controlla i dati di accesso e la sicurezza dell’account.</p>
+				<p className="text-sm leading-6 text-muted-foreground">Controlla i dati di accesso e la sicurezza dell’account.</p>
 			</div>
 
 			{passwordUpdated && (
@@ -877,41 +867,45 @@ function SettingsSection({viewer, passwordUpdated}: {viewer: ViewerDTO; password
 				</Alert>
 			)}
 
-			<Card>
-				<CardHeader className="border-b">
-					<CardTitle>Informazioni di accesso</CardTitle>
-					<CardDescription>Dati forniti dal tuo account autenticato.</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<dl className="grid gap-4 sm:grid-cols-2">
-						<div className="rounded-lg border p-3"><dt className="text-xs font-medium text-muted-foreground">Email</dt><dd className="mt-1 break-all font-medium">{viewer.email}</dd></div>
-						<div className="rounded-lg border p-3"><dt className="text-xs font-medium text-muted-foreground">Metodo di accesso</dt><dd className="mt-1 font-medium">{viewer.authMethod}</dd></div>
-						<div className="rounded-lg border p-3"><dt className="text-xs font-medium text-muted-foreground">Stato email</dt><dd className="mt-1 font-medium">{viewer.emailConfirmedAt ? `Verificata il ${formatDate(viewer.emailConfirmedAt)}` : "Da verificare"}</dd></div>
-						<div className="rounded-lg border p-3"><dt className="text-xs font-medium text-muted-foreground">Ultimo accesso</dt><dd className="mt-1 font-medium">{formatDate(viewer.lastSignInAt)}</dd></div>
-					</dl>
-				</CardContent>
-			</Card>
+			<div className="grid gap-4 lg:grid-cols-2">
+				<Card className="profile-dashboard-card">
+					<CardHeader className="gap-3">
+						<span className="profile-dashboard-emblem flex size-10 items-center justify-center rounded-xl"><UserRoundIcon className="size-5" aria-hidden="true" /></span>
+						<CardTitle>Informazioni di accesso</CardTitle>
+						<CardDescription>Dati forniti dal tuo account autenticato.</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<dl className="profile-dashboard-account-details grid gap-4 sm:grid-cols-2">
+							<div><dt>Email</dt><dd className="break-all">{viewer.email}</dd></div>
+							<div><dt>Metodo di accesso</dt><dd className="wrap-anywhere">{viewer.authMethod}</dd></div>
+							<div><dt>Stato email</dt><dd>{viewer.emailConfirmedAt ? `Verificata il ${formatDate(viewer.emailConfirmedAt)}` : "Da verificare"}</dd></div>
+							<div><dt>Ultimo accesso</dt><dd>{formatDate(viewer.lastSignInAt)}</dd></div>
+						</dl>
+					</CardContent>
+				</Card>
 
-			<Card>
-				<CardHeader className="border-b">
-					<CardTitle>Sicurezza</CardTitle>
-					<CardDescription>Ricevi via email un link sicuro per scegliere una nuova password.</CardDescription>
-				</CardHeader>
-				<CardContent className="grid gap-4">
-					<div className="flex items-start gap-3 rounded-lg bg-muted/50 p-3">
-						<MailIcon className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-						<p className="text-sm text-muted-foreground">Il link verrà inviato all’indirizzo autenticato <span className="font-medium text-foreground">{viewer.email}</span>.</p>
-					</div>
-					{state.message && (
-						<Alert variant={state.status === "error" ? "destructive" : "default"} aria-live="polite">
-							{state.status === "success" ? <BadgeCheckIcon aria-hidden="true" /> : <InfoIcon aria-hidden="true" />}
-							<AlertTitle>{state.status === "success" ? "Email inviata" : "Invio non riuscito"}</AlertTitle>
-							<AlertDescription>{state.message}</AlertDescription>
-						</Alert>
-					)}
-					<form action={formAction}><PasswordResetButton /></form>
-				</CardContent>
-			</Card>
+				<Card className="profile-dashboard-card">
+					<CardHeader className="gap-3">
+						<span className="profile-dashboard-emblem flex size-10 items-center justify-center rounded-xl"><ShieldCheckIcon className="size-5" aria-hidden="true" /></span>
+						<CardTitle>Sicurezza</CardTitle>
+						<CardDescription>Ricevi via email un link sicuro per scegliere una nuova password.</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-1 flex-col gap-4">
+						<div className="flex items-start gap-3">
+							<MailIcon className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+							<p className="min-w-0 text-sm leading-6 text-muted-foreground">Il link verrà inviato all’indirizzo <span className="break-all font-medium text-foreground">{viewer.email}</span>.</p>
+						</div>
+						{state.message && (
+							<Alert variant={state.status === "error" ? "destructive" : "default"} aria-live="polite">
+								{state.status === "success" ? <BadgeCheckIcon aria-hidden="true" /> : <InfoIcon aria-hidden="true" />}
+								<AlertTitle>{state.status === "success" ? "Email inviata" : "Invio non riuscito"}</AlertTitle>
+								<AlertDescription>{state.message}</AlertDescription>
+							</Alert>
+						)}
+					</CardContent>
+					<CardFooter><form action={formAction} className="w-full"><PasswordResetButton /></form></CardFooter>
+				</Card>
+			</div>
 		</section>
 	);
 }
@@ -919,14 +913,14 @@ function SettingsSection({viewer, passwordUpdated}: {viewer: ViewerDTO; password
 function FaqSection() {
 	return (
 		<section aria-labelledby="faq-heading" className="grid gap-6">
-			<div>
+			<div className="flex flex-col gap-1.5">
 				<h2 id="faq-heading" className="text-xl font-semibold tracking-tight">Domande frequenti</h2>
-				<p className="mt-1 text-muted-foreground">Le informazioni utili per gestire profili, annunci e richieste di assistenza.</p>
+				<p className="text-sm leading-6 text-muted-foreground">Le informazioni utili per gestire profili, annunci e richieste di assistenza.</p>
 			</div>
 			<div className="grid gap-4">
 				{FAQ_GROUPS.map((group) => (
-					<Card key={group.id}>
-						<CardHeader className="border-b">
+					<Card key={group.id} className="profile-dashboard-card profile-dashboard-faq-card lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-0">
+						<CardHeader className="gap-2">
 							<CardTitle>{group.title}</CardTitle>
 							<CardDescription>{group.description}</CardDescription>
 						</CardHeader>
@@ -969,28 +963,27 @@ export default function IlTuoProfilo({
 	);
 
 	return (
-		<GradientBackground className="min-h-screen py-10 sm:py-12">
-			<main className="relative mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:px-8">
-				<header className="max-w-3xl">
-					<p className="text-sm font-medium text-primary">Area personale</p>
-					<h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Bentornato, {viewer.fullName}!</h1>
-					<p className="mt-2 text-base leading-7 text-muted-foreground">Gestisci la tua presenza su Bacheca Dilettanti da un unico spazio.</p>
+		<GradientBackground className="profile-dashboard min-h-screen py-6 sm:py-8">
+			<main className="relative mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:gap-8 sm:px-6 lg:px-8">
+				<header>
+					<AccountOverview
+						viewer={viewer}
+						imageUrl={mainImageUrl}
+						hasMainImage={hasMainImage}
+						profiles={profiles}
+					/>
 				</header>
 
 				<Tabs
-					orientation="vertical"
+					orientation="horizontal"
 					value={section}
 					onValueChange={(value) => isDashboardSection(value) && setSection(value)}
-					className="grid min-w-0 gap-6 lg:grid-cols-[15rem_minmax(0,1fr)]"
+					className="min-w-0 gap-6 sm:gap-8"
 				>
-					<div className="lg:hidden"><MobileDashboardNavigation section={section} onSectionChange={setSection} /></div>
-					<aside className="hidden lg:block"><DashboardNavigation /></aside>
+					<DashboardNavigation section={section} />
 					<div className="min-w-0">
 						<TabsContent value="profilo">
 							<ProfilesSection
-								viewer={viewer}
-								mainImageUrl={mainImageUrl}
-								hasMainImage={hasMainImage}
 								profiles={profiles}
 								drafts={drafts}
 								locations={locations}

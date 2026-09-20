@@ -74,7 +74,7 @@ export default async function Navbar({minimal = false, backToHome = false, workI
 										Pubblica annuncio
 									</Link>
 								</div>
-								<div className="hidden lg:block">
+								<div className="hidden lg:flex items-center">
 									{viewer ? (
 										<UserAvatar viewer={viewer} />
 									) : (

@@ -514,10 +514,13 @@ export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): N
 		fail("Le tipologie di profilo non possono essere duplicate.", 2);
 	}
 	const registrableTypes = selectedProfileTypes.filter(isRegistrableProfileType);
+	if (registrableTypes.length !== selectedProfileTypes.length) {
+		fail("Una delle tipologie selezionate non Ã¨ ancora disponibile.", 2);
+	}
 	if (registrableTypes.length === 0) {
 		fail("Seleziona almeno un profilo.", 2);
 	}
-	if (typeof parsed.primaryProfileType !== "string" || !isProfileType(parsed.primaryProfileType) || !selectedProfileTypes.includes(parsed.primaryProfileType)) {
+	if (typeof parsed.primaryProfileType !== "string" || !isProfileType(parsed.primaryProfileType) || !isRegistrableProfileType(parsed.primaryProfileType) || !registrableTypes.includes(parsed.primaryProfileType)) {
 		fail("Seleziona un profilo principale valido.", 2);
 	}
 	const primaryProfileType = parsed.primaryProfileType as RegistrableProfileType;

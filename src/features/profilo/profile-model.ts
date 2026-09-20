@@ -25,6 +25,19 @@ export const PROFILE_TYPES = [
 
 export type ProfileType = typeof PROFILE_TYPES[number];
 
+export const COMING_SOON_PROFILE_TYPES = [
+	"professionisti-studi",
+	"creators",
+] as const satisfies readonly ProfileType[];
+
+export type ComingSoonProfileType = typeof COMING_SOON_PROFILE_TYPES[number];
+
+export function isComingSoonProfileType(
+	type: ProfileType,
+): type is ComingSoonProfileType {
+	return (COMING_SOON_PROFILE_TYPES as readonly ProfileType[]).includes(type);
+}
+
 type ProfileTable =
 	| "profilo_arbitro"
 	| "profilo_campi_impianti"
