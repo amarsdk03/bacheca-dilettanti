@@ -4,6 +4,7 @@ import ProfileDetailsOverview, {ProfileDetailsHeader} from "./ProfileDetailsOver
 import type {ProfileDetailPresentation} from "./profile-detail-presentation";
 import ProfileSocialLinksCard from "./ProfileSocialLinks";
 import ProfileTabs from "./ProfileTabs";
+import SimilarProfiles from "./SimilarProfiles";
 
 export default function ProfileDetailsLayout<Type extends NonPlayerProfileType>({
 	profile,
@@ -20,6 +21,7 @@ export default function ProfileDetailsLayout<Type extends NonPlayerProfileType>(
 				label="Informazioni del profilo"
 				overview={<ProfileDetailsOverview profile={profile} presentation={presentation} />}
 				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} />}
+				similarProfiles={<SimilarProfiles profiles={profile.similarProfiles} unavailable={profile.similarProfilesUnavailable} />}
 			/>
 		</div>
 	);

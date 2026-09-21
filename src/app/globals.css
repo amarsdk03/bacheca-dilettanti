@@ -448,15 +448,82 @@
     border-color: color-mix(in srgb, var(--profile-accent) 20%, var(--border));
 }
 
-.profile-dashboard-navigation {
+.public-profile-page {
+    --ring: var(--profile-accent);
+    background: color-mix(in srgb, var(--profile-accent) 2%, var(--background));
+}
+
+.public-profile-detail {
+    --primary: color-mix(in srgb, var(--profile-accent) 94%, black);
+    --primary-foreground: #ffffff;
+    --accent: color-mix(in srgb, var(--profile-accent) 7%, var(--card));
+    --accent-foreground: var(--foreground);
+    --ring: var(--profile-accent);
+    --profile-tabs-accent: var(--profile-accent);
+}
+
+.public-profile-detail .profile-detail-accent {
+    color: var(--profile-accent);
+}
+
+.public-profile-hero {
+    --background: #111317;
+    --foreground: #f8fafc;
+    --card: var(--background);
+    --card-foreground: var(--foreground);
+    --muted: #252b36;
+    --muted-foreground: #bac3d2;
+    --secondary: #292f3b;
+    --secondary-foreground: var(--foreground);
+    --accent: #29344a;
+    --accent-foreground: var(--foreground);
+    --border: #ffffff24;
+    --input: #ffffff33;
+    --ring: color-mix(in srgb, var(--profile-accent) 60%, white);
+    background: linear-gradient(125deg, var(--background) 35%, color-mix(in srgb, var(--profile-accent) 18%, var(--background)));
+}
+
+.public-profile-hero .public-profile-type-badge {
+    color: color-mix(in srgb, var(--profile-accent) 50%, white);
+    background: color-mix(in srgb, var(--profile-accent) 20%, var(--card));
+    border-color: color-mix(in srgb, var(--profile-accent) 45%, transparent);
+}
+
+.public-profile-hero .profile-detail-follow {
+    color: var(--primary-foreground);
+    background: var(--primary);
+    border-color: transparent;
+}
+
+.public-profile-hero .profile-detail-follow[aria-pressed="true"] {
+    color: var(--foreground);
+    background: var(--accent);
+    border-color: var(--ring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .public-profile-hero .profile-detail-follow:hover {
+        background: color-mix(in srgb, var(--primary) 80%, var(--background));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .public-profile-detail :is([data-slot="button"], [data-slot="toggle"]) {
+        transition: none;
+    }
+}
+
+.profile-section-navigation {
+    --section-tabs-accent: var(--profile-tabs-accent, var(--brand-indigo));
+    --section-tabs-tint: color-mix(in srgb, var(--section-tabs-accent) 7%, var(--card));
     border-bottom: 1px solid var(--border);
     overscroll-behavior-x: contain;
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--brand-indigo) 25%, var(--border)) transparent;
+    scrollbar-color: color-mix(in srgb, var(--section-tabs-accent) 25%, var(--border)) transparent;
     scroll-padding-inline: 6px;
 }
 
-.profile-dashboard .profile-dashboard-tab-list {
+.profile-section-navigation .profile-section-tab-list {
     width: max-content;
     min-width: 100%;
     height: auto;
@@ -465,7 +532,7 @@
     padding: 0.25rem;
 }
 
-.profile-dashboard .profile-dashboard-tab {
+.profile-section-navigation .profile-section-tab {
     flex: 1 0 auto;
     height: 2.75rem;
     gap: 0.5rem;
@@ -473,26 +540,26 @@
     transition: color 180ms ease, background-color 180ms ease;
 }
 
-.profile-dashboard .profile-dashboard-tab::after {
+.profile-section-navigation .profile-section-tab::after {
     inset-inline: 0.875rem;
     bottom: 0;
     height: 2px;
     border-radius: 2px;
-    background: var(--brand-indigo);
+    background: var(--section-tabs-accent);
     transform: scaleX(0.75);
     transition: opacity 180ms ease, transform 180ms ease;
 }
 
-.profile-dashboard .profile-dashboard-tab[data-active] {
+.profile-section-navigation .profile-section-tab[data-active] {
     color: var(--foreground);
-    background: var(--dashboard-tint);
+    background: var(--section-tabs-tint);
 }
 
-.profile-dashboard .profile-dashboard-tab[data-active]::after {
+.profile-section-navigation .profile-section-tab[data-active]::after {
     transform: scaleX(1);
 }
 
-.profile-dashboard .profile-dashboard-tab:focus-visible {
+.profile-section-navigation .profile-section-tab:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: -2px;
     box-shadow: none;
@@ -568,8 +635,8 @@
         box-shadow: 0 6px 20px -12px color-mix(in srgb, var(--foreground) 22%, transparent);
     }
 
-    .profile-dashboard .profile-dashboard-tab:hover {
-        background: var(--dashboard-tint);
+    .profile-section-navigation .profile-section-tab:hover {
+        background: var(--section-tabs-tint);
     }
 
     .profile-dashboard-action:hover .profile-dashboard-action-arrow {
@@ -588,7 +655,8 @@
 
 @media (prefers-reduced-motion: reduce) {
     .profile-dashboard :is(.profile-dashboard-interactive-card, .profile-dashboard-action-arrow, [data-slot="tabs-trigger"], [data-slot="button"], [data-slot="toggle-group-item"], [data-slot="progress-indicator"], [data-slot="accordion-trigger"], [data-slot="accordion-content"]),
-    .profile-dashboard .profile-dashboard-tab::after,
+    .profile-section-navigation .profile-section-tab,
+    .profile-section-navigation .profile-section-tab::after,
     .profile-dashboard .profile-dashboard-saved-card > div > [data-slot="card"] {
         animation: none;
         transition: none;

@@ -12,6 +12,7 @@ import {profileInitials} from "@/features/profilo/public-profile-display";
 import {cn} from "@/lib/utils";
 import type {ProfileDetailPresentation} from "./profile-detail-presentation";
 import ProfileExperienceHistory from "./ProfileExperienceHistory";
+import ProfileFollowerCount from "./ProfileFollowerCount";
 
 function ProfileFieldValue({field}: {field: PublicProfile["fields"][number]}) {
 	if (!field.href) return field.value;
@@ -78,6 +79,7 @@ export function ProfileDetailsHeader({
 						{profile.primary && <Badge variant="outline"><StarIcon data-icon="inline-start" aria-hidden="true" />Profilo principale</Badge>}
 					</div>
 					<h1 className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">{profile.title}</h1>
+					<ProfileFollowerCount count={profile.followerCount} />
 					<p className="text-base text-muted-foreground sm:text-lg">{presentation.intro}</p>
 					<ProfileLocationSummary locations={profile.locations} className="max-w-md" />
 					{profile.availabilityLabel && <div><Badge variant="secondary"><CircleDotIcon data-icon="inline-start" aria-hidden="true" />{profile.availabilityLabel}</Badge></div>}

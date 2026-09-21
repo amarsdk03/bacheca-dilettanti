@@ -11,15 +11,10 @@ export default function LatestProfileAnnouncements({announcements, announcements
 }) {
 	return (
 		<section aria-labelledby="latest-profile-announcements" className="flex flex-col gap-4">
-			<div className="flex flex-wrap items-end justify-between gap-3">
-				<div>
-					<h2 id="latest-profile-announcements" className="text-2xl font-semibold tracking-tight">
-						Ultimi annunci pubblicati
-					</h2>
-					<p className="mt-1 text-sm text-muted-foreground">
-						Fino a 4 annunci pubblici recenti associati a questa tipologia di profilo.
-					</p>
-				</div>
+			<div className="flex flex-wrap items-center justify-between gap-3">
+				<h2 className="font-home-display text-2xl font-medium uppercase">
+					Ultimi annunci pubblicati
+				</h2>
 				{!announcementsUnavailable && (
 					<Badge variant="secondary">
 						{announcements.length === 1

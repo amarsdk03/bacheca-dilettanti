@@ -18,9 +18,21 @@ import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database, Json} from "@/server/supabase";
+import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
 
 const PROFILE_DIRECTORY_BATCH_SIZE = 500;
 const NOT_SPECIFIED = "Non specificato";
+
+const PROFILE_TABLE_BY_TYPE = {
+	giocatore: "profilo_giocatore",
+	squadra: "profilo_squadra",
+	"staff-sportivo": "profilo_staff_sportivo",
+	"professionisti-studi": "profilo_professionista_studente",
+	arbitro: "profilo_arbitro",
+	creators: "profilo_creator",
+	"torneo-evento": "profilo_torneo_evento",
+	"campi-impianti-sportivi": "profilo_campi_impianti",
+} as const satisfies Record<ProfileType, keyof Database["public"]["Tables"]>;
 
 function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: number) {
 	// The admin client bypasses owner-only RLS: keep this select as an explicit
@@ -276,8 +288,8 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 
 	for (const player of row.profilo_giocatore ?? []) {
 		if (player.nascosto !== false) continue;
-		const primaryRoles = jsonStringArray(player.ruoli_sport, "principali");
-		const specificRoles = jsonStringArray(player.ruoli_sport, "specifici");
+		const primaryRoles = normalizePlayerPrimaryRoles(jsonStringArray(player.ruoli_sport, "principali"));
+		const specificRoles = normalizePlayerSpecificRoles(jsonStringArray(player.ruoli_sport, "specifici"));
 		const sportTypes = cleanStringArray(player.tipologie_sport);
 		const categories = cleanStringArray(player.categorie_ricercate);
 		profiles.push(createDirectoryProfile(row, "giocatore", player.id, {
@@ -437,6 +449,36 @@ function emptyDirectoryResult(error = false): ProfileDirectoryResult {
 		totalPages: 1,
 		error,
 	};
+}
+
+/** Child IDs are monotonic; subprofiles do not have a creation timestamp. */
+export async function loadRecentSimilarProfiles(
+	supabase: SupabaseClient<Database>, id: string, type: ProfileType,
+): Promise<DirectoryProfile[]> {
+	if (isLimitedProfileType(type)) return [];
+	const {data: children, error} = await supabase.from(PROFILE_TABLE_BY_TYPE[type])
+		.select("id, uuid_profilo, profilo!inner(nascosto, uuid_utente)")
+		.eq("nascosto", false)
+		.eq("profilo.nascosto", false)
+		.not("profilo.uuid_utente", "is", null)
+		.neq("uuid_profilo", id)
+		.order("id", {ascending: false})
+		.limit(6);
+	if (error) throw new Error("SIMILAR_PROFILES_UNAVAILABLE");
+	if (!children?.length) return [];
+	const ids = children.map(child => child.uuid_profilo);
+	const [{data: rows, error: profilesError}, images] = await Promise.all([
+		profileDirectoryQuery(supabase, 0).in("uuid", ids),
+		loadProfileImageUrlMap(supabase, ids),
+	]);
+	if (profilesError) throw new Error("SIMILAR_PROFILES_UNAVAILABLE");
+	const profiles = (rows ?? []).flatMap(row => mapProfileRow(row, images))
+		.filter(profile => profile.type === type && profile.id !== id);
+	const byId = new Map(profiles.map(profile => [profile.id, profile]));
+	return ids.flatMap(profileId => {
+		const profile = byId.get(profileId);
+		return profile ? [profile] : [];
+	});
 }
 
 /** Resolve one public identity per account, without loading the entire directory. */

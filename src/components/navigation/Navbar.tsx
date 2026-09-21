@@ -48,7 +48,7 @@ export default async function Navbar({minimal = false, backToHome = false, workI
 
 				{!minimal && <NavbarNavigation authenticated={Boolean(viewer)} viewer={viewer} backToHome={backToHome} />}
 
-				<div className={cn("flex shrink-0 items-center gap-2", minimal ? "ml-auto" : "lg:ml-0")}>
+				<div className={cn("flex shrink-0 items-center gap-3", minimal ? "ml-auto" : "lg:ml-0")}>
 					{
 						backToHome ? (
 							<Link

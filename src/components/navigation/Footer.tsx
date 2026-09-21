@@ -3,6 +3,8 @@ import Image from "next/image";
 
 import {DEFAULT_BANNER_PATH} from "@/const/defaultConstants";
 import {SiInstagram, SiWhatsapp} from "@icons-pack/react-simple-icons";
+import {CONTACT_EMAIL, INSTAGRAM_URL, WHATSAPP_URL} from "@/const/contactConstants";
+import {MailIcon} from "lucide-react";
 
 
 interface FooterProps {
@@ -85,20 +87,28 @@ export default function Footer(
 					</p>
 					<div className="flex items-center gap-3">
 						<Link
-							href="https://www.instagram.com/bachecadilettanti/"
+							href={`mailto:${CONTACT_EMAIL}`}
 							target="_blank"
-							aria-label="Instagram"
+							aria-label="Email"
 							className="inline-flex size-12 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:-translate-y-0.5 hover:border-fuchsia-300 hover:text-fuchsia-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500"
 						>
-							<SiInstagram title='Instagram' size={20} />
+							<MailIcon size={20} />
 						</Link>
 						<Link
-							href="https://whatsapp.com/channel/0029Vb8lng43AzNSP0YlRL3V"
+							href={WHATSAPP_URL}
 							target="_blank"
 							aria-label="Whatsapp"
 							className="inline-flex size-12 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:-translate-y-0.5 hover:border-fuchsia-300 hover:text-fuchsia-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500"
 						>
 							<SiWhatsapp title='Whatsapp' size={20} />
+						</Link>
+						<Link
+							href={INSTAGRAM_URL}
+							target="_blank"
+							aria-label="Instagram"
+							className="inline-flex size-12 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:-translate-y-0.5 hover:border-fuchsia-300 hover:text-fuchsia-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500"
+						>
+							<SiInstagram title='Instagram' size={20} />
 						</Link>
 					</div>
 				</div>

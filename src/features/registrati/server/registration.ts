@@ -13,6 +13,13 @@ import {
 } from "@/features/registrati/registration-payload";
 import type {Json} from "@/server/supabase";
 import {isLinkAnnuncioValid, MAX_LINK_ANNUNCIO_LENGTH,} from "@/features/pubblica-annuncio/types/announcementExtras";
+import {
+	normalizePlayerPrimaryRole,
+	normalizePlayerPrimaryRoles,
+	PLAYER_PRIMARY_ROLE_BY_SPECIFIC,
+	normalizePlayerSpecificRole,
+	normalizePlayerSpecificRoles,
+} from "@/features/profilo/player-roles";
 
 const MAX_PAYLOAD_BYTES = 256_000;
 const MAX_SHORT_TEXT = 160;
@@ -230,10 +237,18 @@ function sportsRoles(value: unknown, profileType: ProfileType): Json {
 	if (value === null || value === undefined) return {principali: [], specifici: []};
 	if (!isRecord(value)) fail("I ruoli sportivi inseriti non sono validi.", 3, profileType);
 	assertExactKeys(value, ["principali", "specifici"], profileType);
-	return {
-		principali: stringList(value.principali, profileType),
-		specifici: stringList(value.specifici, profileType),
-	};
+	const rawPrimary = stringList(value.principali, profileType);
+	const rawSpecific = stringList(value.specifici, profileType);
+	if (!rawPrimary.every(role => normalizePlayerPrimaryRole(role)) || !rawSpecific.every(role => normalizePlayerSpecificRole(role))) {
+		fail("I ruoli sportivi inseriti non sono validi.", 3, profileType);
+	}
+	const primary = normalizePlayerPrimaryRoles(rawPrimary);
+	const primarySet = new Set(primary);
+	const specific = normalizePlayerSpecificRoles(rawSpecific);
+	if (specific.some(role => !primarySet.has(PLAYER_PRIMARY_ROLE_BY_SPECIFIC[role]))) {
+		fail("I ruoli specifici non corrispondono ai ruoli principali selezionati.", 3, profileType);
+	}
+	return {principali: primary, specifici: specific};
 }
 
 function openingHours(value: unknown, profileType: ProfileType): Json[] {

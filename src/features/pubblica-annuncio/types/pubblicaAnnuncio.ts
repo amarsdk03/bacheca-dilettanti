@@ -83,14 +83,13 @@ export const TIPOLOGIA_PRINCIPALE_SQUADRA_OPTIONS = TIPOLOGIA_CALCIO_OPTIONS.map
 	etichetta: tipologia,
 }));
 
-export const RUOLO_PRINCIPALE_OPTIONS = ["Portiere", "Difensore", "Centrocampista", "Attaccante"] as const;
+import {
+	PLAYER_PRIMARY_ROLES,
+	PLAYER_SPECIFIC_ROLES_BY_PRIMARY,
+} from "@/features/profilo/player-roles";
 
-export const RUOLI_SPECIFICI_PER_RUOLO: Record<string, string[]> = {
-	Portiere: [],
-	Difensore: ["Libero", "Terzino sinistro", "Difensore centrale", "Terzino destro", "Esterno sinistro a tutta fascia", "Esterno destro a tutta fascia"],
-	Centrocampista: ["Mediano", "Centrocampista sinistro", "Centrocampista centrale", "Centrocampista destro", "Trequartista"],
-	Attaccante: ["Ala sinistra", "Ala destra", "Attaccante sinistro / Seconda punta sinistra", "Centravanti", "Attaccante destro / Seconda punta destra", "Seconda punta"],
-};
+export const RUOLO_PRINCIPALE_OPTIONS = PLAYER_PRIMARY_ROLES;
+export const RUOLI_SPECIFICI_PER_RUOLO: Readonly<Record<string, readonly string[]>> = PLAYER_SPECIFIC_ROLES_BY_PRIMARY;
 
 export const FIGURA_PROFESSIONALE_OPTIONS = [
 	"Analisi", "Coaching/Preparatore", "Osservatore/Scouting", "Esecutivo/Amministrativo",

@@ -1,21 +1,24 @@
+import type {CSSProperties, ReactNode} from "react";
 import type {PlayerProfileDetail} from "../../profile-detail-model";
+import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import LatestProfileAnnouncements from "../LatestProfileAnnouncements";
 import PlayerCareer from "../player/PlayerCareer";
 import PlayerHeader from "../player/PlayerHeader";
 import PlayerOverview from "../player/PlayerOverview";
-import ProfileSocialLinksCard from "../ProfileSocialLinks";
 import PlayerTabs from "../player/PlayerTabs";
+import SimilarProfiles from "../SimilarProfiles";
 
-export default function DettagliProfiloGiocatore({profile}: {profile: PlayerProfileDetail}) {
+export default function DettagliProfiloGiocatore({profile, actions}: {profile: PlayerProfileDetail; actions?: ReactNode}) {
 	const {player} = profile;
+
 	return (
-		<div className="flex flex-col gap-6 font-home-body">
-			<PlayerHeader title={profile.title} imageUrl={profile.imageUrl} verified={profile.verified} primary={profile.primary} availabilityLabel={profile.availabilityLabel} locations={profile.locations} age={player.age} primaryRoles={player.primaryRoles} specificRoles={player.specificRoles} />
-			<ProfileSocialLinksCard socialLinks={profile.socialLinks} />
+		<div className="public-profile-detail flex min-w-0 flex-col gap-6 font-home-body" style={{"--profile-accent": getProfileAccent("giocatore")} as CSSProperties}>
+			<PlayerHeader title={profile.title} imageUrl={profile.imageUrl} verified={profile.verified} primary={profile.primary} availabilityLabel={profile.availabilityLabel} player={player} followerCount={profile.followerCount} announcementCount={profile.announcementCount} actions={actions} />
 			<PlayerTabs
-				overview={<PlayerOverview sportTypes={player.sportTypes} specificRoles={player.specificRoles} preferredCategories={player.preferredCategories} preferredFoot={player.preferredFoot} height={player.height} weight={player.weight} presentation={player.presentation} highlightsUrl={player.highlightsUrl} />}
+				overview={<PlayerOverview presentation={player.presentation} highlightsUrl={player.highlightsUrl} locations={profile.locations} socialLinks={profile.socialLinks} primaryRoles={player.primaryRoles} specificRoles={player.specificRoles} preferredCategories={player.preferredCategories} profileId={profile.id} />}
 				career={<PlayerCareer entries={player.career} />}
 				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} />}
+				similarProfiles={<SimilarProfiles profiles={profile.similarProfiles} unavailable={profile.similarProfilesUnavailable} />}
 			/>
 		</div>
 	);

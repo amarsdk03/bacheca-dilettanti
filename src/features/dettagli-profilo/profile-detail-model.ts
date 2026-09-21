@@ -3,6 +3,7 @@ import type {PublicProfileLocation} from "@/features/profilo/public-profile-loca
 import type {AnnouncementFact, AnnouncementType} from "@/features/annunci/announcement-model";
 import type {PublicTeamProfile, TeamProfileReference} from "@/features/profilo/team-profile";
 import type {ProfileSocialLinks} from "@/features/profilo/profile-social-links";
+import type {DirectoryProfile} from "@/features/profili/profile-directory-model";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -45,6 +46,10 @@ interface ProfileDetailBase {
 	socialLinks: ProfileSocialLinks;
 	announcements: ProfileAnnouncement[];
 	announcementsUnavailable: boolean;
+	announcementCount: number | null;
+	followerCount: number | null;
+	similarProfiles: DirectoryProfile[];
+	similarProfilesUnavailable: boolean;
 }
 
 export type NonPlayerProfileType = Exclude<ProfileType, "giocatore">;

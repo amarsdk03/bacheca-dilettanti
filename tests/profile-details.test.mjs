@@ -47,6 +47,12 @@ const {groupPublicProfileLocations, publicProfileLocationLabel} = load("src/feat
 const {parseProfileDetailParams} = load("src/features/dettagli-profilo/profile-detail-model.ts");
 const {profileImageMapKey, profileImageRowsToMap, resolvedProfileImageUrl} = load("src/features/profilo/profile-image.ts");
 const {getPlayerRolePitchMarkers} = load("src/features/dettagli-profilo/components/player/PlayerRolePitch.tsx");
+const {getAnnouncementPlayerRolePitchMarkers} = load("src/features/annunci/components/details/AnnouncementPlayerRolePitch.tsx");
+const {
+	PLAYER_PRIMARY_ROLES,
+	PLAYER_SPECIFIC_ROLES_BY_PRIMARY,
+	normalizePlayerSpecificRoles,
+} = load("src/features/profilo/player-roles.ts");
 const now = new Date("2026-09-14T12:00:00Z");
 const player = {
 	id: 7, nome: "Mario", cognome: "Rossi", disponibilita: "disponibile-subito",
@@ -172,31 +178,139 @@ test("location details use a dialog instead of an accordion", () => {
 	assert.match(source, /<DialogClose>Chiudi<\/DialogClose>/);
 });
 
-test("player role pitch prioritizes specific roles and falls back to primary roles", () => {
+test("player role catalog exposes only the canonical taxonomy and normalizes legacy labels", () => {
+	assert.deepEqual(PLAYER_PRIMARY_ROLES, ["Portiere", "Difensore", "Centrocampista", "Attaccante"]);
+	assert.deepEqual(PLAYER_SPECIFIC_ROLES_BY_PRIMARY, {
+		Portiere: [],
+		Difensore: ["Terzino destro", "Difensore centrale", "Terzino sinistro"],
+		Centrocampista: ["Mediano", "Esterno sinistro", "Centrale", "Esterno destro", "Trequartista"],
+		Attaccante: ["Ala sinistra", "Seconda Punta", "Ala destra", "Punta centrale"],
+	});
+	assert.deepEqual(normalizePlayerSpecificRoles([
+		"Libero", "Esterno sinistro a tutta fascia", "Centrocampista sinistro",
+		"Centrocampista centrale", "Centrocampista destro", "Esterno destro a tutta fascia",
+		"Attaccante sinistro / Seconda punta sinistra", "Attaccante destro / Seconda punta destra",
+		"Centravanti", "Seconda punta", "Non mappato",
+	]), ["Difensore centrale", "Esterno sinistro", "Centrale", "Esterno destro", "Ala sinistra", "Ala destra", "Punta centrale", "Seconda Punta"]);
+});
+
+test("player role pitch uses the 3x7 grid and hides only specialized primary groups", () => {
 	assert.deepEqual(
-		getPlayerRolePitchMarkers(["Difensore"], ["Non mappato", "Terzino destro", "Terzino destro"]),
-		[{role: "Terzino destro", abbreviation: "TD", left: 82, top: 70}],
+		getPlayerRolePitchMarkers(["Difensore", "Centrocampista", "Attaccante", "Portiere"], ["Terzino destro", "Centrale", "Ala sinistra"]),
+		[
+			{role: "Ala sinistra", isPrimary: false, abbreviation: "AS", column: 1, row: 2},
+			{role: "Centrale", isPrimary: false, abbreviation: "CC", column: 2, row: 4},
+			{role: "Terzino destro", isPrimary: false, abbreviation: "TD", column: 3, row: 6},
+			{role: "Portiere", isPrimary: true, abbreviation: "POR", column: 2, row: 7},
+		],
 	);
 	assert.deepEqual(
-		getPlayerRolePitchMarkers(["Portiere", "Attaccante"], []),
+		getPlayerRolePitchMarkers(["Difensore", "Centrocampista"], ["Terzino destro", "Terzino destro", "Non mappato"]),
 		[
-			{role: "Portiere", abbreviation: "POR", left: 50, top: 89},
-			{role: "Attaccante", abbreviation: "ATT", left: 50, top: 18},
+			{role: "Centrocampista", isPrimary: true, abbreviation: "CEN", column: 2, row: 4},
+			{role: "Terzino destro", isPrimary: false, abbreviation: "TD", column: 3, row: 6},
 		],
+	);
+	assert.deepEqual(
+		getAnnouncementPlayerRolePitchMarkers(["Difensore", "Centrocampista"], ["Terzino destro"]),
+		getPlayerRolePitchMarkers(["Difensore", "Centrocampista"], ["Terzino destro"]),
 	);
 });
 
-test("player header renders the pitch and the primary role in the detail header", () => {
+test("player header renders the ordered eight-fact grid beside the role pitch", () => {
 	const PlayerHeader = load("src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(PlayerHeader, {
 		title: "Mario Rossi", imageUrl: null, verified: false, primary: false,
-		availabilityLabel: null, locations: [], age: 26,
-		primaryRoles: ["Difensore"], specificRoles: ["Terzino destro", "Difensore centrale"],
+		availabilityLabel: "Disponibile subito",
+		followerCount: 42,
+		announcementCount: 7,
+		player: {...toPublicPlayerData(player, null, now), sportTypes: ["Calcio a 11", "Calcio a 5"], specificRoles: ["Terzino destro", "Difensore centrale"]},
+		actions: React.createElement("button", null, "Condividi"),
 	}));
 	assert.match(html, /campo\.png/);
-	assert.match(html, /Principale:/);
-	assert.match(html, /aria-label="Terzino destro"/);
-	assert.match(html, />TD</);
+	assert.match(html, /grid-cols-3 grid-rows-7/);
+	assert.match(html, /rounded-xl border-4 border-white/);
+	assert.match(html, />Ruoli</);
+	assert.match(html, /lucide-user-round-plus/);
+	assert.match(html, /lucide-megaphone/);
+	assert.match(html, /min-h-24/);
+	assert.match(html, /Calcio a 11, Calcio a 5/);
+	const factLabels = ["Età", "Altezza", "Peso", "Piede", "Disponibilità", "Tipologie di calcio", "Follower", "Num. annunci"];
+	for (let index = 1; index < factLabels.length; index += 1) {
+		assert.ok(html.indexOf(`>${factLabels[index - 1]}<`) < html.indexOf(`>${factLabels[index]}<`), factLabels[index]);
+	}
+	for (const value of [">42<", ">7<"]) assert.ok(html.includes(value), value);
+	assert.doesNotMatch(html, /Principale:/);
+	for (const value of ["26 anni", "Disponibile subito", "Destro", "180 cm", "75 kg", "Calcio a 11", "Condividi"]) assert.ok(html.includes(value), value);
+	assert.doesNotMatch(html, /Ruoli principali|Ruoli specifici|Categorie ricercate|Eccellenza/);
+	assert.match(html, /<header[^>]*>[\s\S]*public-profile-hero[\s\S]*<dl[\s\S]*<\/header>/);
+	assert.doesNotMatch(html, /nascita|>2000<|Una presentazione/);
+});
+
+test("player header handles missing sports data without exposing unspecified availability", () => {
+	const PlayerHeader = load("src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
+	const html = renderToStaticMarkup(React.createElement(PlayerHeader, {
+		title: "Mario Rossi", imageUrl: null, verified: false, primary: false,
+		availabilityLabel: null, followerCount: null, announcementCount: null,
+		player: toPublicPlayerData({}, null, now),
+	}));
+	assert.match(html, /Non specificato/);
+	assert.match(html, />MR</);
+	assert.doesNotMatch(html, /campo\.png|Verificato|Profilo principale|undefined|null/);
+});
+
+test("player overview shows grouped locations, visible social URLs and highlights below description", () => {
+	const Overview = load("src/features/dettagli-profilo/components/player/PlayerOverview.tsx").default;
+	const href = "https://instagram.com/mario.rossi?ref=profilo";
+	const html = renderToStaticMarkup(React.createElement(Overview, {
+		profileId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+		primaryRoles: ["Difensore"], specificRoles: ["Terzino destro"], preferredCategories: ["Eccellenza"],
+		presentation: "Descrizione del giocatore", highlightsUrl: "https://youtu.be/abcdefghijk",
+		locations: [{region: "Toscana", city: null}, {region: "Lazio", city: "Roma"}, {region: "Lazio", city: "Roma"}, {region: "Lazio", city: "Viterbo"}],
+		socialLinks: {instagram: href, facebook: "", youtube: "", linkedin: ""},
+	}));
+	assert.match(html, /youtube-nocookie\.com\/embed\/abcdefghijk/);
+	assert.ok(html.indexOf("Descrizione del giocatore") < html.indexOf(">Highlights<"));
+	assert.ok(html.indexOf(">Lazio<") < html.indexOf(">Toscana<"));
+	assert.equal((html.match(/>Roma</g) ?? []).length, 1);
+	assert.match(html, /Tutta la regione/);
+	assert.ok(html.includes(`href="${href}"`));
+	assert.match(html, />instagram\.com\/mario\.rossi\?ref=profilo</);
+	assert.match(html, /target="_blank" rel="noopener noreferrer"/);
+	const sidebar = html.match(/<aside[\s\S]*<\/aside>/)?.[0];
+	assert.ok(sidebar);
+	assert.doesNotMatch(sidebar, /campo\.png/);
+	assert.doesNotMatch(sidebar, /player-role-pitch-title|Principale:/);
+	for (const value of ["Ruoli principali", "Difensore", "Ruoli specifici", "Terzino destro", "Categorie ricercate", "Eccellenza", "Social", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]) assert.ok(sidebar.includes(value), value);
+	assert.ok(sidebar.indexOf("Categorie ricercate") < sidebar.indexOf(">Località<"));
+	assert.ok(sidebar.indexOf(">Social<") < sidebar.indexOf("UUID profilo"));
+	assert.match(sidebar, /data-social-brand="instagram"/);
+	assert.match(sidebar, /aria-label="Copia UUID del profilo"/);
+	assert.doesNotMatch(html, /Una presentazione|Guarda il giocatore|Scheda sportiva|Facebook|role="dialog"/);
+});
+
+test("player overview omits absent media and socials and supports non-YouTube highlights", () => {
+	const Overview = load("src/features/dettagli-profilo/components/player/PlayerOverview.tsx").default;
+	const props = {profileId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", primaryRoles: [], specificRoles: [], preferredCategories: [], presentation: null, highlightsUrl: null, locations: [], socialLinks: {instagram: "", facebook: "", youtube: "", linkedin: ""}};
+	const empty = renderToStaticMarkup(React.createElement(Overview, props));
+	assert.match(empty, /Descrizione non disponibile/);
+	assert.match(empty, /Nessuna località indicata/);
+	assert.doesNotMatch(empty, /Highlights|Social|<iframe/);
+	const external = renderToStaticMarkup(React.createElement(Overview, {...props, highlightsUrl: "https://example.test/video"}));
+	assert.match(external, /href="https:\/\/example.test\/video"/);
+	assert.match(external, /Guarda video highlights/);
+	assert.doesNotMatch(external, /<iframe/);
+});
+
+test("all populated player social links use their brand icon, including LinkedIn", () => {
+	const SocialLinks = load("src/features/dettagli-profilo/components/ProfileSocialLinks.tsx").default;
+	const socialLinks = {instagram: "https://instagram.com/player", facebook: "https://facebook.com/player", youtube: "https://youtube.com/@player", linkedin: "https://linkedin.com/in/player"};
+	const html = renderToStaticMarkup(React.createElement(SocialLinks, {socialLinks, presentation: "profile"}));
+	for (const [platform, href] of Object.entries(socialLinks)) {
+		assert.ok(html.includes(`data-social-brand="${platform}"`));
+		assert.ok(html.includes(`href="${href}"`));
+	}
+	assert.doesNotMatch(html, /briefcase-business/);
 });
 
 function fixtureClient(results) {
@@ -207,10 +321,10 @@ function fixtureClient(results) {
 			const call = {table, operations: []};
 			calls.push(call);
 			const query = {};
-			for (const method of ["select", "eq", "not", "in", "order", "limit", "maybeSingle"]) {
+			for (const method of ["select", "eq", "neq", "not", "in", "order", "limit", "range", "maybeSingle"]) {
 				query[method] = (...args) => {call.operations.push([method, ...args]); return query;};
 			}
-			query.then = (resolve, reject) => Promise.resolve(results[table] ?? {data: [], error: null}).then(resolve, reject);
+			query.then = (resolve, reject) => Promise.resolve(typeof results[table] === "function" ? results[table](call) : results[table] ?? {data: [], error: null, count: 0}).then(resolve, reject);
 			return query;
 		},
 	};
@@ -222,18 +336,25 @@ test("detail query preserves visibility filters and exposes age without birth pa
 		profilo: {data: {uuid: id, tipologia_principale: "giocatore"}, error: null},
 		profilo_giocatore: {data: player, error: null},
 		media_profilo: {data: null, error: null},
+		annuncio: {data: [], count: 7, error: null},
+		profilo_follow: {data: null, count: 42, error: null},
 		localita_profilo: {data: [{id_sottoprofilo: 7, citta: "Roma", regione: "Lazio"}, {id_sottoprofilo: null, citta: null, regione: "Toscana"}, {id_sottoprofilo: 8, citta: "Wrong", regione: "Lazio"}], error: null},
 	});
 	const queryLoad = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}});
 	const {getProfileDetail} = queryLoad("src/features/dettagli-profilo/server/profile-detail-query.ts");
 	const result = await getProfileDetail(id, "giocatore");
 	assert.equal(result.status, "ok");
+	assert.equal(result.profile.followerCount, 42);
+	assert.equal(result.profile.announcementCount, 7);
+	const followerQuery = client.calls.find(call => call.table === "profilo_follow");
+	assert.deepEqual(followerQuery.operations, [["select", "uuid_profilo_seguito", {count: "exact", head: true}], ["eq", "uuid_profilo_seguito", id]]);
 	assert.deepEqual(result.profile.locations, [{region: "Lazio", city: "Roma"}, {region: "Toscana", city: null}]);
 	assert.doesNotMatch(JSON.stringify(result), /nascita|2000|Wrong/);
 	for (const table of ["profilo", "profilo_giocatore", "annuncio"]) {
 		assert.ok(client.calls.find(call => call.table === table).operations.some(operation => JSON.stringify(operation) === JSON.stringify(["eq", "nascosto", false])));
 	}
 	const announcements = client.calls.find(call => call.table === "annuncio").operations;
+	assert.deepEqual(announcements[0][2], {count: "exact"});
 	for (const expected of [["eq", "autore_annuncio", id], ["eq", "privato", false], ["eq", "stato_annuncio", "pubblicato"], ["in", "tipologia_annuncio", ["annuncio_giocatore"]], ["limit", 4]]) {
 		assert.ok(announcements.some(operation => JSON.stringify(operation) === JSON.stringify(expected)));
 	}
@@ -243,6 +364,58 @@ test("missing or hidden profiles keep returning not-found", async () => {
 	const client = fixtureClient({profilo: {data: null, error: null}, profilo_giocatore: {data: null, error: null}, media_profilo: {data: null, error: null}});
 	const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("src/features/dettagli-profilo/server/profile-detail-query.ts");
 	assert.deepEqual(await getProfileDetail("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "giocatore"), {status: "not-found"});
+	assert.ok(!client.calls.some(call => call.table === "profilo_follow"));
+});
+
+test("similar profiles select six newest visible children of the same type and retain child order", async () => {
+	const current = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+	const older = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+	const newest = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+	const row = (id, childId) => ({uuid: id, tipologia_principale: "squadra", ultima_modifica_il: "2026-09-21", profilo_giocatore: [{...player, id: childId, nascosto: false}], profilo_squadra: [{id: 1, nascosto: false, nome_societa: "Squadra"}]});
+	const client = fixtureClient({
+		profilo_giocatore: {data: [{id: 12, uuid_profilo: newest}, {id: 11, uuid_profilo: older}], error: null},
+		profilo: {data: [row(older, 11), row(newest, 12)], error: null},
+	});
+	const {loadRecentSimilarProfiles} = sourceLoader()("src/features/profili/server/queries.ts");
+	const profiles = await loadRecentSimilarProfiles(client, current, "giocatore");
+	assert.deepEqual(profiles.map(profile => [profile.id, profile.type]), [[newest, "giocatore"], [older, "giocatore"]]);
+	const childQuery = client.calls[0];
+	assert.equal(childQuery.table, "profilo_giocatore");
+	for (const expected of [["eq", "nascosto", false], ["eq", "profilo.nascosto", false], ["not", "profilo.uuid_utente", "is", null], ["neq", "uuid_profilo", current], ["order", "id", {ascending: false}], ["limit", 6]]) {
+		assert.ok(childQuery.operations.some(operation => JSON.stringify(operation) === JSON.stringify(expected)), JSON.stringify(expected));
+	}
+	assert.match(childQuery.operations[0][1], /profilo!inner/);
+	const emptyClient = fixtureClient({});
+	assert.deepEqual(await loadRecentSimilarProfiles(emptyClient, current, "giocatore"), []);
+	assert.equal(emptyClient.calls.length, 1);
+});
+
+test("follower and similar-profile failures do not hide the current profile", async (t) => {
+	t.mock.method(console, "error", () => {});
+	const client = fixtureClient({
+		profilo: {data: {uuid: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}, error: null},
+		profilo_giocatore: call => call.operations.some(([method]) => method === "maybeSingle")
+			? {data: player, error: null} : {data: null, error: {code: "TEST_UNAVAILABLE"}},
+		profilo_follow: {data: null, count: null, error: {code: "TEST_UNAVAILABLE"}},
+	});
+	const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("src/features/dettagli-profilo/server/profile-detail-query.ts");
+	const result = await getProfileDetail("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "giocatore");
+	assert.equal(result.status, "ok");
+	assert.equal(result.profile.followerCount, null);
+	assert.equal(result.profile.similarProfilesUnavailable, true);
+	assert.deepEqual(result.profile.similarProfiles, []);
+});
+
+test("similar profiles tab and empty/error states are available", () => {
+	const Tabs = load("src/features/dettagli-profilo/components/player/PlayerTabs.tsx").default;
+	const SimilarProfiles = load("src/features/dettagli-profilo/components/SimilarProfiles.tsx").default;
+	const html = renderToStaticMarkup(React.createElement(Tabs, {overview: "Panoramica", career: "Carriera", announcements: "Annunci", similarProfiles: React.createElement(SimilarProfiles, {profiles: [], unavailable: false})}));
+	assert.match(html, /role="tab"[^>]*[\s\S]*Profili simili/);
+	assert.match(renderToStaticMarkup(React.createElement(SimilarProfiles, {profiles: [], unavailable: false})), /Nessun profilo simile/);
+	assert.match(renderToStaticMarkup(React.createElement(SimilarProfiles, {profiles: [], unavailable: true})), /temporaneamente non disponibili/);
+	const Count = load("src/features/dettagli-profilo/components/ProfileFollowerCount.tsx").default;
+	assert.match(renderToStaticMarkup(React.createElement(Count, {count: 0})), /0 follower/);
+	assert.equal(renderToStaticMarkup(React.createElement(Count, {count: null})), "");
 });
 
 test("an announcement failure leaves player details available", async (t) => {
@@ -257,6 +430,7 @@ test("an announcement failure leaves player details available", async (t) => {
 	const result = await getProfileDetail("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "giocatore");
 	assert.equal(result.status, "ok");
 	assert.equal(result.profile.announcementsUnavailable, true);
+	assert.equal(result.profile.announcementCount, null);
 	assert.equal(result.profile.title, "Mario Rossi");
 });
 
@@ -282,6 +456,7 @@ test("every non-player detail page preserves its configured content", () => {
 		assert.match(html, /Descrizione dimostrativa/);
 		assert.match(html, /aria-label="Informazioni del profilo"/);
 		assert.match(html, /Annunci/);
+		assert.doesNotMatch(html, /public-profile-hero|profile-section-navigation/);
 	}
 });
 

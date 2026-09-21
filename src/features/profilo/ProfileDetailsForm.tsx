@@ -59,6 +59,7 @@ import {
 import type {Json} from "@/server/supabase";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import Link from "next/link";
+import {getPlayerSpecificRoleOptions, normalizePlayerRoleSelection,} from "@/features/profilo/player-roles";
 
 interface ProfileDetailsFormProps {
 	type: ProfileType;
@@ -546,7 +547,8 @@ function toSportsRoles(value: Json | null): SportsRoles {
 	const specifici = Array.isArray(value.specifici)
 		? value.specifici.filter((role): role is string => typeof role === "string")
 		: [];
-	return {principali, specifici};
+	const normalized = normalizePlayerRoleSelection(principali, specifici);
+	return {principali: normalized.primary, specifici: normalized.specific};
 }
 
 interface PersonalDataFieldsProps {
@@ -642,9 +644,7 @@ function GiocatoreFields({
 	errors: ProfileValidationErrors;
 }) {
 	const roles = toSportsRoles(draft.ruoli_sport);
-	const specificRoleOptions = [...new Set(
-		roles.principali.flatMap((role) => RUOLI_SPECIFICI_PER_RUOLO[role] ?? []),
-	)];
+	const specificRoleOptions = getPlayerSpecificRoleOptions(roles.principali);
 
 	return (
 		<>

@@ -25,6 +25,7 @@ import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-prof
 import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
+import {loadRecentSimilarProfiles} from "@/features/profili/server/queries";
 
 const NOT_SPECIFIED = "Non specificato";
 
@@ -460,6 +461,22 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			return {status: "not-found"};
 		}
 
+		// Only enrich a visible profile. Return an aggregate, never follower identities.
+		const [followersResult, similarResult] = await Promise.allSettled([
+			supabase.from("profilo_follow").select("uuid_profilo_seguito", {count: "exact", head: true})
+				.eq("uuid_profilo_seguito", id),
+			loadRecentSimilarProfiles(supabase, id, type),
+		]);
+		const followerCount = followersResult.status === "fulfilled" && !followersResult.value.error
+			? followersResult.value.count ?? null : null;
+		const similarProfiles = similarResult.status === "fulfilled" ? similarResult.value : [];
+		if (followerCount === null || similarResult.status === "rejected") {
+			console.error("[dettagli-profilo] Profile enrichment unavailable", {
+				followersUnavailable: followerCount === null,
+				similarProfilesUnavailable: similarResult.status === "rejected",
+			});
+		}
+
 		const {content} = contentResult;
 		const rawExperiences = type === "giocatore"
 			? content.player?.career ?? []
@@ -493,6 +510,10 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			socialLinks: publicSocialLinks(socialLinksResult.data ?? []),
 			announcements: announcementsResult.announcements,
 			announcementsUnavailable: announcementsResult.unavailable,
+			announcementCount: announcementsResult.announcementCount,
+			followerCount,
+			similarProfiles,
+			similarProfilesUnavailable: similarResult.status === "rejected",
 		};
 
 		if (type === "giocatore") {

@@ -1,6 +1,6 @@
 "use client";
 
-import {type CSSProperties, type ReactNode, useActionState, useEffect, useRef, useState, useTransition} from "react";
+import {type CSSProperties, type ReactNode, useActionState, useState, useTransition} from "react";
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
 import {
@@ -54,6 +54,7 @@ import {toast} from "@/components/ui/toast";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {Progress, ProgressLabel, ProgressValue} from "@/components/ui/progress";
 import GradientBackground from "@/components/styling/GradientBackground";
+import ProfileSectionNavigation from "@/components/navigation/ProfileSectionNavigation";
 import {CONTACT_EMAIL} from "@/const/contactConstants";
 import {announcementOption} from "@/features/annunci/announcement-model";
 import {requestCurrentUserPasswordReset, signOut} from "@/features/auth/server/actions";
@@ -257,55 +258,18 @@ function LogoutButton() {
 	);
 }
 
-function revealDashboardTab(viewport: HTMLDivElement, tab: HTMLElement) {
-	const viewportBounds = viewport.getBoundingClientRect();
-	const tabBounds = tab.getBoundingClientRect();
-	const inset = 6;
-
-	// Only move this strip: scrollIntoView can also move the entire page.
-	if (tabBounds.left < viewportBounds.left + inset) {
-		viewport.scrollLeft += tabBounds.left - viewportBounds.left - inset;
-	} else if (tabBounds.right > viewportBounds.right - inset) {
-		viewport.scrollLeft += tabBounds.right - viewportBounds.right + inset;
-	}
-}
-
 function DashboardNavigation({section}: {section: ProfileDashboardSection}) {
-	const viewportRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		const viewport = viewportRef.current;
-		if (!viewport) return;
-
-		const revealActiveTab = () => {
-			const tab = viewport.querySelector<HTMLElement>(`[data-dashboard-section="${section}"]`);
-			if (tab) revealDashboardTab(viewport, tab);
-		};
-
-		revealActiveTab();
-		const observer = new ResizeObserver(revealActiveTab);
-		observer.observe(viewport);
-		return () => observer.disconnect();
-	}, [section]);
-
 	return (
-		<div
-			ref={viewportRef}
-			className="profile-dashboard-navigation min-w-0 overflow-x-auto"
-			onFocusCapture={(event) => {
-				const tab = event.target.closest<HTMLElement>("[role=tab]");
-				if (tab) revealDashboardTab(event.currentTarget, tab);
-			}}
-		>
-			<TabsList variant="line" className="profile-dashboard-tab-list" aria-label="Sezioni dell’area personale">
+		<ProfileSectionNavigation activeValue={section} className="profile-dashboard-navigation">
+			<TabsList variant="line" className="profile-dashboard-tab-list profile-section-tab-list" aria-label="Sezioni dell’area personale">
 				{DASHBOARD_ITEMS.map(({value, label, icon: Icon}) => (
-					<TabsTrigger key={value} value={value} data-dashboard-section={value} className="profile-dashboard-tab">
+					<TabsTrigger key={value} value={value} data-dashboard-section={value} className="profile-dashboard-tab profile-section-tab">
 						<Icon data-icon="inline-start" aria-hidden="true" />
 						{label}
 					</TabsTrigger>
 				))}
 			</TabsList>
-		</div>
+		</ProfileSectionNavigation>
 	);
 }
 

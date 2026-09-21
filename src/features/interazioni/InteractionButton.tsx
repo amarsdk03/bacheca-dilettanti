@@ -9,12 +9,14 @@ import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {toast} from "@/components/ui/toast";
 import {setAnnouncementSaved, setProfileFollow} from "@/features/interazioni/server/actions";
 import type {InteractionState, InteractionTarget} from "@/features/interazioni/interaction-model";
+import {cn} from "@/lib/utils";
 
 interface InteractionButtonProps {
 	target: InteractionTarget;
 	state: InteractionState;
 	href: string;
 	showLabel?: boolean;
+	className?: string;
 }
 
 export default function InteractionButton(props: InteractionButtonProps) {
@@ -24,7 +26,7 @@ export default function InteractionButton(props: InteractionButtonProps) {
 	return <InteractionControl key={`${target.kind}:${target.id}:${version}`} {...props} />;
 }
 
-function InteractionControl({target, state, href, showLabel = false}: InteractionButtonProps) {
+function InteractionControl({target, state, href, showLabel = false, className}: InteractionButtonProps) {
 	const router = useRouter();
 	const [active, setActive] = useState(state.status === "ready" && state.active);
 	const [pending, startTransition] = useTransition();
@@ -39,7 +41,7 @@ function InteractionControl({target, state, href, showLabel = false}: Interactio
 	if (state.status === "error") {
 		return (
 			<Tooltip>
-				<TooltipTrigger render={<Button variant="outline" size={showLabel ? "default" : "icon"} disabled={pending}
+				<TooltipTrigger render={<Button variant="outline" size={showLabel ? "default" : "icon"} className={className} disabled={pending}
 					onClick={() => startTransition(() => router.refresh())} aria-label="Stato non disponibile. Riprova" />}>
 					<RefreshCwIcon aria-hidden="true" />{showLabel && "Riprova"}
 				</TooltipTrigger>
@@ -85,7 +87,7 @@ function InteractionControl({target, state, href, showLabel = false}: Interactio
 	return (
 		<Tooltip>
 			<TooltipTrigger render={<Toggle variant="outline" pressed={active} onPressedChange={change}
-				disabled={pending} aria-busy={pending} aria-label={label} className={showLabel ? undefined : "size-8 px-0"} />}>
+				disabled={pending} aria-busy={pending} aria-label={label} className={cn(!showLabel && "size-8 px-0", className)} />}>
 				{pending ? <LoaderCircleIcon aria-hidden="true" className="animate-spin" />
 					: <Icon aria-hidden="true" fill={announcement && active ? "currentColor" : "none"} />}
 				{showLabel && label}

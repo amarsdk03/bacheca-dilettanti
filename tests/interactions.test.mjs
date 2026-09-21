@@ -212,6 +212,30 @@ test("real toggle components render accessible persisted state and hide self-fol
 	assert.match(render("annuncio", {status: "error"}), /Stato non disponibile\. Riprova/);
 });
 
+test("profile action presentation labels its controls and preserves own-profile and error states", () => {
+	const actionsLoad = loader({
+		"next/navigation": {useRouter: () => ({push() {}, refresh() {}})},
+		"@/features/interazioni/server/actions": {},
+		"@/features/segnalazioni/server/actions": {},
+	});
+	const Actions = actionsLoad("src/features/segnalazioni/DetailActions.tsx").default;
+	const render = (interaction, presentation = "profile") => renderToStaticMarkup(React.createElement(Actions, {
+		target: {kind: "profilo", id: targetId}, interaction, href: "/dettagli-profilo", presentation,
+	}));
+	const guest = render({status: "guest"});
+	assert.match(guest, /role="group" aria-label="Azioni"/);
+	assert.ok(guest.indexOf("Segui profilo") < guest.indexOf("Condividi"));
+	assert.match(guest, />Condividi<\/button>/);
+	assert.match(guest, /profile-detail-follow[^\"]*min-h-11/);
+	assert.match(render({status: "ready", active: true}), /aria-pressed="true"/);
+	assert.match(render({status: "error"}), />Riprova<\/button>/);
+	const own = render({status: "own-profile"});
+	assert.doesNotMatch(own, /Segui profilo|profile-detail-follow/);
+	assert.match(own, /Condividi/);
+	assert.match(own, /Segnala/);
+	assert.doesNotMatch(render({status: "guest"}, "default"), /profile-detail-follow|>Condividi<\/button>/);
+});
+
 test("saved-list components distinguish errors from empty results and display saved timestamps", () => {
 	const {SavedAnnouncementsSection} = uiLoad("src/features/interazioni/DashboardSections.tsx");
 	const render = (list) => renderToStaticMarkup(React.createElement(SavedAnnouncementsSection, {list}));

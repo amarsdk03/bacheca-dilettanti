@@ -34,6 +34,7 @@ interface DetailActionsProps {
 	href: string;
 	target: ReportTarget;
 	interaction: InteractionState;
+	presentation?: "default" | "profile";
 }
 
 function ReportForm({
@@ -92,7 +93,7 @@ function ReportForm({
 
 			<DialogFooter>
 				<DialogClose type="button" disabled={pending}>Annulla</DialogClose>
-				<Button type="submit" disabled={pending}>
+				<Button type="submit" variant="destructive" disabled={pending}>
 					{pending ? <LoaderCircleIcon data-icon="inline-start" className="animate-spin" aria-hidden="true" /> : <FlagIcon data-icon="inline-start" aria-hidden="true" />}
 					{pending ? "Invio…" : "Invia segnalazione"}
 				</Button>
@@ -101,9 +102,11 @@ function ReportForm({
 	);
 }
 
-export default function DetailActions({href, target, interaction}: DetailActionsProps) {
+export default function DetailActions({href, target, interaction, presentation = "default"}: DetailActionsProps) {
 	const [reportOpen, setReportOpen] = useState(false);
 	const [reportPending, setReportPending] = useState(false);
+	const isProfile = presentation === "profile";
+	const followButton = <InteractionButton target={target} state={interaction} href={href} showLabel={isProfile} className={isProfile ? "profile-detail-follow col-span-2 min-h-11 gap-2 px-4" : undefined} />;
 
 	const handleReportComplete = useCallback((state: Extract<ReportActionState, {status: "success" | "rate_limited"}>) => {
 		setReportPending(false);
@@ -124,15 +127,20 @@ export default function DetailActions({href, target, interaction}: DetailActions
 	}
 
 	return (
-		<div className="flex items-center gap-2" aria-label="Azioni">
-			<Tooltip>
+		<div className={isProfile ? "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center" : "flex items-center gap-2"} role="group" aria-label="Azioni">
+			{isProfile && followButton}
+			{isProfile ? (
+				<Button type="button" variant="outline" className="min-h-11 gap-2 pe-4" onClick={handleShare}>
+					<Share2Icon data-icon="inline-start" className="ms-1.5" aria-hidden="true" />Condividi
+				</Button>
+			) : <Tooltip>
 				<TooltipTrigger render={<Button type="button" variant="outline" size="icon" onClick={handleShare} aria-label="Condividi" />}>
 					<Share2Icon aria-hidden="true" />
 				</TooltipTrigger>
 				<TooltipContent>Condividi</TooltipContent>
-			</Tooltip>
+			</Tooltip>}
 
-			<InteractionButton target={target} state={interaction} href={href} />
+			{!isProfile && followButton}
 
 			<Dialog
 				open={reportOpen}
@@ -140,8 +148,8 @@ export default function DetailActions({href, target, interaction}: DetailActions
 					if (!reportPending) setReportOpen(open);
 				}}
 			>
-				<DialogTrigger render={<Button type="button" variant="outline" />}>
-					<FlagIcon data-icon="inline-start" aria-hidden="true" />
+				<DialogTrigger render={<Button type="button" variant={isProfile ? "destructive" : "outline"} className={isProfile ? "min-h-11 gap-2 pe-4 text-white" : undefined} />}>
+					<FlagIcon data-icon="inline-start" className="ms-1.5" aria-hidden="true" />
 					Segnala
 				</DialogTrigger>
 				<DialogContent>

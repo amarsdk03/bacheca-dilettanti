@@ -24,6 +24,13 @@ import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {parseProfileEditorPayload, RegistrationPayloadError,} from "@/features/registrati/server/registration";
 import type {Json} from "@/server/supabase";
+import {
+	normalizePlayerPrimaryRole,
+	normalizePlayerPrimaryRoles,
+	PLAYER_PRIMARY_ROLE_BY_SPECIFIC,
+	normalizePlayerSpecificRole,
+	normalizePlayerSpecificRoles,
+} from "@/features/profilo/player-roles";
 
 const MAX_PAYLOAD_BYTES = 256_000;
 const MAX_SHORT_TEXT = 160;
@@ -98,6 +105,21 @@ function stringList(value: unknown, step: 1 | 2 | 3 | 4, required = false) {
 	const unique = [...new Set(normalized)];
 	if (required && unique.length === 0) fail("Completa tutti i campi obbligatori.", step);
 	return unique;
+}
+
+function playerRoles(primaryValue: unknown, specificValue: unknown) {
+	const rawPrimary = stringList(primaryValue, 3, true);
+	const rawSpecific = stringList(specificValue, 3);
+	if (!rawPrimary.every(role => normalizePlayerPrimaryRole(role)) || !rawSpecific.every(role => normalizePlayerSpecificRole(role))) {
+		fail("Uno dei ruoli selezionati non è valido.", 3);
+	}
+	const primary = normalizePlayerPrimaryRoles(rawPrimary);
+	const primarySet = new Set(primary);
+	const specific = normalizePlayerSpecificRoles(rawSpecific);
+	if (specific.some(role => !primarySet.has(PLAYER_PRIMARY_ROLE_BY_SPECIFIC[role]))) {
+		fail("I ruoli specifici non corrispondono ai ruoli principali selezionati.", 3);
+	}
+	return {primary, specific};
 }
 
 function numericValue(
@@ -209,9 +231,10 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 	}
 	if (type === "annuncio_squadra_cerca_giocatore") {
 		assertExactKeys(value, ["ruoli_principali", "ruoli_secondari", "annate_ricercate", "stagione", "descrizione_aggiuntiva"], 3);
+		const roles = playerRoles(value.ruoli_principali, value.ruoli_secondari);
 		return {
-			ruoli_principali: stringList(value.ruoli_principali, 3, true),
-			ruoli_secondari: stringList(value.ruoli_secondari, 3),
+			ruoli_principali: roles.primary,
+			ruoli_secondari: roles.specific,
 			annate_ricercate: stringList(value.annate_ricercate, 3),
 			stagione: textValue(value.stagione, 80, 3),
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),

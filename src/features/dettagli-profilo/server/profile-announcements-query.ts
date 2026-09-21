@@ -12,6 +12,7 @@ import type {ProfileType} from "@/features/profilo/profile-model";
 import type {Database} from "@/server/supabase";
 import {experienceTeamReferences, type TeamProfileReference} from "@/features/profilo/team-profile";
 import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
+import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
 
 const PUBLIC_ANNOUNCEMENT_LIMIT = 4;
 const NOT_SPECIFIED = "Non specificato";
@@ -120,7 +121,7 @@ function publicProfileAnnouncementsQuery(supabase: SupabaseClient<Database>) {
 			annuncio_torneo_evento(nome_evento, modalita_iscrizione, tipo_partecipazione, costo_partecipazione, descrizione_aggiuntiva),
 			annuncio_campo_impianto(tipologie_sport, costo_partenza, servizi_inclusi, descrizione_aggiuntiva),
 			localita_annuncio(regione, citta)
-		`);
+		`, {count: "exact"});
 }
 
 type AnnouncementQueryRow = QueryData<
@@ -234,9 +235,11 @@ function profileAnnouncementFacts(
 	if (!detail || !type) return [];
 
 	if (type === "annuncio_giocatore") {
+		const primaryRoles = normalizePlayerPrimaryRoles(textArray(detail.ruoli_principali));
+		const secondaryRoles = normalizePlayerSpecificRoles(textArray(detail.ruoli_secondari));
 		return [
-			announcementFact("roles", "Ruoli principali", formatSelection(textArray(detail.ruoli_principali), "selezionati")),
-			announcementFact("roles", "Ruoli secondari", formatSelection(textArray(detail.ruoli_secondari), "selezionati")),
+			announcementFact("roles", "Ruoli principali", formatSelection(primaryRoles, "selezionati")),
+			announcementFact("roles", "Ruoli secondari", formatSelection(secondaryRoles, "selezionati")),
 			announcementFact("types", "Tipologie", formatSelection(textArray(detail.tipologie_sport), "selezionate")),
 			announcementFact("categories", "Categorie ricercate", formatSelection(textArray(detail.categorie_ricercate), "selezionate")),
 			announcementFact("location", "Località", location),
@@ -244,7 +247,7 @@ function profileAnnouncementFacts(
 	}
 	if (type === "annuncio_squadra_cerca_giocatore") {
 		return [
-			announcementFact("roles", "Ruoli", formatSelection(textArray(detail.ruoli_principali), "selezionati")),
+			announcementFact("roles", "Ruoli", formatSelection(normalizePlayerPrimaryRoles(textArray(detail.ruoli_principali)), "selezionati")),
 			announcementFact("categories", "Annate", formatSelection(textArray(detail.annate_ricercate), "selezionate")),
 			announcementFact("season", "Stagione", firstText(detail.stagione)),
 			announcementFact("location", "Località", location),
@@ -374,14 +377,14 @@ export async function loadPublicProfileAnnouncements(
 	supabase: SupabaseClient<Database>,
 	profileId: string,
 	type: ProfileType,
-): Promise<{announcements: ProfileAnnouncement[]; unavailable: boolean}> {
+): Promise<{announcements: ProfileAnnouncement[]; announcementCount: number | null; unavailable: boolean}> {
 	try {
 		const allowedTypes = ANNOUNCEMENT_TYPES_BY_PROFILE[type];
 		if (allowedTypes.length === 0) {
-			return {announcements: [], unavailable: false};
+			return {announcements: [], announcementCount: 0, unavailable: false};
 		}
 
-		const {data, error} = await publicProfileAnnouncementsQuery(supabase)
+		const {data, error, count} = await publicProfileAnnouncementsQuery(supabase)
 			.eq("autore_annuncio", profileId)
 			.eq("stato_annuncio", "pubblicato")
 			.eq("nascosto", false)
@@ -395,7 +398,7 @@ export async function loadPublicProfileAnnouncements(
 			console.error("[dettagli-profilo] Public announcements unavailable", {
 				code: error.code,
 			});
-			return {announcements: [], unavailable: true};
+			return {announcements: [], announcementCount: null, unavailable: true};
 		}
 
 		const mapped = (data ?? []).flatMap((row) => {
@@ -431,12 +434,13 @@ export async function loadPublicProfileAnnouncements(
 				...announcement,
 				linkedTeams: teamReferences.map((reference) => teamsById.get(reference.profileId) ?? reference),
 			})),
+			announcementCount: count,
 			unavailable: false,
 		};
 	} catch (error) {
 		console.error("[dettagli-profilo] Public announcements unavailable", {
 			code: errorCode(error),
 		});
-		return {announcements: [], unavailable: true};
+		return {announcements: [], announcementCount: null, unavailable: true};
 	}
 }

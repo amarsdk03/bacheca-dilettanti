@@ -35,6 +35,7 @@ import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database} from "@/server/supabase";
+import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
 
 const ANNOUNCEMENT_BATCH_SIZE = 500;
 const AUTHOR_BATCH_SIZE = 100;
@@ -361,8 +362,8 @@ function announcementContent(
 
 	if (type === "annuncio_giocatore") {
 		const types = cleanStringArray(detail.tipologie_sport);
-		const primaryRoles = cleanStringArray(detail.ruoli_principali);
-		const secondaryRoles = cleanStringArray(detail.ruoli_secondari);
+		const primaryRoles = normalizePlayerPrimaryRoles(cleanStringArray(detail.ruoli_principali));
+		const secondaryRoles = normalizePlayerSpecificRoles(cleanStringArray(detail.ruoli_secondari));
 		const categories = cleanStringArray(detail.categorie_ricercate);
 		title = primaryRoles[0] ? `${primaryRoles[0]} disponibile` : "Giocatore disponibile";
 		facts = [
@@ -385,8 +386,8 @@ function announcementContent(
 		playerRoles = {primaryRoles, secondaryRoles};
 	} else if (type === "annuncio_squadra_cerca_giocatore") {
 		const types = cleanStringArray(detail.tipologie_sport);
-		const primaryRoles = cleanStringArray(detail.ruoli_principali);
-		const secondaryRoles = cleanStringArray(detail.ruoli_secondari);
+		const primaryRoles = normalizePlayerPrimaryRoles(cleanStringArray(detail.ruoli_principali));
+		const secondaryRoles = normalizePlayerSpecificRoles(cleanStringArray(detail.ruoli_secondari));
 		const years = cleanStringArray(detail.annate_ricercate);
 		const season = cleanText(detail.stagione, 80);
 		title = primaryRoles[0] ? `Ricerca ${primaryRoles[0].toLocaleLowerCase("it-IT")}` : "Ricerca giocatore";
@@ -691,8 +692,8 @@ function registeredAuthor(
 
 	if (profileType === "giocatore") {
 		const roles = [
-			...jsonStringArray(child.ruoli_sport, "principali"),
-			...jsonStringArray(child.ruoli_sport, "specifici"),
+			...normalizePlayerPrimaryRoles(jsonStringArray(child.ruoli_sport, "principali")),
+			...normalizePlayerSpecificRoles(jsonStringArray(child.ruoli_sport, "specifici")),
 		];
 		title = fullName(child.nome, child.cognome);
 		highlights = [
