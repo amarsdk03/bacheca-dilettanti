@@ -3,6 +3,7 @@ import {notFound} from "next/navigation";
 
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
+import {ExternalNavigationProvider} from "@/components/navigation/ExternalNavigation";
 import DettagliProfilo from "@/features/dettagli-profilo/DettagliProfilo";
 import {
 	parseProfileDetailParams,
@@ -47,10 +48,10 @@ export default async function DettagliProfiloPage({searchParams}: DettagliProfil
 	if (result.status === "not-found") notFound();
 
 	return (
-		<>
+		<ExternalNavigationProvider key={`${params.id}:${params.type}`}>
 			<Navbar />
 			<DettagliProfilo result={result} />
 			<Footer />
-		</>
+		</ExternalNavigationProvider>
 	);
 }

@@ -1,4 +1,6 @@
 import {TriangleAlertIcon} from "lucide-react";
+import type {CSSProperties} from "react";
+import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import DettagliAnnuncioArbitro from "@/features/annunci/components/details/DettagliAnnuncioArbitro";
@@ -15,7 +17,6 @@ import DettagliAnnuncioStaffSportivo from "@/features/annunci/components/details
 import DettagliAnnuncioTorneoEvento from "@/features/annunci/components/details/DettagliAnnuncioTorneoEvento";
 import AnnouncementHistoryBackButton from "@/features/annunci/AnnouncementHistoryBackButton";
 import type {AnnouncementDetail, AnnouncementDetailResult,} from "@/features/annunci/announcement-model";
-import DetailActions from "@/features/interazioni/DetailActions";
 
 interface DettagliAnnuncioPubblicoProps {
 	result: Exclude<AnnouncementDetailResult, {status: "not-found"}>;
@@ -51,16 +52,10 @@ export default function DettagliAnnuncioPubblico({
 	result,
 }: DettagliAnnuncioPubblicoProps) {
 	return (
-		<div className="min-h-[calc(100vh-4rem)] bg-brand-paper">
+		<div className="public-profile-page min-h-[calc(100vh-4rem)]" style={{"--profile-accent": result.status === "success" ? getProfileAccent(result.announcement.profileType) : "var(--brand-indigo)"} as CSSProperties}>
 			<main className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 				<div className="flex items-center justify-between gap-3">
 					<AnnouncementHistoryBackButton />
-					{result.status === "success" ? (
-						<DetailActions
-							target={{kind: "annuncio", id: result.announcement.id}}
-							href={`/dettagli-annuncio?${new URLSearchParams({id: result.announcement.id}).toString()}`}
-						/>
-					) : null}
 				</div>
 				{result.status === "error" ? <AnnouncementError /> : <AnnouncementContent announcement={result.announcement} />}
 				<div className="flex justify-center pt-2">

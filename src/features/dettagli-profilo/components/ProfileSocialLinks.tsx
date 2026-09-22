@@ -1,3 +1,4 @@
+import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import type {SVGProps} from "react";
 import {ArrowUpRightIcon, LinkIcon} from "lucide-react";
 import {SiFacebook, SiInstagram, SiYoutube} from "@icons-pack/react-simple-icons";
@@ -33,7 +34,7 @@ export default function ProfileSocialLinksCard({socialLinks, presentation = "def
 					{links.map(({platform, label, href}) => {
 						const Icon = SOCIAL_ICONS[platform];
 						return <li key={platform} className="min-w-0">
-							<a href={href} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-start gap-3 rounded-lg px-2 py-3 hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+							<ExternalLink href={href} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-start gap-3 rounded-lg px-2 py-3 hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
 								<Icon className="profile-detail-accent mt-0.5 size-4 shrink-0" aria-hidden="true" data-social-brand={platform} />
 								<span className="grid min-w-0 flex-1 items-baseline gap-x-3 gap-y-1 sm:grid-cols-[5rem_minmax(0,1fr)]">
 									<span className="font-semibold">{label}</span>
@@ -41,7 +42,7 @@ export default function ProfileSocialLinksCard({socialLinks, presentation = "def
 								</span>
 								<ArrowUpRightIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
 								<span className="sr-only"> (si apre in una nuova scheda)</span>
-							</a>
+							</ExternalLink>
 						</li>;
 					})}
 				</ul>
@@ -58,7 +59,7 @@ export default function ProfileSocialLinksCard({socialLinks, presentation = "def
 			<CardContent>
 				<div className="flex flex-wrap gap-2">
 					{links.map(({platform, label, href}) => (
-						<a
+						<ExternalLink
 							key={platform}
 							href={href}
 							target="_blank"
@@ -68,7 +69,7 @@ export default function ProfileSocialLinksCard({socialLinks, presentation = "def
 							{label}
 							<ArrowUpRightIcon data-icon="inline-end" aria-hidden="true" />
 							<span className="sr-only"> (si apre in una nuova scheda)</span>
-						</a>
+						</ExternalLink>
 					))}
 				</div>
 			</CardContent>

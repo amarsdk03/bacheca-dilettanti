@@ -61,7 +61,7 @@ test("report RPC responses expose only supported application states", () => {
 });
 
 test("detail pages render the shared action bar for their displayed element", () => {
-	const announcement = readFileSync(path.join(root, "src/features/annunci/DettagliAnnuncioPubblico.tsx"), "utf8");
+	const announcement = readFileSync(path.join(root, "src/features/annunci/components/details/AnnouncementDetailsLayout.tsx"), "utf8");
 	const profile = readFileSync(path.join(root, "src/features/dettagli-profilo/DettagliProfilo.tsx"), "utf8");
 	const actions = readFileSync(path.join(root, "src/features/segnalazioni/DetailActions.tsx"), "utf8");
 

@@ -224,10 +224,10 @@ export const ANNOUNCEMENT_DIRECTORY_OPTIONS: readonly AnnouncementDirectoryOptio
 ];
 
 export const ANNOUNCEMENT_TEAM_SEARCH_OPTIONS = [
-	{value: "giocatore", label: "Giocatore"},
-	{value: "staff", label: "Staff"},
-	{value: "partita", label: "Partita"},
-	{value: "sponsor", label: "Sponsor"},
+	{value: "giocatore", label: "Squadra cerca giocatore"},
+	{value: "staff", label: "Squadra cerca staff"},
+	{value: "partita", label: "Squadra cerca partita"},
+	{value: "sponsor", label: "Squadra cerca sponsor"},
 ] as const satisfies readonly {value: AnnouncementTeamSearch; label: string}[];
 
 export const ANNOUNCEMENT_FILTER_PARAM_KEYS = [
@@ -400,6 +400,10 @@ export interface AnnouncementPlayerRoles {
 }
 
 export interface AnnouncementDetail extends AnnouncementDirectoryItem {
+	saveCount: number | null;
+	authorFollowerCount: number | null;
+	similarAnnouncements: AnnouncementDirectoryItem[];
+	similarAnnouncementsUnavailable: boolean;
 	fields: AnnouncementDetailField[];
 	contacts: AnnouncementContact[];
 	contactsUnavailable: boolean;

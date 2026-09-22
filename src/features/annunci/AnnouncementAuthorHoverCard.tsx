@@ -53,8 +53,8 @@ function AuthorLocations({locations}: {locations: readonly PublicProfileLocation
 				<MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />
 				Zone selezionate
 			</p>
-			<ScrollArea className="max-h-44 rounded-lg bg-muted/50 p-2.5">
-				<dl className="flex flex-col gap-2.5">
+			<ScrollArea className="rounded-lg bg-muted/50 [&>[data-slot=scroll-area-viewport]]:h-auto [&>[data-slot=scroll-area-viewport]]:max-h-44">
+				<dl className="flex flex-col gap-2.5 p-2.5">
 					{groups.map((group) => (
 						<div key={group.region} className="flex flex-col gap-1.5">
 							<dt className="text-xs font-semibold">{group.region}</dt>
@@ -115,7 +115,7 @@ export default function AnnouncementAuthorHoverCard({
 			<HoverCardContent
 				side="top"
 				align="start"
-				className="w-[min(23rem,calc(100vw-2rem))] p-4"
+				className="max-h-[var(--available-height)] w-[min(23rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain p-4"
 				style={{"--profile-accent": accent} as CSSProperties}
 			>
 				<div className="flex flex-col gap-4">

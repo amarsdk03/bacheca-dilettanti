@@ -1,3 +1,4 @@
+import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -94,22 +95,22 @@ export default function Footer(
 						>
 							<MailIcon size={20} />
 						</Link>
-						<Link
+						<ExternalLink
 							href={WHATSAPP_URL}
 							target="_blank"
 							aria-label="Whatsapp"
 							className="inline-flex size-12 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:-translate-y-0.5 hover:border-fuchsia-300 hover:text-fuchsia-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500"
 						>
 							<SiWhatsapp title='Whatsapp' size={20} />
-						</Link>
-						<Link
+						</ExternalLink>
+						<ExternalLink
 							href={INSTAGRAM_URL}
 							target="_blank"
 							aria-label="Instagram"
 							className="inline-flex size-12 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:-translate-y-0.5 hover:border-fuchsia-300 hover:text-fuchsia-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500"
 						>
 							<SiInstagram title='Instagram' size={20} />
-						</Link>
+						</ExternalLink>
 					</div>
 				</div>
 

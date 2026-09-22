@@ -1,3 +1,4 @@
+import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import type {ReactNode} from "react";
 import {BadgeCheckIcon, ExternalLinkIcon, StarIcon} from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
@@ -16,11 +17,11 @@ import ProfileSocialLinksCard from "./ProfileSocialLinks";
 function ProfileFieldValue({field}: {field: PublicProfile["fields"][number]}) {
 	if (!field.href) return field.value;
 	return (
-		<a href={field.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline">
+		<ExternalLink href={field.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline">
 			{field.value}
 			<ExternalLinkIcon className="size-4 shrink-0" aria-hidden="true" />
 			<span className="sr-only"> (si apre in una nuova scheda)</span>
-		</a>
+		</ExternalLink>
 	);
 }
 

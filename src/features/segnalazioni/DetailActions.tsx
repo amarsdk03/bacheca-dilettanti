@@ -28,13 +28,13 @@ import {
 	type ReportTarget,
 } from "@/features/segnalazioni/report-model";
 import {submitReport} from "@/features/segnalazioni/server/actions";
-import {copyText} from "@/lib/utils";
+import {cn, copyText} from "@/lib/utils";
 
 interface DetailActionsProps {
 	href: string;
 	target: ReportTarget;
 	interaction: InteractionState;
-	presentation?: "default" | "profile";
+	presentation?: "default" | "profile" | "announcement";
 }
 
 function ReportForm({
@@ -105,8 +105,8 @@ function ReportForm({
 export default function DetailActions({href, target, interaction, presentation = "default"}: DetailActionsProps) {
 	const [reportOpen, setReportOpen] = useState(false);
 	const [reportPending, setReportPending] = useState(false);
-	const isProfile = presentation === "profile";
-	const followButton = <InteractionButton target={target} state={interaction} href={href} showLabel={isProfile} className={isProfile ? "profile-detail-follow col-span-2 min-h-11 gap-2 px-4" : undefined} />;
+	const isDetail = presentation !== "default";
+	const followButton = <InteractionButton target={target} state={interaction} href={href} showLabel={isDetail} className={cn(isDetail && target.kind === "profilo" && "profile-detail-follow", isDetail && "col-span-2 min-h-11 gap-2 px-4")} />;
 
 	const handleReportComplete = useCallback((state: Extract<ReportActionState, {status: "success" | "rate_limited"}>) => {
 		setReportPending(false);
@@ -127,9 +127,9 @@ export default function DetailActions({href, target, interaction, presentation =
 	}
 
 	return (
-		<div className={isProfile ? "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center" : "flex items-center gap-2"} role="group" aria-label="Azioni">
-			{isProfile && followButton}
-			{isProfile ? (
+		<div className={isDetail ? "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center" : "flex items-center gap-2"} role="group" aria-label="Azioni">
+			{isDetail && followButton}
+			{isDetail ? (
 				<Button type="button" variant="outline" className="min-h-11 gap-2 pe-4" onClick={handleShare}>
 					<Share2Icon data-icon="inline-start" className="ms-1.5" aria-hidden="true" />Condividi
 				</Button>
@@ -140,7 +140,7 @@ export default function DetailActions({href, target, interaction, presentation =
 				<TooltipContent>Condividi</TooltipContent>
 			</Tooltip>}
 
-			{!isProfile && followButton}
+			{!isDetail && followButton}
 
 			<Dialog
 				open={reportOpen}
@@ -148,7 +148,7 @@ export default function DetailActions({href, target, interaction, presentation =
 					if (!reportPending) setReportOpen(open);
 				}}
 			>
-				<DialogTrigger render={<Button type="button" variant={isProfile ? "destructive" : "outline"} className={isProfile ? "min-h-11 gap-2 pe-4 text-white" : undefined} />}>
+				<DialogTrigger render={<Button type="button" variant={isDetail ? "destructive" : "outline"} className={isDetail ? "min-h-11 gap-2 pe-4 text-white" : undefined} />}>
 					<FlagIcon data-icon="inline-start" className="ms-1.5" aria-hidden="true" />
 					Segnala
 				</DialogTrigger>

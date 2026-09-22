@@ -204,8 +204,11 @@ test("real toggle components render accessible persisted state and hide self-fol
 	assert.match(saved, /aria-pressed="true"/);
 	assert.match(saved, /aria-label="Rimuovi dai salvati"/);
 	assert.match(saved, /fill="currentColor"/);
+	assert.match(saved, /announcement-save-toggle/);
 	assert.doesNotMatch(saved, /<button[^>]*\shidden/);
 	assert.match(render("annuncio", {status: "guest"}), /aria-pressed="false"/);
+	assert.match(render("annuncio", {status: "guest"}), /announcement-save-toggle/);
+	assert.doesNotMatch(render("profilo", {status: "ready", active: true}), /announcement-save-toggle/);
 	assert.match(render("profilo", {status: "ready", active: false}), /aria-label="Segui profilo"/);
 	assert.match(render("profilo", {status: "ready", active: true}), /aria-label="Non seguire più"/);
 	assert.equal(render("profilo", {status: "own-profile"}), "");
@@ -234,6 +237,24 @@ test("profile action presentation labels its controls and preserves own-profile 
 	assert.match(own, /Condividi/);
 	assert.match(own, /Segnala/);
 	assert.doesNotMatch(render({status: "guest"}, "default"), /profile-detail-follow|>Condividi<\/button>/);
+});
+
+test("announcement detail actions use the shared bookmark styling without profile accent overrides", () => {
+	const load = loader({
+		"next/navigation": {useRouter: () => ({push() {}, refresh() {}})},
+		"@/features/interazioni/server/actions": {},
+		"@/features/segnalazioni/server/actions": {},
+	});
+	const Actions = load("src/features/segnalazioni/DetailActions.tsx").default;
+	for (const active of [false, true]) {
+		const html = renderToStaticMarkup(React.createElement(Actions, {
+			target: {kind: "annuncio", id: targetId}, interaction: {status: "ready", active},
+			href: "/dettagli-annuncio", presentation: "announcement",
+		}));
+		assert.match(html, /announcement-save-toggle/);
+		assert.doesNotMatch(html, /profile-detail-follow/);
+		assert.ok(html.indexOf(active ? "Rimuovi dai salvati" : "Salva annuncio") < html.indexOf("Condividi"));
+	}
 });
 
 test("saved-list components distinguish errors from empty results and display saved timestamps", () => {

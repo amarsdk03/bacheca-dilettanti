@@ -1,105 +1,44 @@
-import type {CSSProperties} from "react";
-import {CalendarDaysIcon, MapPinIcon} from "lucide-react";
-
+import type {ReactNode} from "react";
+import {CalendarDaysIcon} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
+import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import AnnouncementAuthorHoverCard from "@/features/annunci/AnnouncementAuthorHoverCard";
-import {
-	type AnnouncementDetail,
-	announcementOption,
-	type AnnouncementPlayerRoles,
-} from "@/features/annunci/announcement-model";
-import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
-import AnnouncementPlayerRolePitch from "./AnnouncementPlayerRolePitch";
+import {type AnnouncementDetail, announcementOption} from "@/features/annunci/announcement-model";
+import ProfileFactsGrid from "@/features/dettagli-profilo/components/ProfileFactsGrid";
+import {getAnnouncementDetailFacts} from "./announcement-detail-facts";
 import type {AnnouncementDetailPresentation} from "./announcement-detail-presentation";
 
-const ANNOUNCEMENT_DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {
-	day: "numeric",
-	month: "long",
-	timeZone: "Europe/Rome",
-	year: "numeric",
-});
+const DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Rome"});
 
-function formatAnnouncementDate(value: string | null) {
-	if (!value) return "Data non disponibile";
-	const date = new Date(value);
-	return Number.isNaN(date.getTime())
-		? "Data non disponibile"
-		: ANNOUNCEMENT_DATE_FORMATTER.format(date);
-}
-
-function humanizeLevel(value: string) {
-	const normalized = value.trim().replaceAll("_", " ").replaceAll("-", " ");
-	return normalized
-		? normalized.charAt(0).toLocaleUpperCase("it-IT") + normalized.slice(1)
-		: value;
-}
-
-export default function AnnouncementDetailsHeader({
-	announcement,
-	presentation,
-	playerRoles,
-}: {
+export default function AnnouncementDetailsHeader({announcement, presentation, actions}: {
 	announcement: AnnouncementDetail;
 	presentation: AnnouncementDetailPresentation;
-	playerRoles?: AnnouncementPlayerRoles;
+	actions?: ReactNode;
 }) {
-	const option = announcementOption(announcement.type);
-	const TypeIcon = option.icon;
-	const accent = getProfileAccent(announcement.profileType);
-	const headerStyle = {"--announcement-accent": accent} as CSSProperties;
-	const formattedDate = formatAnnouncementDate(announcement.createdAt);
+	const TypeIcon = announcementOption(announcement.type).icon;
+	const date = announcement.createdAt ? new Date(announcement.createdAt) : null;
+	const validDate = date && !Number.isNaN(date.getTime());
+	const level = announcement.level?.trim().replaceAll("_", " ").replaceAll("-", " ");
 
 	return (
-		<header
-			className="relative isolate overflow-hidden rounded-2xl border bg-card p-5 sm:p-8"
-			style={{...headerStyle, borderColor: `color-mix(in oklab, ${accent} 28%, transparent)`}}
-		>
-			<div
-				aria-hidden="true"
-				className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-br from-[color:var(--announcement-accent)]/15 via-[color:var(--announcement-accent)]/5 to-transparent"
-			/>
-			<div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:gap-8">
-				<div className="flex min-w-0 flex-1 flex-col gap-4">
-					<div className="flex flex-wrap items-center gap-2">
-						<Badge variant="outline" style={{borderColor: accent, color: accent}}>
-							<TypeIcon data-icon="inline-start" aria-hidden="true" />
-							{announcement.typeLabel}
-						</Badge>
-						{announcement.level && <Badge variant="secondary">{humanizeLevel(announcement.level)}</Badge>}
+		<header aria-labelledby="announcement-detail-title">
+			<Card className="public-profile-hero gap-5 rounded-2xl [--card-spacing:--spacing(5)] sm:gap-6 sm:[--card-spacing:--spacing(6)]">
+				<CardHeader className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+					<div className="flex min-w-0 flex-1 flex-col gap-3">
+						<h1 id="announcement-detail-title" className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">{announcement.title}</h1>
+						<div className="flex flex-wrap items-center gap-2">
+							<Badge variant="secondary" className="public-profile-type-badge"><TypeIcon data-icon="inline-start" aria-hidden="true" />{announcement.typeLabel}</Badge>
+							{level && <Badge variant="outline">{level.charAt(0).toLocaleUpperCase("it-IT") + level.slice(1)}</Badge>}
+						</div>
+						<div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm">
+							<div className="flex flex-wrap items-center gap-2"><span className="text-muted-foreground">Pubblicato da</span><AnnouncementAuthorHoverCard author={announcement.author} /></div>
+							<div className="flex items-center gap-2 text-muted-foreground"><CalendarDaysIcon className="size-4 shrink-0" aria-hidden="true" />{validDate ? <time dateTime={announcement.createdAt!}>{DATE_FORMATTER.format(date)}</time> : "Data non disponibile"}</div>
+						</div>
 					</div>
-					<h1 id="announcement-detail-title" className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">
-						{announcement.title}
-					</h1>
-					<p className="text-base text-muted-foreground sm:text-lg">{presentation.intro}</p>
-					<div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-muted-foreground">
-						<p className="flex items-center gap-2">
-							<MapPinIcon className="size-4 shrink-0" aria-hidden="true" />
-							<span>{announcement.location}</span>
-						</p>
-						{announcement.createdAt ? (
-							<time dateTime={announcement.createdAt} className="flex items-center gap-2">
-								<CalendarDaysIcon className="size-4 shrink-0" aria-hidden="true" />
-								{formattedDate}
-							</time>
-						) : (
-							<p className="flex items-center gap-2">
-								<CalendarDaysIcon className="size-4 shrink-0" aria-hidden="true" />
-								{formattedDate}
-							</p>
-						)}
-					</div>
-					<div className="flex flex-wrap items-center gap-2 text-sm">
-						<span className="text-muted-foreground">Pubblicato da</span>
-						<AnnouncementAuthorHoverCard author={announcement.author} />
-					</div>
-				</div>
-				{playerRoles && (
-					<AnnouncementPlayerRolePitch
-						primaryRoles={playerRoles.primaryRoles}
-						secondaryRoles={playerRoles.secondaryRoles}
-					/>
-				)}
-			</div>
+					{actions && <div className="w-full min-w-0 xl:w-auto xl:shrink-0">{actions}</div>}
+				</CardHeader>
+				<CardContent><ProfileFactsGrid facts={getAnnouncementDetailFacts(announcement, presentation)} layout="balanced" /></CardContent>
+			</Card>
 		</header>
 	);
 }

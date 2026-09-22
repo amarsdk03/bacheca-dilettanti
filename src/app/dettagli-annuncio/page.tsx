@@ -3,6 +3,7 @@ import {notFound} from "next/navigation";
 
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
+import {ExternalNavigationProvider} from "@/components/navigation/ExternalNavigation";
 import DettagliAnnuncioPubblico from "@/features/annunci/DettagliAnnuncioPubblico";
 import {isValidAnnouncementId, type RawAnnouncementSearchParams,} from "@/features/annunci/announcement-model";
 import {loadPublicAnnouncementDetail} from "@/features/annunci/server/queries";
@@ -48,10 +49,10 @@ export default async function DettagliAnnuncioPage({
 	if (result.status === "not-found") notFound();
 
 	return (
-		<>
+		<ExternalNavigationProvider key={id}>
 			<Navbar />
 			<DettagliAnnuncioPubblico result={result} />
 			<Footer />
-		</>
+		</ExternalNavigationProvider>
 	);
 }

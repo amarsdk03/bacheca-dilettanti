@@ -13,7 +13,7 @@ export default function AnnouncementDetailsContacts({
 	unavailable: boolean;
 }) {
 	return (
-		<aside aria-labelledby="announcement-contacts-title" className="xl:sticky xl:top-24">
+		<section aria-labelledby="announcement-contacts-title" className="min-w-0">
 			<Card>
 				<CardHeader>
 					<CardTitle><h2 id="announcement-contacts-title" className="font-home-display text-2xl uppercase">Contatta l’autore</h2></CardTitle>
@@ -60,6 +60,6 @@ export default function AnnouncementDetailsContacts({
 					</CardFooter>
 				)}
 			</Card>
-		</aside>
+		</section>
 	);
 }

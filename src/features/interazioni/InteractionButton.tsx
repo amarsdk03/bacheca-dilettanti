@@ -87,7 +87,7 @@ function InteractionControl({target, state, href, showLabel = false, className}:
 	return (
 		<Tooltip>
 			<TooltipTrigger render={<Toggle variant="outline" pressed={active} onPressedChange={change}
-				disabled={pending} aria-busy={pending} aria-label={label} className={cn(!showLabel && "size-8 px-0", className)} />}>
+				disabled={pending} aria-busy={pending} aria-label={label} className={cn(!showLabel && "size-8 px-0", announcement && "announcement-save-toggle", className)} />}>
 				{pending ? <LoaderCircleIcon aria-hidden="true" className="animate-spin" />
 					: <Icon aria-hidden="true" fill={announcement && active ? "currentColor" : "none"} />}
 				{showLabel && label}

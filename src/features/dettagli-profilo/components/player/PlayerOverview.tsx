@@ -1,3 +1,4 @@
+import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import {ArrowUpRightIcon, VideoIcon} from "lucide-react";
 import {buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -64,9 +65,9 @@ export default function PlayerOverview({presentation, highlightsUrl, locations, 
 								/>
 							</div>
 						) : (
-							<a href={highlightsUrl} target="_blank" rel="noopener noreferrer" className={buttonVariants({variant: "outline", className: "min-h-11 h-auto self-start whitespace-normal"})}>
+							<ExternalLink href={highlightsUrl} target="_blank" rel="noopener noreferrer" className={buttonVariants({variant: "outline", className: "min-h-11 h-auto self-start whitespace-normal"})}>
 								Guarda video highlights<ArrowUpRightIcon data-icon="inline-end" aria-hidden="true" /><span className="sr-only"> (si apre in una nuova scheda)</span>
-							</a>
+							</ExternalLink>
 						)}
 					</CardContent>
 				</Card>}

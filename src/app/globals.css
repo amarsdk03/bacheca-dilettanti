@@ -453,6 +453,35 @@
     background: color-mix(in srgb, var(--profile-accent) 2%, var(--background));
 }
 
+/* Bookmark controls share the same state colours on cards, details and saved lists. */
+.announcement-save-toggle {
+    --save-color: #dc2626;
+    --save-outline: var(--save-color);
+    --save-foreground: #ffffff;
+    color: var(--save-outline);
+    border-color: var(--save-outline);
+    background: transparent;
+}
+
+.public-profile-hero .announcement-save-toggle {
+    --save-outline: #f87171;
+}
+
+.announcement-save-toggle[aria-pressed="true"] {
+    color: var(--save-foreground);
+    background: var(--save-color);
+    border-color: var(--save-color);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .announcement-save-toggle:hover {
+        background: color-mix(in srgb, var(--save-color) 10%, transparent);
+    }
+    .announcement-save-toggle[aria-pressed="true"]:hover {
+        background: color-mix(in srgb, var(--save-color) 85%, black);
+    }
+}
+
 .public-profile-detail {
     --primary: color-mix(in srgb, var(--profile-accent) 94%, black);
     --primary-foreground: #ffffff;
