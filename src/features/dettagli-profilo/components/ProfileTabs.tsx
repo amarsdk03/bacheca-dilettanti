@@ -1,7 +1,7 @@
 "use client";
 
 import {type ReactNode, useState} from "react";
-import {CalendarRangeIcon, IdCardIcon, MegaphoneIcon, RouteIcon, UsersIcon} from "lucide-react";
+import {CalendarRangeIcon, IdCardIcon, MegaphoneIcon, UsersIcon} from "lucide-react";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import ProfileSectionNavigation from "@/components/navigation/ProfileSectionNavigation";
 
@@ -9,6 +9,7 @@ export default function ProfileTabs({
 	label,
 	overview,
 	career,
+	careerLabel = "Carriera",
 	announcements,
 	similarProfiles,
 	presentation = "default",
@@ -16,6 +17,7 @@ export default function ProfileTabs({
 	label: string;
 	overview: ReactNode;
 	career?: ReactNode;
+	careerLabel?: string;
 	announcements: ReactNode;
 	similarProfiles?: ReactNode;
 	presentation?: "default" | "profile";
@@ -27,7 +29,7 @@ export default function ProfileTabs({
 	const triggerClassName = isProfile ? "profile-section-tab" : "min-h-11 px-2";
 	const navigation = <TabsList variant="line" aria-label={label} className={isProfile ? "profile-section-tab-list" : "h-12 w-max min-w-full justify-center sm:min-w-0"}>
 		<TabsTrigger value="overview" className={triggerClassName}><IdCardIcon data-icon="inline-start" aria-hidden="true" /><span>Panoramica</span></TabsTrigger>
-		{hasCareer && <TabsTrigger value="career" className={triggerClassName}><CalendarRangeIcon data-icon="inline-start" aria-hidden="true" /><span>Carriera</span></TabsTrigger>}
+		{hasCareer && <TabsTrigger value="career" className={triggerClassName}><CalendarRangeIcon data-icon="inline-start" aria-hidden="true" /><span>{careerLabel}</span></TabsTrigger>}
 		<TabsTrigger value="announcements" className={triggerClassName}><MegaphoneIcon data-icon="inline-start" aria-hidden="true" /><span>Annunci</span></TabsTrigger>
 		{hasSimilarProfiles && <TabsTrigger value="similar-profiles" className={triggerClassName}><UsersIcon data-icon="inline-start" aria-hidden="true" /><span>Profili simili</span></TabsTrigger>}
 	</TabsList>;

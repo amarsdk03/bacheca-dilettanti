@@ -14,7 +14,11 @@ export default function PlayerRolesCard({primaryRoles, specificRoles, preferredC
 	return (
 		<Card className="min-w-0">
 			<CardHeader>
-				<CardTitle><h2 className="flex items-center gap-2 font-home-display text-2xl uppercase"><TargetIcon className="profile-detail-accent size-5" aria-hidden="true" />Ruoli e categorie</h2></CardTitle>
+				<CardTitle>
+					<h2 className="flex items-center gap-2 font-home-display text-2xl uppercase">
+						<TargetIcon className="profile-detail-accent size-5" aria-hidden="true" /> Ruoli e categorie
+					</h2>
+				</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<div className="mt-2 mb-8">

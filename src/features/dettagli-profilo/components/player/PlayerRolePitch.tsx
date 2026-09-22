@@ -25,15 +25,20 @@ export default function PlayerRolePitch({
 		<section className={cn("flex w-full max-w-60 flex-col gap-2 justify-self-center", className)} aria-label="Posizioni in campo">
 			<div
 				className="grid aspect-4/5 grid-cols-3 grid-rows-7 overflow-hidden rounded-sm border-4 border-white"
-				style={{backgroundImage: "url('/sfondi/campo.png')", backgroundPosition: "center", backgroundSize: "cover", filter: "invert(1)"}}
+				style={{
+					backgroundImage: "url('/sfondi/campo.png')",
+					backgroundPosition: "center",
+					backgroundSize: "cover",
+					filter: "invert(1) opacity(75%)"
+				}}
 			>
 				{markers.map((marker) => (
 					<Badge
 						key={marker.role}
-						variant={marker.isPrimary ? "default" : "secondary"}
+						variant={"default"}
 						aria-label={marker.role}
 						title={marker.role}
-						className="z-10 min-w-8 place-self-center border border-white/50 bg-black/95 px-1.5 font-bold tracking-wide text-white shadow-md"
+						className="z-10 min-w-8 place-self-center border border-white/25 bg-[#dcaf40] text-black shadow-md px-1.5 font-bold tracking-wide"
 						style={{gridColumn: marker.column, gridRow: marker.row}}
 					>
 						{marker.abbreviation}

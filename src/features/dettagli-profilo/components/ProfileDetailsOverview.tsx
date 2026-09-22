@@ -1,152 +1,103 @@
-import type {CSSProperties} from "react";
-import {BadgeCheckIcon, CircleDotIcon, ExternalLinkIcon, InfoIcon, StarIcon,} from "lucide-react";
-
+import type {ReactNode} from "react";
+import {BadgeCheckIcon, ExternalLinkIcon, StarIcon} from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import type {GenericProfileDetail as PublicProfile} from "@/features/dettagli-profilo/profile-detail-model";
-import ProfileLocationSummary from "@/features/dettagli-profilo/components/ProfileLocationSummary";
-import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import type {GenericProfileDetail as PublicProfile} from "../profile-detail-model";
+import ProfilePngIcon from "@/features/profilo/ProfilePngIcon";
 import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
 import {profileInitials} from "@/features/profilo/public-profile-display";
-import {cn} from "@/lib/utils";
-import type {ProfileDetailPresentation} from "./profile-detail-presentation";
-import ProfileExperienceHistory from "./ProfileExperienceHistory";
-import ProfileFollowerCount from "./ProfileFollowerCount";
+import {getProfileDetailFacts, getProfileDetailFields, type ProfileDetailPresentation} from "./profile-detail-presentation";
+import ProfileFactsGrid from "./ProfileFactsGrid";
+import ProfileIdentifier from "./ProfileIdentifier";
+import ProfileLocationsCard from "./ProfileLocationsCard";
+import ProfileSocialLinksCard from "./ProfileSocialLinks";
 
 function ProfileFieldValue({field}: {field: PublicProfile["fields"][number]}) {
 	if (!field.href) return field.value;
 	return (
-		<a
-			href={field.href}
-			target="_blank"
-			rel="noopener noreferrer"
-			className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
-		>
-			Guarda video highlights
-			<ExternalLinkIcon className="size-4" aria-hidden="true" />
+		<a href={field.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline">
+			{field.value}
+			<ExternalLinkIcon className="size-4 shrink-0" aria-hidden="true" />
 			<span className="sr-only"> (si apre in una nuova scheda)</span>
 		</a>
 	);
 }
 
-function FactGrid({fields}: {fields: PublicProfile["primaryFields"]}) {
-	if (fields.length === 0) return null;
-	return (
-		<dl className={cn("grid gap-3 sm:grid-cols-2", fields.length > 2 && "xl:grid-cols-3")}>
-			{fields.map((field) => (
-				<div key={field.label} className="min-w-0 rounded-xl bg-muted/55 p-4">
-					<dt className="text-xs font-medium text-muted-foreground">{field.label}</dt>
-					<dd className="mt-1 wrap-anywhere text-base font-semibold"><ProfileFieldValue field={field} /></dd>
-				</div>
-			))}
-		</dl>
-	);
-}
-
-export function ProfileDetailsHeader({
-	profile,
-	presentation,
-}: {
+export function ProfileDetailsHeader({profile, presentation, actions}: {
 	profile: PublicProfile;
 	presentation: ProfileDetailPresentation;
+	actions?: ReactNode;
 }) {
-	const option = PROFILE_OPTIONS.find(({value}) => value === profile.type) ?? PROFILE_OPTIONS[0];
-	const accent = getProfileAccent(profile.type);
-	const headerStyle = {"--profile-accent": accent} as CSSProperties;
+	const option = PROFILE_OPTIONS.find(({value}) => value === profile.type)!;
 
 	return (
-		<header
-			className="relative isolate overflow-hidden rounded-2xl border bg-card p-5 sm:p-8"
-			style={{...headerStyle, borderColor: `color-mix(in oklab, ${accent} 28%, transparent)`}}
-		>
-			<div
-				aria-hidden="true"
-				className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-br from-(--profile-accent)/15 via-(--profile-accent)/5 to-transparent"
-			/>
-			<div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-				<Avatar className="size-28 shrink-0 ring-4 ring-background sm:size-36">
-					{profile.imageUrl && <AvatarImage src={profile.imageUrl} alt={`Foto profilo di ${profile.title}`} />}
-					<AvatarFallback><span className="font-home-display text-4xl">{profileInitials(profile.title)}</span></AvatarFallback>
-				</Avatar>
-				<div className="flex min-w-0 flex-1 flex-col gap-3">
-					<div className="flex flex-wrap items-center gap-2">
-						<Badge variant="outline" style={{borderColor: accent, color: accent}}>
-							<ProfilePngIcon type={profile.type} color={accent} className="size-3" />
-							{option.label}
-						</Badge>
-						{profile.verified && <Badge variant="secondary"><BadgeCheckIcon data-icon="inline-start" aria-hidden="true" />Verificato</Badge>}
-						{profile.primary && <Badge variant="outline"><StarIcon data-icon="inline-start" aria-hidden="true" />Profilo principale</Badge>}
+		<header aria-label={`Profilo ${option.label}`}>
+			<Card className="public-profile-hero gap-5 rounded-2xl [--card-spacing:--spacing(5)] sm:gap-6 sm:[--card-spacing:--spacing(6)]">
+				<CardHeader className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+					<div className="flex min-w-0 flex-1 flex-col gap-5 sm:flex-row sm:items-center">
+						<Avatar className="size-24 shrink-0 ring-4 ring-border sm:size-28">
+							{profile.imageUrl && <AvatarImage src={profile.imageUrl} alt={`Foto profilo di ${profile.title}`} />}
+							<AvatarFallback><span className="font-home-display text-4xl">{profileInitials(profile.title)}</span></AvatarFallback>
+						</Avatar>
+						<div className="flex min-w-0 flex-1 flex-col gap-3">
+							<h1 className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">{profile.title}</h1>
+							<div className="flex flex-wrap items-center gap-2">
+								<Badge variant="secondary" className="public-profile-type-badge"><ProfilePngIcon type={profile.type} color="currentColor" className="size-3" />{option.label}</Badge>
+								{profile.verified && <Badge variant="secondary"><BadgeCheckIcon data-icon="inline-start" aria-hidden="true" />Verificato</Badge>}
+								{profile.primary && <Badge variant="outline"><StarIcon data-icon="inline-start" aria-hidden="true" />Profilo principale</Badge>}
+							</div>
+						</div>
 					</div>
-					<h1 className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">{profile.title}</h1>
-					<ProfileFollowerCount count={profile.followerCount} />
-					<p className="text-base text-muted-foreground sm:text-lg">{presentation.intro}</p>
-					<ProfileLocationSummary locations={profile.locations} className="max-w-md" />
-					{profile.availabilityLabel && <div><Badge variant="secondary"><CircleDotIcon data-icon="inline-start" aria-hidden="true" />{profile.availabilityLabel}</Badge></div>}
-				</div>
-			</div>
+					{actions && <div className="w-full min-w-0 xl:w-auto xl:shrink-0">{actions}</div>}
+				</CardHeader>
+				<CardContent><ProfileFactsGrid facts={getProfileDetailFacts(profile, presentation)} /></CardContent>
+			</Card>
 		</header>
 	);
 }
 
-export default function ProfileDetailsOverview({
-	profile,
-	presentation,
-}: {
+export default function ProfileDetailsOverview({profile, presentation}: {
 	profile: PublicProfile;
 	presentation: ProfileDetailPresentation;
 }) {
-	const narrativeFieldLabels = new Set(presentation.narrativeFieldLabels);
-	const narrativeFields = profile.fields.filter((field) => narrativeFieldLabels.has(field.label));
-	const primaryFieldLabels = new Set(profile.primaryFields.map(({label}) => label));
-	const supportingFields = profile.fields.filter((field) =>
-		!narrativeFieldLabels.has(field.label) && !primaryFieldLabels.has(field.label),
-	);
+	const fields = getProfileDetailFields(profile);
+	const description = fields.find(field => field.label === "Presentazione");
+	const narrativeFields = presentation.narrativeFieldLabels.flatMap(label => {
+		const field = fields.find(candidate => candidate.label === label);
+		return field ? [field] : [];
+	});
+	const usedLabels = new Set(["Presentazione", ...presentation.narrativeFieldLabels, ...presentation.facts.map(({label}) => label)]);
+	const supportingFields = fields.filter(({label}) => !usedLabels.has(label));
 
 	return (
-		<div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]">
+		<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
 			<div className="flex min-w-0 flex-col gap-5">
-				{narrativeFields.map((field) => (
+				<Card>
+					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Descrizione</h2></CardTitle></CardHeader>
+					<CardContent><p className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{description && description.value !== "Non specificato" ? <ProfileFieldValue field={description} /> : "Descrizione non disponibile"}</p></CardContent>
+				</Card>
+				{narrativeFields.map(field => (
 					<Card key={field.label}>
-						<CardHeader>
-							<CardTitle><h2 className="font-home-display text-2xl uppercase">{field.label}</h2></CardTitle>
-							<CardDescription>{presentation.summary}</CardDescription>
-						</CardHeader>
-						<CardContent><p className="leading-7 whitespace-pre-wrap wrap-anywhere"><ProfileFieldValue field={field} /></p></CardContent>
+						<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{field.label}</h2></CardTitle></CardHeader>
+						<CardContent><p className="text-base leading-7 whitespace-pre-wrap wrap-anywhere"><ProfileFieldValue field={field} /></p></CardContent>
 					</Card>
 				))}
-				{narrativeFields.length === 0 && (
-					<Card>
-						<CardHeader>
-							<CardTitle><h2 className="font-home-display text-2xl uppercase">{presentation.summary}</h2></CardTitle>
-						</CardHeader>
-						<CardContent className="flex items-center gap-3 text-muted-foreground">
-							<InfoIcon className="size-5 shrink-0" aria-hidden="true" />
-							<p>Questo profilo non ha ancora aggiunto una presentazione.</p>
-						</CardContent>
-					</Card>
-				)}
-				<ProfileExperienceHistory experiences={profile.experiences ?? []} />
 			</div>
-			<Card className="min-w-0">
-				<CardHeader>
-					<CardTitle><h2 className="font-home-display text-2xl uppercase">In evidenza</h2></CardTitle>
-					<CardDescription>{presentation.summary}</CardDescription>
-				</CardHeader>
-				<CardContent className="flex flex-col gap-5">
-					<FactGrid fields={profile.primaryFields} />
-					{supportingFields.length > 0 && (
-						<dl className="flex flex-col gap-3">
-							{supportingFields.map((field) => (
-								<div key={field.label} className="min-w-0 rounded-xl border bg-background/60 p-4">
-									<dt className="text-xs font-medium text-muted-foreground">{field.label}</dt>
-									<dd className="mt-1 whitespace-pre-wrap wrap-anywhere font-medium"><ProfileFieldValue field={field} /></dd>
-								</div>
-							))}
-						</dl>
-					)}
-				</CardContent>
-			</Card>
+			<aside aria-label="Informazioni e contatti" className="flex min-w-0 flex-col gap-5">
+				{supportingFields.length > 0 && <Card className="min-w-0">
+					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Altre informazioni</h2></CardTitle></CardHeader>
+					<CardContent><dl className="flex flex-col gap-5">
+						{supportingFields.map(field => <div key={field.label} className="flex min-w-0 flex-col gap-2">
+							<dt className="text-sm font-semibold">{field.label}</dt>
+							<dd className="text-sm leading-6 whitespace-pre-wrap wrap-anywhere"><ProfileFieldValue field={field} /></dd>
+						</div>)}
+					</dl></CardContent>
+				</Card>}
+				<ProfileLocationsCard locations={profile.locations} />
+				<ProfileSocialLinksCard socialLinks={profile.socialLinks} presentation="profile" />
+				<ProfileIdentifier profileId={profile.id} />
+			</aside>
 		</div>
 	);
 }

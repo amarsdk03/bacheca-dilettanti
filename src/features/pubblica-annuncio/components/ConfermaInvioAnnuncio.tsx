@@ -465,19 +465,41 @@ export default function ConfermaInvioAnnuncio({
 					<Field orientation="horizontal" data-invalid={Boolean(consentErrors.data)}>
 						<Checkbox id="confirm-data" checked={dataConfirmed} onCheckedChange={(checked) => setDataConfirmed(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.data)} />
 						<FieldContent>
-							<FieldLabel htmlFor="confirm-data" className="font-normal">Confermo che i dati inseriti sono corretti e veritieri. <RequiredMark /></FieldLabel>
+							<FieldLabel htmlFor="confirm-data" className="font-normal">
+								Confermo che i dati inseriti sono il più corretti e veritieri possibili. <RequiredMark />
+							</FieldLabel>
 						</FieldContent>
 					</Field>
 					<Field orientation="horizontal" data-invalid={Boolean(consentErrors.terms)}>
 						<Checkbox id="confirm-terms" checked={termsAccepted} onCheckedChange={(checked) => setTermsAccepted(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.terms)} />
 						<FieldContent>
-							<FieldLabel htmlFor="confirm-terms" className="font-normal">Ho letto e accetto i Termini e condizioni del servizio. <RequiredMark /></FieldLabel>
+							<FieldLabel htmlFor="confirm-terms" className="font-normal">
+								Confermo di aver letto e accettato i
+								<Link
+									href="/termini-di-servizio"
+									target="_blank"
+									className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4"
+								>
+									Termini di servizio.
+								</Link>
+								<RequiredMark />
+							</FieldLabel>
 						</FieldContent>
 					</Field>
 					<Field orientation="horizontal" data-invalid={Boolean(consentErrors.privacy)}>
 						<Checkbox id="confirm-privacy" checked={privacyAccepted} onCheckedChange={(checked) => setPrivacyAccepted(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.privacy)} />
 						<FieldContent>
-							<FieldLabel htmlFor="confirm-privacy" className="font-normal">Ho letto l’informativa privacy e acconsento al trattamento dei dati. <RequiredMark /></FieldLabel>
+							<FieldLabel htmlFor="confirm-privacy" className="font-normal">
+								Ho letto
+								<Link
+									href="/privacy-policy"
+									target="_blank"
+									className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4"
+								>
+									l’informativa sulla Privacy
+								</Link>
+								 e acconsento al trattamento dei miei dati. <RequiredMark />
+							</FieldLabel>
 						</FieldContent>
 					</Field>
 				</FieldGroup>

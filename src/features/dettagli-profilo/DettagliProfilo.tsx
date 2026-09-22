@@ -18,30 +18,29 @@ import DettagliProfiloCampiImpianti from "./components/types/DettagliProfiloCamp
 function ProfileContent({profile, actions}: {profile: ProfileDetail; actions: ReactNode}) {
 	switch (profile.type) {
 		case "giocatore": return <DettagliProfiloGiocatore profile={profile} actions={actions} />;
-		case "squadra": return <DettagliProfiloSquadra profile={profile} />;
-		case "staff-sportivo": return <DettagliProfiloStaffSportivo profile={profile} />;
-		case "professionisti-studi": return <DettagliProfiloProfessionistiStudi profile={profile} />;
-		case "arbitro": return <DettagliProfiloArbitro profile={profile} />;
-		case "creators": return <DettagliProfiloCreator profile={profile} />;
-		case "torneo-evento": return <DettagliProfiloTorneoEvento profile={profile} />;
-		case "campi-impianti-sportivi": return <DettagliProfiloCampiImpianti profile={profile} />;
+		case "squadra": return <DettagliProfiloSquadra profile={profile} actions={actions} />;
+		case "staff-sportivo": return <DettagliProfiloStaffSportivo profile={profile} actions={actions} />;
+		case "professionisti-studi": return <DettagliProfiloProfessionistiStudi profile={profile} actions={actions} />;
+		case "arbitro": return <DettagliProfiloArbitro profile={profile} actions={actions} />;
+		case "creators": return <DettagliProfiloCreator profile={profile} actions={actions} />;
+		case "torneo-evento": return <DettagliProfiloTorneoEvento profile={profile} actions={actions} />;
+		case "campi-impianti-sportivi": return <DettagliProfiloCampiImpianti profile={profile} actions={actions} />;
 	}
 }
 
 export default function DettagliProfilo({result}: {result: Exclude<ProfileDetailResult, {status: "not-found"}>}) {
-	const isPlayer = result.status === "ok" && result.profile.type === "giocatore";
+	const hasProfile = result.status === "ok";
 	const actions = result.status === "ok" ? (
 		<DetailActions
 			target={{kind: "profilo", id: result.profile.id}}
 			href={`/dettagli-profilo?${new URLSearchParams({id: result.profile.id, type: result.profile.type}).toString()}`}
-			presentation={isPlayer ? "profile" : "default"}
+			presentation="profile"
 		/>
 	) : null;
 	const content = (
 		<main className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 			<div className="flex items-center justify-between gap-3">
 				<ProfileHistoryBackButton />
-				{!isPlayer && actions}
 			</div>
 			{result.status === "error" ? (
 				<Alert variant="destructive">
@@ -55,5 +54,5 @@ export default function DettagliProfilo({result}: {result: Exclude<ProfileDetail
 			</div>
 		</main>
 	);
-	return <div className={cn("min-h-[calc(100vh-4rem)] bg-brand-paper", isPlayer && "public-profile-page")} style={isPlayer ? {"--profile-accent": getProfileAccent("giocatore")} as CSSProperties : undefined}>{content}</div>;
+	return <div className={cn("min-h-[calc(100vh-4rem)] bg-brand-paper", hasProfile && "public-profile-page")} style={hasProfile ? {"--profile-accent": getProfileAccent(result.profile.type)} as CSSProperties : undefined}>{content}</div>;
 }
