@@ -1,4 +1,4 @@
-import {AwardIcon, Building2Icon, CalendarDaysIcon, RouteIcon} from "lucide-react";
+import {AwardIcon, CalendarDaysIcon, RouteIcon} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Empty, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";

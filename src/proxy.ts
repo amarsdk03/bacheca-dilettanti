@@ -62,17 +62,17 @@ export default async function proxy(request: NextRequest) {
 	 * 2. MAINTENANCE MODE
 	 *
 	 * Ha priorità assoluta sul password gate.
-	 * Se il sito è in manutenzione, tutti vedono /coming-soon.
+	 * Se il sito è in manutenzione, tutti vedono /in-manutenzione.
 	 */
 	if (MAINTENANCE_MODE) {
-		if (pathname === '/coming-soon') {
+		if (pathname === '/in-manutenzione') {
 			return sessionResponse;
 		}
 
 		return copyResponseCookies(
 			sessionResponse,
 			NextResponse.rewrite(
-				new URL('/coming-soon', request.url),
+				new URL('/in-manutenzione', request.url),
 			),
 		);
 	}
@@ -161,12 +161,12 @@ export default async function proxy(request: NextRequest) {
 
 	/*
 	 * 4. Se NON siamo più in maintenance mode,
-	 *    /coming-soon non deve essere direttamente raggiungibile.
+	 *    /in-manutenzione non deve essere direttamente raggiungibile.
 	 *
 	 * Questo controllo viene fatto DOPO il password gate
 	 * per evitare un possibile bypass.
 	 */
-	if (pathname === '/coming-soon') {
+	if (pathname === '/in-manutenzione') {
 		return copyResponseCookies(
 			sessionResponse,
 			NextResponse.redirect(

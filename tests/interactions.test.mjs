@@ -257,6 +257,20 @@ test("announcement detail actions use the shared bookmark styling without profil
 	}
 });
 
+test("unlisted preview actions only share and never load session interaction state", async () => {
+	const load = loader({
+		"next/navigation": {useRouter: () => ({push() {}, refresh() {}})},
+		"@/features/interazioni/server/actions": {},
+		"@/features/segnalazioni/server/actions": {},
+		"@/features/interazioni/server/queries": {getInteractionState: () => assert.fail("Preview must not load interactions")},
+	});
+	const Actions = load("src/features/interazioni/DetailActions.tsx").default;
+	const element = await Actions({target: {kind: "annuncio", id: targetId}, href: "/dettagli-annuncio", presentation: "announcement", shareOnly: true});
+	const html = renderToStaticMarkup(element);
+	assert.match(html, /Condividi/);
+	assert.doesNotMatch(html, /Salva annuncio|Rimuovi dai salvati|Segnala|announcement-save-toggle/);
+});
+
 test("saved-list components distinguish errors from empty results and display saved timestamps", () => {
 	const {SavedAnnouncementsSection} = uiLoad("src/features/interazioni/DashboardSections.tsx");
 	const render = (list) => renderToStaticMarkup(React.createElement(SavedAnnouncementsSection, {list}));

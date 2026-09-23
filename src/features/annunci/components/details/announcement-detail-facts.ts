@@ -1,7 +1,26 @@
-import {BadgeEuroIcon, BriefcaseBusinessIcon, Building2Icon, CalendarCheckIcon, CalendarRangeIcon, CarIcon, CircleDollarSignIcon, ClapperboardIcon, ClockIcon, GraduationCapIcon, HeartIcon, MapPinIcon, TagsIcon, UserRoundPlusIcon, UserSearchIcon, UsersIcon, WrenchIcon, type LucideIcon} from "lucide-react";
+import {
+	BadgeEuroIcon,
+	BriefcaseBusinessIcon,
+	Building2Icon,
+	CalendarCheckIcon,
+	CalendarRangeIcon,
+	CarIcon,
+	CircleDollarSignIcon,
+	ClapperboardIcon,
+	ClockIcon,
+	GraduationCapIcon,
+	HeartIcon,
+	type LucideIcon,
+	MapPinIcon,
+	TagsIcon,
+	UserRoundPlusIcon,
+	UserSearchIcon,
+	UsersIcon,
+	WrenchIcon
+} from "lucide-react";
 import type {AnnouncementDetail, AnnouncementFactKind} from "@/features/annunci/announcement-model";
 import type {ProfileFact} from "@/features/dettagli-profilo/components/ProfileFactsGrid";
-import {isSpecifiedAnnouncementValue, type AnnouncementDetailPresentation} from "./announcement-detail-presentation";
+import {type AnnouncementDetailPresentation, isSpecifiedAnnouncementValue} from "./announcement-detail-presentation";
 
 const FACT_ICONS: Record<AnnouncementFactKind, LucideIcon> = {
 	availability: CalendarCheckIcon, car: CarIcon, categories: TagsIcon, content: ClapperboardIcon,

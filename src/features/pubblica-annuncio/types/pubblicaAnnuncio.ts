@@ -83,10 +83,7 @@ export const TIPOLOGIA_PRINCIPALE_SQUADRA_OPTIONS = TIPOLOGIA_CALCIO_OPTIONS.map
 	etichetta: tipologia,
 }));
 
-import {
-	PLAYER_PRIMARY_ROLES,
-	PLAYER_SPECIFIC_ROLES_BY_PRIMARY,
-} from "@/features/profilo/player-roles";
+import {PLAYER_PRIMARY_ROLES, PLAYER_SPECIFIC_ROLES_BY_PRIMARY,} from "@/features/profilo/player-roles";
 
 export const RUOLO_PRINCIPALE_OPTIONS = PLAYER_PRIMARY_ROLES;
 export const RUOLI_SPECIFICI_PER_RUOLO: Readonly<Record<string, readonly string[]>> = PLAYER_SPECIFIC_ROLES_BY_PRIMARY;

@@ -7,7 +7,13 @@ import {sanitizeNextPath} from "@/features/auth/utils";
 import {dynamicMetadata} from "@/server/metadata";
 import HomepageWorkInProgressNotice from "@/features/homepage/components/HomepageWorkInProgressNotice";
 
-export const metadata: Metadata = dynamicMetadata("Accedi");
+export const metadata: Metadata = dynamicMetadata({
+	title: "Accedi",
+	description: "Accedi al tuo account Bacheca Dilettanti.",
+	canonicalPath: "/accedi",
+	index: false,
+	follow: true,
+});
 
 interface PageProps {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;

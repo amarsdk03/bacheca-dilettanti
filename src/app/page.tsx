@@ -6,9 +6,11 @@ import Homepage from "@/features/homepage/Homepage";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
 
-export const metadata: Metadata = dynamicMetadata(
-	"Home"
-);
+export const metadata: Metadata = dynamicMetadata({
+	description: "Profili, annunci e opportunità per giocatori, squadre e professionisti del calcio dilettantistico.",
+	canonicalPath: "/",
+	keywords: ["calcio dilettantistico", "annunci calcio", "profili calciatori", "squadre di calcio"],
+});
 
 interface PageProps {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;

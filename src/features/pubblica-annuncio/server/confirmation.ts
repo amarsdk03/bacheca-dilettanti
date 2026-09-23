@@ -1,5 +1,7 @@
 import "server-only";
 
+import {isAnnouncementListed} from "@/features/annunci/announcement-visibility";
+
 import {
 	type AnnouncementDirectoryItem,
 	announcementOption,
@@ -21,7 +23,7 @@ import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-prof
 const ANNOUNCEMENT_IMAGES_BUCKET = "immagini_annunci";
 
 export type PublishConfirmationResult =
-	| {status: "ok"; preview: AnnouncementPreviewData; suggestions: AnnouncementDirectoryItem[]; awaitingPayment: boolean}
+	| {status: "ok"; preview: AnnouncementPreviewData; suggestions: AnnouncementDirectoryItem[]; awaitingPayment: boolean; isListed: boolean}
 	| {status: "not-found"}
 	| {status: "error"};
 
@@ -109,6 +111,8 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 				autore_annuncio,
 				tipologia_annuncio,
 				stato_annuncio,
+				nascosto,
+				privato,
 				info_stato_annuncio,
 				annuncio_giocatore(categorie_ricercate, tipologie_sport, ruoli_principali, ruoli_secondari, descrizione_aggiuntiva),
 				annuncio_squadra_cerca_giocatore(ruoli_principali, ruoli_secondari, annate_ricercate, stagione, descrizione_aggiuntiva),
@@ -224,6 +228,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			preview,
 			suggestions,
 			awaitingPayment: data.stato_annuncio === "in_attesa_pagamento",
+			isListed: isAnnouncementListed(data.stato_annuncio, data.nascosto, data.privato),
 		};
 	} catch (error) {
 		console.error("[publish-confirmation] Unexpected query failure", {cause: error instanceof Error ? error.name : "unknown"});

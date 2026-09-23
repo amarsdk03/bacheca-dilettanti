@@ -54,7 +54,7 @@ export default function UserAvatar({viewer}: {viewer: ViewerDTO}) {
 						<UserIcon /> Profilo
 					</DropdownMenuItem>
 					<DropdownMenuItem render={<Link href="/il-tuo-profilo?sezione=annunci" />}>
-						<ListChecksIcon /> I miei annunci
+						<ListChecksIcon /> I tuoi annunci
 					</DropdownMenuItem>
 					<DropdownMenuItem render={<Link href="/il-tuo-profilo?sezione=salvati" />}>
 						<HeartIcon /> Annunci salvati

@@ -14,7 +14,13 @@ import {isValidAnnouncementId, isValidCheckoutSessionId,} from "@/features/pubbl
 import {cn} from "@/lib/utils";
 import {dynamicMetadata} from "@/server/metadata";
 
-export const metadata: Metadata = dynamicMetadata("Pagamento annuncio prioritario");
+export const metadata: Metadata = dynamicMetadata({
+	title: "Pagamento annuncio prioritario",
+	description: "Completa il pagamento del tuo annuncio prioritario.",
+	canonicalPath: "/pubblica-annuncio/pagamento",
+	index: false,
+	follow: false,
+});
 export const dynamic = "force-dynamic";
 
 export default async function Page({

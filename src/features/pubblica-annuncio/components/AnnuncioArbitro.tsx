@@ -132,7 +132,7 @@ export default function AnnuncioArbitro() {
 				idPrefix="arbitro"
 				tipologia="arbitro"
 				value={immagineAnnuncio}
-				onValueChange={(value) => setField("immagineAnnuncio", value)}
+				onValueChangeAction={(value) => setField("immagineAnnuncio", value)}
 			/>
 			<LinkAnnuncioField
 				idPrefix="arbitro"

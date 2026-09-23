@@ -27,9 +27,9 @@ import type {Json} from "@/server/supabase";
 import {
 	normalizePlayerPrimaryRole,
 	normalizePlayerPrimaryRoles,
-	PLAYER_PRIMARY_ROLE_BY_SPECIFIC,
 	normalizePlayerSpecificRole,
 	normalizePlayerSpecificRoles,
+	PLAYER_PRIMARY_ROLE_BY_SPECIFIC,
 } from "@/features/profilo/player-roles";
 
 const MAX_PAYLOAD_BYTES = 256_000;

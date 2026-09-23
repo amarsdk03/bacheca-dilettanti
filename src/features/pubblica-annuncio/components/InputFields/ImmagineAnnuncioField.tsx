@@ -13,19 +13,19 @@ type ImmagineAnnuncioFieldProps = {
 	idPrefix: string;
 	tipologia?: string;
 	value: File | null;
-	onValueChange: (value: File | null) => void;
+	onValueChangeAction: (value: File | null) => void;
 };
 
 export default function ImmagineAnnuncioField({
 	idPrefix,
 	value,
-	onValueChange,
+	onValueChangeAction,
 }: ImmagineAnnuncioFieldProps) {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const error = getAnnouncementImageError(value);
 
 	const removeImage = () => {
-		onValueChange(null);
+		onValueChangeAction(null);
 		if (fileInputRef.current) fileInputRef.current.value = "";
 	};
 
@@ -41,7 +41,7 @@ export default function ImmagineAnnuncioField({
 				id={`${idPrefix}-immagine-annuncio`}
 				type="file"
 				accept="image/png,image/jpeg,image/webp"
-				onChange={(event) => onValueChange(event.target.files?.[0] ?? null)}
+				onChange={(event) => onValueChangeAction(event.target.files?.[0] ?? null)}
 				aria-invalid={Boolean(error)}
 			/>
 			{error && <FieldDescription className="font-medium text-destructive">{error}</FieldDescription>}

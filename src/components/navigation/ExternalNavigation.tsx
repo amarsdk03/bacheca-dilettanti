@@ -1,7 +1,16 @@
 "use client";
 
-import {createContext, useContext, useRef, useState, type ComponentProps, type MouseEvent, type ReactNode} from "react";
-import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from "@/components/ui/alert-dialog";
+import {type ComponentProps, createContext, type MouseEvent, type ReactNode, useContext, useRef, useState} from "react";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import {externalNavigationUrl} from "./external-navigation";
 
 interface NavigationRequest {

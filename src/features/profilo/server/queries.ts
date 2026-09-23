@@ -129,6 +129,7 @@ function announcementQuery(supabase: SupabaseClient<Database>) {
 			creato_il,
 			livello_annuncio,
 			nascosto,
+			privato,
 			stato_annuncio,
 			info_stato_annuncio,
 			annuncio_generico(titolo, contenuto),
@@ -238,6 +239,7 @@ function toManagedAnnouncement(row: AnnouncementQueryRow): ManagedAnnouncement {
 		createdAt: row.creato_il,
 		level: row.livello_annuncio,
 		visibility: row.nascosto === true ? "hidden" : "visible",
+		isPrivate: row.privato !== false,
 		moderationStatus: row.stato_annuncio,
 		moderationInfo: row.info_stato_annuncio,
 	};
@@ -303,6 +305,13 @@ export async function getProfileDashboardData(
 	userId: string,
 ): Promise<ProfileDashboardData> {
 	const supabase = await createClient();
+	const {data: preferences, error: preferencesError} = await supabase
+		.from("utente")
+		.select("consenso_newsletter")
+		.eq("utente_uuid", userId)
+		.maybeSingle();
+	queryFailed(preferencesError, "utente");
+	const newsletterSubscribed = preferences?.consenso_newsletter === true;
 	const {data: baseProfile, error: baseProfileError} = await supabase
 		.from("profilo")
 		.select("uuid, tipologia_principale, link_foto_profilo")
@@ -319,6 +328,7 @@ export async function getProfileDashboardData(
 	if (!baseProfile) {
 		return {
 			interactions: await getDashboardInteractions(supabase, userId, null),
+			newsletterSubscribed,
 			mainImageUrl: null,
 			hasMainImage: false,
 			profiles: [],
@@ -415,6 +425,7 @@ export async function getProfileDashboardData(
 		const row = activeRows.get(value);
 		return row ? [{
 			id: `${value}:${row.id}`,
+			profileId: baseProfile.uuid,
 			type: value,
 			isPrimary: baseProfile.tipologia_principale === value,
 			imageUrl: resolvedProfileImageUrl(profileImages, baseProfile.uuid, value, mainImageUrl),
@@ -424,6 +435,7 @@ export async function getProfileDashboardData(
 
 	return {
 		interactions,
+		newsletterSubscribed,
 		mainImageUrl,
 		hasMainImage: Boolean(mainImageUrl),
 		profiles,

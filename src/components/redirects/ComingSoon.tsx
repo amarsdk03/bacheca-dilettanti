@@ -9,7 +9,6 @@ import {ArrowRight, Sparkles,} from 'lucide-react';
 import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import Image from "next/image";
 import {DEFAULT_BANNER_PATH} from "@/const/defaultConstants";
-import AccessForm from "@/app/accesso/access-form";
 
 
 /**
@@ -186,7 +185,7 @@ const statusStyles: Record<FeatureStatus, string> = {
 
 
 
-export default function ComingSoon({ next }: { next?: string }) {
+export default function ComingSoon() {
 	const shouldReduceMotion = useReducedMotion();
 
 	const accentVars = {
@@ -201,23 +200,6 @@ export default function ComingSoon({ next }: { next?: string }) {
 			className={`${display.variable} ${body.variable} ${mono.variable} font-(family-name:--font-body) text-neutral-900 antialiased`}
 		>
 			<main id="main-content">
-				<main className="flex items-center justify-center bg-muted px-6 py-16">
-					<div className="w-full max-w-md rounded-2xl border bg-background p-8 shadow-sm">
-						<div className="mb-8">
-							<h1 className="text-2xl font-semibold">
-								Bacheca Dilettanti
-							</h1>
-
-							<p className="mt-2 text-sm text-muted-foreground">
-								Il sito è attualmente ad accesso riservato.
-								Inserisci la password per continuare.
-							</p>
-						</div>
-
-						<AccessForm next={next}/>
-					</div>
-				</main>
-
 				{/* ------------------------------ Hero ------------------------------ */}
 				<section className="relative overflow-hidden bg-[#131316]">
 					<div
@@ -449,7 +431,7 @@ export default function ComingSoon({ next }: { next?: string }) {
 								variants={fadeUp}
 								className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5"
 							>
-								<Sparkles className="h-3.5 w-3.5 text-(--accent)" aria-hidden="true" />
+								<Sparkles className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
 								<span className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-white">
 									Prossimamente
 								</span>

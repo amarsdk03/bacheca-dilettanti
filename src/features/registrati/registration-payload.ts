@@ -1,11 +1,12 @@
 import {
-	isComingSoonProfileType,
 	type ComingSoonProfileType,
+	isComingSoonProfileType,
 	type ProfileDrafts,
 	type ProfileLocations,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
 import type {ProfileSocialLinks, ProfileSocialLinksByType,} from "@/features/profilo/profile-social-links";
+import {COOKIE_POLICY_VERSION, PRIVACY_VERSION, TERMS_VERSION} from "@/features/legal/legal-versions";
 
 export const REGISTRATION_PAYLOAD_VERSION = 1 as const;
 
@@ -23,6 +24,13 @@ export interface RegistrationPayload {
 	selectedProfileTypes: RegistrableProfileType[];
 	primaryProfileType: RegistrableProfileType;
 	profiles: RegistrationProfilePayload[];
+	consents: {
+		legalAccepted: boolean;
+		newsletterSubscribed: boolean;
+		termsVersion: typeof TERMS_VERSION;
+		privacyVersion: typeof PRIVACY_VERSION;
+		cookiePolicyVersion: typeof COOKIE_POLICY_VERSION;
+	};
 }
 
 export function isRegistrableProfileType(
@@ -37,6 +45,8 @@ export function createRegistrationPayload(
 	drafts: ProfileDrafts,
 	locations: ProfileLocations,
 	socialLinks: ProfileSocialLinksByType,
+	legalAccepted: boolean,
+	newsletterSubscribed: boolean,
 ): RegistrationPayload | null {
 	const registrableProfileTypes = selectedProfileTypes.filter(isRegistrableProfileType);
 	if (
@@ -61,5 +71,12 @@ export function createRegistrationPayload(
 		selectedProfileTypes: registrableProfileTypes,
 		primaryProfileType,
 		profiles,
+		consents: {
+			legalAccepted,
+			newsletterSubscribed,
+			termsVersion: TERMS_VERSION,
+			privacyVersion: PRIVACY_VERSION,
+			cookiePolicyVersion: COOKIE_POLICY_VERSION,
+		},
 	};
 }

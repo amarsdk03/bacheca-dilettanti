@@ -7,9 +7,11 @@ import Footer from "@/components/navigation/Footer";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {getPublishProfileContext} from "@/features/pubblica-annuncio/server/queries";
 
-export const metadata: Metadata = dynamicMetadata(
-	"Pubblica annuncio"
-);
+export const metadata: Metadata = dynamicMetadata({
+	title: "Pubblica un annuncio",
+	description: "Pubblica gratuitamente un annuncio per trovare giocatori, squadre, staff, partite e opportunità nel calcio dilettantistico.",
+	canonicalPath: "/pubblica-annuncio",
+});
 export const dynamic = "force-dynamic";
 
 export default async function Page() {

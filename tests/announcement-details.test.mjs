@@ -37,17 +37,18 @@ const otherId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const profile = {uuid: authorId, profilo_giocatore: [{id: 7, nascosto: false, nome: "Mario", cognome: "Rossi"}]};
 const row = (type = "annuncio_giocatore", child = {}) => ({
 	uuid: id, autore_annuncio: authorId, tipologia_annuncio: type, creato_il: "2026-09-22", livello_annuncio: null,
+	stato_annuncio: "pubblicato", nascosto: false, privato: false,
 	[type]: {tipologie_sport: ["Calcio a 11", "Calcio a 5"], ruoli_principali: ["Difensore"], ruoli_secondari: ["Terzino destro", "Difensore centrale"], categorie_ricercate: ["Eccellenza", "Promozione"], descrizione_aggiuntiva: "Descrizione completa", ...child},
 	localita_annuncio: [{regione: "Lazio", citta: "Roma"}],
 });
 
-function fixture({current = row(), authors = [profile], similar = [], errors = {}, counts = {annuncio_salvato: 3, profilo_follow: 8}} = {}) {
+function fixture({current = row(), authors = [profile], similar = [], contacts = [], media = [], errors = {}, counts = {annuncio_salvato: 3, profilo_follow: 8}} = {}) {
 	const calls = [];
 	const client = {from(table) {
 		const call = {table, operations: []};
 		calls.push(call);
 		const query = {};
-		for (const method of ["select", "eq", "neq", "in", "not", "order", "limit", "maybeSingle"]) {
+		for (const method of ["select", "eq", "neq", "in", "not", "like", "order", "limit", "range", "maybeSingle"]) {
 			query[method] = (...args) => {call.operations.push([method, ...args]); return query;};
 		}
 		query.then = (resolve, reject) => {
@@ -55,8 +56,19 @@ function fixture({current = row(), authors = [profile], similar = [], errors = {
 			const isSimilar = table === "annuncio" && call.operations.some(([method]) => method === "neq");
 			const error = errors[isSimilar ? "similar" : table];
 			if (error === "throw") return Promise.reject(new Error("NETWORK_FAILURE")).then(resolve, reject);
-			const data = table === "annuncio" ? (single ? current : isSimilar ? similar : [current]) : table === "profilo" ? authors : [];
-			return Promise.resolve({data, error: error ? {code: "TEST_FAILURE"} : null, count: counts[table] ?? 0}).then(resolve, reject);
+			let data;
+			let count = counts[table] ?? 0;
+			if (table === "annuncio") {
+				const rows = (isSimilar ? similar : [current]).filter(Boolean).filter(candidate => call.operations.every(([method, key, value]) => {
+					if (method === "eq") return candidate[key] === value;
+					if (method === "neq") return candidate[key] !== value;
+					if (method === "in") return value.includes(candidate[key]);
+					return true;
+				}));
+				count = rows.length;
+				data = single ? rows[0] ?? null : rows;
+			} else data = table === "profilo" ? authors : table === "contatto_annuncio" ? contacts : table === "media_annuncio" ? media : [];
+			return Promise.resolve({data, error: error ? {code: "TEST_FAILURE"} : null, count}).then(resolve, reject);
 		};
 		return query;
 	}};
@@ -86,12 +98,27 @@ test("detail exposes aggregate counts and complete comma-separated selections; d
 	assert.equal(card.facts.find(f => f.kind === "types").value, "2 selezionate");
 });
 
+test("detail exposes a stable metadata image URL without returning the private storage path", async () => {
+	const privatePath = "owner/submission/image.webp";
+	const {queries, calls} = fixture({media: [{id: 9, link_media: privatePath}]});
+	const result = await queries.loadPublicAnnouncementDetail(id);
+	assert.equal(result.status, "success");
+	assert.equal(result.announcement.shareImageUrl, `/api/metadata/annuncio-immagine?id=${id}`);
+	assert.doesNotMatch(JSON.stringify(result), new RegExp(privatePath));
+	assert.deepEqual(calls.find(call => call.table === "media_annuncio").operations, [
+		["select", "id"],
+		["eq", "uuid_annuncio", id],
+		["like", "formato_media", "image/%"],
+		["limit", 1],
+	]);
+});
+
 test("similar announcements use exact type, six newest, exclusion and every public visibility predicate", async () => {
 	const {queries, calls} = fixture({similar: [{...row(), uuid: otherId}]});
 	const result = await queries.loadPublicAnnouncementDetail(id);
 	assert.deepEqual(result.announcement.similarAnnouncements.map(item => item.id), [otherId]);
 	assert.equal(result.announcement.similarAnnouncementsUnavailable, false);
-	const publicCalls = calls.filter(c => c.table === "annuncio");
+	const publicCalls = calls.filter(c => c.table === "annuncio" && !c.operations.some(([method]) => method === "maybeSingle"));
 	for (const call of publicCalls) for (const expected of [["eq", "stato_annuncio", "pubblicato"], ["eq", "nascosto", false], ["eq", "privato", false]]) {
 		assert.ok(call.operations.some(op => JSON.stringify(op) === JSON.stringify(expected)));
 	}
@@ -112,12 +139,123 @@ test("anonymous and unavailable authors never trigger a follower count", async t
 	}
 });
 
-test("missing/hidden current announcement prevents auxiliary queries", async () => {
+test("missing current announcement prevents auxiliary queries", async () => {
 	const {queries, calls} = fixture({current: null});
 	assert.deepEqual(await queries.loadPublicAnnouncementDetail(id), {status: "not-found"});
 	assert.equal(calls.length, 1);
 	assert.deepEqual(await queries.loadPublicAnnouncementDetail("invalid"), {status: "not-found"});
 	assert.equal(calls.length, 1);
+});
+
+test("saved unlisted announcements are accessible by URL with contacts but absent from discovery", async () => {
+	const states = [
+		{stato_annuncio: "in_revisione"},
+		{stato_annuncio: "in_attesa_pagamento", nascosto: true, privato: true},
+		{stato_annuncio: "rifiutato"},
+		{nascosto: true},
+		{privato: true},
+		{stato_annuncio: null},
+	];
+	for (const state of states) {
+		const current = {...row(), ...state, info_stato_annuncio: "PRIVATE_NOTE", creato_da: "PRIVATE_OWNER"};
+		const {queries, calls, load} = fixture({current, authors: [], contacts: [{tipo: "email", valore: "contact@example.test"}]});
+		const result = await queries.loadPublicAnnouncementDetail(id);
+		assert.equal(result.status, "success", JSON.stringify(state));
+		assert.equal(result.announcement.isListed, false);
+		assert.equal(result.announcement.moderationStatus, current.stato_annuncio);
+		assert.equal(result.announcement.contacts[0].value, "contact@example.test");
+		assert.equal(result.announcement.saveCount, null);
+		assert.ok(!calls.some(call => call.table === "annuncio_salvato"));
+		assert.doesNotMatch(JSON.stringify(result), /PRIVATE_NOTE|PRIVATE_OWNER|info_stato_annuncio|creato_da/);
+		const projection = calls[0].operations.find(([method]) => method === "select")[1];
+		assert.doesNotMatch(projection, /info_stato_annuncio|creato_da|stripe|normalized_email/);
+		assert.deepEqual(await queries.loadPublicAnnouncementsByIds([id]), []);
+		assert.deepEqual((await queries.loadLatestPublicAnnouncements()).announcements, []);
+		const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
+		for (const params of [{}, {q: "Difensore"}]) {
+			const directory = await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery(params));
+			assert.equal(directory.error, false);
+			assert.equal(directory.total, 0);
+			assert.deepEqual(directory.announcements, []);
+		}
+	}
+});
+
+test("preview tolerates missing optional relations and rejects unsupported types", async () => {
+	const current = {...row(), stato_annuncio: "in_revisione", annuncio_giocatore: null, localita_annuncio: []};
+	const {queries} = fixture({current, authors: []});
+	const result = await queries.loadPublicAnnouncementDetail(id);
+	assert.equal(result.status, "success");
+	assert.ok(result.announcement.title);
+	assert.deepEqual(result.announcement.contacts, []);
+	assert.deepEqual(await fixture({current: {...current, tipologia_annuncio: "unsupported"}}).queries.loadPublicAnnouncementDetail(id), {status: "not-found"});
+});
+
+test("unlisted candidates cannot appear among similar announcements", async () => {
+	const {queries} = fixture({similar: [
+		{...row(), uuid: otherId, stato_annuncio: "in_revisione"},
+		{...row(), uuid: otherId, nascosto: true},
+		{...row(), uuid: otherId, privato: true},
+	]});
+	assert.deepEqual((await queries.loadPublicAnnouncementDetail(id)).announcement.similarAnnouncements, []);
+});
+
+test("preview banners describe the actual state and pass share-only behavior to the actions", async () => {
+	const load = sourceLoader({
+		"@/features/interazioni/DetailActions": {__esModule: true, default: ({shareOnly}) => React.createElement("span", {"data-share-only": String(shareOnly)})},
+	});
+	const Layout = load("src/features/annunci/components/details/AnnouncementDetailsLayout.tsx").default;
+	const {ANNOUNCEMENT_DETAIL_PRESENTATIONS: presentations} = load("src/features/annunci/components/details/announcement-detail-presentation.ts");
+	for (const [status, title] of [
+		["in_revisione", "Annuncio in attesa di revisione"],
+		["in_attesa_pagamento", "Annuncio da completare"],
+		["rifiutato", "Annuncio non approvato"],
+		["pubblicato", "Annuncio disponibile solo tramite link"],
+		[null, "Annuncio non pubblicato"],
+	]) {
+		const {announcement} = await fixture({current: {...row(), stato_annuncio: status, nascosto: true}, authors: []}).queries.loadPublicAnnouncementDetail(id);
+		const html = renderToStaticMarkup(React.createElement(Layout, {announcement, presentation: presentations.annuncio_giocatore}));
+		assert.ok(html.includes(title));
+		assert.match(html, /Non compare nelle ricerche/);
+		assert.match(html, /data-share-only="true"/);
+		if (status !== "pubblicato") assert.match(html, /Inserito da/);
+	}
+	const {announcement} = await fixture({authors: []}).queries.loadPublicAnnouncementDetail(id);
+	const html = renderToStaticMarkup(React.createElement(Layout, {announcement, presentation: presentations.annuncio_giocatore}));
+	assert.doesNotMatch(html, /Non compare nelle ricerche/);
+	assert.match(html, /data-share-only="false"/);
+});
+
+test("announcement links open the saved detail in a new tab for both preview and published states", () => {
+	const ViewLink = sourceLoader()("src/features/annunci/AnnouncementViewLink.tsx").default;
+	for (const isListed of [true, false]) {
+		const html = renderToStaticMarkup(React.createElement(ViewLink, {id, isListed}));
+		assert.ok(html.includes(`href="/dettagli-annuncio?id=${id}"`));
+		assert.match(html, /target="_blank"/);
+		assert.match(html, /rel="noopener noreferrer"/);
+		assert.ok(html.includes(isListed ? "Visualizza" : "Anteprima"));
+		assert.match(html, /nuova scheda/);
+		assert.doesNotMatch(html, /role="button"/);
+	}
+});
+
+test("confirmation renders the saved preview and opens its detail in a new tab before approval or payment", () => {
+	const Confirmation = sourceLoader()("src/features/pubblica-annuncio/ConfermaPubblicazione.tsx").default;
+	for (const awaitingPayment of [true, false]) {
+		const preview = {
+			id, announcementType: "annuncio_giocatore", profileType: "giocatore", title: "Annuncio salvato",
+			typeLabel: "Giocatore", author: "Autore", description: null, locations: [], contacts: [], facts: [], linkedTeams: [],
+			genericLink: null, videoHighlights: null, imageUrl: null, imageLabel: null, statusInfo: null,
+			status: awaitingPayment ? "Pagamento da completare" : "In attesa di approvazione",
+		};
+		const html = renderToStaticMarkup(React.createElement(Confirmation, {result: {status: "ok", preview, suggestions: [], awaitingPayment, isListed: false}}));
+		assert.match(html, /Annuncio salvato/);
+		assert.ok(html.includes(preview.status));
+		const link = [...html.matchAll(/<a\b[^>]*>[\s\S]*?<\/a>/g)].find(([anchor]) => anchor.includes(`href="/dettagli-annuncio?id=${id}"`))?.[0];
+		assert.ok(link);
+		assert.match(link, /target="_blank"/);
+		assert.match(link, /Anteprima/);
+	}
 });
 
 test("count and similar failures are isolated, including rejected promises; zero remains a known count", async t => {
@@ -177,7 +315,7 @@ test("all nine supported types render balanced fact grids and preserve supportin
 		assert.match(html, /Salva annuncio/);
 		const labels = [...html.matchAll(/<dt[^>]*>[\s\S]*?<\/dt>/g)]
 			.map(match => match[0].replace(/<[^>]+>/g, ""));
-		assert.deepEqual(labels, expectedHeaderLabels[type], type);
+		assert.deepEqual(labels, expectedHeaderLabels[type].map(label => label === "Follower autore" ? "Num. follower profilo" : label), type);
 		assert.ok([3, 4, 6].includes(labels.length));
 		assert.doesNotMatch(html, /<dt[^>]*>[\s\S]*Località[\s\S]*<\/dt>/);
 		assert.doesNotMatch(html, /Informazioni complete senza troncamento/);

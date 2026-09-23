@@ -1731,33 +1731,51 @@ export type Database = {
       utente: {
         Row: {
           auth_user_uuid: string
+          consenso_newsletter: boolean
+          consenso_newsletter_aggiornato_il: string | null
           creato_il: string
           indirizzo_email: string | null
+          informative_accettate_il: string | null
           num_telefono: string | null
           registrato_il: string | null
           tipologia_utente: string
           ultima_modifica_il: string
           utente_uuid: string
+          versione_cookie_policy: string | null
+          versione_privacy: string | null
+          versione_termini: string | null
         }
         Insert: {
           auth_user_uuid: string
+          consenso_newsletter?: boolean
+          consenso_newsletter_aggiornato_il?: string | null
           creato_il?: string
           indirizzo_email?: string | null
+          informative_accettate_il?: string | null
           num_telefono?: string | null
           registrato_il?: string | null
           tipologia_utente?: string
           ultima_modifica_il?: string
           utente_uuid?: string
+          versione_cookie_policy?: string | null
+          versione_privacy?: string | null
+          versione_termini?: string | null
         }
         Update: {
           auth_user_uuid?: string
+          consenso_newsletter?: boolean
+          consenso_newsletter_aggiornato_il?: string | null
           creato_il?: string
           indirizzo_email?: string | null
+          informative_accettate_il?: string | null
           num_telefono?: string | null
           registrato_il?: string | null
           tipologia_utente?: string
           ultima_modifica_il?: string
           utente_uuid?: string
+          versione_cookie_policy?: string | null
+          versione_privacy?: string | null
+          versione_termini?: string | null
         }
         Relationships: []
       }

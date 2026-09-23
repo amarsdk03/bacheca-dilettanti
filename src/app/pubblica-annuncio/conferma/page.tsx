@@ -6,7 +6,13 @@ import ConfermaPubblicazione from "@/features/pubblica-annuncio/ConfermaPubblica
 import {loadPublishConfirmation} from "@/features/pubblica-annuncio/server/confirmation";
 import {dynamicMetadata} from "@/server/metadata";
 
-export const metadata: Metadata = dynamicMetadata("Annuncio inviato");
+export const metadata: Metadata = dynamicMetadata({
+	title: "Annuncio inviato",
+	description: "Conferma e anteprima dell’annuncio inviato.",
+	canonicalPath: "/pubblica-annuncio/conferma",
+	index: false,
+	follow: false,
+});
 
 export default async function Page({
 	searchParams,

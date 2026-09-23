@@ -7,6 +7,7 @@ export type ProfileDashboardSection = "profilo" | "annunci" | "relazioni" | "sal
 
 export interface ManagedProfile {
 	id: string;
+	profileId: string;
 	type: ProfileType;
 	isPrimary: boolean;
 	imageUrl: string | null;
@@ -28,6 +29,7 @@ export interface ManagedAnnouncement {
 	createdAt: string | null;
 	level: string | null;
 	visibility: AnnouncementVisibility;
+	isPrivate: boolean;
 	moderationStatus: string | null;
 	moderationInfo: string | null;
 }
@@ -41,6 +43,7 @@ export interface ProfileEditorSavePayload {
 
 export interface ProfileDashboardData {
 	interactions: DashboardInteractions;
+	newsletterSubscribed: boolean;
 	mainImageUrl: string | null;
 	hasMainImage: boolean;
 	profiles: ManagedProfile[];

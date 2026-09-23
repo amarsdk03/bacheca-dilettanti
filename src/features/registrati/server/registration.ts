@@ -12,13 +12,14 @@ import {
 	REGISTRATION_PAYLOAD_VERSION,
 } from "@/features/registrati/registration-payload";
 import type {Json} from "@/server/supabase";
+import {COOKIE_POLICY_VERSION, PRIVACY_VERSION, TERMS_VERSION} from "@/features/legal/legal-versions";
 import {isLinkAnnuncioValid, MAX_LINK_ANNUNCIO_LENGTH,} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {
 	normalizePlayerPrimaryRole,
 	normalizePlayerPrimaryRoles,
-	PLAYER_PRIMARY_ROLE_BY_SPECIFIC,
 	normalizePlayerSpecificRole,
 	normalizePlayerSpecificRoles,
+	PLAYER_PRIMARY_ROLE_BY_SPECIFIC,
 } from "@/features/profilo/player-roles";
 
 const MAX_PAYLOAD_BYTES = 256_000;
@@ -68,6 +69,13 @@ export interface NormalizedRegistrationPayload {
 	selectedProfileTypes: ProfileType[];
 	primaryProfileType: RegistrableProfileType;
 	profiles: NormalizedRegistrationProfile[];
+	consents: {
+		legalAccepted: true;
+		newsletterSubscribed: boolean;
+		termsVersion: typeof TERMS_VERSION;
+		privacyVersion: typeof PRIVACY_VERSION;
+		cookiePolicyVersion: typeof COOKIE_POLICY_VERSION;
+	};
 }
 
 function fail(
@@ -511,11 +519,26 @@ export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): N
 		fail("I dati della registrazione non sono validi.", 2);
 	}
 	if (!isRecord(parsed)) fail("I dati della registrazione non sono validi.", 2);
-	if (Object.keys(parsed).some((key) => !["version", "selectedProfileTypes", "primaryProfileType", "profiles"].includes(key))) {
+	if (Object.keys(parsed).some((key) => !["version", "selectedProfileTypes", "primaryProfileType", "profiles", "consents"].includes(key))) {
 		fail("I dati della registrazione non sono validi.", 2);
 	}
 	if (parsed.version !== REGISTRATION_PAYLOAD_VERSION) {
 		fail("Aggiorna la pagina e ripeti la registrazione.", 2);
+	}
+	if (!isRecord(parsed.consents)) {
+		fail("Conferma di aver letto e accettato le informative obbligatorie.", 3);
+	}
+	if (Object.keys(parsed.consents).some((key) => !["legalAccepted", "newsletterSubscribed", "termsVersion", "privacyVersion", "cookiePolicyVersion"].includes(key))) {
+		fail("I consensi della registrazione non sono validi.", 3);
+	}
+	if (
+		parsed.consents.legalAccepted !== true
+		|| typeof parsed.consents.newsletterSubscribed !== "boolean"
+		|| parsed.consents.termsVersion !== TERMS_VERSION
+		|| parsed.consents.privacyVersion !== PRIVACY_VERSION
+		|| parsed.consents.cookiePolicyVersion !== COOKIE_POLICY_VERSION
+	) {
+		fail("Conferma di aver letto e accettato le informative obbligatorie.", 3);
 	}
 
 	if (!Array.isArray(parsed.selectedProfileTypes) || parsed.selectedProfileTypes.length === 0 || parsed.selectedProfileTypes.length > MAX_PROFILE_COUNT) {
@@ -570,5 +593,12 @@ export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): N
 		selectedProfileTypes,
 		primaryProfileType,
 		profiles,
+		consents: {
+			legalAccepted: true,
+			newsletterSubscribed: parsed.consents.newsletterSubscribed,
+			termsVersion: TERMS_VERSION,
+			privacyVersion: PRIVACY_VERSION,
+			cookiePolicyVersion: COOKIE_POLICY_VERSION,
+		},
 	};
 }

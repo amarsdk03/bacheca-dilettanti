@@ -1,13 +1,23 @@
 'use client';
 
-import {createElement, type ElementType, useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {
+  createElement,
+  type ElementType,
+  HTMLAttributes,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import {gsap} from 'gsap';
 
 interface TextTypeProps {
   className?: string;
   showCursor?: boolean;
   hideCursorWhileTyping?: boolean;
-  cursorCharacter?: string | React.ReactNode;
+  cursorCharacter?: string | ReactNode;
   cursorBlinkDuration?: number;
   cursorClassName?: string;
   text: string | string[];
@@ -44,7 +54,7 @@ const TextType = ({
   startOnVisible = false,
   reverseMode = false,
   ...props
-}: TextTypeProps & React.HTMLAttributes<HTMLElement>) => {
+}: TextTypeProps & HTMLAttributes<HTMLElement>) => {
   const [displayedText, setDisplayedText] = useState('');
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);

@@ -62,6 +62,9 @@ Sviluppato da Amar Sidkir, per Gabriele Zaniboni, a partire dal 15 luglio 2026.
 | `/visibilita` | Informazioni sui livelli di visibilità |
 | `/contatti` | Contatti e assistenza |
 | `/partner` | Sezione partner |
+| `/sitemap.xml` | Sitemap dei contenuti pubblici indicizzabili |
+| `/robots.txt` | Direttive per crawler e riferimento alla sitemap |
+| `/api/metadata/annuncio-immagine?id=…` | Immagine per le anteprime social degli annunci |
 
 ## Requisiti
 
@@ -83,6 +86,7 @@ Crea `.env.local` nella root del progetto. Il file è ignorato da Git e non deve
 
 ```dotenv
 # Applicazione
+# Deve corrispondere all'origine pubblica dell'ambiente: viene usata per canonical, sitemap e URL condivisi.
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_MAINTENANCE_MODE=false
 
@@ -110,6 +114,37 @@ npm run dev
 
 L’applicazione è disponibile su [http://localhost:3000](http://localhost:3000).
 
+## SEO, condivisione e indicizzazione
+
+La piattaforma genera metadati completi per le pagine pubbliche: titolo, descrizione, canonical, Open Graph, Twitter Card e dati strutturati JSON-LD. Il fallback grafico per le condivisioni è il banner della piattaforma.
+
+- I dettagli pubblici di un sottoprofilo usano nome, tipologia, presentazione, località e foto, se disponibile.
+- Gli articoli di `/aggiornamenti/[slug]` usano cover, autore, categoria, tag e data di pubblicazione.
+- Gli annunci pubblicati usano titolo, descrizione, tipologia, località e immagine caricata; in assenza di quest’ultima usano la foto dell’autore o il banner.
+- Gli annunci non pubblicati, parziali o in revisione mantengono una preview completa con lo stato visibile, ma sono `noindex,nofollow`.
+- Le varianti con ricerca, filtri o paginazione di `/annunci` e `/profili` hanno una preview descrittiva, canonical verso la directory principale e `noindex,follow` per evitare contenuti duplicati.
+- Dashboard, autenticazione, recupero password, conferme e pagamenti non vengono indicizzati.
+
+`/sitemap.xml` include le pagine pubbliche, gli articoli, i sottoprofili visibili e gli annunci effettivamente pubblicati; viene rigenerata con una cache di un’ora. `/robots.txt` espone la sitemap e blocca i flussi riservati ai crawler.
+
+Le immagini degli annunci sono conservate nel bucket privato Supabase `immagini_annunci`. L’endpoint `/api/metadata/annuncio-immagine?id=…` legge soltanto l’immagine collegata all’annuncio richiesto e la serve ai crawler social senza esporre il percorso Storage: gli annunci pubblicati ricevono cache CDN, le anteprime non pubblicate usano `no-store`.
+
+## Verifica
+
+Esegui i controlli principali dalla root del progetto:
+
+```bash
+npx tsc --noEmit
+npx eslint src/app src/server/metadata.ts src/server/structured-data.ts src/server/sitemap-data.ts src/components/seo/JsonLd.tsx src/features/annunci/announcement-model.ts src/features/annunci/server/queries.ts
+```
+
+In PowerShell, per eseguire tutti i test Node:
+
+```powershell
+$testFiles = (Get-ChildItem -LiteralPath tests -Filter *.test.mjs).FullName
+node --test $testFiles
+```
+
 # 2. Changelog
 
 ## Versione 1.0 - Deploy prima versione
@@ -125,6 +160,7 @@ Push effettuato il: ??/??/2026
 - Completamento del flusso operativo di approvazione e rimborso degli annunci prioritari.
 - Analitiche visualizzazione per aggiornamenti, profili e annunci
 - Aggiunta di sponsor/partner nelle varie sezioni dedicate
+- Metadati dinamici, anteprime social, JSON-LD, sitemap e robots per i contenuti pubblici.
 
 ---
 

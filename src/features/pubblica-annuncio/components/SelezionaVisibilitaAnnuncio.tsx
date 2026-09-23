@@ -39,10 +39,10 @@ const VISIBILITY_OPTIONS = [
 
 export default function SelezionaVisibilitaAnnuncio({
 	value,
-	onValueChange,
+	onValueChangeAction,
 }: {
 	value: PublishVisibility;
-	onValueChange: (value: PublishVisibility) => void;
+	onValueChangeAction: (value: PublishVisibility) => void;
 }) {
 	return (
 		<FieldSet>
@@ -52,7 +52,7 @@ export default function SelezionaVisibilitaAnnuncio({
 			</FieldDescription>
 			<RadioGroup
 				value={value}
-				onValueChange={(nextValue) => onValueChange(nextValue as PublishVisibility)}
+				onValueChange={(nextValue) => onValueChangeAction(nextValue as PublishVisibility)}
 				className="grid gap-3 sm:grid-cols-2"
 			>
 				{VISIBILITY_OPTIONS.map((option) => {

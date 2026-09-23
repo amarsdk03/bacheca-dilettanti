@@ -90,7 +90,7 @@ export default function AnnuncioTorneoEvento() {
 				setPremiTrofei={(value) => data.setField("premiTrofei", value)}
 			/>
 
-			<ImmagineAnnuncioField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.immagineAnnuncio} onValueChange={(value) => data.setField("immagineAnnuncio", value)} />
+			<ImmagineAnnuncioField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.immagineAnnuncio} onValueChangeAction={(value) => data.setField("immagineAnnuncio", value)} />
 			<LinkAnnuncioField idPrefix="torneo-evento" tipologia="torneo-evento" value={data.linkAnnuncio} onValueChange={(value) => data.setField("linkAnnuncio", value)} />
 		</FieldGroup>
 	);

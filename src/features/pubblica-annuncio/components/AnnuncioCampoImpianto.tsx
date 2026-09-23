@@ -130,7 +130,7 @@ export default function AnnuncioCampoImpianto() {
 				idPrefix="campo-impianto"
 				tipologia="campi-impianti-sportivi"
 				value={immagineAnnuncio}
-				onValueChange={(value) => setField("immagineAnnuncio", value)}
+				onValueChangeAction={(value) => setField("immagineAnnuncio", value)}
 			/>
 			<LinkAnnuncioField
 				idPrefix="campo-impianto"

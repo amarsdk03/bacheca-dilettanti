@@ -6,10 +6,13 @@ import {getCurrentViewer} from "@/features/auth/server/queries";
 import {dynamicMetadata} from "@/server/metadata";
 import Navbar from "@/components/navigation/Navbar";
 
-export const metadata: Metadata = dynamicMetadata(
-	"Come vuoi continuare?",
-	"Accedi, crea un account oppure pubblica gratuitamente un annuncio come ospite.",
-);
+export const metadata: Metadata = dynamicMetadata({
+	title: "Come vuoi continuare?",
+	description: "Accedi, crea un account oppure pubblica gratuitamente un annuncio come ospite.",
+	canonicalPath: "/effettua-accesso",
+	index: false,
+	follow: true,
+});
 
 export default async function Page() {
 	if (await getCurrentViewer()) redirect("/il-tuo-profilo");

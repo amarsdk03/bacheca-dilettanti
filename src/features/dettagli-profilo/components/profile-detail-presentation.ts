@@ -1,4 +1,4 @@
-import {MegaphoneIcon, UserRoundPlusIcon, type LucideIcon} from "lucide-react";
+import {type LucideIcon, MegaphoneIcon, UserRoundPlusIcon} from "lucide-react";
 import type {GenericProfileDetail, ProfileDetailField} from "../profile-detail-model";
 import type {ProfileFact} from "./ProfileFactsGrid";
 

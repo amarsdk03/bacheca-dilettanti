@@ -5,9 +5,11 @@ import Aggiornamenti from "@/features/aggiornamenti/Aggiornamenti";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
 
-export const metadata: Metadata = dynamicMetadata(
-	"Aggiornamenti"
-);
+export const metadata: Metadata = dynamicMetadata({
+	title: "Aggiornamenti",
+	description: "Notizie, guide e approfondimenti dedicati al calcio dilettantistico e alla community di Bacheca Dilettanti.",
+	canonicalPath: "/aggiornamenti",
+});
 
 export default function Page() {
 	return (

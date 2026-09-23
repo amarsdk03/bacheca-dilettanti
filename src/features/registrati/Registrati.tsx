@@ -171,6 +171,9 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 	const [otpFeedback, setOtpFeedback] = useState<string>();
 	const [registeredEmail, setRegisteredEmail] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
+	const [legalAccepted, setLegalAccepted] = useState(false);
+	const [newsletterSubscribed, setNewsletterSubscribed] = useState(true);
+	const [legalConsentError, setLegalConsentError] = useState<string>();
 	const [clientFieldErrors, setClientFieldErrors] = useState<AuthFieldErrors>({});
 	const [selectedProfileTypes, setSelectedProfileTypes] = useState<ProfileType[]>([]);
 	const [primaryProfileType, setPrimaryProfileType] = useState<ProfileType | "">("");
@@ -232,6 +235,8 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 		profileDrafts,
 		profileLocations,
 		profileSocialLinks,
+		legalAccepted,
+		newsletterSubscribed,
 	);
 
 	const scrollToHeader = () => {
@@ -538,6 +543,15 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 			return;
 		}
 
+		if (!legalAccepted) {
+			event.preventDefault();
+			setLegalConsentError("Per creare l’account devi accettare Termini di servizio, Privacy policy e Cookie policy.");
+			setStep(3);
+			setProfileDetailIndex(orderedSelectedProfileTypes.length - 1);
+			scrollToHeader();
+			return;
+		}
+
 		if (!registrationPayload) {
 			event.preventDefault();
 			setProfileSelectionError("Rivedi la selezione dei profili e riprova.");
@@ -758,18 +772,53 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 								)}
 
 								{visibleStep === 3 && currentProfileType && (
-									<ProfileDetailsForm
-										key={currentProfileType}
-										type={currentProfileType}
-										drafts={profileDrafts}
-										locations={profileLocations}
-										onChange={updateProfileDraft}
-										onLocationsChange={updateProfileLocations}
-										socialLinks={profileSocialLinks[currentProfileType]}
-										onSocialLinksChange={(platform, value) => updateProfileSocialLinks(currentProfileType, platform, value)}
-										requiredFields
-										errors={currentProfileErrors}
-									/>
+									<>
+										<ProfileDetailsForm
+											key={currentProfileType}
+											type={currentProfileType}
+											drafts={profileDrafts}
+											locations={profileLocations}
+											onChange={updateProfileDraft}
+											onLocationsChange={updateProfileLocations}
+											socialLinks={profileSocialLinks[currentProfileType]}
+											onSocialLinksChange={(platform, value) => updateProfileSocialLinks(currentProfileType, platform, value)}
+											requiredFields
+											errors={currentProfileErrors}
+										/>
+										{isLastProfileDetail && (
+											<FieldSet className="mt-8">
+												<FieldLegend variant="label">Consensi e comunicazioni</FieldLegend>
+												<FieldGroup className="gap-3">
+													<Field orientation="horizontal" data-invalid={Boolean(legalConsentError)}>
+														<Checkbox
+															id="registration-legal-consent"
+															checked={legalAccepted}
+															onCheckedChange={(checked) => {
+																setLegalAccepted(Boolean(checked));
+																setLegalConsentError(undefined);
+															}}
+															required
+															aria-required="true"
+															aria-invalid={Boolean(legalConsentError)}
+														/>
+														<FieldContent>
+															<FieldLabel htmlFor="registration-legal-consent" className="font-normal">
+																Confermo di aver letto e accettato i <Link href="/termini-di-servizio" target="_blank" rel="noopener noreferrer" className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4">Termini di servizio</Link>, la <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4">Privacy policy</Link> e la <Link href="/cookie-policy" target="_blank" rel="noopener noreferrer" className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4">Cookie policy</Link>. <RequiredMark />
+															</FieldLabel>
+															{legalConsentError && <FieldError>{legalConsentError}</FieldError>}
+														</FieldContent>
+													</Field>
+													<Field orientation="horizontal">
+														<Checkbox id="registration-newsletter" checked={newsletterSubscribed} onCheckedChange={(checked) => setNewsletterSubscribed(Boolean(checked))} />
+														<FieldContent>
+															<FieldLabel htmlFor="registration-newsletter" className="font-normal">Desidero ricevere notizie e newsletter da Bacheca Dilettanti.</FieldLabel>
+															<FieldDescription>Puoi modificare questa scelta in qualsiasi momento dalle impostazioni del profilo.</FieldDescription>
+														</FieldContent>
+													</Field>
+												</FieldGroup>
+											</FieldSet>
+										)}
+									</>
 								)}
 			</CardContent>
 

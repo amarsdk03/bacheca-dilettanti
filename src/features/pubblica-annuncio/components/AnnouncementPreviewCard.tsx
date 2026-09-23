@@ -62,7 +62,7 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 					</div>
 				</div>
 				<CardTitle className="mt-3 text-2xl leading-tight sm:text-3xl">{preview.title}</CardTitle>
-				<CardDescription className="mt-2">Pubblicato da <span className="font-medium text-foreground">{preview.author}</span></CardDescription>
+				<CardDescription className="mt-2">{preview.status === "Pubblicato" ? "Pubblicato da" : "Inserito da"} <span className="font-medium text-foreground">{preview.author}</span></CardDescription>
 			</CardHeader>
 			<CardContent className="grid gap-5">
 				{preview.statusInfo && (

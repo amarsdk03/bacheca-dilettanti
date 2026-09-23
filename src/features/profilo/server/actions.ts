@@ -474,6 +474,48 @@ export async function setAnnouncementVisibility(
 	};
 }
 
+export async function setNewsletterSubscription(
+	enabled: unknown,
+): Promise<ProfileMutationResult> {
+	if (typeof enabled !== "boolean") {
+		return {status: "error", message: "La preferenza newsletter non è valida."};
+	}
+
+	const account = await getAuthenticatedViewer();
+	if (!account?.utenteId || !account.registeredAt) {
+		return {status: "error", message: "La sessione non è più valida. Accedi di nuovo."};
+	}
+
+	const changedAt = new Date().toISOString();
+	const {data, error} = await createAdminClient()
+		.from("utente")
+		.update({
+			consenso_newsletter: enabled,
+			consenso_newsletter_aggiornato_il: changedAt,
+			ultima_modifica_il: changedAt,
+		})
+		.eq("utente_uuid", account.utenteId)
+		.eq("auth_user_uuid", account.authUserId)
+		.select("utente_uuid")
+		.maybeSingle();
+
+	if (error) {
+		console.error("[profile-dashboard] Newsletter preference update failed", {code: error.code});
+		return {status: "error", message: "Non è stato possibile aggiornare la preferenza newsletter."};
+	}
+	if (!data) {
+		return {status: "error", message: "L’account non è più disponibile."};
+	}
+
+	revalidatePath("/il-tuo-profilo");
+	return {
+		status: "success",
+		message: enabled
+			? "Riceverai notizie e newsletter dalla piattaforma."
+			: "Non riceverai più notizie e newsletter dalla piattaforma.",
+	};
+}
+
 export async function removeAnnouncement(
 	announcementId: unknown,
 ): Promise<ProfileMutationResult> {

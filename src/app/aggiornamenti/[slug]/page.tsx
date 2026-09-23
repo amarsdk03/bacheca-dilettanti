@@ -1,6 +1,7 @@
 import type {Metadata} from "next";
 import Link from "next/link";
 import {notFound} from "next/navigation";
+import {cache} from "react";
 import {ArrowLeft, CalendarDays, Clock, Eye, UserRound} from "lucide-react";
 
 import Navbar from "@/components/navigation/Navbar";
@@ -8,16 +9,15 @@ import Footer from "@/components/navigation/Footer";
 import ArticleBody from "@/features/aggiornamenti/ArticleBody";
 import ArticleNavigation from "@/features/aggiornamenti/ArticleNavigation";
 import ShareButtons from "@/features/aggiornamenti/ShareButtons";
-import {
-	formatArticleDate,
-	getAllArticles,
-	getArticleBySlug,
-	getArticleCover,
-	getPlaceholderViews
-} from "@/lib/articles";
-import {dynamicMetadata} from "@/server/metadata";
+import JsonLd from "@/components/seo/JsonLd";
+import {formatArticleDate, getAllArticles, getArticleCover, getPlaceholderViews} from "@/lib/articles";
+import {dynamicMetadata, getSiteUrl} from "@/server/metadata";
+import {articleStructuredData} from "@/server/structured-data";
 
 export const dynamicParams = false;
+
+const loadArticles = cache(getAllArticles);
+const loadArticle = cache((slug: string) => loadArticles().find((article) => article.slug === slug));
 
 export function generateStaticParams() {
 	return getAllArticles().map(({slug}) => ({slug}));
@@ -25,13 +25,25 @@ export function generateStaticParams() {
 
 export async function generateMetadata({params}: PageProps<"/aggiornamenti/[slug]">): Promise<Metadata> {
 	const {slug} = await params;
-	const article = getArticleBySlug(slug);
-	if (!article) return {};
+	const article = loadArticle(slug);
+	if (!article) return dynamicMetadata({
+		title: "Articolo non disponibile",
+		canonicalPath: `/aggiornamenti/${slug}`,
+		index: false,
+		follow: false,
+	});
 
-	const metadata = dynamicMetadata(article.title, article.description, `/aggiornamenti/${article.slug}`, getArticleCover(article.coverImage));
+	const coverImage = getArticleCover(article.coverImage);
+	const metadata = dynamicMetadata({
+		title: article.title,
+		description: article.description,
+		canonicalPath: `/aggiornamenti/${article.slug}`,
+		image: {url: coverImage, alt: `Copertina dell’articolo “${article.title}”`},
+		openGraphType: "article",
+		keywords: article.tags,
+	});
 	return {
 		...metadata,
-		keywords: article.tags,
 		authors: [{name: article.author}],
 		category: article.category,
 		openGraph: {
@@ -46,18 +58,19 @@ export async function generateMetadata({params}: PageProps<"/aggiornamenti/[slug
 
 export default async function ArticlePage({params}: PageProps<"/aggiornamenti/[slug]">) {
 	const {slug} = await params;
-	const articles = getAllArticles();
+	const articles = loadArticles();
 	const article = articles.find((item) => item.slug === slug);
 	if (!article) notFound();
 
-	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-	const canonicalUrl = new URL(`/aggiornamenti/${article.slug}`, siteUrl).toString();
+	const path = `/aggiornamenti/${article.slug}`;
+	const canonicalUrl = getSiteUrl(path);
 	const coverImage = getArticleCover(article.coverImage);
 
 	const viewCount = getPlaceholderViews(article.slug).toLocaleString("it-IT");
 
 	return (
 		<>
+			<JsonLd data={articleStructuredData(article, path, coverImage)} />
 			<Navbar />
 			<main className="bg-white text-neutral-900">
 				<header className="relative isolate overflow-hidden bg-neutral-950">

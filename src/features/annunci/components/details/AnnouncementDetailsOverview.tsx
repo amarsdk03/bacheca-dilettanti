@@ -1,7 +1,7 @@
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import type {AnnouncementDetail} from "@/features/annunci/announcement-model";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
-import {isSpecifiedAnnouncementValue, type AnnouncementDetailPresentation} from "./announcement-detail-presentation";
+import {type AnnouncementDetailPresentation, isSpecifiedAnnouncementValue} from "./announcement-detail-presentation";
 
 export default function AnnouncementDetailsOverview({announcement, presentation}: {
 	announcement: AnnouncementDetail;

@@ -1,5 +1,7 @@
 import "server-only";
 
+import {isAnnouncementListed} from "@/features/annunci/announcement-visibility";
+
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
@@ -63,12 +65,12 @@ const ANONYMOUS_LABEL_BY_PROFILE: Partial<Record<ProfileType, string>> = {
 	"campi-impianti-sportivi": "Campo / impianto anonimo",
 };
 
-function publicAnnouncementQuery(
+function announcementContentQuery(
 	supabase: SupabaseClient<Database>,
 	options?: {count?: "exact"},
 ) {
-	// This client bypasses RLS. Keep the projection explicit and the three
-	// public-visibility predicates attached to every caller through this helper.
+	// Server-only projection of shareable content. Never include private account,
+	// payment or moderation notes: saved announcements can be opened by URL.
 	return supabase
 		.from("annuncio")
 		.select(`
@@ -77,6 +79,9 @@ function publicAnnouncementQuery(
 			tipologia_annuncio,
 			creato_il,
 			livello_annuncio,
+			stato_annuncio,
+			nascosto,
+			privato,
 			annuncio_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, categorie_ricercate, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, annate_ricercate, stagione, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_staff(figura_ricercata, settore, compenso_mensile, requisiti, periodo_dal, periodo_al, descrizione_aggiuntiva),
@@ -87,7 +92,15 @@ function publicAnnouncementQuery(
 			annuncio_torneo_evento(nome_evento, modalita_iscrizione, annate_ammesse_da, annate_ammesse_a, numero_squadre, costo_partecipazione, tipo_partecipazione, lista_premi_trofei, descrizione_aggiuntiva, tipologie_sport),
 			annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva),
 			localita_annuncio(regione, citta)
-		`, options)
+		`, options);
+}
+
+function publicAnnouncementQuery(
+	supabase: SupabaseClient<Database>,
+	options?: {count?: "exact"},
+) {
+	// Every discovery query must retain all three visibility predicates.
+	return announcementContentQuery(supabase, options)
 		.eq("stato_annuncio", "pubblicato")
 		.eq("nascosto", false)
 		.eq("privato", false);
@@ -1187,7 +1200,7 @@ export async function loadPublicAnnouncementDetail(
 
 	try {
 		const supabase = createAdminClient();
-		const {data, error} = await publicAnnouncementQuery(supabase)
+		const {data, error} = await announcementContentQuery(supabase)
 			.eq("uuid", id)
 			.maybeSingle();
 		if (error) {
@@ -1201,7 +1214,8 @@ export async function loadPublicAnnouncementDetail(
 		const mapped = mapAnnouncement(data);
 		if (!mapped) return {status: "not-found"};
 		const content = announcementContent(mapped.item.type, detailForType(data, mapped.item.type), announcementLocations(data), true);
-		const [authorResult, linkedTeams, contactResult, saveCount, similar] = await Promise.all([
+		const isListed = isAnnouncementListed(data.stato_annuncio, data.nascosto, data.privato);
+		const [authorResult, linkedTeams, contactResult, mediaResult, saveCount, similar] = await Promise.all([
 			loadOfficialAuthors(supabase, [mapped]),
 			loadAnnouncementTeams(supabase, [mapped]),
 			supabase
@@ -1209,11 +1223,19 @@ export async function loadPublicAnnouncementDetail(
 				.select("tipo, valore")
 				.eq("uuid_annuncio", data.uuid)
 				.order("id", {ascending: true}),
-			loadAnnouncementSaveCount(supabase, id),
+			supabase
+				.from("media_annuncio")
+				.select("id")
+				.eq("uuid_annuncio", data.uuid)
+				.like("formato_media", "image/%")
+				.limit(1),
+			isListed ? loadAnnouncementSaveCount(supabase, id) : Promise.resolve(null),
 			loadSimilarPublicAnnouncements(supabase, id, mapped.item.type),
 		]);
 
 		if (contactResult.error) logQueryError("contacts", contactResult.error);
+		if (mediaResult.error) logQueryError("share-image", mediaResult.error);
+		const hasShareImage = !mediaResult.error && Boolean(mediaResult.data?.length);
 
 		const contacts = (contactResult.error ? [] : contactResult.data ?? [])
 			.map(validContact)
@@ -1226,6 +1248,11 @@ export async function loadPublicAnnouncementDetail(
 			status: "success",
 			announcement: {
 				...announcement,
+				moderationStatus: data.stato_annuncio,
+				isListed,
+				shareImageUrl: hasShareImage
+					? `/api/metadata/annuncio-immagine?${new URLSearchParams({id}).toString()}`
+					: null,
 				location: content.location,
 				facts: content.facts,
 				fields: content.fields,

@@ -335,7 +335,7 @@ export default function ConfermaInvioAnnuncio({
 				<FieldLegend variant="label" className="field-legend-title mb-4">Conferma e pubblica:</FieldLegend>
 				<AnnouncementPreviewCard preview={preview} />
 				<div className="mt-6">
-					<SelezionaVisibilitaAnnuncio value={visibility} onValueChange={onVisibilityChange} />
+					<SelezionaVisibilitaAnnuncio value={visibility} onValueChangeAction={onVisibilityChange} />
 				</div>
 
 				{!authenticated && (

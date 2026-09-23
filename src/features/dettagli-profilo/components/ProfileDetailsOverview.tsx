@@ -8,7 +8,11 @@ import type {GenericProfileDetail as PublicProfile} from "../profile-detail-mode
 import ProfilePngIcon from "@/features/profilo/ProfilePngIcon";
 import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
 import {profileInitials} from "@/features/profilo/public-profile-display";
-import {getProfileDetailFacts, getProfileDetailFields, type ProfileDetailPresentation} from "./profile-detail-presentation";
+import {
+	getProfileDetailFacts,
+	getProfileDetailFields,
+	type ProfileDetailPresentation
+} from "./profile-detail-presentation";
 import ProfileFactsGrid from "./ProfileFactsGrid";
 import ProfileIdentifier from "./ProfileIdentifier";
 import ProfileLocationsCard from "./ProfileLocationsCard";

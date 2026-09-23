@@ -45,7 +45,12 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {Badge} from "@/components/ui/badge";
-import {Button} from "@/components/ui/button";
+import {Button, buttonVariants} from "@/components/ui/button";
+import {Checkbox} from "@/components/ui/checkbox";
+import {Field, FieldContent, FieldDescription, FieldLabel} from "@/components/ui/field";
+import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
+import AnnouncementViewLink from "@/features/annunci/AnnouncementViewLink";
+import {isAnnouncementListed} from "@/features/annunci/announcement-visibility";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card";
 import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle,} from "@/components/ui/empty";
 import {Separator} from "@/components/ui/separator";
@@ -77,6 +82,7 @@ import {
 	removeProfile,
 	saveProfile,
 	setAnnouncementVisibility,
+	setNewsletterSubscription,
 	setPrimaryProfile,
 } from "@/features/profilo/server/actions";
 import type {
@@ -92,7 +98,7 @@ import {RelationshipsSection, SavedAnnouncementsSection} from "@/features/intera
 
 const DASHBOARD_ITEMS = [
 	{value: "profilo", label: "Il tuo profilo", icon: UserRoundIcon},
-	{value: "annunci", label: "I miei annunci", icon: ListChecksIcon},
+	{value: "annunci", label: "I tuoi annunci", icon: ListChecksIcon},
 	{value: "salvati", label: "Annunci salvati", icon: HeartIcon},
 	{value: "relazioni", label: "Follower e seguiti", icon: UsersIcon},
 	{value: "impostazioni", label: "Impostazioni", icon: SettingsIcon},
@@ -148,7 +154,7 @@ const FAQ_GROUPS = [
 			{
 				value: "announcement-review",
 				question: "Cosa succede dopo aver inviato un annuncio?",
-				answer: "Un annuncio gratuito entra direttamente in revisione. Per un annuncio prioritario devi prima completare il pagamento: dopo l’approvazione avrà priorità per sette giorni. Puoi controllarne lo stato nella sezione I miei annunci.",
+				answer: "Un annuncio gratuito entra direttamente in revisione. Per un annuncio prioritario devi prima completare il pagamento: dopo l’approvazione avrà priorità per sette giorni. Puoi controllarne lo stato nella sezione I tuoi annunci.",
 			},
 			{
 				value: "announcement-edit",
@@ -158,7 +164,7 @@ const FAQ_GROUPS = [
 			{
 				value: "announcement-visibility",
 				question: "Cosa succede quando nascondo un annuncio?",
-				answer: "L’annuncio resta nella tua area personale ma non è visibile nella bacheca pubblica. Puoi mostrarlo nuovamente in qualsiasi momento.",
+				answer: "L’annuncio resta nella tua area personale e viene escluso dalla bacheca e dalle ricerche. Chiunque abbia il link può ancora consultarlo, inclusi i contatti. Puoi mostrarlo nuovamente in qualsiasi momento.",
 			},
 		],
 	},
@@ -438,6 +444,18 @@ function ProfileCard({
 					)}
 				</div>
 				<div className="flex flex-wrap justify-end gap-2">
+					<Tooltip>
+						<TooltipTrigger render={<Link
+							href={`/dettagli-profilo?${new URLSearchParams({id: profile.profileId, type: profile.type})}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							className={buttonVariants({variant: "outline", size: "icon"})}
+							aria-label={`Visualizza il profilo ${option?.label ?? profile.type} (si apre in una nuova scheda)`}
+						/>}>
+							<EyeIcon aria-hidden="true" />
+						</TooltipTrigger>
+						<TooltipContent>Visualizza profilo</TooltipContent>
+					</Tooltip>
 					<Button type="button" variant="outline" onClick={onEdit} disabled={pending} aria-label={`Aggiorna il profilo ${option?.label ?? profile.type}`}>
 						<PencilIcon data-icon="inline-start" aria-hidden="true" /> Aggiorna
 					</Button>
@@ -684,6 +702,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 				</dl>
 			</CardContent>
 			<CardFooter className="flex flex-wrap justify-end gap-2">
+				<AnnouncementViewLink id={announcement.id} isListed={isAnnouncementListed(announcement.moderationStatus, isHidden, announcement.isPrivate)} />
 				{paymentPending ? (
 					<Button render={<Link href={`/pubblica-annuncio/pagamento?id=${encodeURIComponent(announcement.id)}`} />} nativeButton={false} className="profile-dashboard-action" disabled={pending}>
 						Completa pagamento
@@ -753,7 +772,7 @@ function AnnouncementsSection({announcements, onToggleVisibility, onRemove}: {
 	return (
 		<section aria-labelledby="announcements-heading" className="grid gap-6">
 			<div className="flex flex-col gap-1.5">
-				<h2 id="announcements-heading" className="text-xl font-semibold tracking-tight">I miei annunci</h2>
+				<h2 id="announcements-heading" className="text-xl font-semibold tracking-tight">I tuoi annunci</h2>
 				<p className="text-sm leading-6 text-muted-foreground">Controlla lo stato dei tuoi annunci, gestiscine la visibilità o eliminali. Per cambiare i contenuti, pubblica un nuovo annuncio.</p>
 			</div>
 
@@ -813,8 +832,29 @@ function PasswordResetButton() {
 	);
 }
 
-function SettingsSection({viewer, passwordUpdated}: {viewer: ViewerDTO; passwordUpdated: boolean}) {
+function SettingsSection({viewer, passwordUpdated, initialNewsletterSubscribed}: {viewer: ViewerDTO; passwordUpdated: boolean; initialNewsletterSubscribed: boolean}) {
 	const [state, formAction] = useActionState(requestCurrentUserPasswordReset, INITIAL_AUTH_STATE);
+	const [newsletterSubscribed, setNewsletterSubscribed] = useState(initialNewsletterSubscribed);
+	const [newsletterPending, startNewsletterTransition] = useTransition();
+
+	const updateNewsletterSubscription = (enabled: boolean) => {
+		const previous = newsletterSubscribed;
+		setNewsletterSubscribed(enabled);
+		startNewsletterTransition(async () => {
+			try {
+				const result = await setNewsletterSubscription(enabled);
+				if (result.status === "error") setNewsletterSubscribed(previous);
+				toast.add({
+					title: result.status === "success" ? "Preferenza aggiornata" : "Modifica non riuscita",
+					description: result.message,
+					type: result.status,
+				});
+			} catch {
+				setNewsletterSubscribed(previous);
+				toast.add({title: "Modifica non riuscita", description: "La richiesta non è stata completata. Riprova.", type: "error"});
+			}
+		});
+	};
 
 	return (
 		<section aria-labelledby="settings-heading" className="grid gap-6">
@@ -868,6 +908,28 @@ function SettingsSection({viewer, passwordUpdated}: {viewer: ViewerDTO; password
 						)}
 					</CardContent>
 					<CardFooter><form action={formAction} className="w-full"><PasswordResetButton /></form></CardFooter>
+				</Card>
+
+				<Card className="profile-dashboard-card">
+					<CardHeader className="gap-3">
+						<span className="profile-dashboard-emblem flex size-10 items-center justify-center rounded-xl"><MailIcon className="size-5" aria-hidden="true" /></span>
+						<CardTitle>Notizie e newsletter</CardTitle>
+						<CardDescription>Scegli se ricevere aggiornamenti e comunicazioni dalla piattaforma.</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<Field orientation="horizontal" data-disabled={newsletterPending}>
+							<Checkbox
+								id="settings-newsletter"
+								checked={newsletterSubscribed}
+								onCheckedChange={(checked) => updateNewsletterSubscription(Boolean(checked))}
+								disabled={newsletterPending}
+							/>
+							<FieldContent>
+								<FieldLabel htmlFor="settings-newsletter" className="font-normal">Ricevi notizie e newsletter</FieldLabel>
+								<FieldDescription>{newsletterPending ? "Salvataggio in corso…" : "Puoi cambiare questa scelta in qualsiasi momento."}</FieldDescription>
+							</FieldContent>
+						</Field>
+					</CardContent>
 				</Card>
 			</div>
 		</section>
@@ -960,7 +1022,7 @@ export default function IlTuoProfilo({
 						<TabsContent value="annunci"><AnnouncementsSection announcements={announcements} onToggleVisibility={handleToggleAnnouncement} onRemove={handleRemoveAnnouncement} /></TabsContent>
 						<TabsContent value="salvati"><SavedAnnouncementsSection list={data.interactions.savedAnnouncements} /></TabsContent>
 						<TabsContent value="relazioni"><RelationshipsSection followers={data.interactions.followers} following={data.interactions.following} /></TabsContent>
-						<TabsContent value="impostazioni"><SettingsSection viewer={viewer} passwordUpdated={passwordUpdated} /></TabsContent>
+						<TabsContent value="impostazioni"><SettingsSection viewer={viewer} passwordUpdated={passwordUpdated} initialNewsletterSubscribed={data.newsletterSubscribed} /></TabsContent>
 						<TabsContent value="info"><FaqSection /></TabsContent>
 					</div>
 				</Tabs>

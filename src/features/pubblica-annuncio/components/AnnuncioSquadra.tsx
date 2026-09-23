@@ -438,7 +438,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 						className="sm:col-span-3"
 						items={CATEGORIE_CALCIO_GROUPS}
 						value={cercaAmichevoli.categorieAvversario}
-						onValueChange={(value) =>
+						onValueChangeAction={(value) =>
 								setCercaAmichevoli((prev) => ({ ...prev, categorieAvversario: value }))
 							}
 						/>
@@ -563,7 +563,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 				idPrefix="squadra"
 				tipologia="squadra"
 				value={immagineAnnuncio}
-				onValueChange={(value) => setField("immagineAnnuncio", value)}
+				onValueChangeAction={(value) => setField("immagineAnnuncio", value)}
 			/>
 			<LinkAnnuncioField
 				idPrefix="squadra"

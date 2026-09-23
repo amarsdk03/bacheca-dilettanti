@@ -105,7 +105,7 @@ export default function AnnuncioStaff() {
 						label="Categorie ricercate"
 						items={CATEGORIE_CALCIO_GROUPS}
 						value={categorieRicercate}
-						onValueChange={(value) => setField("categorieRicercate", value)}
+						onValueChangeAction={(value) => setField("categorieRicercate", value)}
 					/>
 
 					<div className="grid gap-4 sm:grid-cols-2">
@@ -149,7 +149,7 @@ export default function AnnuncioStaff() {
 				idPrefix="staff"
 				tipologia="staff-sportivo"
 				value={immagineAnnuncio}
-				onValueChange={(value) => setField("immagineAnnuncio", value)}
+				onValueChangeAction={(value) => setField("immagineAnnuncio", value)}
 			/>
 			<LinkAnnuncioField
 				idPrefix="staff"

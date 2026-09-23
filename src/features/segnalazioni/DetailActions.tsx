@@ -35,6 +35,7 @@ interface DetailActionsProps {
 	target: ReportTarget;
 	interaction: InteractionState;
 	presentation?: "default" | "profile" | "announcement";
+	shareOnly?: boolean;
 }
 
 function ReportForm({
@@ -102,7 +103,7 @@ function ReportForm({
 	);
 }
 
-export default function DetailActions({href, target, interaction, presentation = "default"}: DetailActionsProps) {
+export default function DetailActions({href, target, interaction, presentation = "default", shareOnly = false}: DetailActionsProps) {
 	const [reportOpen, setReportOpen] = useState(false);
 	const [reportPending, setReportPending] = useState(false);
 	const isDetail = presentation !== "default";
@@ -128,7 +129,7 @@ export default function DetailActions({href, target, interaction, presentation =
 
 	return (
 		<div className={isDetail ? "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center" : "flex items-center gap-2"} role="group" aria-label="Azioni">
-			{isDetail && followButton}
+			{!shareOnly && isDetail && followButton}
 			{isDetail ? (
 				<Button type="button" variant="outline" className="min-h-11 gap-2 pe-4" onClick={handleShare}>
 					<Share2Icon data-icon="inline-start" className="ms-1.5" aria-hidden="true" />Condividi
@@ -140,9 +141,9 @@ export default function DetailActions({href, target, interaction, presentation =
 				<TooltipContent>Condividi</TooltipContent>
 			</Tooltip>}
 
-			{!isDetail && followButton}
+			{!shareOnly && !isDetail && followButton}
 
-			<Dialog
+			{!shareOnly && <Dialog
 				open={reportOpen}
 				onOpenChange={(open) => {
 					if (!reportPending) setReportOpen(open);
@@ -168,7 +169,7 @@ export default function DetailActions({href, target, interaction, presentation =
 						/>
 					) : null}
 				</DialogContent>
-			</Dialog>
+			</Dialog>}
 		</div>
 	);
 }

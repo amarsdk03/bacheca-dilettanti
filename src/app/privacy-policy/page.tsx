@@ -5,9 +5,11 @@ import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
 import EmbedLegalBlink from "@/components/legal/EmbedLegalBlink";
 
-export const metadata: Metadata = dynamicMetadata(
-	"Privacy policy"
-);
+export const metadata: Metadata = dynamicMetadata({
+	title: "Privacy policy",
+	description: "Informativa sul trattamento dei dati personali degli utenti di Bacheca Dilettanti.",
+	canonicalPath: "/privacy-policy",
+});
 
 export default function Page() {
 	return (

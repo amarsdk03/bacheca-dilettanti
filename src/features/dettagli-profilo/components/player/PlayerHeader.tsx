@@ -1,7 +1,15 @@
 import type {ReactNode} from "react";
 import {
-	BadgeCheckIcon, CalendarDaysIcon,
-	CircleCheckBigIcon, FootprintsIcon, MegaphoneIcon, RulerIcon, ScaleIcon, ShirtIcon, StarIcon, UserRoundPlusIcon
+	BadgeCheckIcon,
+	CalendarDaysIcon,
+	CircleCheckBigIcon,
+	FootprintsIcon,
+	MegaphoneIcon,
+	RulerIcon,
+	ScaleIcon,
+	ShirtIcon,
+	StarIcon,
+	UserRoundPlusIcon
 } from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";

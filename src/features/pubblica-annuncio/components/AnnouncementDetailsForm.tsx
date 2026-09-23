@@ -203,7 +203,7 @@ export default function AnnouncementDetailsForm({
 							label="Categorie ricercate"
 							items={CATEGORIE_CALCIO_GROUPS}
 							value={drafts.giocatore.categorie_ricercate}
-							onValueChange={(value) => updateDraft("giocatore", "categorie_ricercate", value)}
+							onValueChangeAction={(value) => updateDraft("giocatore", "categorie_ricercate", value)}
 						/>
 						<DescriptionField
 							id="announcement-player-description"
@@ -264,7 +264,7 @@ export default function AnnouncementDetailsForm({
 
 				{profileType === "squadra" && teamSubtype === "cerca-partite-amichevoli" && (
 					<FieldGroup>
-						<CategorieCalcioMultiselectField label="Categorie avversarie" items={CATEGORIE_CALCIO_GROUPS} value={drafts.squadraCercaPartita.categorie_avversario} onValueChange={(value) => updateDraft("squadraCercaPartita", "categorie_avversario", value)} required error={errors.matchCategories} />
+						<CategorieCalcioMultiselectField label="Categorie avversarie" items={CATEGORIE_CALCIO_GROUPS} value={drafts.squadraCercaPartita.categorie_avversario} onValueChangeAction={(value) => updateDraft("squadraCercaPartita", "categorie_avversario", value)} required error={errors.matchCategories} />
 						<div className="grid gap-4 sm:grid-cols-2">
 							<TextField id="team-match-from" label="Periodo dal" type="date" value={drafts.squadraCercaPartita.periodo_dal} onChange={(value) => updateDraft("squadraCercaPartita", "periodo_dal", value)} />
 							<TextField id="team-match-to" label="Periodo al" type="date" value={drafts.squadraCercaPartita.periodo_al} onChange={(value) => updateDraft("squadraCercaPartita", "periodo_al", value)} />
@@ -294,7 +294,7 @@ export default function AnnouncementDetailsForm({
 				{profileType === "staff-sportivo" && (
 					<FieldGroup>
 						<TipologiaCalcioMultiselectField value={drafts.staffSportivo.tipologie_sport} onValueChange={(value) => updateDraft("staffSportivo", "tipologie_sport", value)} required error={errors.sports} />
-						<CategorieCalcioMultiselectField label="Categorie ricercate" items={CATEGORIE_CALCIO_GROUPS} value={drafts.staffSportivo.categorie_ricercate} onValueChange={(value) => updateDraft("staffSportivo", "categorie_ricercate", value)} />
+						<CategorieCalcioMultiselectField label="Categorie ricercate" items={CATEGORIE_CALCIO_GROUPS} value={drafts.staffSportivo.categorie_ricercate} onValueChangeAction={(value) => updateDraft("staffSportivo", "categorie_ricercate", value)} />
 						<Field>
 							<FieldLabel htmlFor="staff-travel">Disponibilità agli spostamenti <OptionalLabel /></FieldLabel>
 							<Select value={drafts.staffSportivo.disponibilita_spostamento || null} onValueChange={(value) => updateDraft("staffSportivo", "disponibilita_spostamento", value ?? "")}>
@@ -309,7 +309,7 @@ export default function AnnouncementDetailsForm({
 				{profileType === "arbitro" && (
 					<FieldGroup>
 						<TipologiaCalcioMultiselectField value={drafts.arbitro.tipologie_sport} onValueChange={(value) => updateDraft("arbitro", "tipologie_sport", value)} required error={errors.sports} />
-						<CategorieCalcioMultiselectField label="Categorie di interesse" items={CATEGORIE_CALCIO_GROUPS} value={drafts.arbitro.categorie_ricercate} onValueChange={(value) => updateDraft("arbitro", "categorie_ricercate", value)} />
+						<CategorieCalcioMultiselectField label="Categorie di interesse" items={CATEGORIE_CALCIO_GROUPS} value={drafts.arbitro.categorie_ricercate} onValueChangeAction={(value) => updateDraft("arbitro", "categorie_ricercate", value)} />
 						<div className="grid gap-4 sm:grid-cols-2">
 							<Field>
 								<FieldLabel htmlFor="referee-car">Automunito <OptionalLabel /></FieldLabel>
@@ -424,7 +424,7 @@ export default function AnnouncementDetailsForm({
 							)}
 						/>
 					)}
-					<ImmagineAnnuncioField idPrefix="announcement" value={image} onValueChange={onImageChange} />
+					<ImmagineAnnuncioField idPrefix="announcement" value={image} onValueChangeAction={onImageChange} />
 				</FieldGroup>
 			</FieldSet>
 

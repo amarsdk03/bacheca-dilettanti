@@ -692,7 +692,7 @@ function GiocatoreFields({
 				label="Categorie ricercate"
 				items={CATEGORIE_CALCIO_GROUPS}
 				value={draft.categorie_ricercate ?? []}
-				onValueChange={(value) => onChange("giocatore", "categorie_ricercate", value)}
+				onValueChangeAction={(value) => onChange("giocatore", "categorie_ricercate", value)}
 			/>
 			<FieldGroup className="grid gap-4 sm:grid-cols-3">
 				<ProfileTextField id={`${prefix}-altezza`} label="Altezza (in cm)" value={draft.altezza} onChange={(value) => onChange("giocatore", "altezza", value)} placeholder="Es. 180" />

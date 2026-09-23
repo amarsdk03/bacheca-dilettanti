@@ -12,7 +12,13 @@ import {sanitizeNextPath} from "@/features/auth/utils";
 import Registrati from "@/features/registrati/Registrati";
 import {dynamicMetadata} from "@/server/metadata";
 
-export const metadata: Metadata = dynamicMetadata("Registrati");
+export const metadata: Metadata = dynamicMetadata({
+	title: "Registrati",
+	description: "Crea il tuo account su Bacheca Dilettanti.",
+	canonicalPath: "/registrati",
+	index: false,
+	follow: true,
+});
 
 interface PageProps {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;

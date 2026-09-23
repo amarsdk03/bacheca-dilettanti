@@ -1,7 +1,7 @@
 "use client";
 
 import {SiFacebook, SiWhatsapp, SiX} from "@icons-pack/react-simple-icons";
-import {CopyIcon, LinkIcon} from "lucide-react";
+import {CopyIcon} from "lucide-react";
 
 import {Button} from "@/components/ui/button";
 import {toast} from "@/components/ui/toast";

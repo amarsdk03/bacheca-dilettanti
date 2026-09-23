@@ -400,6 +400,9 @@ export interface AnnouncementPlayerRoles {
 }
 
 export interface AnnouncementDetail extends AnnouncementDirectoryItem {
+	moderationStatus: string | null;
+	isListed: boolean;
+	shareImageUrl: string | null;
 	saveCount: number | null;
 	authorFollowerCount: number | null;
 	similarAnnouncements: AnnouncementDirectoryItem[];

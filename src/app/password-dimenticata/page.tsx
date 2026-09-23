@@ -6,7 +6,13 @@ import {getCurrentViewer} from "@/features/auth/server/queries";
 import {dynamicMetadata} from "@/server/metadata";
 import Navbar from "@/components/navigation/Navbar";
 
-export const metadata: Metadata = dynamicMetadata("Password dimenticata");
+export const metadata: Metadata = dynamicMetadata({
+	title: "Password dimenticata",
+	description: "Richiedi il collegamento per recuperare l’accesso al tuo account.",
+	canonicalPath: "/password-dimenticata",
+	index: false,
+	follow: false,
+});
 
 interface PageProps {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;

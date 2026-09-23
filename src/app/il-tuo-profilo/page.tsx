@@ -9,7 +9,13 @@ import {getProfileDashboardData} from "@/features/profilo/server/queries";
 import type {ProfileDashboardSection} from "@/features/profilo/types";
 import {dynamicMetadata} from "@/server/metadata";
 
-export const metadata: Metadata = dynamicMetadata("Il tuo profilo");
+export const metadata: Metadata = dynamicMetadata({
+	title: "Il tuo profilo",
+	description: "Gestisci profili, annunci e impostazioni del tuo account.",
+	canonicalPath: "/il-tuo-profilo",
+	index: false,
+	follow: false,
+});
 export const dynamic = "force-dynamic";
 
 interface IlTuoProfiloPageProps {

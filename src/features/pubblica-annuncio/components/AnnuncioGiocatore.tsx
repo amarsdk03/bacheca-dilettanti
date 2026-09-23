@@ -157,7 +157,7 @@ export default function AnnuncioGiocatore() {
 					idPrefix="giocatore"
 					tipologia="giocatore"
 					value={immagineAnnuncio}
-					onValueChange={(value) => setField("immagineAnnuncio", value)}
+					onValueChangeAction={(value) => setField("immagineAnnuncio", value)}
 				/>
 
 				<LinkAnnuncioField

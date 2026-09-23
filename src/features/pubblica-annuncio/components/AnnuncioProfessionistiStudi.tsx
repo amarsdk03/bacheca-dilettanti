@@ -70,7 +70,7 @@ export default function AnnuncioProfessionistiStudi() {
 					</Select>
 				</Field>
 				<AnnuncioTextareaField id="professionisti-studi-info-aggiuntive" label="Info aggiuntive" value={data.infoAggiuntive} onValueChange={(value) => data.setField("infoAggiuntive", value)} placeholder="Aggiungi eventuali altre informazioni..." />
-				<ImmagineAnnuncioField idPrefix="professionisti-studi" tipologia="professionisti-studi" value={data.immagineAnnuncio} onValueChange={(value) => data.setField("immagineAnnuncio", value)} />
+				<ImmagineAnnuncioField idPrefix="professionisti-studi" tipologia="professionisti-studi" value={data.immagineAnnuncio} onValueChangeAction={(value) => data.setField("immagineAnnuncio", value)} />
 				<LinkAnnuncioField idPrefix="professionisti-studi" tipologia="professionisti-studi" value={data.linkAnnuncio} onValueChange={(value) => data.setField("linkAnnuncio", value)} />
 			</FieldSet>
 		</FieldGroup>

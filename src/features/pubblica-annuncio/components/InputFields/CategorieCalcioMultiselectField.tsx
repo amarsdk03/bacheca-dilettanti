@@ -23,7 +23,7 @@ type CategorieCalcioMultiselectFieldProps = {
 	label: string;
 	value: string[];
 	items: ReadonlyArray<{gruppo: string; opzioni: readonly string[]}>;
-	onValueChange: (value: string[]) => void;
+	onValueChangeAction: (value: string[]) => void;
 	required?: boolean;
 	error?: string;
 	className?: string;
@@ -33,7 +33,7 @@ export default function CategorieCalcioMultiselectField({
 	label,
 	value,
 	items,
-	onValueChange,
+	onValueChangeAction,
 	required = false,
 	error,
 	className,
@@ -48,7 +48,7 @@ export default function CategorieCalcioMultiselectField({
 				autoHighlight
 				items={items}
 				value={value}
-				onValueChange={onValueChange}
+				onValueChange={onValueChangeAction}
 			>
 				<ComboboxChips ref={anchor} className="w-full">
 					<ComboboxValue>

@@ -5,6 +5,7 @@ import {ArrowUpRightIcon, CheckCircle2Icon, CircleAlertIcon, CrownIcon, Sparkles
 import {buttonVariants} from "@/components/ui/button";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import AnnouncementCard from "@/features/annunci/components/cards/AnnouncementCard";
+import AnnouncementViewLink from "@/features/annunci/AnnouncementViewLink";
 import AnnouncementPreviewCard from "@/features/pubblica-annuncio/components/AnnouncementPreviewCard";
 import type {PublishConfirmationResult} from "@/features/pubblica-annuncio/server/confirmation";
 import {cn} from "@/lib/utils";
@@ -40,7 +41,7 @@ export default function ConfermaPubblicazione({result}: {result: PublishConfirma
 							<h1 className="mt-3 font-home-display text-3xl uppercase tracking-tight sm:text-5xl">{result.awaitingPayment ? "Completa il pagamento." : "Il tuo annuncio è stato inviato."}</h1>
 							<p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
 								{result.awaitingPayment
-									? "L’annuncio resta privato e non entra in revisione finché il pagamento non è confermato."
+									? "L’annuncio è consultabile tramite link, ma non compare nelle ricerche e non entra in revisione finché il pagamento non è confermato."
 									: "Puoi controllare qui i dati salvati e lo stato dell’approvazione."}
 							</p>
 							<Link
@@ -53,6 +54,9 @@ export default function ConfermaPubblicazione({result}: {result: PublishConfirma
 
 						<section className="mx-auto mt-12 max-w-3xl" aria-label="Riepilogo annuncio">
 							<AnnouncementPreviewCard preview={result.preview} />
+							{result.preview.id && <div className="mt-4 flex justify-center">
+								<AnnouncementViewLink id={result.preview.id} isListed={result.isListed} />
+							</div>}
 						</section>
 
 						<div className="mx-auto mt-12 flex max-w-4xl justify-center overflow-hidden rounded-xl border border-black/8 bg-white p-2">

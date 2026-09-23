@@ -31,7 +31,7 @@ export default function AnnouncementDetailsHeader({announcement, presentation, a
 							{level && <Badge variant="outline">{level.charAt(0).toLocaleUpperCase("it-IT") + level.slice(1)}</Badge>}
 						</div>
 						<div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm">
-							<div className="flex flex-wrap items-center gap-2"><span className="text-muted-foreground">Pubblicato da</span><AnnouncementAuthorHoverCard author={announcement.author} /></div>
+							<div className="flex flex-wrap items-center gap-2"><span className="text-muted-foreground">{announcement.moderationStatus === "pubblicato" ? "Pubblicato da" : "Inserito da"}</span><AnnouncementAuthorHoverCard author={announcement.author} /></div>
 							<div className="flex items-center gap-2 text-muted-foreground"><CalendarDaysIcon className="size-4 shrink-0" aria-hidden="true" />{validDate ? <time dateTime={announcement.createdAt!}>{DATE_FORMATTER.format(date)}</time> : "Data non disponibile"}</div>
 						</div>
 					</div>
