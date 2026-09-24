@@ -6,6 +6,12 @@ import {loadSitemapAnnouncements, loadSitemapProfiles} from "@/server/sitemap-da
 
 export const revalidate = 3_600;
 
+// Funzione helper per escapare i query parameter
+function buildUrl(basePath: string, params: Record<string, string>): string {
+	const searchParams = new URLSearchParams(params);
+	return `${basePath}?${searchParams.toString()}`;
+}
+
 const STATIC_PAGES: Array<{
 	path: string;
 	changeFrequency: "daily" | "weekly" | "monthly" | "yearly";
@@ -45,13 +51,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			images: [getSiteUrl(getArticleCover(article.coverImage))],
 		})),
 		...profiles.map((profile) => ({
-			url: getSiteUrl(`/dettagli-profilo?${new URLSearchParams({id: profile.id, type: profile.type}).toString()}`),
+			url: getSiteUrl(buildUrl("/dettagli-profilo", {id: profile.id, type: profile.type})),
 			...(profile.updatedAt ? {lastModified: profile.updatedAt} : {}),
 			changeFrequency: "weekly" as const,
 			priority: 0.7,
 		})),
 		...announcements.map((announcement) => ({
-			url: getSiteUrl(`/dettagli-annuncio?${new URLSearchParams({id: announcement.id}).toString()}`),
+			url: getSiteUrl(buildUrl("/dettagli-annuncio", {id: announcement.id})),
 			...(announcement.createdAt ? {lastModified: announcement.createdAt} : {}),
 			changeFrequency: "weekly" as const,
 			priority: 0.7,
