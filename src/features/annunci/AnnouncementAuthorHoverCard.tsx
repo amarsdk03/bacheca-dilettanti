@@ -1,7 +1,6 @@
 import type {CSSProperties} from "react";
 import Link from "next/link";
 import {
-	BadgeCheckIcon,
 	BriefcaseBusinessIcon,
 	CalendarCheckIcon,
 	ClapperboardIcon,
@@ -17,6 +16,7 @@ import {HoverCard, HoverCardContent, HoverCardTrigger,} from "@/components/ui/ho
 import {ScrollArea} from "@/components/ui/scroll-area";
 import type {AnnouncementAuthor, AnnouncementFactKind} from "@/features/annunci/announcement-model";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
+import {OfficialVerificationIcon, RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
 import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
 import {groupPublicProfileLocations, type PublicProfileLocation,} from "@/features/profilo/public-profile-locations";
 
@@ -104,13 +104,14 @@ export default function AnnouncementAuthorHoverCard({
 				delay={200}
 				closeDelay={150}
 				className="inline-flex min-w-0 items-center gap-2 rounded-lg text-xs font-medium text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-				aria-label={`Apri il profilo di ${author.title}`}
+				aria-label={`Apri il profilo di ${author.title}${author.officialVerified ? ", verificato ufficialmente" : ""}`}
 			>
 				<Avatar size="sm">
 					{author.imageUrl && <AvatarImage src={author.imageUrl} alt={`Foto profilo di ${author.title}`} />}
 					<AvatarFallback>{initials(author.title)}</AvatarFallback>
 				</Avatar>
 				<span className="truncate underline-offset-4 hover:underline">{author.title}</span>
+				<OfficialVerificationIcon officialVerified={author.officialVerified} className="size-4 -translate-x-1" />
 			</HoverCardTrigger>
 			<HoverCardContent
 				side="top"
@@ -125,13 +126,16 @@ export default function AnnouncementAuthorHoverCard({
 							<AvatarFallback>{initials(author.title)}</AvatarFallback>
 						</Avatar>
 						<div className="flex min-w-0 flex-1 flex-col gap-1.5">
-							<p className="truncate font-semibold text-foreground">{author.title}</p>
+							<p className="flex min-w-0 items-center gap-1.5 font-semibold text-foreground">
+								<span className="truncate">{author.title}</span>
+								<OfficialVerificationIcon officialVerified={author.officialVerified} className="size-4 -translate-x-0.5" />
+							</p>
 							<div className="flex flex-wrap gap-1.5">
 								<Badge variant="outline" style={{borderColor: accent, color: accent}}>
 									<ProfilePngIcon type={author.profileType} color={accent} className="size-3" />
 									{option.label}
 								</Badge>
-								{author.verified && <Badge variant="secondary"><BadgeCheckIcon data-icon="inline-start" aria-hidden="true" />Verificato</Badge>}
+								<RegisteredUserBadge emailConfirmed={author.emailConfirmed} />
 							</div>
 						</div>
 					</div>

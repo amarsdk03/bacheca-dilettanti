@@ -19,6 +19,7 @@ import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import {experienceTeamReferences} from "@/features/profilo/team-profile";
 import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 const ANNOUNCEMENT_IMAGES_BUCKET = "immagini_annunci";
 
@@ -162,7 +163,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 
 		const author = await loadAuthorName(String(data.autore_annuncio), type) ?? option.label;
 		const facts: AnnouncementPreviewFact[] = [];
-		addFact(facts, "Tipologie", detail.tipologie_sport);
+		addFact(facts, "Tipologie", ordinaTipologieCalcio(stringList(detail.tipologie_sport)));
 		addFact(facts, "Categorie", detail.categorie_ricercate ?? detail.categorie_avversario);
 		addFact(facts, "Ruoli", detail.ruoli_principali);
 		addFact(facts, "Annate", detail.annate_ricercate);

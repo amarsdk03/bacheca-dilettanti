@@ -15,6 +15,7 @@ import {
 	ClockIcon,
 	GraduationCapIcon,
 	MapPinIcon,
+	PinIcon,
 	SparklesIcon,
 	TagsIcon,
 	UserSearchIcon,
@@ -119,7 +120,7 @@ export default function AnnouncementCardShell({
 	const formattedDate = formatAnnouncementDate(announcement.createdAt);
 	const style = {"--announcement-accent": accent} as CSSProperties;
 
-	return (
+	const card = (
 		<Card
 			className={cn(
 				"group/card relative h-full gap-5 overflow-hidden font-home-body transition duration-200 focus-within:ring-3 focus-within:ring-ring/50 hover:-translate-y-0.5 hover:shadow-lg",
@@ -134,7 +135,7 @@ export default function AnnouncementCardShell({
 			/>
 			<div aria-hidden="true" className={cn("absolute inset-x-0 top-0 z-10 h-1 bg-(--announcement-accent)", announcement.isPriority && "priority-announcement-accent")} />
 			<CardHeader className="pointer-events-none relative z-10 gap-4">
-				<div className="flex flex-wrap items-center gap-2">
+				<div className={cn("flex flex-wrap items-center gap-2", announcement.isPriority && "pr-8")}>
 					<Badge className={cn("border-0", announcement.isPriority && "priority-announcement-type-badge")} style={announcement.isPriority ? undefined : {backgroundColor: `${accent}18`, color: accent}}>
 						<TypeIcon data-icon="inline-start" aria-hidden="true" />
 						{announcement.typeLabel}
@@ -183,5 +184,18 @@ export default function AnnouncementCardShell({
 				</span>
 			</CardFooter>
 		</Card>
+	);
+
+	if (!announcement.isPriority) return card;
+	return (
+		<div className="relative h-full">
+			{card}
+			<PinIcon
+				aria-hidden="true"
+				className="pointer-events-none absolute -top-3 -right-2 sm:-top-3 sm:-right-3 z-20 size-8 sm:size-10 rotate-30 fill-violet-200"
+				style={{stroke: "color-mix(in srgb, var(--brand-indigo) 85%, black)"}}
+				strokeWidth={1.2}
+			/>
+		</div>
 	);
 }

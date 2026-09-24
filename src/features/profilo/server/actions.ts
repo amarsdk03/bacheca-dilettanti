@@ -9,6 +9,7 @@ import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {isComingSoonProfileType, isProfileType, type ProfileType,} from "@/features/profilo/profile-model";
 import {
 	isProfileImageScope,
+	PROFILE_IMAGE_FALLBACK_LINK,
 	PROFILE_IMAGE_MEDIA_FORMAT,
 	PROFILE_IMAGES_BUCKET,
 	type ProfileImageScope,
@@ -256,15 +257,26 @@ export async function removeProfileImage(
 		if (rawScope === "main") {
 			const {error} = await admin.from("profilo").update({link_foto_profilo: null}).eq("uuid", profile.uuid);
 			if (error) throw error;
-		}
-		if (previous) {
-			const {error} = await admin.from("media_profilo").delete().eq("id", previous.id);
-			if (error) {
-				if (rawScope === "main") {
+			if (previous) {
+				const {error: deleteError} = await admin.from("media_profilo").delete().eq("id", previous.id);
+				if (deleteError) {
 					await admin.from("profilo").update({link_foto_profilo: profile.link_foto_profilo}).eq("uuid", profile.uuid);
+					throw deleteError;
 				}
-				throw error;
 			}
+		} else if (previous) {
+			const {error} = await admin.from("media_profilo")
+				.update({link_media: PROFILE_IMAGE_FALLBACK_LINK, storage_path: null})
+				.eq("id", previous.id);
+			if (error) throw error;
+		} else {
+			const {error} = await admin.from("media_profilo").insert({
+				uuid_profilo: profile.uuid,
+				formato_media: PROFILE_IMAGE_MEDIA_FORMAT,
+				sottoprofilo: rawScope,
+				link_media: PROFILE_IMAGE_FALLBACK_LINK,
+			});
+			if (error) throw error;
 		}
 		if (previous?.storage_path) {
 			const {error} = await admin.storage.from(PROFILE_IMAGES_BUCKET).remove([previous.storage_path]);
@@ -272,7 +284,11 @@ export async function removeProfileImage(
 		}
 
 		revalidateProfileImages();
-		return {status: "success", message: "La foto profilo è stata rimossa.", imageUrl: null};
+		return {
+			status: "success",
+			message: rawScope === "main" ? "La foto profilo è stata rimossa." : "Il sottoprofilo ora mostra l’avatar predefinito.",
+			imageUrl: null,
+		};
 	} catch (error) {
 		console.error("[profile-images] Removal failed", {cause: error instanceof Error ? error.message : "unknown"});
 		return {status: "error", message: "Non è stato possibile rimuovere la foto. Riprova."};

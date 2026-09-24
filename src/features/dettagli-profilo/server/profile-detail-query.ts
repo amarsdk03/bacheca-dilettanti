@@ -25,6 +25,7 @@ import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-prof
 import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {loadRecentSimilarProfiles} from "@/features/profili/server/queries";
 
 const NOT_SPECIFIED = "Non specificato";
@@ -221,7 +222,7 @@ async function loadProfileContent(
 				title: cleanText(data.nome_societa),
 				availability: null,
 				fields: [
-					detailField("Tipologie sportive", formatList(data.tipologie_sport)),
+					detailField("Tipologie sportive", formatList(ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport)))),
 					detailField("Sede principale", data.sede_principale),
 					detailField("Presentazione", data.presentazione, true),
 				],
@@ -270,7 +271,7 @@ async function loadProfileContent(
 				title: fullName(data.nome, data.cognome),
 				availability: data.disponibilita,
 				fields: [
-					detailField("Tipologie sportive", formatList(data.tipologie_sport)),
+					detailField("Tipologie sportive", formatList(ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport)))),
 					detailField("Figure professionali", formatList(data.figure_professionali)),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Automunito", formatVehicleAvailability(data.automunito)),
@@ -346,7 +347,7 @@ async function loadProfileContent(
 				title: cleanText(data.nome_organizzazione),
 				availability: null,
 				fields: [
-					detailField("Tipologie sportive", formatList(data.tipologie_sport)),
+					detailField("Tipologie sportive", formatList(ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport)))),
 					detailField("Sede principale", data.sede_principale),
 					detailField("Presentazione", data.presentazione, true),
 				],
@@ -371,7 +372,7 @@ async function loadProfileContent(
 			title: cleanText(data.nome_organizzazione),
 			availability: null,
 			fields: [
-				detailField("Tipologie sportive", formatList(data.tipologie_sport)),
+				detailField("Tipologie sportive", formatList(ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport)))),
 				detailField("Sede principale", data.sede_principale),
 				detailField("Costo di partenza", formatCurrency(data.costo_partenza)),
 				detailField("Orari", formatOpeningHours(data.orari), true),
@@ -417,7 +418,7 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 		// in toPublicPlayerData; never return those parts, private identity, contacts or notes.
 		const baseProfilePromise = supabase
 			.from("profilo")
-			.select("uuid, link_foto_profilo, verificato_il, tipologia_principale")
+			.select("uuid, link_foto_profilo, confermato_il, verificato_il, tipologia_principale")
 			.eq("uuid", id)
 			.eq("nascosto", false)
 			.not("uuid_utente", "is", null)
@@ -504,7 +505,8 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			id: baseResult.data.uuid,
 			title: content.title ?? `Profilo ${typeLabel.toLocaleLowerCase("it-IT")}`,
 			imageUrl: resolvedProfileImageUrl(profileImages, id, type, cleanText(baseResult.data.link_foto_profilo)),
-			verified: Boolean(baseResult.data.verificato_il),
+			emailConfirmed: Boolean(baseResult.data.confermato_il),
+			officialVerified: Boolean(baseResult.data.verificato_il),
 			primary: baseResult.data.tipologia_principale === type,
 			availabilityLabel: availabilityLabel(content.availability),
 			socialLinks: publicSocialLinks(socialLinksResult.data ?? []),

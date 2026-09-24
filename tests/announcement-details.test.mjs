@@ -34,11 +34,11 @@ function sourceLoader(overrides = {}) {
 const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const authorId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const otherId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
-const profile = {uuid: authorId, profilo_giocatore: [{id: 7, nascosto: false, nome: "Mario", cognome: "Rossi"}]};
+const profile = {uuid: authorId, confermato_il: "2026-09-01T10:00:00Z", verificato_il: null, profilo_giocatore: [{id: 7, nascosto: false, nome: "Mario", cognome: "Rossi"}]};
 const row = (type = "annuncio_giocatore", child = {}) => ({
 	uuid: id, autore_annuncio: authorId, tipologia_annuncio: type, creato_il: "2026-09-22", livello_annuncio: null,
 	stato_annuncio: "pubblicato", nascosto: false, privato: false,
-	[type]: {tipologie_sport: ["Calcio a 11", "Calcio a 5"], ruoli_principali: ["Difensore"], ruoli_secondari: ["Terzino destro", "Difensore centrale"], categorie_ricercate: ["Eccellenza", "Promozione"], descrizione_aggiuntiva: "Descrizione completa", ...child},
+	[type]: {tipologie_sport: ["Calcio a 5", "Calcio a 11"], ruoli_principali: ["Difensore"], ruoli_secondari: ["Terzino destro", "Difensore centrale"], categorie_ricercate: ["Eccellenza", "Promozione"], descrizione_aggiuntiva: "Descrizione completa", ...child},
 	localita_annuncio: [{regione: "Lazio", citta: "Roma"}],
 });
 
@@ -88,6 +88,8 @@ test("detail exposes aggregate counts and complete comma-separated selections; d
 	assert.equal(result.announcement.saveCount, 3);
 	assert.equal(result.announcement.authorFollowerCount, 8);
 	assert.equal(result.announcement.author.kind, "registered");
+	assert.equal(result.announcement.author.emailConfirmed, true);
+	assert.equal(result.announcement.author.officialVerified, false);
 	assert.equal(result.announcement.facts.find(f => f.kind === "types").value, "Calcio a 11, Calcio a 5");
 	assert.equal(result.announcement.fields.find(f => f.label === "Ruoli secondari").value, "Terzino destro, Difensore centrale");
 	assert.equal(result.announcement.facts.find(f => f.kind === "location").value, "Firenze, Toscana, Roma, Lazio");

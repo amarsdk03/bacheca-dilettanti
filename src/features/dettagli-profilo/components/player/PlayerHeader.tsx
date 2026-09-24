@@ -1,6 +1,5 @@
 import type {ReactNode} from "react";
 import {
-	BadgeCheckIcon,
 	CalendarDaysIcon,
 	CircleCheckBigIcon,
 	FootprintsIcon,
@@ -17,13 +16,14 @@ import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import type {PlayerProfileDetail} from "../../profile-detail-model";
 import ProfilePngIcon from "@/features/profilo/ProfilePngIcon";
 import {profileInitials} from "@/features/profilo/public-profile-display";
+import {OfficialVerificationIcon, RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
 import ProfileFactsGrid, {type ProfileFact} from "../ProfileFactsGrid";
 
-type PlayerHeaderProps = Pick<PlayerProfileDetail, "title" | "imageUrl" | "verified" | "primary" | "availabilityLabel" | "player" | "followerCount" | "announcementCount"> & {
+type PlayerHeaderProps = Pick<PlayerProfileDetail, "title" | "imageUrl" | "emailConfirmed" | "officialVerified" | "primary" | "availabilityLabel" | "player" | "followerCount" | "announcementCount"> & {
 	actions?: ReactNode;
 };
 
-export default function PlayerHeader({title, imageUrl, verified, primary, availabilityLabel, player, followerCount, announcementCount, actions}: PlayerHeaderProps) {
+export default function PlayerHeader({title, imageUrl, emailConfirmed, officialVerified, primary, availabilityLabel, player, followerCount, announcementCount, actions}: PlayerHeaderProps) {
 	const {age, sportTypes, preferredFoot, height, weight} = player;
 	const facts: ProfileFact[] = [
 		{label: "Età", icon: CalendarDaysIcon, value: age !== null ? `${age} anni` : null},
@@ -46,10 +46,12 @@ export default function PlayerHeader({title, imageUrl, verified, primary, availa
 							<AvatarFallback><span className="font-home-display text-4xl">{profileInitials(title)}</span></AvatarFallback>
 						</Avatar>
 						<div className="flex min-w-0 flex-1 flex-col gap-3">
-							<h1 className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">{title}</h1>
+							<h1 className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">
+								{title} <OfficialVerificationIcon officialVerified={officialVerified} className={"size-7 align-[0.16em]"} />
+							</h1>
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge variant="secondary" className="public-profile-type-badge"><ProfilePngIcon type="giocatore" color="currentColor" className="size-3" />Giocatore</Badge>
-								{verified && <Badge variant="secondary"><BadgeCheckIcon data-icon="inline-start" aria-hidden="true" />Verificato</Badge>}
+								<RegisteredUserBadge emailConfirmed={emailConfirmed} />
 								{primary && <Badge variant="outline"><StarIcon data-icon="inline-start" aria-hidden="true" />Profilo principale</Badge>}
 							</div>
 						</div>

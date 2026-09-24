@@ -10,7 +10,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/80",
         brand:
-          "bg-brand-indigo text-brand-ink hover:bg-[#7f61f5] focus-visible:border-brand-indigo focus-visible:ring-brand-indigo/35",
+          "bg-brand-indigo text-white hover:bg-[#7f61f5] focus-visible:border-brand-indigo focus-visible:ring-brand-indigo/35",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         "inverse-outline":

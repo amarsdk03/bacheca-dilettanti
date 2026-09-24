@@ -2,7 +2,7 @@
 
 import {useEffect, useMemo, useRef, useState} from "react";
 import Link from "next/link";
-import {ClipboardPenIcon} from "lucide-react";
+import {ClipboardPenIcon, MailCheckIcon} from "lucide-react";
 
 import GradientBackground from "@/components/styling/GradientBackground";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
@@ -318,8 +318,19 @@ export default function PubblicaAnnuncio({
 					</TabsList>
 
 					<TabsContent value="tab-1">
-						<Card className="my-4 pt-6">
+						<Card className="my-4 pt-4">
 							<CardContent>
+								{
+									!registered && (
+										<div className="mx-auto mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+											<MailCheckIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+											<p>
+												<strong>Pubblicazione senza profilo:</strong> prima dell’invio, verificheremo il tuo indirizzo
+												email con un codice monouso. Senza profilo, è possibile pubblicare <b>massimo 1 annuncio</b> ogni 24 ore.
+											</p>
+										</div>
+									)
+								}
 								<SelezionaTipologiaAnnuncio
 									tipologia={profileType}
 									sottotipologia={teamSubtype ?? ""}

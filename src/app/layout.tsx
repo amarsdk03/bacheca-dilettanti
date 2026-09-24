@@ -67,6 +67,7 @@ export default function RootLayout(
 					data-consent-mode="true"
 					data-tcf-enabled="true"
 					strategy="afterInteractive"
+					style={{"height": "50vh"}}
 				/>
 			</body>
 		</html>

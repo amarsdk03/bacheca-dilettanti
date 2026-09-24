@@ -77,6 +77,7 @@ export async function signUpWithPassword(
 			return {
 				status: "error",
 				message: error.message,
+				fieldErrors: error.step === 1 ? {inviteCode: error.message} : undefined,
 				step: error.step,
 				profileType: error.profileType,
 			};
@@ -162,7 +163,7 @@ export async function signUpWithPassword(
 	}
 
 	let intentToken: string | null = null;
-	let prepareError: {code?: string} | null = null;
+	let prepareError: {code?: string; message?: string} | null = null;
 	try {
 		const result = await admin.rpc(
 			"prepare_registration",
@@ -177,6 +178,14 @@ export async function signUpWithPassword(
 	}
 
 	if (prepareError || typeof intentToken !== "string") {
+		if (prepareError?.message === "INVALID_INVITATION_CODE") {
+			return {
+				status: "error",
+				message: "Il codice invito non è valido. Correggilo o rimuovilo.",
+				fieldErrors: {inviteCode: "Codice invito inesistente o non utilizzabile."},
+				step: 1,
+			};
+		}
 		console.error("[registration] Could not prepare registration", {
 			code: prepareError?.code,
 		});

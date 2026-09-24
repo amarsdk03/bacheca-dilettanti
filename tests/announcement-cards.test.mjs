@@ -104,7 +104,8 @@ function fixtureAnnouncement(type, facts = FACTS, linkedTeams = [], isPriority =
 			profileType: "giocatore",
 			title: "Autore dimostrativo",
 			imageUrl: null,
-			verified: false,
+			emailConfirmed: true,
+			officialVerified: false,
 			presentation: null,
 			location: "Roma, Lazio",
 			locations: [],
@@ -165,8 +166,10 @@ test("only active priority cards receive the indigo treatment", () => {
 	assert.match(active, /priority-announcement-card/);
 	assert.match(active, /priority-announcement-level-badge/);
 	assert.match(active, /lucide-sparkles/);
+	assert.match(active, /lucide-pin/);
 	assert.doesNotMatch(free, /priority-announcement/);
 	assert.doesNotMatch(free, /lucide-sparkles/);
+	assert.doesNotMatch(free, /lucide-pin/);
 });
 
 test("the detail overlay and author link remain separate interactive links", () => {
@@ -182,6 +185,21 @@ test("the detail overlay and author link remain separate interactive links", () 
 	assert.equal((html.match(/<a\b/g) ?? []).length, 2);
 	assert.equal(/<a\b[^>]*>(?:(?!<\/a>).)*<a\b/s.test(html), false);
 	assert.match(html, /pointer-events-auto/);
+});
+
+test("an officially verified author has a blue check beside the name", () => {
+	const announcement = fixtureAnnouncement("annuncio_giocatore", FACTS);
+	announcement.author.officialVerified = true;
+	const html = renderToStaticMarkup(React.createElement(AnnouncementCard, {announcement}));
+	assert.match(html, /Apri il profilo di Autore dimostrativo, verificato ufficialmente/);
+	assert.match(html, /aria-label="Profilo verificato ufficialmente"/);
+});
+
+test("anonymous authors have no registration or official verification marks", () => {
+	const announcement = fixtureAnnouncement("annuncio_giocatore", FACTS);
+	announcement.author = {kind: "anonymous", profileType: "giocatore", label: "Autore anonimo"};
+	const html = renderToStaticMarkup(React.createElement(AnnouncementCard, {announcement}));
+	assert.doesNotMatch(html, /Utente registrato|Profilo verificato ufficialmente/);
 });
 
 test("announcement cards render at most two independent linked-team profiles", () => {

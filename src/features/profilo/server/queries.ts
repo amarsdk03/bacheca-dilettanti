@@ -307,11 +307,18 @@ export async function getProfileDashboardData(
 	const supabase = await createClient();
 	const {data: preferences, error: preferencesError} = await supabase
 		.from("utente")
-		.select("consenso_newsletter")
+		.select("consenso_newsletter, codice_invito")
 		.eq("utente_uuid", userId)
 		.maybeSingle();
 	queryFailed(preferencesError, "utente");
 	const newsletterSubscribed = preferences?.consenso_newsletter === true;
+	if (!preferences?.codice_invito) throw new Error("PROFILE_INVITATION_CODE_UNAVAILABLE");
+	const {count: confirmedInvitations, error: invitationCountError} = await createAdminClient()
+		.from("invito")
+		.select("invito_uuid", {count: "exact", head: true})
+		.eq("uuid_invitante", userId)
+		.not("confermato_il", "is", null);
+	queryFailed(invitationCountError, "invito");
 	const {data: baseProfile, error: baseProfileError} = await supabase
 		.from("profilo")
 		.select("uuid, tipologia_principale, link_foto_profilo")
@@ -329,6 +336,8 @@ export async function getProfileDashboardData(
 		return {
 			interactions: await getDashboardInteractions(supabase, userId, null),
 			newsletterSubscribed,
+			invitationCode: preferences.codice_invito,
+			confirmedInvitations: confirmedInvitations ?? 0,
 			mainImageUrl: null,
 			hasMainImage: false,
 			profiles: [],
@@ -429,13 +438,15 @@ export async function getProfileDashboardData(
 			type: value,
 			isPrimary: baseProfile.tipologia_principale === value,
 			imageUrl: resolvedProfileImageUrl(profileImages, baseProfile.uuid, value, mainImageUrl),
-			hasCustomImage: profileImages.has(profileImageMapKey(baseProfile.uuid, value)),
+			hasCustomImage: Boolean(profileImages.get(profileImageMapKey(baseProfile.uuid, value))),
 		}] : [];
 	});
 
 	return {
 		interactions,
 		newsletterSubscribed,
+		invitationCode: preferences.codice_invito,
+		confirmedInvitations: confirmedInvitations ?? 0,
 		mainImageUrl,
 		hasMainImage: Boolean(mainImageUrl),
 		profiles,

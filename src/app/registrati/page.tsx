@@ -32,6 +32,7 @@ export default async function Page({searchParams}: PageProps) {
 	const params = await searchParams;
 	const nextPath = sanitizeNextPath(Array.isArray(params.next) ? params.next[0] : params.next);
 	const passwordUpdated = (Array.isArray(params.password) ? params.password[0] : params.password) === "aggiornata";
+	const inviteCode = Array.isArray(params["codice-invito"]) ? params["codice-invito"][0] : params["codice-invito"];
 
 	return (
 		<div className="flex min-h-svh flex-col">
@@ -60,6 +61,7 @@ export default async function Page({searchParams}: PageProps) {
 						<Registrati
 							nextPath={nextPath}
 							existingSessionEmail={account?.viewer.email ?? null}
+							initialInviteCode={inviteCode?.slice(0, 64) ?? ""}
 						/>
 					</Card>
 				</div>

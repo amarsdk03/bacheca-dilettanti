@@ -10,7 +10,7 @@ import TorneoEventoCard from "./TorneoEventoCard";
 import CampiImpiantiCard from "./CampiImpiantiCard";
 
 export default function ProfileCard({profile}: {profile: DirectoryProfile}) {
-	const card = {id: profile.id, title: profile.title, presentation: profile.presentation, imageUrl: profile.imageUrl, verified: profile.verified, facts: profile.facts};
+	const card = {id: profile.id, title: profile.title, presentation: profile.presentation, imageUrl: profile.imageUrl, emailConfirmed: profile.emailConfirmed, officialVerified: profile.officialVerified, facts: profile.facts};
 	switch (profile.type) {
 		case "giocatore": return <GiocatoreCard profile={toPlayerCardData(profile)} />;
 		case "squadra": return <SquadraCard profile={{...card, type: "squadra", summary: summarizeProfileValues(profile.filterData.tipologie, "Società e opportunità sportive")}} />;

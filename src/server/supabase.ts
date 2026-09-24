@@ -663,6 +663,51 @@ export type Database = {
           },
         ]
       }
+      invito: {
+        Row: {
+          codice_invito: string
+          confermato_il: string | null
+          considerato: boolean
+          invito_uuid: string
+          registrato_il: string
+          uuid_invitante: string
+          uuid_invitato: string
+        }
+        Insert: {
+          codice_invito: string
+          confermato_il?: string | null
+          considerato?: boolean
+          invito_uuid?: string
+          registrato_il: string
+          uuid_invitante: string
+          uuid_invitato: string
+        }
+        Update: {
+          codice_invito?: string
+          confermato_il?: string | null
+          considerato?: boolean
+          invito_uuid?: string
+          registrato_il?: string
+          uuid_invitante?: string
+          uuid_invitato?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invito_uuid_invitante_fkey"
+            columns: ["uuid_invitante"]
+            isOneToOne: false
+            referencedRelation: "utente"
+            referencedColumns: ["utente_uuid"]
+          },
+          {
+            foreignKeyName: "invito_uuid_invitato_fkey"
+            columns: ["uuid_invitato"]
+            isOneToOne: true
+            referencedRelation: "utente"
+            referencedColumns: ["utente_uuid"]
+          },
+        ]
+      }
       link_social_annuncio: {
         Row: {
           id: number
@@ -857,6 +902,7 @@ export type Database = {
       }
       profilo: {
         Row: {
+          confermato_il: string | null
           creato_da: string | null
           creato_il: string
           link_foto_profilo: string | null
@@ -870,6 +916,7 @@ export type Database = {
           verificato_il: string | null
         }
         Insert: {
+          confermato_il?: string | null
           creato_da?: string | null
           creato_il?: string
           link_foto_profilo?: string | null
@@ -883,6 +930,7 @@ export type Database = {
           verificato_il?: string | null
         }
         Update: {
+          confermato_il?: string | null
           creato_da?: string | null
           creato_il?: string
           link_foto_profilo?: string | null
@@ -1480,6 +1528,7 @@ export type Database = {
       utente: {
         Row: {
           auth_user_uuid: string
+          codice_invito: string | null
           consenso_newsletter: boolean
           consenso_newsletter_aggiornato_il: string | null
           creato_il: string
@@ -1496,6 +1545,7 @@ export type Database = {
         }
         Insert: {
           auth_user_uuid: string
+          codice_invito?: string | null
           consenso_newsletter?: boolean
           consenso_newsletter_aggiornato_il?: string | null
           creato_il?: string
@@ -1512,6 +1562,7 @@ export type Database = {
         }
         Update: {
           auth_user_uuid?: string
+          codice_invito?: string | null
           consenso_newsletter?: boolean
           consenso_newsletter_aggiornato_il?: string | null
           creato_il?: string
@@ -1563,6 +1614,10 @@ export type Database = {
         Args: { p_email: string; p_payload: Json }
         Returns: string
       }
+      prepare_registration_core_v1: {
+        Args: { p_email: string; p_payload: Json }
+        Returns: string
+      }
       publish_announcement_core_v1: {
         Args: {
           p_payload: Json
@@ -1599,7 +1654,7 @@ export type Database = {
               p_announcement_id: string
               p_checkout_status: string
               p_paid: boolean
-              p_payment_intent_id: string | null
+              p_payment_intent_id: string
               p_payment_status: string
               p_price_id: string
               p_session_id: string
@@ -1612,7 +1667,7 @@ export type Database = {
               p_announcement_id: string
               p_checkout_status: string
               p_paid: boolean
-              p_payment_intent_id: string | null
+              p_payment_intent_id: string
               p_payment_status: string
               p_price_id: string
               p_session_id: string
@@ -1699,9 +1754,9 @@ export type Database = {
       }
       submit_segnalazione_v1: {
         Args: {
-          p_anonymous_key_hash: string | null
-          p_reason: string | null
-          p_reporter_user_uuid: string | null
+          p_anonymous_key_hash: string
+          p_reason: string
+          p_reporter_user_uuid: string
           p_target_kind: string
           p_target_uuid: string
         }

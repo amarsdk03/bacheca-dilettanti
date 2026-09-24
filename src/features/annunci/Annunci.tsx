@@ -247,7 +247,7 @@ function AnnouncementFiltersForm({
 					<FilterNumber
 						id={`${idPrefix}-costo-massimo`}
 						name="costoMax"
-						label="Costo massimo"
+						label="Costo massimo (all'ora)"
 						value={query.filters.costoMax}
 					/>
 				)}

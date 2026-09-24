@@ -66,7 +66,8 @@ export const CITTA_ESEMPIO_PER_REGIONE: Record<string, string[]> = {
 	Veneto: ["Verona", "Venezia", "Padova"],
 };
 
-export const TIPOLOGIA_CALCIO_OPTIONS = ["Calcio a 11", "Calcio a 8", "Calcio a 7", "Calcio a 5"] as const;
+import {TIPOLOGIA_CALCIO_OPTIONS} from "./tipologie-calcio";
+export {TIPOLOGIA_CALCIO_OPTIONS, ordinaTipologieCalcio} from "./tipologie-calcio";
 
 export type DisponibilitaProfilo = "non-specificare" | "disponibile-subito" | "sotto-contratto";
 export const DISPONIBILITA_PROFILO_OPTIONS: readonly {

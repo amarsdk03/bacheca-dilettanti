@@ -14,6 +14,7 @@ import {
 } from "@/features/registrati/registration-payload";
 import type {Json} from "@/server/supabase";
 import {COOKIE_POLICY_VERSION, PRIVACY_VERSION, TERMS_VERSION} from "@/features/legal/legal-versions";
+import {INVITATION_CODE_PATTERN, normalizeInvitationCode} from "@/features/inviti/invitation-code";
 import {isLinkAnnuncioValid, MAX_LINK_ANNUNCIO_LENGTH,} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {
 	normalizePlayerPrimaryRole,
@@ -44,7 +45,7 @@ const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const YEAR_PATTERN = /^\d{4}$/;
 const DAY_PATTERN = /^(?:0?[1-9]|[12]\d|3[01])$/;
 
-type RegistrationStep = 2 | 3;
+type RegistrationStep = 1 | 2 | 3;
 
 export class RegistrationPayloadError extends Error {
 	readonly step: RegistrationStep;
@@ -67,6 +68,7 @@ export interface NormalizedRegistrationProfile {
 
 export interface NormalizedRegistrationPayload {
 	version: typeof REGISTRATION_PAYLOAD_VERSION;
+	inviteCode: string | null;
 	selectedProfileTypes: ProfileType[];
 	primaryProfileType: RegistrableProfileType;
 	profiles: NormalizedRegistrationProfile[];
@@ -532,11 +534,20 @@ export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): N
 		fail("I dati della registrazione non sono validi.", 2);
 	}
 	if (!isRecord(parsed)) fail("I dati della registrazione non sono validi.", 2);
-	if (Object.keys(parsed).some((key) => !["version", "selectedProfileTypes", "primaryProfileType", "profiles", "consents"].includes(key))) {
+	if (Object.keys(parsed).some((key) => !["version", "inviteCode", "selectedProfileTypes", "primaryProfileType", "profiles", "consents"].includes(key))) {
 		fail("I dati della registrazione non sono validi.", 2);
 	}
 	if (parsed.version !== REGISTRATION_PAYLOAD_VERSION) {
 		fail("Aggiorna la pagina e ripeti la registrazione.", 2);
+	}
+	if (parsed.inviteCode !== null && parsed.inviteCode !== undefined && typeof parsed.inviteCode !== "string") {
+		fail("Il codice invito non è valido.", 1);
+	}
+	const inviteCode = typeof parsed.inviteCode === "string"
+		? normalizeInvitationCode(parsed.inviteCode)
+		: "";
+	if (inviteCode && !INVITATION_CODE_PATTERN.test(inviteCode)) {
+		fail("Inserisci un codice invito valido di 16 caratteri.", 1);
 	}
 	if (!isRecord(parsed.consents)) {
 		fail("Conferma di aver letto e accettato le informative obbligatorie.", 3);
@@ -603,6 +614,7 @@ export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): N
 
 	return {
 		version: REGISTRATION_PAYLOAD_VERSION,
+		inviteCode: inviteCode || null,
 		selectedProfileTypes,
 		primaryProfileType,
 		profiles,

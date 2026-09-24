@@ -116,6 +116,7 @@ export default function ProfileImageEditor({
 				const result = await removeProfileImage(scope);
 				if (result.status === "error") {
 					setErrorMessage(result.message);
+					toast.add({title: "Rimozione non riuscita", description: result.message, type: "error"});
 					return;
 				}
 				toast.add({title: "Foto rimossa", description: result.message, type: "success"});
@@ -123,7 +124,9 @@ export default function ProfileImageEditor({
 				setOpen(false);
 				router.refresh();
 			} catch {
-				setErrorMessage("La richiesta non è stata completata. Riprova.");
+				const message = "La richiesta non è stata completata. Riprova.";
+				setErrorMessage(message);
+				toast.add({title: "Rimozione non riuscita", description: message, type: "error"});
 			} finally {
 				setPendingAction(null);
 			}
@@ -131,6 +134,7 @@ export default function ProfileImageEditor({
 	};
 
 	const displayedImage = previewUrl ?? imageUrl;
+	const canRemoveImage = scope === "main" ? hasCustomImage : Boolean(imageUrl);
 
 	const dialogTriggerTranslation = scope === "main" ? "70%" : "55%";
 
@@ -193,7 +197,7 @@ export default function ProfileImageEditor({
 
 				<DialogFooter className="flex-wrap justify-between">
 					<div>
-						{hasCustomImage && (
+						{canRemoveImage && (
 							<Button type="button" variant="destructive" onClick={handleRemove} disabled={pending}>
 								{pendingAction === "remove" ? <LoaderCircleIcon className="animate-spin" aria-hidden="true" /> : <Trash2Icon aria-hidden="true" />}
 								Rimuovi

@@ -96,7 +96,8 @@ export interface DirectoryProfile {
 	title: string;
 	presentation: string | null;
 	imageUrl: string | null;
-	verified: boolean;
+	emailConfirmed: boolean;
+	officialVerified: boolean;
 	updatedAt: string;
 	sport: string;
 	location: string;

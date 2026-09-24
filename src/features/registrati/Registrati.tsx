@@ -9,6 +9,7 @@ import {
 	ArrowRightIcon,
 	CheckIcon,
 	CircleAlertIcon,
+	ClipboardPasteIcon,
 	EyeIcon,
 	EyeOffIcon,
 	MailCheckIcon,
@@ -36,6 +37,7 @@ import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group";
 import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
 import {Spinner} from "@/components/ui/spinner";
+import {toast} from "@/components/ui/toast";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import ProfileDetailsForm from "@/features/profilo/ProfileDetailsForm";
 import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
@@ -64,10 +66,12 @@ import {
 } from "@/features/registrati/registration-payload";
 import {requestRegistrationEmailRecovery, verifyRegistrationEmailRecovery,} from "@/features/registrati/server/actions";
 import {cn} from "@/lib/utils";
+import {getInvitationCodeError, INVITATION_CODE_LENGTH} from "@/features/inviti/invitation-code";
 
 interface RegistratiProps {
 	nextPath: string;
 	existingSessionEmail: string | null;
+	initialInviteCode: string;
 }
 
 type RegistrationStep = 1 | 2 | 3;
@@ -77,12 +81,14 @@ interface AccountDraft {
 	email: string;
 	password: string;
 	confirmPassword: string;
+	inviteCode: string;
 }
 
 const INITIAL_ACCOUNT_DRAFT: AccountDraft = {
 	email: "",
 	password: "",
 	confirmPassword: "",
+	inviteCode: "",
 };
 
 const STEPS = ["Account", "Tipo di profilo", "Dati profilo"] as const;
@@ -152,12 +158,13 @@ function RegistrationConfirmation({email}: {email: string}) {
 	);
 }
 
-export default function Registrati({nextPath, existingSessionEmail}: RegistratiProps) {
+export default function Registrati({nextPath, existingSessionEmail, initialInviteCode}: RegistratiProps) {
 	const [state, formAction] = useActionState(signUpWithPassword, INITIAL_AUTH_STATE);
 	const [step, setStep] = useState<RegistrationStep>(1);
 	const [account, setAccount] = useState<AccountDraft>(() => ({
 		...INITIAL_ACCOUNT_DRAFT,
 		email: existingSessionEmail ?? "",
+		inviteCode: initialInviteCode,
 	}));
 	const [registrationEmailStatus, setRegistrationEmailStatus] = useState<RegistrationEmailStatus>(
 		existingSessionEmail ? "verified" : "unchecked",
@@ -238,6 +245,7 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 		profileSocialLinks,
 		legalAccepted,
 		newsletterSubscribed,
+		account.inviteCode,
 	);
 
 	const scrollToHeader = () => {
@@ -266,12 +274,30 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 		}
 	};
 
+	const pasteInvitationCode = async () => {
+		try {
+			const clipboardText = await navigator.clipboard.readText();
+			const pastedCode = clipboardText.match(/(?:codice-invito=)?([0-9a-f]{16})/i)?.[1]
+				?? clipboardText.trim().slice(0, INVITATION_CODE_LENGTH);
+			updateAccount("inviteCode", pastedCode);
+			toast.add({title: "Codice invito incollato", type: "success"});
+		} catch {
+			toast.add({
+				title: "Incolla non riuscito",
+				description: "Consenti l’accesso agli appunti oppure incolla il codice nel campo.",
+				type: "error",
+			});
+		}
+	};
+
 	const validateAccountStep = () => {
 		const formData = new FormData();
 		formData.set("email", account.email);
 		formData.set("password", account.password);
 		formData.set("confirmPassword", account.confirmPassword);
 		const {fieldErrors: nextErrors} = validateRegistration(formData);
+		const inviteCodeError = getInvitationCodeError(account.inviteCode);
+		if (inviteCodeError) nextErrors.inviteCode = inviteCodeError;
 
 		setClientFieldErrors(nextErrors);
 		return !hasFieldErrors(nextErrors);
@@ -573,6 +599,7 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 			? "Seleziona le categorie che rappresentano meglio i tuoi interessi e obiettivi."
 			: "Compila i dati essenziali indicati. I campi facoltativi potranno essere modificati anche in seguito.";
 
+	// noinspection PointlessBooleanExpressionJS
 	return (
 		<form action={formAction} onSubmit={handleSubmit} className="flex w-full flex-col gap-6">
 						<input
@@ -630,7 +657,7 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 										{(registrationEmailStatus === "sent" || registrationEmailStatus === "verifying" || registrationEmailStatus === "checking") && resolvedEmail === normalizedAccountEmail && (
 											<Field data-invalid={Boolean(otpError)}>
 												<FieldLabel htmlFor="registration-recovery-code">Codice OTP <RequiredMark /></FieldLabel>
-												<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+												<div className="flex flex-col items-start justify-start sm:items-center sm:flex-row sm:justify-between gap-y-3 gap-x-5">
 													<InputOTP
 														id="registration-recovery-code"
 														maxLength={6}
@@ -653,16 +680,18 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 															))}
 														</InputOTPGroup>
 													</InputOTP>
-													<Button type="button" onClick={verifyRecoveryCode} disabled={emailRecoveryBusy} aria-busy={registrationEmailStatus === "verifying"}>
-														{registrationEmailStatus === "verifying" && <Spinner data-icon="inline-start" aria-hidden="true" />}
-														{registrationEmailStatus === "verifying" ? "Verifica…" : "Verifica codice"}
-													</Button>
+													<div className={"flex justify-start gap-3"}>
+														<Button type="button" onClick={verifyRecoveryCode} disabled={emailRecoveryBusy} aria-busy={registrationEmailStatus === "verifying"} className="w-fit">
+															{registrationEmailStatus === "verifying" && <Spinner data-icon="inline-start" aria-hidden="true" />}
+															{registrationEmailStatus === "verifying" ? "Verifica…" : "Verifica codice"}
+														</Button>
+														<Button type="button" variant="outline" onClick={() => requestEmailRecovery(false)} disabled={emailRecoveryBusy} aria-busy={registrationEmailStatus === "checking"} className="w-fit">
+															{registrationEmailStatus === "checking" && <Spinner data-icon="inline-start" aria-hidden="true" />}{registrationEmailStatus === "checking" ? "Invio in corso…" : "Invia di nuovo il codice"}
+														</Button>
+													</div>
 												</div>
 												{otpFeedback && <FieldDescription role="status">{otpFeedback}</FieldDescription>}
 												<FieldError>{otpError}</FieldError>
-												<Button type="button" variant="outline" size="sm" onClick={() => requestEmailRecovery(false)} disabled={emailRecoveryBusy} aria-busy={registrationEmailStatus === "checking"} className="w-fit">
-													{registrationEmailStatus === "checking" && <Spinner data-icon="inline-start" aria-hidden="true" />}{registrationEmailStatus === "checking" ? "Invio in corso…" : "Invia di nuovo il codice"}
-												</Button>
 											</Field>
 										)}
 										<Field data-invalid={Boolean(fieldErrors.password)}>
@@ -693,6 +722,35 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 												<InputGroupInput id="registration-confirm-password" name="confirmPassword" value={account.confirmPassword} onChange={(event) => updateAccount("confirmPassword", event.target.value)} type="password" minLength={8} maxLength={128} autoComplete="new-password" required aria-invalid={Boolean(fieldErrors.confirmPassword)} />
 											</InputGroup>
 											<FieldError>{fieldErrors.confirmPassword}</FieldError>
+										</Field>
+										<Field data-invalid={Boolean(fieldErrors.inviteCode)}>
+											<FieldLabel htmlFor="registration-invite-code">Codice invito</FieldLabel>
+											<InputGroup className="h-9">
+												<InputGroupInput
+													id="registration-invite-code"
+													name="inviteCode"
+													value={account.inviteCode}
+													onChange={(event) => updateAccount("inviteCode", event.target.value)}
+													maxLength={INVITATION_CODE_LENGTH}
+													autoComplete="off"
+													aria-invalid={Boolean(fieldErrors.inviteCode)}
+												/>
+												<InputGroupAddon align="inline-end" className="py-0">
+													<InputGroupButton
+														type="button"
+														size="icon-sm"
+														variant="ghost"
+														className="text-foreground"
+														aria-label="Incolla codice invito"
+														title="Incolla codice invito"
+														onClick={pasteInvitationCode}
+													>
+														<ClipboardPasteIcon aria-hidden="true" />
+													</InputGroupButton>
+												</InputGroupAddon>
+											</InputGroup>
+											<FieldDescription>Facoltativo. Inserisci il codice ricevuto da un amico.</FieldDescription>
+											<FieldError>{fieldErrors.inviteCode}</FieldError>
 										</Field>
 										<FieldDescription className="text-center">
 											{verifiedSessionEmail

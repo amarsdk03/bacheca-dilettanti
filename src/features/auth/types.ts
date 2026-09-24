@@ -6,6 +6,7 @@ export interface AuthFieldErrors {
 	email?: string;
 	password?: string;
 	confirmPassword?: string;
+	inviteCode?: string;
 }
 
 export interface AuthActionState {

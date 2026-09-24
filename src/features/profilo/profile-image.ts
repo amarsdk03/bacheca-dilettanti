@@ -2,6 +2,8 @@ import {isProfileType, type ProfileType,} from "@/features/profilo/profile-model
 
 export const PROFILE_IMAGES_BUCKET = "immagini_profili";
 export const PROFILE_IMAGE_MEDIA_FORMAT = "foto_profilo";
+// An empty image link on a subprofile explicitly selects its avatar fallback.
+export const PROFILE_IMAGE_FALLBACK_LINK = "";
 export const PROFILE_IMAGE_MAX_SOURCE_BYTES = 5 * 1024 * 1024;
 export const PROFILE_IMAGE_OUTPUT_SIZE = 1024;
 
@@ -26,7 +28,7 @@ export function profileImageRowsToMap(rows: readonly ProfileImageRow[]) {
 	for (const row of rows) {
 		if (!row.sottoprofilo || !isProfileType(row.sottoprofilo)) continue;
 		const url = row.link_media.trim();
-		if (url) images.set(profileImageMapKey(row.uuid_profilo, row.sottoprofilo), url);
+		images.set(profileImageMapKey(row.uuid_profilo, row.sottoprofilo), url);
 	}
 	return images;
 }
@@ -37,5 +39,6 @@ export function resolvedProfileImageUrl(
 	type: ProfileType,
 	mainImageUrl: string | null,
 ) {
-	return images.get(profileImageMapKey(profileId, type)) ?? mainImageUrl;
+	const key = profileImageMapKey(profileId, type);
+	return images.has(key) ? images.get(key) || null : mainImageUrl;
 }

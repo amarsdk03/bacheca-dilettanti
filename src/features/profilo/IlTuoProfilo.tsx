@@ -95,6 +95,7 @@ import type {
 	ProfileMutationResult,
 } from "@/features/profilo/types";
 import {RelationshipsSection, SavedAnnouncementsSection} from "@/features/interazioni/DashboardSections";
+import InviteFriendDialog from "@/features/inviti/InviteFriendDialog";
 
 const DASHBOARD_ITEMS = [
 	{value: "profilo", label: "Il tuo profilo", icon: UserRoundIcon},
@@ -259,7 +260,7 @@ function LogoutButton() {
 			disabled={pending}
 		>
 			{pending ? <LoaderCircleIcon className="animate-spin" data-icon="inline-start" aria-hidden="true" /> : <LogOutIcon data-icon="inline-start" aria-hidden="true" />}
-			{pending ? "Uscita in corso…" : "Esci"}
+			{pending ? "Logout in corso…" : "Logout"}
 		</Button>
 	);
 }
@@ -279,11 +280,13 @@ function DashboardNavigation({section}: {section: ProfileDashboardSection}) {
 	);
 }
 
-function AccountOverview({viewer, imageUrl, hasMainImage, profiles}: {
+function AccountOverview({viewer, imageUrl, hasMainImage, profiles, invitationCode, confirmedInvitations}: {
 	viewer: ViewerDTO;
 	imageUrl: string | null;
 	hasMainImage: boolean;
 	profiles: ManagedProfile[];
+	invitationCode: string;
+	confirmedInvitations: number;
 }) {
 	const primaryProfile = profiles.find(({isPrimary}) => isPrimary);
 	const primaryLabel = PROFILE_OPTIONS.find(({value}) => value === primaryProfile?.type)?.label;
@@ -298,7 +301,7 @@ function AccountOverview({viewer, imageUrl, hasMainImage, profiles}: {
 						hasCustomImage={hasMainImage}
 						fallback={<span>{viewer.initials}</span>}
 						title="Foto profilo principale"
-						description="Questa foto rappresenta il tuo account e viene usata come fallback per i sottoprofili senza una foto dedicata."
+						description="Questa foto rappresenta il tuo account e può essere usata anche dai sottoprofili senza foto dedicata."
 						alt={`Foto profilo di ${viewer.fullName}`}
 						avatarClassName="size-16 text-lg sm:size-20 sm:text-xl"
 					/>
@@ -313,6 +316,7 @@ function AccountOverview({viewer, imageUrl, hasMainImage, profiles}: {
 						<ClipboardPenIcon data-icon="inline-start" className="ms-3" aria-hidden="true" />
 						Pubblica annuncio
 					</Button>
+					<InviteFriendDialog code={invitationCode} confirmedCount={confirmedInvitations} />
 				</div>
 			</CardHeader>
 			<CardFooter className="flex-wrap gap-x-3 gap-y-2">
@@ -323,7 +327,7 @@ function AccountOverview({viewer, imageUrl, hasMainImage, profiles}: {
 							<StarIcon data-icon="inline-start" aria-hidden="true" /><span className="truncate">Principale: {primaryLabel}</span>
 						</Badge>
 					)}
-					<span className="text-xs text-muted-foreground"><span className="font-medium text-foreground">{profiles.length}/{MAX_PROFILE_COUNT}</span> sottoprofili attivi</span>
+					<span className="text-xs text-muted-foreground ms-2 mt-0.5"><span className="font-medium text-foreground">{profiles.length}/{MAX_PROFILE_COUNT}</span> sottoprofili attivi</span>
 				</div>
 				<form action={signOut} className="ml-auto"><LogoutButton /></form>
 			</CardFooter>
@@ -393,7 +397,7 @@ function ProfileCard({
 						hasCustomImage={profile.hasCustomImage}
 						fallback={<ProfilePngIcon type={profile.type} color={accent} className="size-7" />}
 						title={`Foto profilo ${option?.label ?? "sottoprofilo"}`}
-						description="Puoi usare una foto diversa da quella principale per questa tipologia di profilo."
+						description="Puoi usare una foto dedicata o mostrare l’avatar predefinito solo per questo sottoprofilo."
 						alt={`Foto del profilo ${option?.label ?? profile.type}`}
 						avatarClassName="size-12"
 					/>
@@ -997,6 +1001,8 @@ export default function IlTuoProfilo({
 						imageUrl={mainImageUrl}
 						hasMainImage={hasMainImage}
 						profiles={profiles}
+						invitationCode={data.invitationCode}
+						confirmedInvitations={data.confirmedInvitations}
 					/>
 				</header>
 

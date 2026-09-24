@@ -7,6 +7,7 @@ import {
 } from "@/features/profilo/profile-model";
 import type {ProfileSocialLinks, ProfileSocialLinksByType,} from "@/features/profilo/profile-social-links";
 import {COOKIE_POLICY_VERSION, PRIVACY_VERSION, TERMS_VERSION} from "@/features/legal/legal-versions";
+import {normalizeInvitationCode} from "@/features/inviti/invitation-code";
 
 export const REGISTRATION_PAYLOAD_VERSION = 1 as const;
 
@@ -21,6 +22,7 @@ export interface RegistrationProfilePayload {
 
 export interface RegistrationPayload {
 	version: typeof REGISTRATION_PAYLOAD_VERSION;
+	inviteCode: string | null;
 	selectedProfileTypes: RegistrableProfileType[];
 	primaryProfileType: RegistrableProfileType;
 	profiles: RegistrationProfilePayload[];
@@ -47,6 +49,7 @@ export function createRegistrationPayload(
 	socialLinks: ProfileSocialLinksByType,
 	legalAccepted: boolean,
 	newsletterSubscribed: boolean,
+	inviteCode = "",
 ): RegistrationPayload | null {
 	const registrableProfileTypes = selectedProfileTypes.filter(isRegistrableProfileType);
 	if (
@@ -68,6 +71,7 @@ export function createRegistrationPayload(
 
 	return {
 		version: REGISTRATION_PAYLOAD_VERSION,
+		inviteCode: normalizeInvitationCode(inviteCode) || null,
 		selectedProfileTypes: registrableProfileTypes,
 		primaryProfileType,
 		profiles,

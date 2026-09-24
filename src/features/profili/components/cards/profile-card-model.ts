@@ -2,7 +2,7 @@ import type {DirectoryProfile, DirectoryProfileFact, DirectoryProfileFactKind,} 
 import type {ProfileType} from "@/features/profilo/profile-model";
 
 export type ProfileCardData<Type extends ProfileType = ProfileType> = Pick<DirectoryProfile,
-	"id" | "title" | "presentation" | "imageUrl" | "verified" | "facts"
+	"id" | "title" | "presentation" | "imageUrl" | "emailConfirmed" | "officialVerified" | "facts"
 > & {type: Type; summary?: string};
 
 export type PlayerCardData = ProfileCardData<"giocatore"> & {
@@ -16,7 +16,8 @@ export function toPlayerCardData(profile: DirectoryProfile): PlayerCardData {
 		title: profile.title,
 		presentation: profile.presentation,
 		imageUrl: profile.imageUrl,
-		verified: profile.verified,
+		emailConfirmed: profile.emailConfirmed,
+		officialVerified: profile.officialVerified,
 		facts: profile.facts,
 		roles: profile.filterData.ruoli,
 	};

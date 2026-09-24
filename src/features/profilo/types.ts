@@ -44,6 +44,8 @@ export interface ProfileEditorSavePayload {
 export interface ProfileDashboardData {
 	interactions: DashboardInteractions;
 	newsletterSubscribed: boolean;
+	invitationCode: string;
+	confirmedInvitations: number;
 	mainImageUrl: string | null;
 	hasMainImage: boolean;
 	profiles: ManagedProfile[];

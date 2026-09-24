@@ -19,6 +19,7 @@ import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database, Json} from "@/server/supabase";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 const PROFILE_DIRECTORY_BATCH_SIZE = 500;
 const NOT_SPECIFIED = "Non specificato";
@@ -43,6 +44,7 @@ function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: numbe
 			uuid,
 			tipologia_principale,
 			link_foto_profilo,
+			confermato_il,
 			verificato_il,
 			ultima_modifica_il,
 			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
@@ -271,7 +273,8 @@ function createDirectoryProfile(
 		title,
 		presentation,
 		imageUrl: resolvedProfileImageUrl(profileImages, row.uuid, type, cleanText(row.link_foto_profilo)),
-		verified: Boolean(row.verificato_il),
+		emailConfirmed: Boolean(row.confermato_il),
+		officialVerified: Boolean(row.verificato_il),
 		updatedAt: row.ultima_modifica_il,
 		sport,
 		location,
@@ -290,7 +293,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		if (player.nascosto !== false) continue;
 		const primaryRoles = normalizePlayerPrimaryRoles(jsonStringArray(player.ruoli_sport, "principali"));
 		const specificRoles = normalizePlayerSpecificRoles(jsonStringArray(player.ruoli_sport, "specifici"));
-		const sportTypes = cleanStringArray(player.tipologie_sport);
+		const sportTypes = ordinaTipologieCalcio(cleanStringArray(player.tipologie_sport));
 		const categories = cleanStringArray(player.categorie_ricercate);
 		profiles.push(createDirectoryProfile(row, "giocatore", player.id, {
 			title: fullName(player.nome, player.cognome),
@@ -306,7 +309,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 
 	for (const team of row.profilo_squadra ?? []) {
 		if (team.nascosto !== false) continue;
-		const sportTypes = cleanStringArray(team.tipologie_sport);
+		const sportTypes = ordinaTipologieCalcio(cleanStringArray(team.tipologie_sport));
 		profiles.push(createDirectoryProfile(row, "squadra", team.id, {
 			title: team.nome_societa,
 			presentation: team.presentazione,
@@ -334,7 +337,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 	for (const professional of row.profilo_professionista_studente ?? []) {
 		if (professional.nascosto !== false) continue;
 		const figures = cleanStringArray(professional.figure_professionali);
-		const sportTypes = cleanStringArray(professional.tipologie_sport);
+		const sportTypes = ordinaTipologieCalcio(cleanStringArray(professional.tipologie_sport));
 		profiles.push(createDirectoryProfile(row, "professionisti-studi", professional.id, {
 			title: fullName(professional.nome, professional.cognome),
 			presentation: professional.presentazione,
@@ -379,7 +382,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 
 	for (const tournament of row.profilo_torneo_evento ?? []) {
 		if (tournament.nascosto !== false) continue;
-		const sportTypes = cleanStringArray(tournament.tipologie_sport);
+		const sportTypes = ordinaTipologieCalcio(cleanStringArray(tournament.tipologie_sport));
 		profiles.push(createDirectoryProfile(row, "torneo-evento", tournament.id, {
 			title: tournament.nome_organizzazione,
 			presentation: tournament.presentazione,
@@ -393,7 +396,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 
 	for (const facility of row.profilo_campi_impianti ?? []) {
 		if (facility.nascosto !== false) continue;
-		const sportTypes = cleanStringArray(facility.tipologie_sport);
+		const sportTypes = ordinaTipologieCalcio(cleanStringArray(facility.tipologie_sport));
 		const price = facility.costo_partenza;
 		profiles.push(createDirectoryProfile(row, "campi-impianti-sportivi", facility.id, {
 			title: facility.nome_organizzazione,

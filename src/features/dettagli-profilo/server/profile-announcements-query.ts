@@ -13,6 +13,7 @@ import type {Database} from "@/server/supabase";
 import {experienceTeamReferences, type TeamProfileReference} from "@/features/profilo/team-profile";
 import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 const PUBLIC_ANNOUNCEMENT_LIMIT = 4;
 const NOT_SPECIFIED = "Non specificato";
@@ -240,7 +241,7 @@ function profileAnnouncementFacts(
 		return [
 			announcementFact("roles", "Ruoli principali", formatSelection(primaryRoles, "selezionati")),
 			announcementFact("roles", "Ruoli secondari", formatSelection(secondaryRoles, "selezionati")),
-			announcementFact("types", "Tipologie", formatSelection(textArray(detail.tipologie_sport), "selezionate")),
+			announcementFact("types", "Tipologie", formatSelection(ordinaTipologieCalcio(textArray(detail.tipologie_sport)), "selezionate")),
 			announcementFact("categories", "Categorie ricercate", formatSelection(textArray(detail.categorie_ricercate), "selezionate")),
 			announcementFact("location", "Località", location),
 		];
@@ -302,7 +303,7 @@ function profileAnnouncementFacts(
 		];
 	}
 	return [
-		announcementFact("types", "Tipologie", formatSelection(textArray(detail.tipologie_sport), "selezionate")),
+		announcementFact("types", "Tipologie", formatSelection(ordinaTipologieCalcio(textArray(detail.tipologie_sport)), "selezionate")),
 		announcementFact("price", "Costo", numericValue(detail.costo_partenza) === null
 			? NOT_SPECIFIED
 			: "Da " + formatCurrency(numericValue(detail.costo_partenza))),

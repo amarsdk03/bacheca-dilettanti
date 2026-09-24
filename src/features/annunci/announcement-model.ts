@@ -251,7 +251,7 @@ export const ANNOUNCEMENT_FILTERS_BY_TYPE = {
 	annuncio_squadra_cerca_partita: ["regione", "categoria"],
 	annuncio_squadra_cerca_sponsor: ["regione"],
 	annuncio_staff_sportivo: ["regione", "tipologia", "figura", "categoria"],
-	annuncio_arbitro: ["regione", "tipologia", "categoria", "automunito"],
+	annuncio_arbitro: ["regione", "tipologia", "automunito"],
 	annuncio_torneo_evento: ["regione", "tipologia", "costoMax"],
 	annuncio_campo_impianto: ["regione", "tipologia", "costoMax"],
 	annuncio_professionisti_studi: ["regione"],
@@ -326,7 +326,8 @@ export type AnnouncementAuthor =
 		profileType: ProfileType;
 		title: string;
 		imageUrl: string | null;
-		verified: boolean;
+		emailConfirmed: boolean;
+		officialVerified: boolean;
 		presentation: string | null;
 		location: string;
 		locations: PublicProfileLocation[];

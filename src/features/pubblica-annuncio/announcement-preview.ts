@@ -2,6 +2,7 @@ import type {ProfileDrafts, ProfileType} from "@/features/profilo/profile-model"
 import type {AnnouncementType} from "@/features/annunci/announcement-model";
 import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";
 import {getTipologia} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 import {experienceTeamReferences, type TeamProfileReference} from "@/features/profilo/team-profile";
 
 export interface AnnouncementPreviewFact {
@@ -70,7 +71,7 @@ export function buildPublishPreview(
 		if (value) facts.push({label, value});
 	};
 
-	addFact("Tipologie", joined(detail.tipologie_sport as string[] | undefined));
+	addFact("Tipologie", joined(ordinaTipologieCalcio((detail.tipologie_sport as string[] | undefined) ?? [])));
 	addFact("Categorie", joined((detail.categorie_ricercate ?? detail.categorie_avversario) as string[] | undefined));
 	addFact("Ruoli", joined(detail.ruoli_principali as string[] | undefined));
 	addFact("Annate", joined(detail.annate_ricercate as string[] | undefined));

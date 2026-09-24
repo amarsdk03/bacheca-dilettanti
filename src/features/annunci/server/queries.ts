@@ -38,6 +38,7 @@ import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database} from "@/server/supabase";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 const ANNOUNCEMENT_BATCH_SIZE = 500;
 const AUTHOR_BATCH_SIZE = 100;
@@ -118,6 +119,7 @@ function officialAuthorQuery(supabase: SupabaseClient<Database>) {
 		.select(`
 			uuid,
 			link_foto_profilo,
+			confermato_il,
 			verificato_il,
 			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
 			profilo_giocatore(id, nascosto, nome, cognome, disponibilita, presentazione, ruoli_sport, tipologie_sport, categorie_ricercate),
@@ -397,7 +399,7 @@ function announcementContent(
 	let playerRoles: AnnouncementPlayerRoles | null = null;
 
 	if (type === "annuncio_giocatore") {
-		const types = cleanStringArray(detail.tipologie_sport);
+		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
 		const primaryRoles = normalizePlayerPrimaryRoles(cleanStringArray(detail.ruoli_principali));
 		const secondaryRoles = normalizePlayerSpecificRoles(cleanStringArray(detail.ruoli_secondari));
 		const categories = cleanStringArray(detail.categorie_ricercate);
@@ -421,7 +423,7 @@ function announcementContent(
 		searchValues = [...types, ...primaryRoles, ...secondaryRoles, ...categories];
 		playerRoles = {primaryRoles, secondaryRoles};
 	} else if (type === "annuncio_squadra_cerca_giocatore") {
-		const types = cleanStringArray(detail.tipologie_sport);
+		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
 		const primaryRoles = normalizePlayerPrimaryRoles(cleanStringArray(detail.ruoli_principali));
 		const secondaryRoles = normalizePlayerSpecificRoles(cleanStringArray(detail.ruoli_secondari));
 		const years = cleanStringArray(detail.annate_ricercate);
@@ -507,7 +509,7 @@ function announcementContent(
 		searchValues = [sector ?? "", support ?? "", offer ?? ""];
 	} else if (type === "annuncio_staff_sportivo") {
 		const figures = cleanStringArray(detail.figure_professionali);
-		const types = cleanStringArray(detail.tipologie_sport);
+		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
 		const categories = cleanStringArray(detail.categorie_ricercate);
 		const occupation = cleanText(detail.disponibilita_occupazione, 160);
 		const travel = cleanText(detail.disponibilita_spostamento, 40);
@@ -530,7 +532,7 @@ function announcementContent(
 		filters.categories = categories;
 		searchValues = [...figures, ...types, ...categories, occupation ?? "", travel ?? ""];
 	} else if (type === "annuncio_arbitro") {
-		const types = cleanStringArray(detail.tipologie_sport);
+		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
 		const categories = cleanStringArray(detail.categorie_ricercate);
 		const occupation = cleanText(detail.disponibilita_occupazione, 160);
 		const travel = cleanText(detail.disponibilita_spostamento, 40);
@@ -555,7 +557,7 @@ function announcementContent(
 		searchValues = [...types, ...categories, occupation ?? "", travel ?? "", car ?? ""];
 	} else if (type === "annuncio_torneo_evento") {
 		const name = cleanText(detail.nome_evento, 160);
-		const types = cleanStringArray(detail.tipologie_sport);
+		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
 		const registration = humanizeValue(detail.modalita_iscrizione);
 		const participation = humanizeValue(detail.tipo_partecipazione);
 		const cost = finiteNumber(detail.costo_partecipazione);
@@ -582,7 +584,7 @@ function announcementContent(
 		filters.cost = cost;
 		searchValues = [...types, registration, participation, years, prizes];
 	} else {
-		const types = cleanStringArray(detail.tipologie_sport);
+		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
 		const cost = finiteNumber(detail.costo_partenza);
 		const services = cleanText(detail.servizi_inclusi);
 		const hours = formatOpeningHours(detail.orari);
@@ -750,7 +752,7 @@ function registeredAuthor(
 	} else if (profileType === "squadra") {
 		title = cleanText(child.nome_societa, 160);
 		highlights = [
-			fact("types", "Tipologie", formatSelection(cleanStringArray(child.tipologie_sport), "selezionate")),
+			fact("types", "Tipologie", formatSelection(ordinaTipologieCalcio(cleanStringArray(child.tipologie_sport)), "selezionate")),
 			fact("headquarters", "Sede", cleanText(child.sede_principale, 160)),
 			fact("location", "Località", location),
 		];
@@ -782,7 +784,7 @@ function registeredAuthor(
 	} else if (profileType === "torneo-evento") {
 		title = cleanText(child.nome_organizzazione, 160);
 		highlights = [
-			fact("types", "Tipologie", formatSelection(cleanStringArray(child.tipologie_sport), "selezionate")),
+			fact("types", "Tipologie", formatSelection(ordinaTipologieCalcio(cleanStringArray(child.tipologie_sport)), "selezionate")),
 			fact("headquarters", "Sede", cleanText(child.sede_principale, 160)),
 			fact("location", "Località", location),
 		];
@@ -790,7 +792,7 @@ function registeredAuthor(
 		title = cleanText(child.nome_organizzazione, 160);
 		const cost = finiteNumber(child.costo_partenza);
 		highlights = [
-			fact("types", "Tipologie", formatSelection(cleanStringArray(child.tipologie_sport), "selezionate")),
+			fact("types", "Tipologie", formatSelection(ordinaTipologieCalcio(cleanStringArray(child.tipologie_sport)), "selezionate")),
 			fact("price", "Costo", cost === null ? null : `Da ${formatCurrency(cost)}`),
 			fact("location", "Località", location),
 		];
@@ -803,7 +805,8 @@ function registeredAuthor(
 		profileType,
 		title,
 		imageUrl: resolvedProfileImageUrl(profileImages, row.uuid, profileType, cleanText(row.link_foto_profilo, 2_000)),
-		verified: Boolean(row.verificato_il),
+		emailConfirmed: Boolean(row.confermato_il),
+		officialVerified: Boolean(row.verificato_il),
 		presentation: cleanText(child.presentazione),
 		location,
 		locations,

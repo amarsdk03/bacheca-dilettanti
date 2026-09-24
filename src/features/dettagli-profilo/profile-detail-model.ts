@@ -40,7 +40,8 @@ interface ProfileDetailBase {
 	id: string;
 	title: string;
 	imageUrl: string | null;
-	verified: boolean;
+	emailConfirmed: boolean;
+	officialVerified: boolean;
 	primary: boolean;
 	availabilityLabel: string | null;
 	socialLinks: ProfileSocialLinks;

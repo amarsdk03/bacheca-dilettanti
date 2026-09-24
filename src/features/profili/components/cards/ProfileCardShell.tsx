@@ -3,7 +3,6 @@ import Link from "next/link";
 import type {LucideIcon} from "lucide-react";
 import {
 	ArrowUpRightIcon,
-	BadgeCheckIcon,
 	BriefcaseBusinessIcon,
 	Building2Icon,
 	CalendarCheckIcon,
@@ -18,11 +17,12 @@ import {
 
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
-import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import type {DirectoryProfileFact, DirectoryProfileFactKind} from "@/features/profili/profile-directory-model";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
 import {profileInitials} from "@/features/profilo/public-profile-display";
+import {OfficialVerificationIcon, RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
 import type {ProfileCardData} from "./profile-card-model";
 
 const PROFILE_FACT_ICONS: Record<DirectoryProfileFactKind, LucideIcon> = {
@@ -67,7 +67,6 @@ function ProfileFactGrid({facts, accent}: {facts: readonly DirectoryProfileFact[
 export default function ProfileCardShell({
 	profile,
 	summary,
-	emptyPresentation,
 	facts,
 }: {
 	profile: ProfileCardData;
@@ -84,7 +83,7 @@ export default function ProfileCardShell({
 		<Link
 			href={detailHref}
 			className="group block h-full rounded-xl font-home-body outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-			aria-label={"Apri il profilo di " + profile.title}
+			aria-label={"Apri il profilo di " + profile.title + (profile.officialVerified ? ", verificato ufficialmente" : "")}
 		>
 			<Card className="relative h-full gap-5 overflow-hidden transition-shadow hover:shadow-lg" style={style}>
 				<div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-(--profile-accent)" />
@@ -94,7 +93,7 @@ export default function ProfileCardShell({
 							<ProfilePngIcon type={profile.type} color={accent} className="size-3" />
 							{option.label}
 						</Badge>
-						{profile.verified && <Badge variant="secondary"><BadgeCheckIcon data-icon="inline-start" aria-hidden="true" />Verificato</Badge>}
+						<RegisteredUserBadge emailConfirmed={profile.emailConfirmed} />
 					</div>
 					<div className="flex min-w-0 items-center gap-4">
 						<Avatar className="size-16 shrink-0 ring-2 ring-(--profile-accent)/20">
@@ -102,7 +101,7 @@ export default function ProfileCardShell({
 							<AvatarFallback>{profileInitials(profile.title)}</AvatarFallback>
 						</Avatar>
 						<div className="flex min-w-0 flex-1 flex-col">
-							<CardTitle><h3 className="font-home-display text-2xl uppercase wrap-anywhere">{profile.title}</h3></CardTitle>
+							<CardTitle><h3 className="font-home-display text-2xl uppercase wrap-anywhere">{profile.title} <OfficialVerificationIcon officialVerified={profile.officialVerified} className={"align-[-0.03em]"} /></h3></CardTitle>
 							<p className="text-sm font-semibold text-muted-foreground">{summary}</p>
 						</div>
 					</div>

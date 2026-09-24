@@ -1,6 +1,6 @@
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import type {ReactNode} from "react";
-import {BadgeCheckIcon, ExternalLinkIcon, StarIcon} from "lucide-react";
+import {ExternalLinkIcon, StarIcon} from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -8,6 +8,7 @@ import type {GenericProfileDetail as PublicProfile} from "../profile-detail-mode
 import ProfilePngIcon from "@/features/profilo/ProfilePngIcon";
 import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
 import {profileInitials} from "@/features/profilo/public-profile-display";
+import {OfficialVerificationIcon, RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
 import {
 	getProfileDetailFacts,
 	getProfileDetailFields,
@@ -46,10 +47,12 @@ export function ProfileDetailsHeader({profile, presentation, actions}: {
 							<AvatarFallback><span className="font-home-display text-4xl">{profileInitials(profile.title)}</span></AvatarFallback>
 						</Avatar>
 						<div className="flex min-w-0 flex-1 flex-col gap-3">
-							<h1 className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">{profile.title}</h1>
+							<h1 className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">
+								{profile.title} <OfficialVerificationIcon officialVerified={profile.officialVerified} className={"size-7 align-[0.16em]"} />
+							</h1>
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge variant="secondary" className="public-profile-type-badge"><ProfilePngIcon type={profile.type} color="currentColor" className="size-3" />{option.label}</Badge>
-								{profile.verified && <Badge variant="secondary"><BadgeCheckIcon data-icon="inline-start" aria-hidden="true" />Verificato</Badge>}
+								<RegisteredUserBadge emailConfirmed={profile.emailConfirmed} />
 								{profile.primary && <Badge variant="outline"><StarIcon data-icon="inline-start" aria-hidden="true" />Profilo principale</Badge>}
 							</div>
 						</div>

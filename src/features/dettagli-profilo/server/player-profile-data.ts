@@ -10,6 +10,7 @@ import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announceme
 import type {Tables} from "@/server/supabase";
 import type {PlayerCareerEntry, PlayerProfileData} from "../profile-detail-model";
 import {UUID_PATTERN} from "@/features/profilo/team-profile";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
 
 type PlayerRow = Pick<Tables<"profilo_giocatore">,
@@ -74,7 +75,7 @@ export function toPublicPlayerData(data: PlayerRow, highlights: unknown, now = n
 	const url = cleanText(highlights);
 	return {
 		age: publicPlayerAge({day: data.giorno_nascita, month: data.mese_nascita, year: data.anno_nascita}, now),
-		sportTypes: strings(data.tipologie_sport),
+		sportTypes: ordinaTipologieCalcio(strings(data.tipologie_sport)),
 		primaryRoles: normalizePlayerPrimaryRoles(strings(roles?.principali)),
 		specificRoles: normalizePlayerSpecificRoles(strings(roles?.specifici)),
 		preferredCategories: strings(data.categorie_ricercate),

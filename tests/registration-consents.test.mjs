@@ -78,6 +78,20 @@ test("registration requires current legal versions and preserves the optional ne
 	}
 });
 
+test("registration normalizes an optional invitation code and rejects malformed input on account step", () => {
+	const {parseRegistrationPayload, RegistrationPayloadError} = sourceLoader()("src/features/registrati/server/registration.ts");
+	const payload = validRegistrationPayload();
+	assert.equal(parseRegistrationPayload(JSON.stringify(payload)).inviteCode, null);
+	assert.equal(
+		parseRegistrationPayload(JSON.stringify({...payload, inviteCode: " a1b2c3d4e5f60708 "})).inviteCode,
+		"A1B2C3D4E5F60708",
+	);
+	assert.throws(
+		() => parseRegistrationPayload(JSON.stringify({...payload, inviteCode: "wrong"})),
+		(error) => error instanceof RegistrationPayloadError && error.step === 1,
+	);
+});
+
 test("registration UI includes all legal links, a required consent and newsletter enabled by default", () => {
 	const source = readFileSync(path.join(root, "src/features/registrati/Registrati.tsx"), "utf8");
 	assert.match(source, /useState\(false\).*legalAccepted|legalAccepted[^]*useState\(false\)/);

@@ -57,7 +57,7 @@ const now = new Date("2026-09-14T12:00:00Z");
 const player = {
 	id: 7, nome: "Mario", cognome: "Rossi", disponibilita: "disponibile-subito",
 	giorno_nascita: "14", mese_nascita: "Settembre", anno_nascita: "2000",
-	tipologie_sport: ["Calcio a 11", "Calcio a 11"],
+	tipologie_sport: ["Calcio a 5", "Calcio a 11", "Calcio storico"],
 	ruoli_sport: {principali: ["Difensore"], specifici: ["Terzino destro"]},
 	categorie_ricercate: ["Eccellenza"], piede_principale: "Destro",
 	altezza: "180", peso: "75", presentazione: " Presentazione ",
@@ -93,7 +93,7 @@ test("public projection contains only approved properties and safe highlights", 
 	assert.deepEqual(Object.keys(result).sort(), ["age", "sportTypes", "primaryRoles", "specificRoles", "preferredCategories", "preferredFoot", "height", "weight", "presentation", "career", "highlightsUrl"].sort());
 	assert.equal(result.age, 26);
 	assert.equal(result.highlightsUrl, null);
-	assert.deepEqual(result.sportTypes, ["Calcio a 11"]);
+	assert.deepEqual(result.sportTypes, ["Calcio a 11", "Calcio a 5", "Calcio storico"]);
 	assert.equal(result.presentation, "Presentazione");
 	assert.doesNotMatch(JSON.stringify(result), /nascita|private@example|2000/);
 	assert.equal(toPublicPlayerData(player, "https://example.test/video", now).highlightsUrl, "https://example.test/video");
@@ -134,16 +134,18 @@ test("public locations group cities by region without hiding selections", () => 
 	assert.equal(publicProfileLocationLabel(locations), "2 regioni selezionate");
 });
 
-test("subprofile images override the main image and otherwise inherit it", () => {
+test("subprofile image removal selects its avatar fallback without changing other subprofiles", () => {
 	const profileId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 	const images = profileImageRowsToMap([
 		{uuid_profilo: profileId, sottoprofilo: "squadra", link_media: " https://cdn.test/squadra.webp "},
+		{uuid_profilo: profileId, sottoprofilo: "arbitro", link_media: ""},
 		{uuid_profilo: profileId, sottoprofilo: "invalid", link_media: "https://cdn.test/invalid.webp"},
 		{uuid_profilo: profileId, sottoprofilo: null, link_media: "https://cdn.test/main.webp"},
 	]);
 	assert.equal(images.get(profileImageMapKey(profileId, "squadra")), "https://cdn.test/squadra.webp");
 	assert.equal(resolvedProfileImageUrl(images, profileId, "squadra", "https://cdn.test/main.webp"), "https://cdn.test/squadra.webp");
 	assert.equal(resolvedProfileImageUrl(images, profileId, "giocatore", "https://cdn.test/main.webp"), "https://cdn.test/main.webp");
+	assert.equal(resolvedProfileImageUrl(images, profileId, "arbitro", "https://cdn.test/main.webp"), null);
 	assert.equal(resolvedProfileImageUrl(images, profileId, "giocatore", null), null);
 });
 
@@ -220,7 +222,7 @@ test("player role pitch uses the 3x7 grid and hides only specialized primary gro
 test("player header renders the ordered eight-fact grid", () => {
 	const PlayerHeader = load("src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(PlayerHeader, {
-		title: "Mario Rossi", imageUrl: null, verified: false, primary: false,
+		title: "Mario Rossi", imageUrl: null, emailConfirmed: false, officialVerified: false, primary: false,
 		availabilityLabel: "Disponibile subito",
 		followerCount: 42,
 		announcementCount: 7,
@@ -247,13 +249,34 @@ test("player header renders the ordered eight-fact grid", () => {
 test("player header handles missing sports data without exposing unspecified availability", () => {
 	const PlayerHeader = load("src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(PlayerHeader, {
-		title: "Mario Rossi", imageUrl: null, verified: false, primary: false,
+		title: "Mario Rossi", imageUrl: null, emailConfirmed: false, officialVerified: false, primary: false,
 		availabilityLabel: null, followerCount: null, announcementCount: null,
 		player: toPublicPlayerData({}, null, now),
 	}));
 	assert.match(html, /Non specificato/);
 	assert.match(html, />MR</);
 	assert.doesNotMatch(html, /campo\.png|Verificato|Profilo principale|undefined|null/);
+});
+
+test("email confirmation and official verification have distinct profile marks", () => {
+	const PlayerHeader = load("src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
+	const base = {
+		title: "Mario Rossi", imageUrl: null, primary: false, availabilityLabel: null,
+		followerCount: null, announcementCount: null, player: toPublicPlayerData(player, null, now),
+	};
+	const registered = renderToStaticMarkup(React.createElement(PlayerHeader, {...base, emailConfirmed: true, officialVerified: false}));
+	assert.match(registered, /Utente registrato/);
+	assert.match(registered, /lucide-user-round-check/);
+	assert.doesNotMatch(registered, /Profilo verificato ufficialmente/);
+
+	const official = renderToStaticMarkup(React.createElement(PlayerHeader, {...base, emailConfirmed: true, officialVerified: true}));
+	assert.match(official, /Utente registrato/);
+	assert.match(official, /Profilo verificato ufficialmente/);
+	assert.match(official, /role="img" aria-label="Profilo verificato ufficialmente"/);
+	assert.match(official, /lucide-badge-check/);
+
+	const unconfirmed = renderToStaticMarkup(React.createElement(PlayerHeader, {...base, emailConfirmed: false, officialVerified: false}));
+	assert.doesNotMatch(unconfirmed, /Utente registrato|Profilo verificato ufficialmente/);
 });
 
 test("player overview shows grouped locations, visible social URLs and highlights below description", () => {
@@ -331,7 +354,7 @@ function fixtureClient(results) {
 test("detail query preserves visibility filters and exposes age without birth parts", async () => {
 	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 	const client = fixtureClient({
-		profilo: {data: {uuid: id, tipologia_principale: "giocatore"}, error: null},
+		profilo: {data: {uuid: id, tipologia_principale: "giocatore", confermato_il: "2026-09-01T10:00:00Z", verificato_il: "2026-09-02T10:00:00Z"}, error: null},
 		profilo_giocatore: {data: player, error: null},
 		media_profilo: {data: null, error: null},
 		annuncio: {data: [], count: 7, error: null},
@@ -344,6 +367,9 @@ test("detail query preserves visibility filters and exposes age without birth pa
 	assert.equal(result.status, "ok");
 	assert.equal(result.profile.followerCount, 42);
 	assert.equal(result.profile.announcementCount, 7);
+	assert.equal(result.profile.emailConfirmed, true);
+	assert.equal(result.profile.officialVerified, true);
+	assert.doesNotMatch(JSON.stringify(result.profile), /2026-09-01T10:00:00Z|2026-09-02T10:00:00Z/);
 	const followerQuery = client.calls.find(call => call.table === "profilo_follow");
 	assert.deepEqual(followerQuery.operations, [["select", "uuid_profilo_seguito", {count: "exact", head: true}], ["eq", "uuid_profilo_seguito", id]]);
 	assert.deepEqual(result.profile.locations, [{region: "Lazio", city: "Roma"}, {region: "Toscana", city: null}]);
@@ -445,7 +471,7 @@ const nonPlayerCases = [
 function genericProfile(type, overrides = {}) {
 	return {
 		id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type, title: "Profilo dimostrativo",
-		imageUrl: null, verified: true, primary: true, availabilityLabel: "Disponibile subito",
+		imageUrl: null, emailConfirmed: true, officialVerified: true, primary: true, availabilityLabel: "Disponibile subito",
 		socialLinks: {instagram: "https://instagram.com/profilo", facebook: "", youtube: "https://youtube.com/@profilo", linkedin: ""},
 		locations: [{region: "Lazio", city: "Roma"}, {region: "Lazio", city: "Viterbo"}],
 		primaryFields: [], fields: [{label: "Presentazione", value: "Descrizione dimostrativa", wide: true}],
@@ -475,6 +501,8 @@ test("all seven non-player profiles show ordered facts, integrated actions and s
 		assert.deepEqual(renderedFacts(html), [...labels.map(label => [label, values[label] ?? (label === "Esperienze" ? "1" : "2")]), ["Follower", (1234).toLocaleString("it-IT")], ["Num. annunci", "7"]], type);
 		assert.match(html, /<header\b[\s\S]*Condividi[\s\S]*<\/header>/);
 		assert.match(html, /public-profile-hero/);
+		assert.match(html, /Utente registrato/);
+		assert.match(html, /Profilo verificato ufficialmente/);
 		assert.match(html, /profile-section-navigation/);
 		assert.match(html, /aria-label="Informazioni del profilo"/);
 		assert.match(html, /Profili simili/);
@@ -588,13 +616,15 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 	for (const [type, labels] of Object.entries(expectedLabels)) {
 		const html = renderToStaticMarkup(React.createElement(Card, {profile: {
 			id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type, title: "Profilo dimostrativo",
-			presentation: null, imageUrl: null, verified: true, availabilityLabel: null,
+			presentation: null, imageUrl: null, emailConfirmed: true, officialVerified: true, availabilityLabel: null,
 			location: "Città dimostrativa", facts,
-			filterData: {ruoli: ["Difensore"], tipologie: ["Calcio a 11"]},
+			filterData: {ruoli: ["Difensore"], tipologie: ["Calcio a 11"], figure: []},
 		}}));
 		assert.equal((html.match(/<a /g) ?? []).length, 1);
 		assert.ok(html.includes('data-profile-icon="' + type + '"'));
-		assert.match(html, /Apri profilo/);
+		assert.match(html, /Apri il profilo di/);
+		assert.match(html, /Utente registrato/);
+		assert.match(html, /aria-label="Profilo verificato ufficialmente"/);
 		assert.match(html, /Profilo dimostrativo/);
 		for (const label of labels) assert.match(html, new RegExp(">" + label + "<"));
 		const badgeIndex = html.indexOf(`data-profile-icon="${type}"`);
