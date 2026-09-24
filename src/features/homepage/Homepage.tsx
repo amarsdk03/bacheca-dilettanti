@@ -212,7 +212,7 @@ async function LatestOpportunitiesContent() {
 											className="mb-0.5 block text-[0.63rem] font-bold uppercase tracking-[0.12em]"
 											style={{color: accent}}
 										>
-											{PROFILE_LABELS[announcement.profileType]}
+											{announcement.typeLabel}
 										</span>
 										<span className="line-clamp-2 text-sm font-bold leading-5">{announcement.title}</span>
 									</span>

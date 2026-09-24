@@ -137,6 +137,28 @@ test("the dispatcher preserves the compact card layout for every announcement ty
 	}
 });
 
+test("recent profile announcements show the same saved title and meaningful facts as public cards", () => {
+	const ProfileAnnouncementCard = load("src/features/dettagli-profilo/components/ProfileAnnouncementCard.tsx").default;
+	const announcement = fixtureAnnouncement("annuncio_torneo_evento", [
+		{kind: "registration", label: "Iscrizione", value: "Online"},
+		{kind: "price", label: "Costo", value: "50 €"},
+		{kind: "location", label: "Località", value: "Roma, Lazio"},
+		{kind: "participation", label: "Partecipazione", value: "Squadre"},
+	]);
+	announcement.typeLabel = "Torneo / evento";
+	announcement.title = "Coppa Lazio";
+	const html = renderToStaticMarkup(React.createElement(ProfileAnnouncementCard, {announcement}));
+	assert.match(html, /Coppa Lazio/);
+	assert.match(html, /Torneo \/ evento/);
+	assert.match(html, /Iscrizione/);
+	assert.match(html, /Costo/);
+	assert.match(html, /50 €/);
+	assert.match(html, /Roma, Lazio/);
+	assert.match(html, /Apri annuncio/);
+	assert.doesNotMatch(html, /<dt[^>]*>Località<\/dt>/);
+	assert.match(html, /href="\/dettagli-annuncio\?id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"/);
+});
+
 test("unspecified announcement facts are filtered without reintroducing them into compact cards", () => {
 	const facts = [
 		{kind: "roles", label: "Ruoli principali", value: " Non specificato "},

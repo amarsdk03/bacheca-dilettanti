@@ -371,6 +371,7 @@ export interface AnnouncementDirectoryResult {
 export interface LatestAnnouncementPreview {
 	id: string;
 	profileType: ProfileType;
+	typeLabel: string;
 	title: string;
 	location: string;
 	createdAt: string | null;
@@ -382,7 +383,9 @@ export interface LatestAnnouncementsResult {
 }
 
 export interface AnnouncementDetailField {
+	items?: string[];
 	label: string;
+	listStyle?: "chips" | "rows";
 	value: string;
 	wide?: boolean;
 }
@@ -411,6 +414,7 @@ export interface AnnouncementDetail extends AnnouncementDirectoryItem {
 	similarAnnouncements: AnnouncementDirectoryItem[];
 	similarAnnouncementsUnavailable: boolean;
 	fields: AnnouncementDetailField[];
+	locations: PublicProfileLocation[];
 	contacts: AnnouncementContact[];
 	contactsUnavailable: boolean;
 	playerRoles?: AnnouncementPlayerRoles;

@@ -5,6 +5,7 @@ import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import type {AnnouncementDetail} from "@/features/annunci/announcement-model";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 import {type AnnouncementDetailPresentation, isSpecifiedAnnouncementValue} from "./announcement-detail-presentation";
+import StructuredFieldList from "@/components/data-info/StructuredFieldList";
 
 export default function AnnouncementDetailsOverview({announcement, presentation}: {
 	announcement: AnnouncementDetail;
@@ -46,7 +47,7 @@ export default function AnnouncementDetailsOverview({announcement, presentation}
 			</Card>
 			{fields.map(field => <Card key={field.label}>
 				<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{field.label}</h2></CardTitle></CardHeader>
-				<CardContent><p className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{field.value}</p></CardContent>
+				<CardContent><div className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{field.items?.length ? <StructuredFieldList items={field.items} style={field.listStyle} /> : field.value}</div></CardContent>
 			</Card>)}
 			{announcement.linkedTeams.length > 0 && <Card>
 				<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Squadre collegate</h2></CardTitle></CardHeader>

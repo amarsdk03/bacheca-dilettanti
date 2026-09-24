@@ -1654,7 +1654,7 @@ export type Database = {
               p_announcement_id: string
               p_checkout_status: string
               p_paid: boolean
-              p_payment_intent_id: string
+              p_payment_intent_id: string | null
               p_payment_status: string
               p_price_id: string
               p_session_id: string
@@ -1667,7 +1667,7 @@ export type Database = {
               p_announcement_id: string
               p_checkout_status: string
               p_paid: boolean
-              p_payment_intent_id: string
+              p_payment_intent_id: string | null
               p_payment_status: string
               p_price_id: string
               p_session_id: string
@@ -1754,9 +1754,9 @@ export type Database = {
       }
       submit_segnalazione_v1: {
         Args: {
-          p_anonymous_key_hash: string
-          p_reason: string
-          p_reporter_user_uuid: string
+          p_anonymous_key_hash: string | null
+          p_reason: string | null
+          p_reporter_user_uuid: string | null
           p_target_kind: string
           p_target_uuid: string
         }

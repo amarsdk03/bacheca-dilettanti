@@ -1,14 +1,15 @@
+import {announcementContent} from "@/features/annunci/announcement-content";
+import {
+	announcementOption,
+	type AnnouncementDetailField,
+	type AnnouncementFact,
+	type AnnouncementPlayerRoles,
+	type AnnouncementType,
+} from "@/features/annunci/announcement-model";
 import type {ProfileDrafts, ProfileType} from "@/features/profilo/profile-model";
-import type {AnnouncementType} from "@/features/annunci/announcement-model";
-import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";
-import {getTipologia} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
+import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 import {experienceTeamReferences, type TeamProfileReference} from "@/features/profilo/team-profile";
-
-export interface AnnouncementPreviewFact {
-	label: string;
-	value: string;
-}
+import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";
 
 export interface AnnouncementPreviewData {
 	id?: string;
@@ -18,9 +19,11 @@ export interface AnnouncementPreviewData {
 	typeLabel: string;
 	author: string;
 	description: string | null;
-	locations: string[];
+	locations: PublicProfileLocation[];
 	contacts: string[];
-	facts: AnnouncementPreviewFact[];
+	facts: AnnouncementFact[];
+	fields: AnnouncementDetailField[];
+	playerRoles: AnnouncementPlayerRoles | null;
 	genericLink: string | null;
 	videoHighlights: string | null;
 	imageUrl: string | null;
@@ -28,10 +31,6 @@ export interface AnnouncementPreviewData {
 	status: string | null;
 	statusInfo: string | null;
 	linkedTeams: TeamProfileReference[];
-}
-
-function joined(value: string[] | null | undefined) {
-	return value?.filter(Boolean).join(", ") || null;
 }
 
 function profileTitle(payload: PublishAnnouncementPayload, drafts: ProfileDrafts) {
@@ -57,64 +56,55 @@ export function buildPublishPreview(
 	imageUrl: string | null,
 	imageLabel: string | null,
 ): AnnouncementPreviewData {
-	const profile = profileTitle(payload, drafts);
-	const option = getTipologia(payload.profileType);
-	const subtype = option?.sottotipologie?.find(({valore}) => valore === payload.teamSubtype);
-	const detail = payload.announcement.detail as unknown as Record<string, unknown>;
-	const profileExperiences = payload.profileType === "giocatore"
+	const type = payload.announcement.type;
+	const detail = {...payload.announcement.detail} as Record<string, unknown>;
+
+	// The publish RPC snapshots these profile values into the announcement.
+	if (type === "annuncio_giocatore") {
+		const playerRoles = drafts.giocatore.ruoli_sport;
+		const roles = playerRoles && typeof playerRoles === "object" && !Array.isArray(playerRoles)
+			? playerRoles as Record<string, unknown>
+			: {};
+		detail.tipologie_sport = drafts.giocatore.tipologie_sport;
+		detail.ruoli_principali = Array.isArray(roles.principali) ? roles.principali : [];
+		detail.ruoli_secondari = Array.isArray(roles.specifici) ? roles.specifici : [];
+	} else if (type === "annuncio_squadra_cerca_giocatore") {
+		detail.tipologie_sport = drafts.squadra.tipologie_sport;
+	} else if (type === "annuncio_staff_sportivo") {
+		detail.figure_professionali = drafts["staff-sportivo"].figure_professionali;
+		detail.disponibilita_occupazione = drafts["staff-sportivo"].disponibilita;
+	} else if (type === "annuncio_arbitro") {
+		detail.disponibilita_occupazione = drafts.arbitro.disponibilita;
+	} else if (type === "annuncio_campo_impianto") {
+		detail.orari = {descrizione: detail.orari};
+	}
+
+	const locations = payload.announcement.locations.map(({regione, citta}) => ({region: regione, city: citta}));
+	const content = announcementContent(type, detail, locations, true);
+	const profileExperiences = type === "annuncio_giocatore"
 		? drafts.giocatore.storico_carriera
-		: payload.profileType === "staff-sportivo"
+		: type === "annuncio_staff_sportivo"
 			? drafts["staff-sportivo"].storico_esperienze
-			: payload.profileType === "arbitro" ? drafts.arbitro.storico_esperienze : [];
-	const facts: AnnouncementPreviewFact[] = [];
-	const addFact = (label: string, value: string | null | undefined) => {
-		if (value) facts.push({label, value});
-	};
-
-	addFact("Tipologie", joined(ordinaTipologieCalcio((detail.tipologie_sport as string[] | undefined) ?? [])));
-	addFact("Categorie", joined((detail.categorie_ricercate ?? detail.categorie_avversario) as string[] | undefined));
-	addFact("Ruoli", joined(detail.ruoli_principali as string[] | undefined));
-	addFact("Annate", joined(detail.annate_ricercate as string[] | undefined));
-	addFact("Stagione", detail.stagione as string | undefined);
-	addFact("Figura ricercata", detail.figura_ricercata as string | undefined);
-	addFact("Settore", detail.settore as string | undefined);
-	addFact("Nome evento", detail.nome_evento as string | undefined);
-	addFact("Disponibilità", detail.orari as string | undefined);
-	addFact("Servizi", detail.servizi_inclusi as string | undefined);
-
-	const description = [
-		detail.descrizione_aggiuntiva,
-		detail.requisiti,
-		detail.supporto_cercato,
-		detail.offerta_fornita,
-	].find((value) => typeof value === "string" && value.trim()) as string | undefined;
-	const title = payload.profileType === "giocatore"
-		? `${profile} cerca una nuova opportunità`
-		: payload.profileType === "staff-sportivo"
-			? `${profile} è disponibile`
-			: payload.profileType === "arbitro"
-				? `${profile} è disponibile per nuovi incarichi`
-				: (detail.nome_evento as string | undefined) || subtype?.nome || profile;
+			: type === "annuncio_arbitro" ? drafts.arbitro.storico_esperienze : [];
 
 	return {
-		announcementType: payload.announcement.type,
+		announcementType: type,
 		profileType: payload.profileType,
-		title,
-		typeLabel: subtype?.nome ?? option?.nome ?? payload.profileType,
-		author: profile,
-		description: description?.trim() || null,
-		locations: payload.announcement.locations.map(({regione, citta}) => [citta, regione].filter(Boolean).join(", ")),
+		title: content.title,
+		typeLabel: announcementOption(type).label,
+		author: profileTitle(payload, drafts),
+		description: content.description,
+		locations: content.locations,
 		contacts: [payload.announcement.contacts.email, payload.announcement.contacts.phone].filter(Boolean),
-		facts,
+		facts: content.facts,
+		fields: content.fields,
+		playerRoles: content.playerRoles,
 		genericLink: payload.announcement.extras.genericLink.trim() || null,
 		videoHighlights: payload.announcement.extras.videoHighlights.trim() || null,
 		imageUrl,
 		imageLabel,
 		status: "In revisione dopo l’invio",
 		statusInfo: null,
-		linkedTeams: experienceTeamReferences(
-			profileExperiences,
-			payload.profileType === "giocatore" ? "titolo" : "ente",
-		),
+		linkedTeams: experienceTeamReferences(profileExperiences, type === "annuncio_giocatore" ? "titolo" : "ente"),
 	};
 }

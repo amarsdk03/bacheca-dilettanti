@@ -120,7 +120,7 @@ export default function AnnouncementAuthorHoverCard({
 				style={{"--profile-accent": accent} as CSSProperties}
 			>
 				<div className="flex flex-col gap-4">
-					<div className="flex min-w-0 items-start gap-3">
+					<div className="flex min-w-0 items-center gap-3">
 						<Avatar size="lg" className="ring-2 ring-[color:var(--profile-accent)]/20">
 							{author.imageUrl && <AvatarImage src={author.imageUrl} alt={`Foto profilo di ${author.title}`} />}
 							<AvatarFallback>{initials(author.title)}</AvatarFallback>

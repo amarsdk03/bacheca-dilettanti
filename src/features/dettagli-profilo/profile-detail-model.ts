@@ -1,7 +1,7 @@
 import {isProfileType, type ProfileType} from "@/features/profilo/profile-model";
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
-import type {AnnouncementFact, AnnouncementType} from "@/features/annunci/announcement-model";
-import type {PublicTeamProfile, TeamProfileReference} from "@/features/profilo/team-profile";
+import type {AnnouncementDirectoryItem} from "@/features/annunci/announcement-model";
+import type {PublicTeamProfile} from "@/features/profilo/team-profile";
 import type {ProfileSocialLinks} from "@/features/profilo/profile-social-links";
 import type {DirectoryProfile} from "@/features/profili/profile-directory-model";
 
@@ -16,24 +16,11 @@ export interface ProfileDetailParams {
 
 export interface ProfileDetailField {
 	href?: string;
+	items?: string[];
 	label: string;
+	listStyle?: "chips" | "rows";
 	value: string;
 	wide?: boolean;
-}
-
-export interface ProfileAnnouncement {
-	id: string;
-	type: AnnouncementType;
-	profileType: ProfileType;
-	typeLabel: string;
-	subtypeLabel: string;
-	title: string;
-	description: string;
-	location: string;
-	createdAt: string | null;
-	level: string | null;
-	facts: AnnouncementFact[];
-	linkedTeams: TeamProfileReference[];
 }
 
 interface ProfileDetailBase {
@@ -45,7 +32,7 @@ interface ProfileDetailBase {
 	primary: boolean;
 	availabilityLabel: string | null;
 	socialLinks: ProfileSocialLinks;
-	announcements: ProfileAnnouncement[];
+	announcements: AnnouncementDirectoryItem[];
 	announcementsUnavailable: boolean;
 	announcementCount: number | null;
 	followerCount: number | null;

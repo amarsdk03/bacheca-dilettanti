@@ -18,8 +18,10 @@ import ProfileFactsGrid from "./ProfileFactsGrid";
 import ProfileIdentifier from "./ProfileIdentifier";
 import ProfileLocationsCard from "./ProfileLocationsCard";
 import ProfileSocialLinksCard from "./ProfileSocialLinks";
+import StructuredFieldList from "@/components/data-info/StructuredFieldList";
 
 function ProfileFieldValue({field}: {field: PublicProfile["fields"][number]}) {
+	if (field.items?.length) return <StructuredFieldList items={field.items} style={field.listStyle} />;
 	if (!field.href) return field.value;
 	return (
 		<ExternalLink href={field.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline">
@@ -83,12 +85,12 @@ export default function ProfileDetailsOverview({profile, presentation}: {
 			<div className="flex min-w-0 flex-col gap-5">
 				<Card>
 					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Descrizione</h2></CardTitle></CardHeader>
-					<CardContent><p className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{description && description.value !== "Non specificato" ? <ProfileFieldValue field={description} /> : "Descrizione non disponibile"}</p></CardContent>
+					<CardContent><div className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{description && description.value !== "Non specificato" ? <ProfileFieldValue field={description} /> : "Descrizione non disponibile"}</div></CardContent>
 				</Card>
 				{narrativeFields.map(field => (
 					<Card key={field.label}>
 						<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{field.label}</h2></CardTitle></CardHeader>
-						<CardContent><p className="text-base leading-7 whitespace-pre-wrap wrap-anywhere"><ProfileFieldValue field={field} /></p></CardContent>
+						<CardContent><div className="text-base leading-7 whitespace-pre-wrap wrap-anywhere"><ProfileFieldValue field={field} /></div></CardContent>
 					</Card>
 				))}
 			</div>

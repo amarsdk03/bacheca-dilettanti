@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {ArrowUpRightIcon, CheckCircle2Icon, CircleAlertIcon, CrownIcon, SparklesIcon} from "lucide-react";
 
+import {ExternalNavigationProvider} from "@/components/navigation/ExternalNavigation";
 import {buttonVariants} from "@/components/ui/button";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import AnnouncementCard from "@/features/annunci/components/cards/AnnouncementCard";
@@ -53,7 +54,9 @@ export default function ConfermaPubblicazione({result}: {result: PublishConfirma
 						</section>
 
 						<section className="mx-auto mt-12 max-w-3xl" aria-label="Riepilogo annuncio">
-							<AnnouncementPreviewCard preview={result.preview} />
+							<ExternalNavigationProvider>
+								<AnnouncementPreviewCard preview={result.preview} />
+							</ExternalNavigationProvider>
 							{result.preview.id && <div className="mt-4 flex justify-center">
 								<AnnouncementViewLink id={result.preview.id} isListed={result.isListed} />
 							</div>}

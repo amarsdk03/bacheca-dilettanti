@@ -2,11 +2,11 @@ import {MegaphoneIcon, TriangleAlertIcon} from "lucide-react";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
-import type {ProfileAnnouncement} from "@/features/dettagli-profilo/profile-detail-model";
+import type {AnnouncementDirectoryItem} from "@/features/annunci/announcement-model";
 import ProfileAnnouncementCard from "./ProfileAnnouncementCard";
 
 export default function LatestProfileAnnouncements({announcements, announcementsUnavailable}: {
-	announcements: ProfileAnnouncement[];
+	announcements: AnnouncementDirectoryItem[];
 	announcementsUnavailable: boolean;
 }) {
 	return (

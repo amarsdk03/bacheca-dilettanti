@@ -47,7 +47,7 @@ export default function AnnouncementDetailsLayout({
 						<aside aria-label="Informazioni sportive e contatti" className="flex min-w-0 flex-col gap-5">
 							{playerRoles && <AnnouncementPlayerRolePitch primaryRoles={playerRoles.primaryRoles} secondaryRoles={playerRoles.secondaryRoles} />}
 							<AnnouncementDetailsContacts contacts={announcement.contacts} unavailable={announcement.contactsUnavailable} />
-							<AnnouncementLocationCard location={announcement.location} />
+							<AnnouncementLocationCard locations={announcement.locations} />
 							<DetailIdentifier id={announcement.id} entity="annuncio" />
 						</aside>
 					</div>

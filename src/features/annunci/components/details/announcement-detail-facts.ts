@@ -22,7 +22,7 @@ import type {AnnouncementDetail, AnnouncementFactKind} from "@/features/annunci/
 import type {ProfileFact} from "@/features/dettagli-profilo/components/ProfileFactsGrid";
 import {type AnnouncementDetailPresentation, isSpecifiedAnnouncementValue} from "./announcement-detail-presentation";
 
-const FACT_ICONS: Record<AnnouncementFactKind, LucideIcon> = {
+export const FACT_ICONS: Record<AnnouncementFactKind, LucideIcon> = {
 	availability: CalendarCheckIcon, car: CarIcon, categories: TagsIcon, content: ClapperboardIcon,
 	compensation: BadgeEuroIcon, figures: BriefcaseBusinessIcon, headquarters: Building2Icon,
 	location: MapPinIcon, participation: UsersIcon, period: CalendarRangeIcon, price: CircleDollarSignIcon,

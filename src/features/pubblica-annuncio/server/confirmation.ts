@@ -1,25 +1,19 @@
 import "server-only";
 
 import {isAnnouncementListed} from "@/features/annunci/announcement-visibility";
+import {announcementContent, isActiveAnnouncementType, type ActiveAnnouncementType} from "@/features/annunci/announcement-content";
 
 import {
 	type AnnouncementDirectoryItem,
 	announcementOption,
-	type AnnouncementType,
-	isAnnouncementType,
 	isValidAnnouncementId,
 } from "@/features/annunci/announcement-model";
 import {loadRelatedPublicAnnouncements} from "@/features/annunci/server/queries";
-import {
-	type AnnouncementPreviewData,
-	type AnnouncementPreviewFact,
-	formatPreviewStatus,
-} from "@/features/pubblica-annuncio/announcement-preview";
+import {type AnnouncementPreviewData, formatPreviewStatus} from "@/features/pubblica-annuncio/announcement-preview";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import {experienceTeamReferences} from "@/features/profilo/team-profile";
 import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
-import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 const ANNOUNCEMENT_IMAGES_BUCKET = "immagini_annunci";
 
@@ -44,16 +38,7 @@ function cleanText(value: unknown) {
 	return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function stringList(value: unknown) {
-	return Array.isArray(value) ? value.flatMap((item) => cleanText(item) ?? []) : [];
-}
-
-function addFact(facts: AnnouncementPreviewFact[], label: string, value: unknown) {
-	const formatted = Array.isArray(value) ? stringList(value).join(", ") : cleanText(value);
-	if (formatted) facts.push({label, value: formatted});
-}
-
-const DETAIL_TABLE_BY_TYPE: Record<AnnouncementType, string> = {
+const DETAIL_TABLE_BY_TYPE: Record<ActiveAnnouncementType, string> = {
 	annuncio_giocatore: "annuncio_giocatore",
 	annuncio_squadra_cerca_giocatore: "annuncio_squadra_cerca_giocatore",
 	annuncio_squadra_cerca_staff: "annuncio_squadra_cerca_staff",
@@ -63,11 +48,9 @@ const DETAIL_TABLE_BY_TYPE: Record<AnnouncementType, string> = {
 	annuncio_arbitro: "annuncio_arbitro",
 	annuncio_torneo_evento: "annuncio_torneo_evento",
 	annuncio_campo_impianto: "annuncio_campo_impianto",
-	annuncio_professionisti_studi: "annuncio_professionisti_studi",
-	annuncio_creators: "annuncio_creators",
 };
 
-async function loadAuthorName(profileId: string, type: AnnouncementType) {
+async function loadAuthorName(profileId: string, type: ActiveAnnouncementType) {
 	const admin = createAdminClient();
 	const {data, error} = await admin
 		.from("profilo")
@@ -116,13 +99,13 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 				privato,
 				info_stato_annuncio,
 				annuncio_giocatore(categorie_ricercate, tipologie_sport, ruoli_principali, ruoli_secondari, descrizione_aggiuntiva),
-				annuncio_squadra_cerca_giocatore(ruoli_principali, ruoli_secondari, annate_ricercate, stagione, descrizione_aggiuntiva),
-				annuncio_squadra_cerca_staff(figura_ricercata, settore, requisiti, descrizione_aggiuntiva),
-				annuncio_squadra_cerca_partita(categorie_avversario, disponibilita_trasferta, descrizione_aggiuntiva),
+				annuncio_squadra_cerca_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, annate_ricercate, stagione, descrizione_aggiuntiva),
+				annuncio_squadra_cerca_staff(figura_ricercata, settore, compenso_mensile, requisiti, periodo_dal, periodo_al, descrizione_aggiuntiva),
+				annuncio_squadra_cerca_partita(categorie_avversario, disponibilita_trasferta, periodo_dal, periodo_al, orario_dalle, orario_alle, descrizione_aggiuntiva),
 				annuncio_squadra_cerca_sponsor(categoria_settore, supporto_cercato, offerta_fornita, descrizione_aggiuntiva),
-				annuncio_staff_sportivo(tipologie_sport, categorie_ricercate, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
-				annuncio_arbitro(tipologie_sport, categorie_ricercate, automunito, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
-				annuncio_torneo_evento(nome_evento, tipologie_sport, modalita_iscrizione, annate_ammesse_da, annate_ammesse_a, numero_squadre, descrizione_aggiuntiva),
+				annuncio_staff_sportivo(figure_professionali, tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
+				annuncio_arbitro(tipologie_sport, categorie_ricercate, disponibilita_occupazione, automunito, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
+				annuncio_torneo_evento(nome_evento, tipologie_sport, modalita_iscrizione, annate_ammesse_da, annate_ammesse_a, numero_squadre, costo_partecipazione, tipo_partecipazione, lista_premi_trofei, descrizione_aggiuntiva),
 				annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva),
 				localita_annuncio(regione, citta),
 				contatto_annuncio(tipo, valore),
@@ -135,7 +118,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			console.error("[publish-confirmation] Owner query failed", {code: error.code});
 			return {status: "error"};
 		}
-		if (!data || !isAnnouncementType(data.tipologia_annuncio)) return {status: "not-found"};
+		if (!data || !isActiveAnnouncementType(data.tipologia_annuncio)) return {status: "not-found"};
 
 		const row = data as unknown as Record<string, unknown>;
 		const type = data.tipologia_annuncio;
@@ -144,8 +127,9 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 		const locations = records(row.localita_annuncio).flatMap((location) => {
 			const region = cleanText(location.regione);
 			if (!region) return [];
-			return [{region, label: [cleanText(location.citta), region].filter(Boolean).join(", ")}];
+			return [{region, city: cleanText(location.citta)}];
 		});
+		const content = announcementContent(type, detail, locations, true);
 		const contacts = records(row.contatto_annuncio).flatMap((contact) => cleanText(contact.valore) ?? []);
 		const links = records(row.link_social_annuncio);
 		const genericLink = cleanText(links.find(({piattaforma}) => piattaforma === "link_annuncio")?.sublink);
@@ -162,24 +146,6 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 		}
 
 		const author = await loadAuthorName(String(data.autore_annuncio), type) ?? option.label;
-		const facts: AnnouncementPreviewFact[] = [];
-		addFact(facts, "Tipologie", ordinaTipologieCalcio(stringList(detail.tipologie_sport)));
-		addFact(facts, "Categorie", detail.categorie_ricercate ?? detail.categorie_avversario);
-		addFact(facts, "Ruoli", detail.ruoli_principali);
-		addFact(facts, "Annate", detail.annate_ricercate);
-		addFact(facts, "Stagione", detail.stagione);
-		addFact(facts, "Figura ricercata", detail.figura_ricercata);
-		addFact(facts, "Settore", detail.settore);
-		addFact(facts, "Nome evento", detail.nome_evento);
-		addFact(facts, "Disponibilità", detail.orari);
-		addFact(facts, "Servizi", detail.servizi_inclusi);
-		const description = [detail.descrizione_aggiuntiva, detail.requisiti, detail.supporto_cercato, detail.offerta_fornita]
-			.map(cleanText)
-			.find(Boolean) ?? null;
-		const title = type === "annuncio_giocatore"
-			? `${author} cerca una nuova opportunità`
-			: type === "annuncio_staff_sportivo" ? `${author} è disponibile`
-				: cleanText(detail.nome_evento) ?? option.label;
 		let teamReferences = experienceTeamReferences(detail.lista_esperienze);
 		if (type === "annuncio_giocatore") {
 			const {data: player, error: playerError} = await createAdminClient()
@@ -208,13 +174,15 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			id,
 			announcementType: type,
 			profileType: option.profileType,
-			title,
+			title: content.title,
 			typeLabel: option.label,
 			author,
-			description,
-			locations: locations.map(({label}) => label),
+			description: content.description,
+			locations: content.locations,
 			contacts,
-			facts,
+			facts: content.facts,
+			fields: content.fields,
+			playerRoles: content.playerRoles,
 			genericLink,
 			videoHighlights,
 			imageUrl,

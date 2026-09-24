@@ -1,11 +1,21 @@
 import "server-only";
 
 import {isAnnouncementListed} from "@/features/annunci/announcement-visibility";
+import {
+	ACTIVE_ANNOUNCEMENT_TYPES,
+	announcementContent,
+	finiteNumber,
+	formatLocation,
+	humanizeValue,
+	isActiveAnnouncementType,
+	type AnnouncementFilterData,
+	type AnnouncementLocation,
+	type ActiveAnnouncementType,
+} from "@/features/annunci/announcement-content";
 
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
-	ANNOUNCEMENT_TYPES,
 	type AnnouncementAuthor,
 	type AnnouncementContact,
 	type AnnouncementDetailField,
@@ -21,7 +31,6 @@ import {
 	type AnnouncementType,
 	getAnnouncementFilterEntries,
 	getAnnouncementStorageTypes,
-	isAnnouncementType,
 	isValidAnnouncementId,
 	type LatestAnnouncementsResult,
 	normalizeAnnouncementSearchText,
@@ -43,6 +52,17 @@ import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblica
 const ANNOUNCEMENT_BATCH_SIZE = 500;
 const AUTHOR_BATCH_SIZE = 100;
 const NOT_SPECIFIED = "Non specificato";
+
+const PROFILE_ANNOUNCEMENT_TYPES = {
+	giocatore: ["annuncio_giocatore"],
+	squadra: ["annuncio_squadra_cerca_giocatore", "annuncio_squadra_cerca_staff", "annuncio_squadra_cerca_partita", "annuncio_squadra_cerca_sponsor"],
+	"staff-sportivo": ["annuncio_staff_sportivo"],
+	"professionisti-studi": [],
+	arbitro: ["annuncio_arbitro"],
+	creators: [],
+	"torneo-evento": ["annuncio_torneo_evento"],
+	"campi-impianti-sportivi": ["annuncio_campo_impianto"],
+} as const satisfies Record<ProfileType, readonly ActiveAnnouncementType[]>;
 
 const PROFILE_TABLE_BY_TYPE: Partial<Record<ProfileType, string>> = {
 	giocatore: "profilo_giocatore",
@@ -137,22 +157,6 @@ function officialAuthorQuery(supabase: SupabaseClient<Database>) {
 
 type OfficialAuthorQueryRow = QueryData<ReturnType<typeof officialAuthorQuery>>[number];
 
-interface AnnouncementLocation {
-	region: string;
-	city: string | null;
-}
-
-interface AnnouncementFilterData {
-	regions: string[];
-	types: string[];
-	roles: string[];
-	figures: string[];
-	categories: string[];
-	car: string | null;
-	cost: number | null;
-	compensation: number | null;
-}
-
 interface MappedAnnouncement {
 	item: AnnouncementDirectoryItem;
 	fields: AnnouncementDetailField[];
@@ -214,13 +218,6 @@ function jsonStringArray(value: unknown, key: string) {
 	return isRecord(value) ? cleanStringArray(value[key]) : [];
 }
 
-function finiteNumber(value: unknown) {
-	if (typeof value === "number" && Number.isFinite(value)) return value;
-	if (typeof value !== "string" || !value.trim()) return null;
-	const parsed = Number(value);
-	return Number.isFinite(parsed) ? parsed : null;
-}
-
 function shortFactValue(value: string | null) {
 	if (!value) return NOT_SPECIFIED;
 	return value.length > 96 ? `${value.slice(0, 93).trimEnd()}…` : value;
@@ -253,73 +250,6 @@ function formatCurrency(value: number | null) {
 	}).format(value);
 }
 
-function formatDate(value: unknown) {
-	const text = cleanText(value, 10);
-	if (!text || !/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
-	const date = new Date(`${text}T00:00:00Z`);
-	if (Number.isNaN(date.getTime())) return null;
-	return new Intl.DateTimeFormat("it-IT", {
-		day: "2-digit",
-		month: "2-digit",
-		year: "numeric",
-		timeZone: "UTC",
-	}).format(date);
-}
-
-function formatPeriod(from: unknown, to: unknown) {
-	const fromLabel = formatDate(from);
-	const toLabel = formatDate(to);
-	if (fromLabel && toLabel) return `Dal ${fromLabel} al ${toLabel}`;
-	if (fromLabel) return `Dal ${fromLabel}`;
-	if (toLabel) return `Fino al ${toLabel}`;
-	return NOT_SPECIFIED;
-}
-
-function formatTime(value: unknown) {
-	const text = cleanText(value, 8);
-	if (!text || !/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(text)) return null;
-	return text.slice(0, 5);
-}
-
-function formatTimeRange(from: unknown, to: unknown) {
-	const fromLabel = formatTime(from);
-	const toLabel = formatTime(to);
-	if (fromLabel && toLabel) return `Dalle ${fromLabel} alle ${toLabel}`;
-	return NOT_SPECIFIED;
-}
-
-function formatYearRange(from: unknown, to: unknown) {
-	const fromLabel = cleanText(from, 4);
-	const toLabel = cleanText(to, 4);
-	if (fromLabel && toLabel) return `${fromLabel} – ${toLabel}`;
-	return fromLabel ?? toLabel ?? NOT_SPECIFIED;
-}
-
-function humanizeValue(value: unknown) {
-	const text = cleanText(value, 160);
-	if (!text || text === "non-specificare") return NOT_SPECIFIED;
-	const normalized = text.replaceAll("-", " ");
-	return normalized.charAt(0).toLocaleUpperCase("it-IT") + normalized.slice(1);
-}
-
-function formatOpeningHours(value: unknown) {
-	if (!isRecord(value)) return NOT_SPECIFIED;
-	return cleanText(value.descrizione) ?? NOT_SPECIFIED;
-}
-
-function formatPrizes(value: unknown) {
-	if (!Array.isArray(value)) return NOT_SPECIFIED;
-	const prizes = value.flatMap((item): string[] => {
-		if (!isRecord(item)) return [];
-		const title = cleanText(item.titoloPremio, 160);
-		if (!title) return [];
-		const place = cleanText(item.posto, 160);
-		return [place ? `${place}: ${title}` : title];
-	});
-	if (prizes.length === 0) return NOT_SPECIFIED;
-	return prizes.join("; ");
-}
-
 function announcementLocations(row: AnnouncementQueryRow) {
 	const source = (row as unknown as Record<string, unknown>).localita_annuncio;
 	return relationRecords(source)
@@ -333,13 +263,6 @@ function announcementLocations(row: AnnouncementQueryRow) {
 			const rightLabel = [right.city, right.region].filter(Boolean).join(", ");
 			return leftLabel.localeCompare(rightLabel, "it-IT");
 		});
-}
-
-function formatLocation(locations: AnnouncementLocation[]) {
-	const first = locations[0];
-	if (!first) return "Località non specificata";
-	const label = [first.city, first.region].filter(Boolean).join(", ");
-	return locations.length > 1 ? `${label} +${locations.length - 1}` : label;
 }
 
 function anonymousAuthor(profileType: ProfileType): AnnouncementAuthor {
@@ -362,256 +285,8 @@ function detailForType(row: AnnouncementQueryRow, type: AnnouncementType) {
 	return firstRelation((row as unknown as Record<string, unknown>)[type]) ?? {};
 }
 
-function emptyFilterData(locations: AnnouncementLocation[]): AnnouncementFilterData {
-	return {
-		regions: [...new Set(locations.map(({region}) => region))],
-		types: [],
-		roles: [],
-		figures: [],
-		categories: [],
-		car: null,
-		cost: null,
-		compensation: null,
-	};
-}
-
-function detailField(label: string, value: string | null, wide = false): AnnouncementDetailField {
-	return {label, value: value ?? NOT_SPECIFIED, ...(wide ? {wide: true} : {})};
-}
-
-function announcementContent(
-	type: AnnouncementType,
-	detail: Record<string, unknown>,
-	locations: AnnouncementLocation[],
-	detailed = false,
-) {
-	const selection = (values: string[], plural: "selezionati" | "selezionate") => formatSelection(values, plural, !detailed);
-	const contentFact = (kind: AnnouncementFactKind, label: string, value: string | null) => fact(kind, label, value, !detailed);
-	const location = detailed && locations.length > 0
-		? locations.map(({city, region}) => [city, region].filter(Boolean).join(", ")).join(", ")
-		: formatLocation(locations);
-	const filters = emptyFilterData(locations);
-	let title: string;
-	let description = cleanText(detail.descrizione_aggiuntiva);
-	let facts: AnnouncementFact[];
-	let fields: AnnouncementDetailField[];
-	let searchValues: string[] = [];
-	let playerRoles: AnnouncementPlayerRoles | null = null;
-
-	if (type === "annuncio_giocatore") {
-		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
-		const primaryRoles = normalizePlayerPrimaryRoles(cleanStringArray(detail.ruoli_principali));
-		const secondaryRoles = normalizePlayerSpecificRoles(cleanStringArray(detail.ruoli_secondari));
-		const categories = cleanStringArray(detail.categorie_ricercate);
-		title = primaryRoles[0] ? `${primaryRoles[0]} disponibile` : "Giocatore disponibile";
-		facts = [
-			contentFact("roles", "Ruoli principali", selection(primaryRoles, "selezionati")),
-			contentFact("roles", "Ruoli secondari", selection(secondaryRoles, "selezionati")),
-			contentFact("types", "Tipologie", selection(types, "selezionate")),
-			contentFact("categories", "Categorie ricercate", selection(categories, "selezionate")),
-			contentFact("location", "Località", location),
-		];
-		fields = [
-			detailField("Ruoli principali", selection(primaryRoles, "selezionati")),
-			detailField("Ruoli secondari", selection(secondaryRoles, "selezionati")),
-			detailField("Tipologie", selection(types, "selezionate")),
-			detailField("Categorie ricercate", selection(categories, "selezionate")),
-		];
-		filters.types = types;
-		filters.roles = [...new Set([...primaryRoles, ...secondaryRoles])];
-		filters.categories = categories;
-		searchValues = [...types, ...primaryRoles, ...secondaryRoles, ...categories];
-		playerRoles = {primaryRoles, secondaryRoles};
-	} else if (type === "annuncio_squadra_cerca_giocatore") {
-		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
-		const primaryRoles = normalizePlayerPrimaryRoles(cleanStringArray(detail.ruoli_principali));
-		const secondaryRoles = normalizePlayerSpecificRoles(cleanStringArray(detail.ruoli_secondari));
-		const years = cleanStringArray(detail.annate_ricercate);
-		const season = cleanText(detail.stagione, 80);
-		title = primaryRoles[0] ? `Ricerca ${primaryRoles[0].toLocaleLowerCase("it-IT")}` : "Ricerca giocatore";
-		facts = [
-			contentFact("roles", "Ruoli", selection(primaryRoles, "selezionati")),
-			contentFact("categories", "Annate", selection(years, "selezionate")),
-			contentFact("season", "Stagione", season),
-			contentFact("location", "Località", location),
-		];
-		fields = [
-			detailField("Ruoli principali", selection(primaryRoles, "selezionati")),
-			detailField("Ruoli secondari", selection(secondaryRoles, "selezionati")),
-			detailField("Annate ricercate", selection(years, "selezionate")),
-			detailField("Stagione", season),
-			detailField("Tipologie", selection(types, "selezionate")),
-		];
-		filters.types = types;
-		filters.roles = [...new Set([...primaryRoles, ...secondaryRoles])];
-		searchValues = [...types, ...primaryRoles, ...secondaryRoles, ...years, season ?? ""];
-		playerRoles = {primaryRoles, secondaryRoles};
-	} else if (type === "annuncio_squadra_cerca_staff") {
-		const figure = cleanText(detail.figura_ricercata, 160);
-		const sector = cleanText(detail.settore, 160);
-		const compensation = finiteNumber(detail.compenso_mensile);
-		const requirements = cleanText(detail.requisiti);
-		title = figure ? `Ricerca ${figure.toLocaleLowerCase("it-IT")}` : "Ricerca staff sportivo";
-		description = description ?? requirements;
-		facts = [
-			contentFact("figures", "Figura", figure),
-			contentFact("sector", "Settore", sector),
-			contentFact("compensation", "Compenso mensile", compensation === null ? null : formatCurrency(compensation)),
-			contentFact("location", "Località", location),
-		];
-		fields = [
-			detailField("Figura ricercata", figure),
-			detailField("Settore", sector),
-			detailField("Compenso mensile", compensation === null ? null : formatCurrency(compensation)),
-			detailField("Periodo", formatPeriod(detail.periodo_dal, detail.periodo_al)),
-			detailField("Requisiti", requirements, true),
-		];
-		filters.figures = figure ? [figure] : [];
-		filters.compensation = compensation;
-		searchValues = [figure ?? "", sector ?? "", requirements ?? ""];
-	} else if (type === "annuncio_squadra_cerca_partita") {
-		const categories = cleanStringArray(detail.categorie_avversario);
-		const travel = cleanText(detail.disponibilita_trasferta, 40);
-		const period = formatPeriod(detail.periodo_dal, detail.periodo_al);
-		const time = formatTimeRange(detail.orario_dalle, detail.orario_alle);
-		title = "Ricerca partita";
-		facts = [
-			contentFact("categories", "Categorie", selection(categories, "selezionate")),
-			contentFact("period", "Periodo", period),
-			contentFact("availability", "Trasferta", travel),
-			contentFact("location", "Località", location),
-		];
-		fields = [
-			detailField("Categorie avversarie", selection(categories, "selezionate")),
-			detailField("Disponibilità alla trasferta", travel),
-			detailField("Periodo", period),
-			detailField("Orario", time),
-		];
-		filters.categories = categories;
-		searchValues = [...categories, travel ?? "", period, time];
-	} else if (type === "annuncio_squadra_cerca_sponsor") {
-		const sector = cleanText(detail.categoria_settore, 160);
-		const support = cleanText(detail.supporto_cercato);
-		const offer = cleanText(detail.offerta_fornita);
-		title = sector ? `Ricerca sponsor: ${sector}` : "Ricerca sponsor";
-		description = description ?? support;
-		facts = [
-			contentFact("sector", "Settore", sector),
-			contentFact("services", "Supporto cercato", support),
-			contentFact("services", "Offerta", offer),
-			contentFact("location", "Località", location),
-		];
-		fields = [
-			detailField("Categoria / settore", sector),
-			detailField("Supporto cercato", support, true),
-			detailField("Offerta fornita", offer, true),
-		];
-		searchValues = [sector ?? "", support ?? "", offer ?? ""];
-	} else if (type === "annuncio_staff_sportivo") {
-		const figures = cleanStringArray(detail.figure_professionali);
-		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
-		const categories = cleanStringArray(detail.categorie_ricercate);
-		const occupation = cleanText(detail.disponibilita_occupazione, 160);
-		const travel = cleanText(detail.disponibilita_spostamento, 40);
-		title = figures[0] ? `${figures[0]} disponibile` : "Staff sportivo disponibile";
-		facts = [
-			contentFact("figures", "Figure", selection(figures, "selezionate")),
-			contentFact("categories", "Categorie", selection(categories, "selezionate")),
-			contentFact("availability", "Spostamenti", travel),
-			contentFact("location", "Località", location),
-		];
-		fields = [
-			detailField("Figure professionali", selection(figures, "selezionate")),
-			detailField("Tipologie", selection(types, "selezionate")),
-			detailField("Categorie ricercate", selection(categories, "selezionate")),
-			detailField("Disponibilità lavorativa", humanizeValue(occupation)),
-			detailField("Disponibilità agli spostamenti", travel),
-		];
-		filters.types = types;
-		filters.figures = figures;
-		filters.categories = categories;
-		searchValues = [...figures, ...types, ...categories, occupation ?? "", travel ?? ""];
-	} else if (type === "annuncio_arbitro") {
-		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
-		const categories = cleanStringArray(detail.categorie_ricercate);
-		const occupation = cleanText(detail.disponibilita_occupazione, 160);
-		const travel = cleanText(detail.disponibilita_spostamento, 40);
-		const car = cleanText(detail.automunito, 40);
-		title = "Arbitro disponibile";
-		facts = [
-			contentFact("categories", "Categorie", selection(categories, "selezionate")),
-			contentFact("availability", "Disponibilità", humanizeValue(occupation)),
-			contentFact("car", "Automunito", car),
-			contentFact("location", "Località", location),
-		];
-		fields = [
-			detailField("Tipologie", selection(types, "selezionate")),
-			detailField("Categorie ricercate", selection(categories, "selezionate")),
-			detailField("Disponibilità", humanizeValue(occupation)),
-			detailField("Disponibilità agli spostamenti", travel),
-			detailField("Automunito", car),
-		];
-		filters.types = types;
-		filters.categories = categories;
-		filters.car = car;
-		searchValues = [...types, ...categories, occupation ?? "", travel ?? "", car ?? ""];
-	} else if (type === "annuncio_torneo_evento") {
-		const name = cleanText(detail.nome_evento, 160);
-		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
-		const registration = humanizeValue(detail.modalita_iscrizione);
-		const participation = humanizeValue(detail.tipo_partecipazione);
-		const cost = finiteNumber(detail.costo_partecipazione);
-		const teams = finiteNumber(detail.numero_squadre);
-		const years = formatYearRange(detail.annate_ammesse_da, detail.annate_ammesse_a);
-		const prizes = formatPrizes(detail.lista_premi_trofei);
-		title = name ?? "Torneo o evento";
-		facts = [
-			contentFact("registration", "Iscrizione", registration),
-			contentFact("participation", "Partecipazione", participation),
-			contentFact("price", "Costo", cost === null ? null : formatCurrency(cost)),
-			contentFact("location", "Località", location),
-		];
-		fields = [
-			detailField("Tipologie", selection(types, "selezionate")),
-			detailField("Modalità di iscrizione", registration),
-			detailField("Annate ammesse", years),
-			detailField("Numero di squadre", teams === null ? null : String(teams)),
-			detailField("Costo di partecipazione", cost === null ? null : formatCurrency(cost)),
-			detailField("Tipo di partecipazione", participation),
-			detailField("Premi e trofei", prizes, true),
-		];
-		filters.types = types;
-		filters.cost = cost;
-		searchValues = [...types, registration, participation, years, prizes];
-	} else {
-		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
-		const cost = finiteNumber(detail.costo_partenza);
-		const services = cleanText(detail.servizi_inclusi);
-		const hours = formatOpeningHours(detail.orari);
-		title = "Campo o impianto disponibile";
-		description = description ?? services;
-		facts = [
-			contentFact("types", "Tipologie", selection(types, "selezionate")),
-			contentFact("price", "Costo", cost === null ? null : `Da ${formatCurrency(cost)}`),
-			contentFact("services", "Servizi", services),
-			contentFact("location", "Località", location),
-		];
-		fields = [
-			detailField("Tipologie", selection(types, "selezionate")),
-			detailField("Orari", hours, true),
-			detailField("Costo di partenza", cost === null ? null : formatCurrency(cost)),
-			detailField("Servizi inclusi", services, true),
-		];
-		filters.types = types;
-		filters.cost = cost;
-		searchValues = [...types, services ?? "", hours];
-	}
-
-	return {title, description, location, facts, fields, playerRoles, filters, searchValues};
-}
-
 function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
-	if (!isAnnouncementType(row.tipologia_annuncio)) return null;
+	if (!isActiveAnnouncementType(row.tipologia_annuncio)) return null;
 	const priorityEndsAt = row.priorita_fine_il ? Date.parse(row.priorita_fine_il) : NaN;
 	const isPriority = row.livello_annuncio === "prioritario"
 		&& row.stato_annuncio === "pubblicato"
@@ -919,7 +594,7 @@ export async function loadLatestPublicAnnouncements(): Promise<LatestAnnouncemen
 		const supabase = createAdminClient();
 
 		const {data, error} = await publicAnnouncementQuery(supabase)
-			.in("tipologia_annuncio", ANNOUNCEMENT_TYPES)
+			.in("tipologia_annuncio", ACTIVE_ANNOUNCEMENT_TYPES)
 			.order("creato_il", {ascending: false, nullsFirst: false})
 			.order("uuid", {ascending: false})
 			.limit(6);
@@ -935,6 +610,7 @@ export async function loadLatestPublicAnnouncements(): Promise<LatestAnnouncemen
 			.map(({item}) => ({
 				id: item.id,
 				profileType: item.profileType,
+				typeLabel: item.typeLabel,
 				title: item.title,
 				location: item.location,
 				createdAt: item.createdAt,
@@ -1057,7 +733,8 @@ export async function loadPublicAnnouncementDirectory(
 ): Promise<AnnouncementDirectoryResult> {
 	try {
 		const supabase = createAdminClient();
-		const requestedTypes = getAnnouncementStorageTypes(query);
+		const requestedTypes = getAnnouncementStorageTypes(query).filter(isActiveAnnouncementType);
+		if (requestedTypes.length === 0) return emptyDirectoryResult(false);
 		const requiresClientFiltering = Boolean(query.q)
 			|| getAnnouncementFilterEntries(query.filters)
 				.some(([key]) => key !== "ricercaSquadra");
@@ -1181,6 +858,42 @@ async function loadSimilarPublicAnnouncements(supabase: SupabaseClient<Database>
 	}
 }
 
+export async function loadPublicProfileAnnouncements(
+	supabase: SupabaseClient<Database>,
+	profileId: string,
+	profileType: ProfileType,
+): Promise<{announcements: AnnouncementDirectoryItem[]; announcementCount: number | null; unavailable: boolean}> {
+	const allowedTypes = PROFILE_ANNOUNCEMENT_TYPES[profileType];
+	if (allowedTypes.length === 0) return {announcements: [], announcementCount: 0, unavailable: false};
+
+	try {
+		const {data, error, count} = await publicAnnouncementQuery(supabase, {count: "exact"})
+			.eq("autore_annuncio", profileId)
+			.in("tipologia_annuncio", allowedTypes)
+			.order("creato_il", {ascending: false, nullsFirst: false})
+			.order("uuid", {ascending: false})
+			.limit(4);
+		if (error) {
+			logQueryError("profile-announcements", error);
+			return {announcements: [], announcementCount: null, unavailable: true};
+		}
+
+		const mapped = (data ?? []).map(mapAnnouncement).filter((item): item is MappedAnnouncement => Boolean(item));
+		const [authorResult, teams] = await Promise.all([
+			loadOfficialAuthors(supabase, mapped),
+			loadAnnouncementTeams(supabase, mapped),
+		]);
+		return {
+			announcements: mapped.map(item => withLoadedRelations(item, authorResult.authors, teams, authorResult.error)),
+			announcementCount: count,
+			unavailable: false,
+		};
+	} catch (error) {
+		logQueryError("profile-announcements-unexpected", error);
+		return {announcements: [], announcementCount: null, unavailable: true};
+	}
+}
+
 async function loadAnnouncementSaveCount(supabase: SupabaseClient<Database>, id: string): Promise<number | null> {
 	try {
 		// Aggregate only: never return the identities of users who saved an announcement.
@@ -1234,13 +947,13 @@ export async function loadPublicAnnouncementDetail(
 			logQueryError("detail", error);
 			return {status: "error"};
 		}
-		if (!data || !isAnnouncementType(data.tipologia_annuncio)) {
+		if (!data || !isActiveAnnouncementType(data.tipologia_annuncio)) {
 			return {status: "not-found"};
 		}
 
 		const mapped = mapAnnouncement(data);
 		if (!mapped) return {status: "not-found"};
-		const content = announcementContent(mapped.item.type, detailForType(data, mapped.item.type), announcementLocations(data), true);
+		const content = announcementContent(data.tipologia_annuncio, detailForType(data, data.tipologia_annuncio), announcementLocations(data), true);
 		const isListed = isAnnouncementListed(data.stato_annuncio, data.nascosto, data.privato);
 		const [authorResult, linkedTeams, contactResult, linkResult, mediaResult, saveCount, similar] = await Promise.all([
 			loadOfficialAuthors(supabase, [mapped]),
@@ -1294,6 +1007,7 @@ export async function loadPublicAnnouncementDetail(
 					? `/api/metadata/annuncio-immagine?${new URLSearchParams({id}).toString()}`
 					: null,
 				location: content.location,
+				locations: content.locations,
 				facts: content.facts,
 				fields: content.fields,
 				saveCount,

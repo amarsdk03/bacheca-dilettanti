@@ -10,7 +10,7 @@ import type {
 	ProfileDetailResult,
 	PublicProfileExperience,
 } from "@/features/dettagli-profilo/profile-detail-model";
-import {loadPublicProfileAnnouncements} from "@/features/dettagli-profilo/server/profile-announcements-query";
+import {loadPublicProfileAnnouncements} from "@/features/annunci/server/queries";
 import {DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {parsePlayerCareer, toPublicPlayerData} from "./player-profile-data";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
@@ -94,10 +94,6 @@ function cleanStringArray(value: unknown) {
 	return [...new Set(value.map(cleanText).filter((item): item is string => Boolean(item)))];
 }
 
-function formatList(value: unknown) {
-	return cleanStringArray(value).join(", ") || NOT_SPECIFIED;
-}
-
 function asJsonRecord(value: Json | undefined): Record<string, Json | undefined> | null {
 	if (!value || Array.isArray(value) || typeof value !== "object") return null;
 	return value as Record<string, Json | undefined>;
@@ -108,7 +104,7 @@ function jsonText(record: Record<string, Json | undefined>, key: string) {
 }
 
 function formatOpeningHours(value: Json | null) {
-	if (!Array.isArray(value)) return NOT_SPECIFIED;
+	if (!Array.isArray(value)) return [];
 
 	const entries = value.flatMap((entry): string[] => {
 		const record = asJsonRecord(entry);
@@ -122,7 +118,7 @@ function formatOpeningHours(value: Json | null) {
 		return [`${DAY_LABELS[day] ?? day}: ${hours}`];
 	});
 
-	return entries.join("\n") || NOT_SPECIFIED;
+	return entries;
 }
 
 function formatCurrency(value: number | null) {
@@ -153,6 +149,21 @@ function detailField(
 		value: cleanText(value) ?? NOT_SPECIFIED,
 		...(wide ? {wide: true} : {}),
 		...(href ? {href} : {}),
+	};
+}
+
+function detailListField(
+	label: string,
+	items: string[],
+	listStyle: "chips" | "rows" = "chips",
+	wide = false,
+): ProfileDetailField {
+	return {
+		label,
+		value: items.join(", ") || NOT_SPECIFIED,
+		items,
+		listStyle,
+		...(wide ? {wide: true} : {}),
 	};
 }
 
@@ -222,7 +233,7 @@ async function loadProfileContent(
 				title: cleanText(data.nome_societa),
 				availability: null,
 				fields: [
-					detailField("Tipologie sportive", formatList(ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport)))),
+					detailListField("Tipologie sportive", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
 					detailField("Sede principale", data.sede_principale),
 					detailField("Presentazione", data.presentazione, true),
 				],
@@ -246,7 +257,7 @@ async function loadProfileContent(
 				title: fullName(data.nome, data.cognome),
 				availability: data.disponibilita,
 				fields: [
-					detailField("Figure professionali", formatList(data.figure_professionali)),
+					detailListField("Figure professionali", cleanStringArray(data.figure_professionali)),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Presentazione", data.presentazione, true),
 				],
@@ -271,8 +282,8 @@ async function loadProfileContent(
 				title: fullName(data.nome, data.cognome),
 				availability: data.disponibilita,
 				fields: [
-					detailField("Tipologie sportive", formatList(ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport)))),
-					detailField("Figure professionali", formatList(data.figure_professionali)),
+					detailListField("Tipologie sportive", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
+					detailListField("Figure professionali", cleanStringArray(data.figure_professionali)),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Automunito", formatVehicleAvailability(data.automunito)),
 					detailField("Specializzazioni", data.specializzazioni, true),
@@ -347,7 +358,7 @@ async function loadProfileContent(
 				title: cleanText(data.nome_organizzazione),
 				availability: null,
 				fields: [
-					detailField("Tipologie sportive", formatList(ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport)))),
+					detailListField("Tipologie sportive", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
 					detailField("Sede principale", data.sede_principale),
 					detailField("Presentazione", data.presentazione, true),
 				],
@@ -372,10 +383,10 @@ async function loadProfileContent(
 			title: cleanText(data.nome_organizzazione),
 			availability: null,
 			fields: [
-				detailField("Tipologie sportive", formatList(ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport)))),
+				detailListField("Tipologie sportive", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
 				detailField("Sede principale", data.sede_principale),
 				detailField("Costo di partenza", formatCurrency(data.costo_partenza)),
-				detailField("Orari", formatOpeningHours(data.orari), true),
+				detailListField("Orari", formatOpeningHours(data.orari), "rows", true),
 				detailField("Presentazione", data.presentazione, true),
 				detailField("Servizi inclusi", data.servizi_inclusi, true),
 				detailField("Informazioni aggiuntive", data.info_aggiuntive, true),

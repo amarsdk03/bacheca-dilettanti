@@ -77,7 +77,7 @@ function fixture({current = row(), authors = [profile], similar = [], contacts =
 		"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => new Map()},
 		"@/features/profilo/server/public-team-profiles": {loadPublicTeamProfiles: async () => []},
 	});
-	return {calls, queries: load("src/features/annunci/server/queries.ts"), load};
+	return {calls, client, queries: load("src/features/annunci/server/queries.ts"), load};
 }
 
 test("detail exposes aggregate counts and complete comma-separated selections; directory stays compact", async () => {
@@ -98,6 +98,24 @@ test("detail exposes aggregate counts and complete comma-separated selections; d
 	assert.deepEqual(calls.find(c => c.table === "profilo_follow").operations, [["select", "uuid_profilo_seguito", {count: "exact", head: true}], ["eq", "uuid_profilo_seguito", authorId]]);
 	const [card] = await queries.loadPublicAnnouncementsByIds([id]);
 	assert.equal(card.facts.find(f => f.kind === "types").value, "2 selezionate");
+});
+
+test("recent announcements on a profile reuse the public card title, facts and visibility rules", async () => {
+	const current = row("annuncio_torneo_evento", {
+		nome_evento: "Coppa Lazio", modalita_iscrizione: "online", costo_partecipazione: 50,
+		lista_premi_trofei: [{posto: "Primo posto", titoloPremio: "Coppa"}],
+	});
+	const {client, queries, calls} = fixture({current, authors: []});
+	const profileResult = await queries.loadPublicProfileAnnouncements(client, authorId, "torneo-evento");
+	const [publicCard] = await queries.loadPublicAnnouncementsByIds([id]);
+	assert.equal(profileResult.unavailable, false);
+	assert.equal(profileResult.announcementCount, 1);
+	assert.deepEqual(profileResult.announcements, [publicCard]);
+	const request = calls.find(call => call.table === "annuncio" && call.operations.some(([method, key]) => method === "eq" && key === "autore_annuncio"));
+	assert.ok(request);
+	assert.ok(request.operations.some(([method, key, value]) => method === "eq" && key === "stato_annuncio" && value === "pubblicato"));
+	assert.ok(request.operations.some(([method, key, value]) => method === "eq" && key === "nascosto" && value === false));
+	assert.ok(request.operations.some(([method, key, value]) => method === "eq" && key === "privato" && value === false));
 });
 
 test("priority styling follows the published activation flag and expiry", async () => {
@@ -276,17 +294,85 @@ test("confirmation renders the saved preview and opens its detail in a new tab b
 	for (const awaitingPayment of [true, false]) {
 		const preview = {
 			id, announcementType: "annuncio_giocatore", profileType: "giocatore", title: "Annuncio salvato",
-			typeLabel: "Giocatore", author: "Autore", description: null, locations: [], contacts: [], facts: [], linkedTeams: [],
+			typeLabel: "Giocatore", author: "Autore", description: null, locations: [], contacts: [], facts: [], fields: [], playerRoles: null, linkedTeams: [],
 			genericLink: null, videoHighlights: null, imageUrl: null, imageLabel: null, statusInfo: null,
 			status: awaitingPayment ? "Pagamento da completare" : "In attesa di approvazione",
 		};
 		const html = renderToStaticMarkup(React.createElement(Confirmation, {result: {status: "ok", preview, suggestions: [], awaitingPayment, isListed: false}}));
 		assert.match(html, /Annuncio salvato/);
 		assert.ok(html.includes(preview.status));
+		assert.match(html, /Nessuna località indicata/);
 		const link = [...html.matchAll(/<a\b[^>]*>[\s\S]*?<\/a>/g)].find(([anchor]) => anchor.includes(`href="/dettagli-annuncio?id=${id}"`))?.[0];
 		assert.ok(link);
 		assert.match(link, /target="_blank"/);
 		assert.match(link, /Anteprima/);
+	}
+});
+
+test("publish preview stays light and compact while retaining locations, image, contacts and links", () => {
+	const PreviewCard = sourceLoader()("src/features/pubblica-annuncio/components/AnnouncementPreviewCard.tsx").default;
+	const preview = {
+		announcementType: "annuncio_giocatore", profileType: "giocatore", title: "Difensore disponibile",
+		typeLabel: "Giocatore", author: "Mario Rossi", description: "Descrizione completa",
+		locations: [{region: "Lazio", city: "Roma"}, {region: "Lazio", city: "Viterbo"}, {region: "Toscana", city: null}],
+		contacts: ["info@example.test", "+39 333 1234567"],
+		facts: [{kind: "roles", label: "Ruoli principali", value: "Difensore"}],
+		fields: [{label: "Ruoli principali", value: "Difensore", items: ["Difensore"], listStyle: "chips"}],
+		playerRoles: {primaryRoles: ["Difensore"], secondaryRoles: []},
+		genericLink: "https://example.test/annuncio", videoHighlights: null,
+		imageUrl: "https://example.test/immagine.webp", imageLabel: "Foto del campo",
+		status: "In attesa di approvazione", statusInfo: "Annuncio ricevuto", linkedTeams: [],
+	};
+	const html = renderToStaticMarkup(React.createElement(PreviewCard, {preview}));
+	assert.match(html, /announcement-preview-card/);
+	assert.doesNotMatch(html, /public-profile-hero/);
+	assert.equal((html.match(/data-slot="card"/g) ?? []).length, 1);
+	for (const value of ["Roma (Lazio)", "Viterbo (Lazio)", "Tutta la regione Toscana", "Difensore", "info@example.test", "+39 333 1234567", "Annuncio ricevuto"]) {
+		assert.ok(html.includes(value), value);
+	}
+	assert.ok(html.indexOf("Descrizione completa") < html.indexOf('src="https://example.test/immagine.webp"'));
+	assert.match(html, /href="https:\/\/example\.test\/annuncio"/);
+	assert.match(html, /Link annuncio/);
+});
+
+test("publish preview shows the persisted facts and supporting fields for all nine announcement types", () => {
+	const load = sourceLoader();
+	const {createProfileDrafts} = load("src/features/profilo/profile-model.ts");
+	const {buildPublishPreview} = load("src/features/pubblica-annuncio/announcement-preview.ts");
+	const PreviewCard = load("src/features/pubblica-annuncio/components/AnnouncementPreviewCard.tsx").default;
+	const drafts = createProfileDrafts();
+	drafts.giocatore.nome = "Mario";
+	drafts.giocatore.ruoli_sport = {principali: ["Difensore"], specifici: ["Terzino destro"]};
+	drafts.giocatore.tipologie_sport = ["Calcio a 11"];
+	drafts.squadra.tipologie_sport = ["Calcio a 11"];
+	drafts["staff-sportivo"].figure_professionali = ["Allenatore"];
+	drafts["staff-sportivo"].disponibilita = "disponibile";
+	drafts.arbitro.disponibilita = "disponibile";
+	const cases = [
+		["annuncio_giocatore", "giocatore", {categorie_ricercate: ["Eccellenza"], descrizione_aggiuntiva: "Disponibile da subito"}, ["Difensore disponibile", "Terzino destro", "Eccellenza"]],
+		["annuncio_squadra_cerca_giocatore", "squadra", {ruoli_principali: ["Difensore"], ruoli_secondari: ["Terzino destro"], annate_ricercate: ["2004"], stagione: "2026/27", descrizione_aggiuntiva: "Cerchiamo difensore"}, ["Ricerca difensore", "2004", "2026/27"]],
+		["annuncio_squadra_cerca_staff", "squadra", {figura_ricercata: "Allenatore", settore: "Juniores", compenso_mensile: "1200", requisiti: "Patentino UEFA B", periodo_dal: "2026-10-01", periodo_al: "2027-06-30", descrizione_aggiuntiva: "Staff cercato"}, ["Ricerca allenatore", "Patentino UEFA B", "Dal 01/10/2026 al 30/06/2027"]],
+		["annuncio_squadra_cerca_partita", "squadra", {categorie_avversario: ["Juniores"], disponibilita_trasferta: "Regionale", periodo_dal: "2026-10-01", periodo_al: "2026-10-31", orario_dalle: "18:00", orario_alle: "20:00", descrizione_aggiuntiva: "Amichevole cercata"}, ["Ricerca partita", "Juniores", "Dalle 18:00 alle 20:00"]],
+		["annuncio_squadra_cerca_sponsor", "squadra", {categoria_settore: "Abbigliamento", supporto_cercato: "Materiale tecnico", offerta_fornita: "Visibilità", descrizione_aggiuntiva: "Sponsor cercato"}, ["Ricerca sponsor: Abbigliamento", "Materiale tecnico", "Visibilità"]],
+		["annuncio_staff_sportivo", "staff-sportivo", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", descrizione_aggiuntiva: "Collaborazioni cercate"}, ["Allenatore disponibile", "Juniores", "Calcio a 11"]],
+		["annuncio_arbitro", "arbitro", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", automunito: "Auto propria", descrizione_aggiuntiva: "Disponibile nel Lazio"}, ["Arbitro disponibile", "Auto propria", "Calcio a 11"]],
+		["annuncio_torneo_evento", "torneo-evento", {nome_evento: "Coppa Lazio", tipologie_sport: ["Calcio a 11"], modalita_iscrizione: "online", annate_ammesse_da: "2004", annate_ammesse_a: "2008", numero_squadre: "8", costo_partecipazione: "50", tipo_partecipazione: "squadre", lista_premi_trofei: [{posto: "Primo posto", titoloPremio: "Coppa"}], descrizione_aggiuntiva: "Torneo estivo"}, ["Coppa Lazio", "Premi e trofei", "Primo posto: Coppa"]],
+		["annuncio_campo_impianto", "campi-impianti-sportivi", {tipologie_sport: ["Calcio a 11"], orari: "Lun-Ven 18-22", costo_partenza: "60", servizi_inclusi: "Spogliatoi", descrizione_aggiuntiva: "Campo disponibile"}, ["Campo o impianto disponibile", "Lun-Ven 18-22", "Spogliatoi"]],
+	];
+	for (const [type, profileType, detail, expected] of cases) {
+		const payload = {
+			profileType,
+			announcement: {
+				type, detail, locations: [{regione: "Lazio", citta: "Roma"}],
+				contacts: {email: "info@example.test", phone: ""},
+				extras: {genericLink: "", videoHighlights: ""},
+			},
+		};
+		const preview = buildPublishPreview(payload, drafts, null, null);
+		const html = renderToStaticMarkup(React.createElement(PreviewCard, {preview}));
+		for (const value of expected) assert.ok(html.includes(value), `${type}: missing ${value}`);
+		assert.match(html, /Roma/);
+		assert.match(html, /info@example\.test/);
 	}
 });
 
@@ -363,10 +449,13 @@ test("announcement location and copyable UUID follow contacts in the overview si
 	const load = sourceLoader();
 	const Location = load("src/features/annunci/components/details/AnnouncementLocationCard.tsx").default;
 	const Identifier = load("src/components/data-info/DetailIdentifier.tsx").default;
-	const location = renderToStaticMarkup(React.createElement(Location, {location: "Roma, Lazio, Firenze, Toscana"}));
-	const emptyLocation = renderToStaticMarkup(React.createElement(Location, {location: "Località non specificata"}));
+	const location = renderToStaticMarkup(React.createElement(Location, {locations: [{city: "Roma", region: "Lazio"}, {city: "Firenze", region: "Toscana"}]}));
+	const emptyLocation = renderToStaticMarkup(React.createElement(Location, {locations: []}));
 	const identifier = renderToStaticMarkup(React.createElement(Identifier, {id, entity: "annuncio"}));
-	assert.match(location, /Roma, Lazio, Firenze, Toscana/);
+	assert.match(location, /Roma/);
+	assert.match(location, /Lazio/);
+	assert.match(location, /Firenze/);
+	assert.match(location, /Toscana/);
 	assert.match(emptyLocation, /Nessuna località indicata/);
 	assert.match(identifier, /UUID annuncio/);
 	assert.match(identifier, /aria-label="Copia UUID dell’annuncio"/);

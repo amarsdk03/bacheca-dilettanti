@@ -522,6 +522,30 @@
     border-color: color-mix(in srgb, var(--profile-accent) 45%, transparent);
 }
 
+.announcement-preview-card {
+    --background: #ffffff;
+    --foreground: #211f2a;
+    --card: #ffffff;
+    --card-foreground: var(--foreground);
+    --muted: #f6f4fa;
+    --muted-foreground: #5e5a68;
+    --secondary: #f4f0ff;
+    --secondary-foreground: #37245e;
+    --accent: #f4f0ff;
+    --accent-foreground: var(--foreground);
+    --border: #e5e1eb;
+    --primary: #5532b4;
+    --primary-foreground: #ffffff;
+    --ring: var(--preview-accent, var(--brand-indigo));
+    color: var(--card-foreground);
+    background: var(--card);
+}
+
+.announcement-preview-card .announcement-preview-type-badge {
+    color: color-mix(in srgb, var(--preview-accent) 65%, #16121e);
+    background: color-mix(in srgb, var(--preview-accent) 12%, white);
+}
+
 .priority-announcement {
     --foreground: #211936;
     --card-foreground: var(--foreground);
