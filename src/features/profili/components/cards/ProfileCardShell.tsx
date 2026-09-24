@@ -44,7 +44,7 @@ function ProfileFactGrid({facts, accent}: {facts: readonly DirectoryProfileFact[
 	}
 
 	return (
-		<dl className="grid grid-cols-1 gap-2 sm:grid-cols-2 py-3 px-1 gap-4">
+		<dl className="grid grid-cols-1 gap-x-2 gap-y-4 sm:grid-cols-2 py-3 px-1">
 			{facts.map(({kind, label, value}) => {
 				const Icon = PROFILE_FACT_ICONS[kind];
 				return (
@@ -87,7 +87,7 @@ export default function ProfileCardShell({
 			aria-label={"Apri il profilo di " + profile.title}
 		>
 			<Card className="relative h-full gap-5 overflow-hidden transition-shadow hover:shadow-lg" style={style}>
-				<div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-[color:var(--profile-accent)]" />
+				<div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-(--profile-accent)" />
 				<CardHeader className="gap-4">
 					<div className="flex flex-wrap items-center justify-between gap-2">
 						<Badge variant="outline" style={{borderColor: accent, color: accent}}>
@@ -97,7 +97,7 @@ export default function ProfileCardShell({
 						{profile.verified && <Badge variant="secondary"><BadgeCheckIcon data-icon="inline-start" aria-hidden="true" />Verificato</Badge>}
 					</div>
 					<div className="flex min-w-0 items-center gap-4">
-						<Avatar className="size-16 shrink-0 ring-2 ring-[color:var(--profile-accent)]/20">
+						<Avatar className="size-16 shrink-0 ring-2 ring-(--profile-accent)/20">
 							{profile.imageUrl && <AvatarImage src={profile.imageUrl} alt={"Foto profilo di " + profile.title} />}
 							<AvatarFallback>{profileInitials(profile.title)}</AvatarFallback>
 						</Avatar>

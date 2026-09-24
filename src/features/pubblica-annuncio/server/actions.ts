@@ -40,7 +40,6 @@ interface PublishRpcResult {
 	announcementId?: unknown;
 	retryAt?: unknown;
 	idempotent?: unknown;
-	paymentRequired?: unknown;
 }
 
 interface PublishOtpQuotaRpcResult {
@@ -433,7 +432,7 @@ export async function publishAnnouncement(
 			p_payload: rpcPayload,
 			p_terms_version: TERMS_VERSION,
 			p_privacy_version: PRIVACY_VERSION,
-			p_visibility: payload.visibility,
+			p_visibility: "gratuito",
 		});
 
 		if (error) {
@@ -460,14 +459,6 @@ export async function publishAnnouncement(
 		}
 
 		revalidatePath("/il-tuo-profilo");
-		if (payload.visibility === "prioritario" && result.paymentRequired !== false) {
-			return {
-				status: "payment_required",
-				announcementId: result.announcementId,
-				submissionId: payload.submissionId,
-				idempotent: result.idempotent === true,
-			};
-		}
 		return {
 			status: "success",
 			announcementId: result.announcementId,

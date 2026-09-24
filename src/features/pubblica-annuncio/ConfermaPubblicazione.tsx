@@ -38,7 +38,7 @@ export default function ConfermaPubblicazione({result}: {result: PublishConfirma
 								{result.awaitingPayment ? <CrownIcon className="size-8" /> : <CheckCircle2Icon className="size-8" />}
 							</div>
 							<p className="mt-5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-brand-indigo">{result.awaitingPayment ? "Bozza salvata" : "Invio completato"}</p>
-							<h1 className="mt-3 font-home-display text-3xl uppercase tracking-tight sm:text-5xl">{result.awaitingPayment ? "Completa il pagamento." : "Il tuo annuncio è stato inviato."}</h1>
+							<h1 className="mt-5 font-home-display text-3xl uppercase tracking-tight sm:text-5xl">{result.awaitingPayment ? "Completa il pagamento." : "Il tuo annuncio è stato inviato."}</h1>
 							<p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
 								{result.awaitingPayment
 									? "L’annuncio è consultabile tramite link, ma non compare nelle ricerche e non entra in revisione finché il pagamento non è confermato."

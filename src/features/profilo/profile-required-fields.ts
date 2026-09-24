@@ -1,4 +1,5 @@
 import type {ProfileLocationDraft, ProfileType} from "@/features/profilo/profile-model";
+import {parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 
 export type ProfileValidationField =
 	| "name"
@@ -6,6 +7,7 @@ export type ProfileValidationField =
 	| "mainRole"
 	| "professionalRole"
 	| "headquarters"
+	| "startingCost"
 	| "locations";
 
 export type ProfileValidationErrors = Partial<Record<ProfileValidationField, string>>;
@@ -60,6 +62,7 @@ export function getProfileRequiredFieldErrors(
 		if (!nonEmpty(values.nome_organizzazione)) errors.name = "Inserisci il nome dell’impianto o dell’organizzazione.";
 		if (!nonEmpty(values.sede_principale)) errors.headquarters = "Inserisci la sede principale dell’impianto.";
 		if (!hasItems(values.tipologie_sport)) errors.sports = "Seleziona almeno una tipologia di calcio.";
+		if (parseOptionalMoney(values.costo_partenza) === undefined) errors.startingCost = "Inserisci un importo valido con massimo due decimali.";
 	}
 
 	return errors;

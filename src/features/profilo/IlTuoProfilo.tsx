@@ -154,7 +154,7 @@ const FAQ_GROUPS = [
 			{
 				value: "announcement-review",
 				question: "Cosa succede dopo aver inviato un annuncio?",
-				answer: "Un annuncio gratuito entra direttamente in revisione. Per un annuncio prioritario devi prima completare il pagamento: dopo l’approvazione avrà priorità per sette giorni. Puoi controllarne lo stato nella sezione I tuoi annunci.",
+				answer: "L’annuncio viene inviato gratuitamente in revisione. Puoi controllarne lo stato nella sezione I tuoi annunci.",
 			},
 			{
 				value: "announcement-edit",

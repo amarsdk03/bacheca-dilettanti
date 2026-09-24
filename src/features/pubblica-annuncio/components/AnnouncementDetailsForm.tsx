@@ -115,7 +115,9 @@ function TextField({
 	placeholder,
 	type = "text",
 	min,
+	max,
 	step,
+	maxLength = 160,
 	error,
 }: {
 	id: string;
@@ -126,7 +128,9 @@ function TextField({
 	placeholder?: string;
 	type?: "text" | "number" | "date" | "time";
 	min?: number;
+	max?: number;
 	step?: number;
+	maxLength?: number;
 	error?: string;
 }) {
 	return (
@@ -139,7 +143,9 @@ function TextField({
 				onChange={(event) => onChange(event.target.value)}
 				placeholder={placeholder}
 				min={min}
+				max={max}
 				step={step}
+				maxLength={type === "text" ? maxLength : undefined}
 				required={required}
 				aria-required={required}
 				aria-invalid={Boolean(error)}
@@ -241,7 +247,7 @@ export default function AnnouncementDetailsForm({
 							value={drafts.squadraCercaGiocatore.annate_ricercate}
 							onValueChange={(value) => updateDraft("squadraCercaGiocatore", "annate_ricercate", value)}
 						/>
-						<TextField id="team-player-season" label="Stagione" value={drafts.squadraCercaGiocatore.stagione} onChange={(value) => updateDraft("squadraCercaGiocatore", "stagione", value)} placeholder="Es. 2026/2027" />
+						<TextField id="team-player-season" label="Stagione" value={drafts.squadraCercaGiocatore.stagione} onChange={(value) => updateDraft("squadraCercaGiocatore", "stagione", value)} maxLength={80} placeholder="Es. 2026/2027" />
 						<DescriptionField id="team-player-description" label="Descrizione della ricerca" value={drafts.squadraCercaGiocatore.descrizione_aggiuntiva} onChange={(value) => updateDraft("squadraCercaGiocatore", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Indica requisiti, impegno richiesto e informazioni utili..." />
 					</FieldGroup>
 				)}
@@ -253,9 +259,9 @@ export default function AnnouncementDetailsForm({
 							<TextField id="team-staff-sector" label="Settore" value={drafts.squadraCercaStaff.settore} onChange={(value) => updateDraft("squadraCercaStaff", "settore", value)} placeholder="Es. Prima squadra" />
 						</div>
 						<div className="grid gap-4 sm:grid-cols-3">
-							<TextField id="team-staff-compensation" label="Compenso mensile" type="number" min={0} step={0.01} value={drafts.squadraCercaStaff.compenso_mensile} onChange={(value) => updateDraft("squadraCercaStaff", "compenso_mensile", value)} placeholder="EUR" />
-							<TextField id="team-staff-from" label="Periodo dal" type="date" value={drafts.squadraCercaStaff.periodo_dal} onChange={(value) => updateDraft("squadraCercaStaff", "periodo_dal", value)} />
-							<TextField id="team-staff-to" label="Periodo al" type="date" value={drafts.squadraCercaStaff.periodo_al} onChange={(value) => updateDraft("squadraCercaStaff", "periodo_al", value)} />
+							<TextField id="team-staff-compensation" label="Compenso mensile" type="number" min={0} max={99_999_999.99} step={0.01} value={drafts.squadraCercaStaff.compenso_mensile} onChange={(value) => updateDraft("squadraCercaStaff", "compenso_mensile", value)} error={errors.monthlyCompensation} placeholder="EUR" />
+							<TextField id="team-staff-from" label="Periodo dal" type="date" value={drafts.squadraCercaStaff.periodo_dal} onChange={(value) => updateDraft("squadraCercaStaff", "periodo_dal", value)} error={errors.periodFrom} />
+							<TextField id="team-staff-to" label="Periodo al" type="date" value={drafts.squadraCercaStaff.periodo_al} onChange={(value) => updateDraft("squadraCercaStaff", "periodo_al", value)} error={errors.periodTo} />
 						</div>
 						<DescriptionField id="team-staff-requirements" label="Requisiti" value={drafts.squadraCercaStaff.requisiti} onChange={(value) => updateDraft("squadraCercaStaff", "requisiti", value)} required error={errors.requirements} placeholder="Qualifiche, esperienza e disponibilità richieste..." />
 						<DescriptionField id="team-staff-description" label="Informazioni aggiuntive" value={drafts.squadraCercaStaff.descrizione_aggiuntiva} onChange={(value) => updateDraft("squadraCercaStaff", "descrizione_aggiuntiva", value)} placeholder="Dettagli sull’incarico e sull’ambiente di lavoro..." />
@@ -266,10 +272,10 @@ export default function AnnouncementDetailsForm({
 					<FieldGroup>
 						<CategorieCalcioMultiselectField label="Categorie avversarie" items={CATEGORIE_CALCIO_GROUPS} value={drafts.squadraCercaPartita.categorie_avversario} onValueChangeAction={(value) => updateDraft("squadraCercaPartita", "categorie_avversario", value)} required error={errors.matchCategories} />
 						<div className="grid gap-4 sm:grid-cols-2">
-							<TextField id="team-match-from" label="Periodo dal" type="date" value={drafts.squadraCercaPartita.periodo_dal} onChange={(value) => updateDraft("squadraCercaPartita", "periodo_dal", value)} />
-							<TextField id="team-match-to" label="Periodo al" type="date" value={drafts.squadraCercaPartita.periodo_al} onChange={(value) => updateDraft("squadraCercaPartita", "periodo_al", value)} />
-							<TextField id="team-match-time-from" label="Orario dalle" type="time" value={drafts.squadraCercaPartita.orario_dalle} onChange={(value) => updateDraft("squadraCercaPartita", "orario_dalle", value)} />
-							<TextField id="team-match-time-to" label="Orario alle" type="time" value={drafts.squadraCercaPartita.orario_alle} onChange={(value) => updateDraft("squadraCercaPartita", "orario_alle", value)} error={errors.matchTimes} />
+							<TextField id="team-match-from" label="Periodo dal" type="date" value={drafts.squadraCercaPartita.periodo_dal} onChange={(value) => updateDraft("squadraCercaPartita", "periodo_dal", value)} error={errors.periodFrom} />
+							<TextField id="team-match-to" label="Periodo al" type="date" value={drafts.squadraCercaPartita.periodo_al} onChange={(value) => updateDraft("squadraCercaPartita", "periodo_al", value)} error={errors.periodTo} />
+							<TextField id="team-match-time-from" label="Orario dalle" type="time" value={drafts.squadraCercaPartita.orario_dalle} onChange={(value) => updateDraft("squadraCercaPartita", "orario_dalle", value)} error={errors.matchTimeFrom} />
+							<TextField id="team-match-time-to" label="Orario alle" type="time" value={drafts.squadraCercaPartita.orario_alle} onChange={(value) => updateDraft("squadraCercaPartita", "orario_alle", value)} error={errors.matchTimeTo ?? errors.matchTimes} />
 						</div>
 						<Field>
 							<FieldLabel htmlFor="team-match-travel">Disponibilità alla trasferta <OptionalLabel /></FieldLabel>
@@ -357,16 +363,17 @@ export default function AnnouncementDetailsForm({
 								</Select>
 								{errors.tournamentYears && <FieldError>{errors.tournamentYears}</FieldError>}
 							</Field>
-							<TextField id="tournament-teams" label="Numero squadre" type="number" min={1} step={1} value={drafts.torneoEvento.numero_squadre} onChange={(value) => updateDraft("torneoEvento", "numero_squadre", value)} />
-							<Field>
+							<TextField id="tournament-teams" label="Numero squadre" type="number" min={1} max={100_000} step={1} value={drafts.torneoEvento.numero_squadre} onChange={(value) => updateDraft("torneoEvento", "numero_squadre", value)} error={errors.tournamentTeams} />
+							<Field data-invalid={Boolean(errors.tournamentCost)}>
 								<FieldLabel htmlFor="tournament-cost">Costo partecipazione <OptionalLabel /></FieldLabel>
 								<div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-									<Input id="tournament-cost" type="number" min={0} step={0.01} value={drafts.torneoEvento.costo_partecipazione} onChange={(event) => updateDraft("torneoEvento", "costo_partecipazione", event.target.value)} />
+									<Input id="tournament-cost" type="number" min={0} max={99_999_999.99} step={0.01} value={drafts.torneoEvento.costo_partecipazione} onChange={(event) => updateDraft("torneoEvento", "costo_partecipazione", event.target.value)} aria-invalid={Boolean(errors.tournamentCost)} />
 									<Select value={drafts.torneoEvento.tipo_partecipazione} onValueChange={(value) => updateDraft("torneoEvento", "tipo_partecipazione", value ?? "squadra")}>
 										<SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
 										<SelectContent><SelectItem value="giocatore">Per giocatore</SelectItem><SelectItem value="squadra">Per squadra</SelectItem></SelectContent>
 									</Select>
 								</div>
+								{errors.tournamentCost && <FieldError>{errors.tournamentCost}</FieldError>}
 							</Field>
 						</div>
 						<PremiTrofeiFields premiTrofei={drafts.torneoEvento.lista_premi_trofei} setPremiTrofei={setPrizes} error={errors.tournamentPrizes ?? null} />
@@ -377,14 +384,15 @@ export default function AnnouncementDetailsForm({
 				{profileType === "campi-impianti-sportivi" && (
 					<FieldGroup>
 						<TipologiaCalcioMultiselectField value={drafts.campoImpianto.tipologie_sport} onValueChange={(value) => updateDraft("campoImpianto", "tipologie_sport", value)} required error={errors.sports} />
-						<TextField id="facility-hours" label="Disponibilità / orari" value={drafts.campoImpianto.orari} onChange={(value) => updateDraft("campoImpianto", "orari", value)} placeholder="Es. Lun–Ven 18:00–23:00" />
-						<Field>
+						<TextField id="facility-hours" label="Disponibilità / orari" value={drafts.campoImpianto.orari} onChange={(value) => updateDraft("campoImpianto", "orari", value)} maxLength={5000} placeholder="Es. Lun–Ven 18:00–23:00" />
+						<Field data-invalid={Boolean(errors.facilityCost)}>
 							<FieldLabel htmlFor="facility-cost">Costo di partenza <OptionalLabel /></FieldLabel>
 							<InputGroup>
 								<InputGroupAddon><InputGroupText>€</InputGroupText></InputGroupAddon>
-								<InputGroupInput id="facility-cost" type="number" min={0} step={0.01} value={drafts.campoImpianto.costo_partenza} onChange={(event) => updateDraft("campoImpianto", "costo_partenza", event.target.value)} />
+								<InputGroupInput id="facility-cost" type="number" min={0} max={99_999_999.99} step={0.01} value={drafts.campoImpianto.costo_partenza} onChange={(event) => updateDraft("campoImpianto", "costo_partenza", event.target.value)} aria-invalid={Boolean(errors.facilityCost)} />
 								<InputGroupAddon align="inline-end"><InputGroupText>/ 1h</InputGroupText></InputGroupAddon>
 							</InputGroup>
+							{errors.facilityCost && <FieldError>{errors.facilityCost}</FieldError>}
 						</Field>
 						<DescriptionField id="facility-services" label="Servizi inclusi" value={drafts.campoImpianto.servizi_inclusi} onChange={(value) => updateDraft("campoImpianto", "servizi_inclusi", value)} placeholder="Spogliatoi, illuminazione, parcheggio, bar..." />
 						<DescriptionField id="facility-description" label="Descrizione" value={drafts.campoImpianto.descrizione_aggiuntiva} onChange={(value) => updateDraft("campoImpianto", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Descrivi spazi, caratteristiche e modalità di utilizzo..." />
@@ -435,12 +443,12 @@ export default function AnnouncementDetailsForm({
 					<FieldGroup className="grid gap-4 sm:grid-cols-2">
 					<Field data-invalid={Boolean(errors.contacts || errors.email)}>
 						<FieldLabel htmlFor="announcement-contact-email" className="flex items-center gap-2"><MailIcon className="size-4" /> Email <OptionalLabel recommended /></FieldLabel>
-						<Input id="announcement-contact-email" type="email" value={contacts.email} onChange={(event) => onContactsChange((previous) => ({...previous, email: event.target.value}))} placeholder="nome@email.it" aria-invalid={Boolean(errors.contacts || errors.email)} />
+						<Input id="announcement-contact-email" type="email" maxLength={254} value={contacts.email} onChange={(event) => onContactsChange((previous) => ({...previous, email: event.target.value}))} placeholder="nome@email.it" aria-invalid={Boolean(errors.contacts || errors.email)} />
 						{errors.email && <FieldError>{errors.email}</FieldError>}
 					</Field>
 					<Field data-invalid={Boolean(errors.contacts || errors.phone)}>
 						<FieldLabel htmlFor="announcement-contact-phone" className="flex items-center gap-2"><PhoneIcon className="size-4" /> Telefono <OptionalLabel /></FieldLabel>
-						<Input id="announcement-contact-phone" type="tel" value={contacts.phone} onChange={(event) => onContactsChange((previous) => ({...previous, phone: event.target.value}))} placeholder="+39 333 123 4567" aria-invalid={Boolean(errors.contacts || errors.phone)} />
+						<Input id="announcement-contact-phone" type="tel" maxLength={40} value={contacts.phone} onChange={(event) => onContactsChange((previous) => ({...previous, phone: event.target.value}))} placeholder="+39 333 123 4567" aria-invalid={Boolean(errors.contacts || errors.phone)} />
 						{errors.phone && <FieldError>{errors.phone}</FieldError>}
 					</Field>
 					</FieldGroup>

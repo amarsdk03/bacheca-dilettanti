@@ -4,6 +4,7 @@ import {useActionState} from "react";
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
 
+import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Spinner} from "@/components/ui/spinner";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
@@ -31,9 +32,9 @@ export default function PasswordDimenticata({invalidLink = false}: {invalidLink?
 					</CardHeader>
 					<CardContent>
 						{invalidLink && (
-							<p role="alert" className="mb-5 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-								Il link non è valido oppure è scaduto. Richiedine uno nuovo.
-							</p>
+							<Alert variant="destructive" className="mb-5">
+								<AlertDescription>Il link non è valido oppure è scaduto. Richiedine uno nuovo.</AlertDescription>
+							</Alert>
 						)}
 						<form action={formAction}>
 							<FieldGroup>

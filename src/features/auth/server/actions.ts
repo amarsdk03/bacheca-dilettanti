@@ -332,13 +332,23 @@ export async function requestPasswordReset(
 		return {status: "error", message: "Controlla l'indirizzo email.", fieldErrors};
 	}
 
-	const supabase = await createClient();
-	const {error} = await supabase.auth.resetPasswordForEmail(email, {
-		redirectTo: getAuthCallbackUrl("/reimposta-password"),
-	});
+	try {
+		const redirectTo = getAuthCallbackUrl();
+		const supabase = await createClient();
+		const {error} = await supabase.auth.resetPasswordForEmail(email, {redirectTo});
 
-	if (error?.code === "over_email_send_rate_limit" || error?.code === "over_request_rate_limit") {
-		return {status: "error", message: getAuthErrorMessage(error)};
+		if (error?.code === "over_email_send_rate_limit" || error?.code === "over_request_rate_limit") {
+			return {status: "error", message: getAuthErrorMessage(error)};
+		}
+		if (error) {
+			console.error("[password-reset] Recovery email request failed", {code: error.code});
+			return {status: "error", message: "Non è stato possibile inviare l'email. Riprova tra poco."};
+		}
+	} catch (error) {
+		console.error("[password-reset] Recovery email unavailable", {
+			cause: error instanceof Error ? error.name : "unknown",
+		});
+		return {status: "error", message: "Non è stato possibile inviare l'email. Riprova tra poco."};
 	}
 
 	return {
@@ -367,12 +377,18 @@ export async function requestCurrentUserPasswordReset(
 		return {status: "error", message: "Non è stato possibile verificare l'indirizzo email dell'account."};
 	}
 
-	const {error} = await supabase.auth.resetPasswordForEmail(user.email, {
-		redirectTo: getAuthCallbackUrl("/reimposta-password"),
-	});
-
-	if (error) {
-		return {status: "error", message: getAuthErrorMessage(error)};
+	try {
+		const {error} = await supabase.auth.resetPasswordForEmail(user.email, {
+			redirectTo: getAuthCallbackUrl(),
+		});
+		if (error) {
+			return {status: "error", message: getAuthErrorMessage(error)};
+		}
+	} catch (error) {
+		console.error("[password-reset] Account recovery email unavailable", {
+			cause: error instanceof Error ? error.name : "unknown",
+		});
+		return {status: "error", message: "Non è stato possibile inviare l'email. Riprova tra poco."};
 	}
 
 	return {
@@ -394,8 +410,14 @@ export async function updatePassword(
 	const supabase = await createClient();
 	const {data: claimsData, error: claimsError} = await supabase.auth.getClaims();
 
-	if (claimsError || !claimsData?.claims?.sub) {
+	const subject = claimsData?.claims?.sub;
+	if (claimsError || typeof subject !== "string") {
 		return {status: "error", message: "Il link è scaduto. Richiedine uno nuovo."};
+	}
+
+	const {data: {user}, error: userError} = await supabase.auth.getUser();
+	if (userError || !user || user.id !== subject || !user.email_confirmed_at) {
+		return {status: "error", message: "La sessione non è più valida. Richiedi un nuovo link."};
 	}
 
 	const {error} = await supabase.auth.updateUser({password});
@@ -404,8 +426,21 @@ export async function updatePassword(
 		return {status: "error", message: getAuthErrorMessage(error)};
 	}
 
+	const {data: registration, error: registrationError} = await supabase
+		.from("utente")
+		.select("registrato_il")
+		.eq("auth_user_uuid", user.id)
+		.maybeSingle();
+	if (registrationError) {
+		console.error("[password-reset] Registration lookup failed after password update", {
+			code: registrationError.code,
+		});
+	}
+
 	revalidatePath("/", "layout");
-	redirect("/il-tuo-profilo?password=aggiornata");
+	if (registrationError) redirect("/reimposta-password?esito=aggiornata");
+	if (registration?.registrato_il) redirect("/il-tuo-profilo?password=aggiornata");
+	redirect("/registrati?password=aggiornata");
 }
 
 export async function signOut() {

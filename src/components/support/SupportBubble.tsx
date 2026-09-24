@@ -13,6 +13,7 @@ import {
 	getSupportBubbleSnapshot,
 	subscribeToSupportBubble,
 } from "@/components/support/support-bubble-store";
+import {SiWhatsapp} from "@icons-pack/react-simple-icons";
 
 function Bubble() {
 	const [expanded, setExpanded] = useState(false);
@@ -59,15 +60,7 @@ function Bubble() {
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container) return;
-		const reserveToastSpace = () => {
-			// Include a gap above the close button, which protrudes from the bubble.
-			document.documentElement.style.setProperty("--support-bubble-space", `${container.offsetHeight + 24}px`);
-		};
-		const observer = new ResizeObserver(reserveToastSpace);
-		observer.observe(container);
-		reserveToastSpace();
 		return () => {
-			observer.disconnect();
 			document.documentElement.style.removeProperty("--support-bubble-space");
 		};
 	}, []);
@@ -76,10 +69,10 @@ function Bubble() {
 		<motion.aside
 			ref={containerRef}
 			aria-label="Assistenza WhatsApp"
-			className="fixed z-45"
+			className="fixed z-40"
 			style={{
-				right: "max(2rem, env(safe-area-inset-right))",
-				bottom: "max(2rem, env(safe-area-inset-bottom))",
+				right: "max(max(1rem, 2vw), env(safe-area-inset-right))",
+				bottom: "max(max(1rem, 2vw), env(safe-area-inset-bottom))",
 			}}
 			initial={{opacity: 0, y: reduceMotion ? 0 : 8}}
 			animate={{opacity: 1, y: 0}}
@@ -88,7 +81,7 @@ function Bubble() {
 		>
 			<motion.div
 				layout
-				className="relative bg-white/80 text-card-foreground shadow-lg ring-1 ring-border transition-shadow duration-200 hover:shadow-xl motion-reduce:transition-none"
+				className="relative bg-lime-300 text-black shadow-lg ring-1 ring-lime-500 transition-colors duration-300 hover:bg-lime-400 hover:shadow-xl motion-reduce:transition-none"
 				style={{
 					width: expanded ? 320 : 56,
 					maxWidth: "calc(100vw - 2rem - env(safe-area-inset-left) - env(safe-area-inset-right))",
@@ -100,30 +93,30 @@ function Bubble() {
 				{expanded ? (
 					<motion.div
 						id="support-bubble-content"
-						className="p-5 pr-7 text-sm leading-6"
+						className="p-5 pr-7 font-semibold text-sm leading-6"
 						initial={{opacity: 0}}
 						animate={{opacity: 1}}
 						transition={{duration: reduceMotion ? 0 : 0.18, delay: reduceMotion ? 0 : 0.3}}
 					>
-						<p>
+						<span>
 							Qualcosa non funziona o hai bisogno di aiuto?{" "}
 							<a
 								ref={linkRef}
 								href={WHATSAPP_URL}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="rounded-sm font-semibold text-primary underline underline-offset-4 outline-none transition-hover duration-200 hover:underline-offset-5 hover:decoration-[1.5px] focus-visible:ring-2 focus-visible:ring-ring"
+								className="inline-flex items-center translate-y-0.5 gap-1 rounded-sm text-green-900 underline underline-offset-4 outline-none transition-hover duration-200 hover:underline-offset-5 hover:decoration-[1.5px] focus-visible:ring-2 focus-visible:ring-ring"
 							>
-								Contattaci pure su Whatsapp!
+								<SiWhatsapp className="size-3.5 shrink-0 ms-0.5" aria-hidden="true" /> Contattaci pure su Whatsapp!
 								<span className="sr-only"> (si apre in una nuova scheda)</span>
 							</a>
-						</p>
+						</span>
 						<motion.div layout="position" className="absolute -right-2 -top-2" transition={{duration: reduceMotion ? 0 : 0.3}}>
 							<Button
 								type="button"
 								variant="outline"
 								size="icon-sm"
-								className="rounded-full shadow-sm"
+								className="text-neutral-500 border-green-800 rounded-full shadow-sm"
 								aria-label="Nascondi il pulsante di assistenza"
 								onClick={dismissSupportBubble}
 							>
@@ -136,7 +129,7 @@ function Bubble() {
 						ref={triggerRef}
 						type="button"
 						variant="ghost"
-						className="size-14 rounded-full"
+						className="size-14 rounded-full bg-lime-500 text-white shadow-sm hover:bg-green-500 hover:text-white"
 						aria-label="Hai bisogno di aiuto?"
 						aria-expanded={false}
 						aria-controls="support-bubble-content"

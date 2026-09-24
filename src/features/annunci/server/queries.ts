@@ -79,6 +79,8 @@ function announcementContentQuery(
 			tipologia_annuncio,
 			creato_il,
 			livello_annuncio,
+			priorita_attiva,
+			priorita_fine_il,
 			stato_annuncio,
 			nascosto,
 			privato,
@@ -181,6 +183,20 @@ function cleanText(value: unknown, maxLength = 5_000) {
 	if (typeof value !== "string") return null;
 	const normalized = value.replace(/\s+/g, " ").trim();
 	return normalized ? normalized.slice(0, maxLength) : null;
+}
+
+function validExternalAnnouncementLink(value: unknown) {
+	const link = cleanText(value, 2_048);
+	if (!link) return null;
+
+	try {
+		const url = new URL(link);
+		return (url.protocol === "http:" || url.protocol === "https:") && url.hostname
+			? link
+			: null;
+	} catch {
+		return null;
+	}
 }
 
 function cleanStringArray(value: unknown) {
@@ -594,6 +610,11 @@ function announcementContent(
 
 function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 	if (!isAnnouncementType(row.tipologia_annuncio)) return null;
+	const priorityEndsAt = row.priorita_fine_il ? Date.parse(row.priorita_fine_il) : NaN;
+	const isPriority = row.livello_annuncio === "prioritario"
+		&& row.stato_annuncio === "pubblicato"
+		&& row.priorita_attiva
+		&& priorityEndsAt > Date.now();
 	const type = row.tipologia_annuncio;
 	const option = announcementOption(type);
 	const detail = detailForType(row, type);
@@ -619,7 +640,10 @@ function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 			title: content.title,
 			description: content.description,
 			createdAt: row.creato_il,
-			level: cleanText(row.livello_annuncio, 80),
+			level: row.stato_annuncio === "pubblicato" && row.livello_annuncio === "prioritario" && !isPriority
+				? "gratuito"
+				: cleanText(row.livello_annuncio, 80),
+			isPriority,
 			location: content.location,
 			facts: content.facts,
 			author: anonymousAuthor(option.profileType),
@@ -1215,7 +1239,7 @@ export async function loadPublicAnnouncementDetail(
 		if (!mapped) return {status: "not-found"};
 		const content = announcementContent(mapped.item.type, detailForType(data, mapped.item.type), announcementLocations(data), true);
 		const isListed = isAnnouncementListed(data.stato_annuncio, data.nascosto, data.privato);
-		const [authorResult, linkedTeams, contactResult, mediaResult, saveCount, similar] = await Promise.all([
+		const [authorResult, linkedTeams, contactResult, linkResult, mediaResult, saveCount, similar] = await Promise.all([
 			loadOfficialAuthors(supabase, [mapped]),
 			loadAnnouncementTeams(supabase, [mapped]),
 			supabase
@@ -1223,6 +1247,14 @@ export async function loadPublicAnnouncementDetail(
 				.select("tipo, valore")
 				.eq("uuid_annuncio", data.uuid)
 				.order("id", {ascending: true}),
+			supabase
+				.from("link_social_annuncio")
+				.select("sublink")
+				.eq("uuid_annuncio", data.uuid)
+				.eq("piattaforma", "link_annuncio")
+				.order("id", {ascending: true})
+				.limit(1)
+				.maybeSingle(),
 			supabase
 				.from("media_annuncio")
 				.select("id")
@@ -1234,8 +1266,12 @@ export async function loadPublicAnnouncementDetail(
 		]);
 
 		if (contactResult.error) logQueryError("contacts", contactResult.error);
+		if (linkResult.error) logQueryError("detail-link", linkResult.error);
 		if (mediaResult.error) logQueryError("share-image", mediaResult.error);
 		const hasShareImage = !mediaResult.error && Boolean(mediaResult.data?.length);
+		const announcementLink = linkResult.error
+			? null
+			: validExternalAnnouncementLink(linkResult.data?.sublink);
 
 		const contacts = (contactResult.error ? [] : contactResult.data ?? [])
 			.map(validContact)
@@ -1250,6 +1286,7 @@ export async function loadPublicAnnouncementDetail(
 				...announcement,
 				moderationStatus: data.stato_annuncio,
 				isListed,
+				announcementLink,
 				shareImageUrl: hasShareImage
 					? `/api/metadata/annuncio-immagine?${new URLSearchParams({id}).toString()}`
 					: null,

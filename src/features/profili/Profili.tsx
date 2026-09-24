@@ -416,22 +416,25 @@ export default function Profili({query, result}: ProfiliProps) {
 
 				<div className={"w-full flex items-center justify-between mt-8"}>
 					<Image
-						src="/banner-pubblicita/placeholder.png"
+						src={"/banner-pubblicita/placeholder.png"}
 						width={3840/10}
 						height={1080/10}
-						alt="Pubblicita per sponsor qui!"
+						alt={"Pubblicita per sponsor qui!"}
+						loading={"eager"}
 					/>
 					<Image
-						src="/banner-pubblicita/placeholder.png"
+						src={"/banner-pubblicita/placeholder.png"}
 						width={3840/10}
 						height={1080/10}
-						alt="Pubblicita per sponsor qui!"
+						alt={"Pubblicita per sponsor qui!"}
+						loading={"eager"}
 					/>
 					<Image
-						src="/banner-pubblicita/placeholder.png"
+						src={"/banner-pubblicita/placeholder.png"}
 						width={3840/10}
 						height={1080/10}
-						alt="Pubblicita per sponsor qui!"
+						alt={"Pubblicita per sponsor qui!"}
+						loading={"eager"}
 					/>
 				</div>
 

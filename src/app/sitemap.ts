@@ -9,7 +9,8 @@ export const revalidate = 3_600;
 // Funzione helper per escapare i query parameter
 function buildUrl(basePath: string, params: Record<string, string>): string {
 	const searchParams = new URLSearchParams(params);
-	return `${basePath}?${searchParams.toString()}`;
+	// Sostituisce gli Ampersand '&' with '&amp;' per evitare errori di validazione XML
+	return `${basePath}?${searchParams.toString().replace(/&/g, '&amp;')}`;
 }
 
 const STATIC_PAGES: Array<{
@@ -22,7 +23,6 @@ const STATIC_PAGES: Array<{
 	{path: "/profili", changeFrequency: "daily", priority: 0.9},
 	{path: "/aggiornamenti", changeFrequency: "weekly", priority: 0.8},
 	{path: "/pubblica-annuncio", changeFrequency: "monthly", priority: 0.8},
-	{path: "/visibilita", changeFrequency: "monthly", priority: 0.7},
 	{path: "/partner", changeFrequency: "monthly", priority: 0.6},
 	{path: "/contatti", changeFrequency: "yearly", priority: 0.5},
 	{path: "/termini-di-servizio", changeFrequency: "monthly", priority: 0.3},

@@ -30,7 +30,7 @@
               <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td align="center" bgcolor="#171717" style="border-radius:10px">
-                    <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:15px 28px;font-size:16px;line-height:20px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px">Scegli una nuova password</a>
+                    <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=recovery" style="display:inline-block;padding:15px 28px;font-size:16px;line-height:20px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px">Scegli una nuova password</a>
                   </td>
                 </tr>
               </table>

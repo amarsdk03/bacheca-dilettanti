@@ -26,7 +26,10 @@ export default function EmbedLegalBlink({tipologia}: EmbedLegalBlinkProps) {
 		default:
 			return (
 				<div className="w-full h-128 flex flex-col">
-					<h2 className={"text-lg font-semibold text-center py-64"}>In arrivo...</h2>
+					<iframe
+						src="https://app.legalblink.it/api/documents/6a96dd034295910029c0bccc/cookie-policy-it"
+						className="h-full ps-4 pe-2 py-2 sm:py-12"
+					/>
 				</div>
 			);
 	}

@@ -21,9 +21,10 @@ interface PageProps {
 export default async function Page({searchParams}: PageProps) {
 	const params = await searchParams;
 	const legacyCode = Array.isArray(params.code) ? params.code[0] : params.code;
+	const misplacedTokenHash = Array.isArray(params.token_hash) ? params.token_hash[0] : params.token_hash;
 
-	if (legacyCode) {
-		redirect(`/auth/confirm?code=${encodeURIComponent(legacyCode)}`);
+	if (legacyCode || misplacedTokenHash) {
+		redirect("/auth/link-non-valido");
 	}
 
 	return (

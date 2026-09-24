@@ -19,7 +19,7 @@ function SubmitButton() {
 	return <Button type="submit" disabled={pending} aria-busy={pending} className="w-full">{pending && <Spinner data-icon="inline-start" aria-hidden="true" />}{pending ? "Aggiornamento in corso…" : "Aggiorna password"}</Button>;
 }
 
-export default function ReimpostaPassword() {
+export default function ReimpostaPassword({passwordUpdated = false}: {passwordUpdated?: boolean}) {
 	const [state, formAction] = useActionState(updatePassword, INITIAL_AUTH_STATE);
 
 	return (
@@ -30,11 +30,17 @@ export default function ReimpostaPassword() {
 				</Link>
 				<Card>
 					<CardHeader className="text-center">
-						<CardTitle className="text-xl">Scegli una nuova password</CardTitle>
-						<CardDescription>Usa almeno 8 caratteri e non riutilizzare una password già compromessa.</CardDescription>
+						<CardTitle className="text-xl">{passwordUpdated ? "Password aggiornata" : "Scegli una nuova password"}</CardTitle>
+						<CardDescription>{passwordUpdated ? "La modifica è stata completata." : "Usa almeno 8 caratteri e non riutilizzare una password già compromessa."}</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<form action={formAction}>
+						{passwordUpdated ? (
+							<div className="flex flex-col gap-3">
+								<p className="text-sm text-muted-foreground">Ora puoi utilizzare la nuova password per accedere al tuo account.</p>
+								<Button render={<Link href="/il-tuo-profilo" />} nativeButton={false}>Vai al tuo profilo</Button>
+								<Button render={<Link href="/registrati" />} nativeButton={false} variant="outline">Completa la registrazione</Button>
+							</div>
+						) : <form action={formAction}>
 							<FieldGroup>
 								<Field data-invalid={Boolean(state.fieldErrors?.password)}>
 									<FieldLabel htmlFor="new-password">Nuova password</FieldLabel>
@@ -50,7 +56,7 @@ export default function ReimpostaPassword() {
 								<SubmitButton />
 								<FieldDescription className="text-center"><Link href="/accedi">Torna all&apos;accesso</Link></FieldDescription>
 							</FieldGroup>
-						</form>
+						</form>}
 					</CardContent>
 				</Card>
 			</div>

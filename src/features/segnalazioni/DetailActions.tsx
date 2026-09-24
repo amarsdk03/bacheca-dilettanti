@@ -149,7 +149,7 @@ export default function DetailActions({href, target, interaction, presentation =
 					if (!reportPending) setReportOpen(open);
 				}}
 			>
-				<DialogTrigger render={<Button type="button" variant={isDetail ? "destructive" : "outline"} className={isDetail ? "min-h-11 gap-2 pe-4 text-white" : undefined} />}>
+				<DialogTrigger render={<Button type="button" variant={isDetail ? "outline" : "default"} className={isDetail ? "min-h-11 gap-2 pe-4" : undefined} />}>
 					<FlagIcon data-icon="inline-start" className="ms-1.5" aria-hidden="true" />
 					Segnala
 				</DialogTrigger>

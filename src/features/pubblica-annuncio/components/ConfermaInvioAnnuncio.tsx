@@ -23,12 +23,12 @@ import {
 import {Input} from "@/components/ui/input";
 import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
 import {toast} from "@/components/ui/toast";
+import {ExternalNavigationProvider} from "@/components/navigation/ExternalNavigation";
 import type {ProfileDrafts} from "@/features/profilo/profile-model";
 import {buildPublishPreview} from "@/features/pubblica-annuncio/announcement-preview";
 import AnnouncementPreviewCard from "@/features/pubblica-annuncio/components/AnnouncementPreviewCard";
-import SelezionaVisibilitaAnnuncio from "@/features/pubblica-annuncio/components/SelezionaVisibilitaAnnuncio";
 import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
-import type {PublishAnnouncementPayload, PublishVisibility} from "@/features/pubblica-annuncio/publish-model";
+import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";
 import {
 	publishAnnouncement,
 	requestPublishEmailOtp,
@@ -42,8 +42,6 @@ interface ConfermaInvioAnnuncioProps {
 	imagePreviewUrl: string | null;
 	profileDrafts: ProfileDrafts;
 	authenticated: boolean;
-	visibility: PublishVisibility;
-	onVisibilityChange: (visibility: PublishVisibility) => void;
 	onEditStep: (step: number) => void;
 }
 
@@ -69,8 +67,6 @@ export default function ConfermaInvioAnnuncio({
 	imagePreviewUrl,
 	profileDrafts,
 	authenticated,
-	visibility,
-	onVisibilityChange,
 	onEditStep,
 }: ConfermaInvioAnnuncioProps) {
 	const router = useRouter();
@@ -281,7 +277,6 @@ export default function ConfermaInvioAnnuncio({
 		try {
 			const finalPayload = {
 				...payload,
-				visibility,
 				consents: {dataConfirmed, termsAccepted, privacyAccepted},
 			};
 			const formData = new FormData();
@@ -296,18 +291,6 @@ export default function ConfermaInvioAnnuncio({
 					timeout: 4500,
 				});
 				router.push(`/pubblica-annuncio/conferma?id=${encodeURIComponent(result.announcementId)}`);
-				navigating = true;
-				router.refresh();
-				return;
-			}
-			if (result.status === "payment_required") {
-				toast.add({
-					title: "Bozza prioritaria salvata",
-					description: "Completa il pagamento per inviare l’annuncio in revisione.",
-					type: "success",
-					timeout: 4500,
-				});
-				router.push(`/pubblica-annuncio/pagamento?id=${encodeURIComponent(result.announcementId)}`);
 				navigating = true;
 				router.refresh();
 				return;
@@ -337,10 +320,9 @@ export default function ConfermaInvioAnnuncio({
 		<div className="grid gap-8">
 			<FieldSet>
 				<FieldLegend variant="label" className="field-legend-title mb-4">Conferma e pubblica:</FieldLegend>
-				<AnnouncementPreviewCard preview={preview} />
-				<div className="mt-6">
-					<SelezionaVisibilitaAnnuncio value={visibility} onValueChangeAction={onVisibilityChange} />
-				</div>
+				<ExternalNavigationProvider>
+					<AnnouncementPreviewCard preview={preview} />
+				</ExternalNavigationProvider>
 
 				{!authenticated && (
 					<FieldSet className={"mt-6"}>
@@ -516,9 +498,7 @@ export default function ConfermaInvioAnnuncio({
 				<Button variant="outline" onClick={() => onEditStep(3)}>Indietro</Button>
 				<Button disabled={isSubmitting || otpBusy || registeredEmail} aria-busy={isSubmitting} onClick={submit}>
 					{isSubmitting && <Spinner data-icon="inline-start" aria-hidden="true" />}
-					{isSubmitting
-						? "Salvataggio in corso..."
-						: visibility === "prioritario" ? "Conferma e vai al pagamento" : "Conferma e invia"}
+					{isSubmitting ? "Salvataggio in corso..." : "Conferma e invia"}
 				</Button>
 			</div>
 		</div>

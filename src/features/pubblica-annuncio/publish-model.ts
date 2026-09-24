@@ -1,6 +1,7 @@
 import type {ProfileDraft, ProfileDrafts, ProfileLocationDraft, ProfileType,} from "@/features/profilo/profile-model";
 import type {ProfileSocialLinks, ProfileSocialLinksByType,} from "@/features/profilo/profile-social-links";
 import {getProfileRequiredFieldErrors, type ProfileValidationErrors,} from "@/features/profilo/profile-required-fields";
+import {isValidIsoDate, isValidPhone, isValidTime, parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 
@@ -134,7 +135,7 @@ export interface AnnouncementExtras {
 	videoHighlights: string;
 }
 
-export const PUBLISH_VISIBILITIES = ["gratuito", "prioritario"] as const;
+export const PUBLISH_VISIBILITIES = ["gratuito"] as const;
 export type PublishVisibility = typeof PUBLISH_VISIBILITIES[number];
 
 export function isPublishVisibility(value: unknown): value is PublishVisibility {
@@ -200,6 +201,14 @@ export type AnnouncementValidationField =
 	| "requirements"
 	| "matchCategories"
 	| "matchTimes"
+	| "matchTimeFrom"
+	| "matchTimeTo"
+	| "periodFrom"
+	| "periodTo"
+	| "monthlyCompensation"
+	| "tournamentTeams"
+	| "tournamentCost"
+	| "facilityCost"
 	| "genericLink"
 	| "videoHighlights"
 	| "sponsorSector"
@@ -226,12 +235,6 @@ export type PublishAnnouncementResult =
 		status: "success";
 		announcementId: string;
 		moderationStatus: "in_revisione";
-		idempotent: boolean;
-	}
-	| {
-		status: "payment_required";
-		announcementId: string;
-		submissionId: string;
 		idempotent: boolean;
 	}
 	| {
@@ -398,8 +401,8 @@ export function getAnnouncementValidationErrors(
 	const email = contacts.email.trim();
 	const phone = contacts.phone.trim();
 	if (!email && !phone) errors.contacts = "Inserisci almeno un contatto tra email e telefono.";
-	if (email && !EMAIL_PATTERN.test(email)) errors.email = "Inserisci un indirizzo email valido.";
-	if (phone && phone.replace(/\D/g, "").length < 6) errors.phone = "Inserisci un numero di telefono valido.";
+	if (email && (email.length > 254 || !EMAIL_PATTERN.test(email))) errors.email = "Inserisci un indirizzo email valido.";
+	if (phone && !isValidPhone(phone)) errors.phone = "Inserisci un numero di telefono valido.";
 	if (locations.length === 0) errors.locations = "Seleziona almeno una località per l’annuncio.";
 	if (!isLinkAnnuncioValid(extras.genericLink)) errors.genericLink = "Inserisci un link completo che inizi con http:// o https://.";
 	if (type === "giocatore" && !isLinkAnnuncioValid(extras.videoHighlights)) errors.videoHighlights = "Inserisci un link video completo che inizi con http:// o https://.";
@@ -416,13 +419,23 @@ export function getAnnouncementValidationErrors(
 		if (!nonEmpty(drafts.squadraCercaGiocatore.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione della ricerca.";
 	}
 	if (type === "squadra" && teamSubtype === "cerca-staff") {
-		if (!nonEmpty(drafts.squadraCercaStaff.figura_ricercata)) errors.professionalRole = "Inserisci la figura professionale cercata.";
-		if (!nonEmpty(drafts.squadraCercaStaff.requisiti)) errors.requirements = "Inserisci i requisiti richiesti.";
+		const draft = drafts.squadraCercaStaff;
+		if (!nonEmpty(draft.figura_ricercata)) errors.professionalRole = "Inserisci la figura professionale cercata.";
+		if (!nonEmpty(draft.requisiti)) errors.requirements = "Inserisci i requisiti richiesti.";
+		if (parseOptionalMoney(draft.compenso_mensile) === undefined) errors.monthlyCompensation = "Inserisci un importo valido con massimo due decimali.";
+		if (draft.periodo_dal && !isValidIsoDate(draft.periodo_dal)) errors.periodFrom = "Inserisci una data iniziale valida.";
+		if (draft.periodo_al && !isValidIsoDate(draft.periodo_al)) errors.periodTo = "Inserisci una data finale valida.";
+		if (!errors.periodFrom && !errors.periodTo && draft.periodo_dal && draft.periodo_al && draft.periodo_dal > draft.periodo_al) errors.periodTo = "La data finale non può precedere quella iniziale.";
 	}
 	if (type === "squadra" && teamSubtype === "cerca-partite-amichevoli") {
 		const draft = drafts.squadraCercaPartita;
 		if (draft.categorie_avversario.length === 0) errors.matchCategories = "Seleziona almeno una categoria avversaria.";
+		if (draft.periodo_dal && !isValidIsoDate(draft.periodo_dal)) errors.periodFrom = "Inserisci una data iniziale valida.";
+		if (draft.periodo_al && !isValidIsoDate(draft.periodo_al)) errors.periodTo = "Inserisci una data finale valida.";
+		if (!errors.periodFrom && !errors.periodTo && draft.periodo_dal && draft.periodo_al && draft.periodo_dal > draft.periodo_al) errors.periodTo = "La data finale non può precedere quella iniziale.";
 		if (Boolean(draft.orario_dalle) !== Boolean(draft.orario_alle)) errors.matchTimes = "Completa entrambi gli orari indicativi.";
+		if (draft.orario_dalle && !isValidTime(draft.orario_dalle)) errors.matchTimeFrom = "Inserisci un orario valido.";
+		if (draft.orario_alle && !isValidTime(draft.orario_alle)) errors.matchTimeTo = "Inserisci un orario valido.";
 	}
 	if (type === "squadra" && teamSubtype === "cerca-sponsor") {
 		const draft = drafts.squadraCercaSponsor;
@@ -442,18 +455,21 @@ export function getAnnouncementValidationErrors(
 	}
 	if (type === "torneo-evento") {
 		const draft = drafts.torneoEvento;
+		const currentYear = new Date().getFullYear();
+		const validYear = (value: string) => !value || (/^\d{4}$/.test(value) && Number(value) >= 1900 && Number(value) <= currentYear);
 		if (!nonEmpty(draft.nome_evento)) errors.tournamentName = "Inserisci il nome del torneo o evento.";
 		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
 		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’evento.";
-		if (draft.annate_ammesse_da && draft.annate_ammesse_a && Number(draft.annate_ammesse_da) > Number(draft.annate_ammesse_a)) {
-			errors.tournamentYears = "L’annata iniziale non può essere successiva a quella finale.";
-		}
+		if (!validYear(draft.annate_ammesse_da) || !validYear(draft.annate_ammesse_a) || (draft.annate_ammesse_da && draft.annate_ammesse_a && Number(draft.annate_ammesse_da) > Number(draft.annate_ammesse_a))) errors.tournamentYears = "L’intervallo delle annate non è valido.";
+		if (draft.numero_squadre && (!/^\d+$/.test(draft.numero_squadre) || Number(draft.numero_squadre) < 1 || Number(draft.numero_squadre) > 100_000)) errors.tournamentTeams = "Inserisci un numero di squadre valido.";
+		if (parseOptionalMoney(draft.costo_partecipazione) === undefined) errors.tournamentCost = "Inserisci un importo valido con massimo due decimali.";
 		if (draft.lista_premi_trofei.some((prize) => !nonEmpty(prize.titoloPremio))) errors.tournamentPrizes = "Completa tutti i premi inseriti.";
 	}
 	if (type === "campi-impianti-sportivi") {
 		const draft = drafts.campoImpianto;
 		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
 		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’impianto.";
+		if (parseOptionalMoney(draft.costo_partenza) === undefined) errors.facilityCost = "Inserisci un importo valido con massimo due decimali.";
 	}
 
 	return errors;

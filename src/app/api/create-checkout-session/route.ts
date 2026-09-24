@@ -62,6 +62,9 @@ export async function POST(request: Request) {
 				getCheckoutSiteUrl(),
 			));
 		}
+		if (context.announcementStatus !== "in_attesa_pagamento") {
+			return redirect(paymentPageUrl(request, announcementId, "error", "unavailable"));
+		}
 		if (context.checkoutStatus === PRIORITY_CHECKOUT_ASYNC_PAYMENT_FAILED_STATUS && !retry) {
 			return redirect(paymentPageUrl(request, announcementId, "failed"));
 		}

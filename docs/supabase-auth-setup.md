@@ -13,7 +13,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 SUPABASE_SECRET_KEY=<server-secret-key>
 ```
 
-`NEXT_PUBLIC_SITE_URL` deve coincidere con l'origine pubblica dell'ambiente. `SUPABASE_SECRET_KEY` deve contenere una chiave segreta `sb_secret_...` del progetto ed essere disponibile esclusivamente nel runtime server. Non inserire la chiave nel frontend, nel repository o in variabili `NEXT_PUBLIC_*`.
+`NEXT_PUBLIC_SITE_URL` deve essere un'origine HTTPS valida e coincidere con l'origine pubblica dell'ambiente. In sviluppo sono ammessi `http://localhost` e `http://127.0.0.1`; l'app non genera link Auth se la variabile manca o non è valida. `SUPABASE_SECRET_KEY` deve contenere una chiave segreta `sb_secret_...` del progetto ed essere disponibile esclusivamente nel runtime server. Non inserire la chiave nel frontend, nel repository o in variabili `NEXT_PUBLIC_*`.
 
 ## Provisioning database durante la registrazione
 
@@ -65,15 +65,15 @@ In **Authentication → Providers** disabilita gli eventuali provider social che
 
 In **Authentication → URL Configuration**:
 
-- imposta **Site URL** all'origine pubblica dell'applicazione, senza un percorso finale;
+- imposta **Site URL** a `https://www.bachecadilettanti.it`, senza un percorso finale;
 - aggiungi `http://localhost:3000/auth/confirm` per la conferma email in sviluppo;
 - aggiungi `http://localhost:3000/auth/callback` per il recupero password in sviluppo;
-- aggiungi gli equivalenti `https://<dominio>/auth/confirm` e `https://<dominio>/auth/callback` per la produzione;
+- aggiungi `https://www.bachecadilettanti.it/auth/confirm` e `https://www.bachecadilettanti.it/auth/callback` per la produzione;
 - autorizza eventuali URL preview soltanto per gli ambienti che vuoi supportare.
 
 La registrazione passa a Supabase l'URL `/auth/confirm`; il recupero password usa invece `/auth/callback`.
 
-In locale `supabase/config.toml` usa HTTP per entrambe le origini supportate: `http://127.0.0.1:3000/**` e `http://localhost:3000/**`.
+Il Dashboard del progetto hosted non legge `supabase/config.toml`: configura anche lì questi valori. Se l'app locale usa il progetto Supabase hosted, imposta `NEXT_PUBLIC_SITE_URL` sull'origine locale e autorizza il relativo callback nel Dashboard; un valore di produzione in `.env.local` genera invece link verso la produzione. Per Supabase locale, `supabase/config.toml` autorizza `http://127.0.0.1:3000/**` e `http://localhost:3000/**`.
 
 ## Template “Confirm signup”
 
@@ -93,9 +93,9 @@ La configurazione completa è in `supabase/templates/confirmation.html`. La stru
 {{ end }}
 ```
 
-La registrazione con password imposta `user_metadata.email_flow = account_signup`. Il route handler `/auth/confirm` valida il token sul server, crea la sessione e reindirizza a `/il-tuo-profilo`. Un link non valido, scaduto o già utilizzato riporta a `/accedi` con un messaggio dedicato. La schermata finale di registrazione e l'errore `email_not_confirmed` del login permettono di richiedere un nuovo link tramite `auth.resend({type: "signup"})`.
+La registrazione con password imposta `user_metadata.email_flow = account_signup`. `/auth/confirm` mostra prima una pagina di conferma; il clic sul pulsante verifica il token sul server, crea la sessione e reindirizza a `/il-tuo-profilo`. Il GET non consuma il token, così un'anteprima automatica del link non lo esaurisce. La schermata finale di registrazione e l'errore `email_not_confirmed` del login permettono di richiedere un nuovo link tramite `auth.resend({type: "signup"})`.
 
-I link precedenti che reindirizzano alla homepage con `?code=...` restano compatibili: la homepage inoltra il codice allo stesso route handler.
+I vecchi link che arrivano direttamente a `/auth/confirm?code=...` restano compatibili. Un `?code=...` o `?token_hash=...` arrivato alla homepage è ambiguo e mostra la pagina per richiedere un nuovo messaggio, senza essere trattato come conferma di registrazione.
 
 > Nei progetti Free creati dal 3 giugno 2026, Supabase non consente di modificare i template usando il provider email predefinito. Se l'editor non è disponibile, configura un provider in **Authentication → Emails → SMTP Settings**.
 
@@ -107,7 +107,15 @@ Replica lo stesso template nel Dashboard del progetto hosted. Per i nuovi proget
 
 ## Recupero password
 
-Nel template **Reset password** mantieni un link basato su `{{ .ConfirmationURL }}`. Dopo la verifica, Supabase torna a `/auth/callback` e l'applicazione apre la pagina per scegliere la nuova password.
+Nel template **Reset password** del Dashboard hosted e in `supabase/templates/recovery.html`, il pulsante deve usare esattamente:
+
+```html
+<a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=recovery">Scegli una nuova password</a>
+```
+
+Il recupero passa a Supabase l'URL `/auth/callback` senza query string. Questa pagina mostra un pulsante di continuazione; il suo invio verifica `token_hash` come `recovery` sul server, crea la sessione e apre `/reimposta-password`. Il link funziona anche se l'email viene aperta in un altro browser. Un link scaduto o già usato mostra un errore e permette di richiederne uno nuovo. L'URL `{{ .ConfirmationURL }}` del vecchio template e i link già spediti possono continuare a dipendere dal cookie PKCE del browser originale: richiedere una nuova email dopo l'aggiornamento.
+
+Ordine di rilascio: distribuisci il codice, verifica Site URL e Redirect URLs nel Dashboard, poi aggiorna il template hosted. Il solo file nel repository modifica le email di Supabase locale, non quelle del progetto hosted.
 
 Per registrazioni pubbliche configura un provider SMTP dedicato: il servizio predefinito è destinato ai test, applica limiti restrittivi e invia soltanto agli indirizzi autorizzati del team del progetto.
 
@@ -120,10 +128,10 @@ Prova il flusso in un ambiente configurato:
 - il reinvio dalla schermata finale o dal login genera nuovamente il link di conferma;
 - prima dell’invio dell’email esistono già `utente`, `profilo`, i sottoprofili selezionati e le relative località;
 - prima della conferma, il login mostra il messaggio che richiede la verifica e `/il-tuo-profilo` non è accessibile;
-- il link ricevuto via email conferma l'account e apre `/il-tuo-profilo`;
-- un link non valido o scaduto torna a `/accedi` con un avviso;
+- il link ricevuto via email mostra la conferma e, dopo un clic, apre `/il-tuo-profilo`;
+- un link non valido o scaduto mostra un avviso e permette di richiederne uno nuovo;
 - l'accesso con email e password funziona dopo la conferma;
-- richiesta e completamento del recupero password continuano a funzionare;
+- richiesta e completamento del recupero password funzionano anche aprendo l'email in un altro browser;
 - per una nuova email il solo invio OTP crea l'utente Auth ma non una riga `public.utente`;
 - l'email del primo OTP anonimo mostra il codice a sei cifre anche se Supabase usa internamente il template **Confirm signup**;
 - un OTP valido crea la sessione e il primo annuncio crea `utente`, snapshot profilo, annuncio e ricevuta nella stessa transazione;

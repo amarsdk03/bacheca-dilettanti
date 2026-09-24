@@ -21,6 +21,7 @@ import {
 	type TeamAnnouncementSubtype,
 } from "@/features/pubblica-annuncio/publish-model";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {isValidIsoDate, isValidPhone, isValidTime, parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {parseProfileEditorPayload, RegistrationPayloadError,} from "@/features/registrati/server/registration";
 import type {Json} from "@/server/supabase";
@@ -38,8 +39,6 @@ const MAX_LONG_TEXT = 5_000;
 const MAX_LIST_ITEMS = 32;
 const MAX_LOCATIONS = 100;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const REGIONS = new Set(REGIONI_ITALIANE.map(({nome}) => nome));
 
 export class PublishPayloadError extends Error {
@@ -125,9 +124,14 @@ function playerRoles(primaryValue: unknown, specificValue: unknown) {
 function numericValue(
 	value: unknown,
 	step: 1 | 2 | 3 | 4,
-	options: {integer?: boolean; min?: number; max?: number} = {},
+	options: {integer?: boolean; money?: boolean; min?: number; max?: number} = {},
 ) {
 	if (value === null || value === undefined || value === "") return null;
+	if (options.money) {
+		const amount = parseOptionalMoney(value);
+		if (amount === undefined) fail("Inserisci un importo valido con massimo due decimali.", step);
+		return amount;
+	}
 	if (typeof value !== "string" && typeof value !== "number") fail("Uno dei valori numerici non è valido.", step);
 	const normalized = typeof value === "string" ? value.trim().replace(",", ".") : value;
 	if (normalized === "") return null;
@@ -142,12 +146,7 @@ function numericValue(
 function dateValue(value: unknown) {
 	const normalized = textValue(value, 10, 3);
 	if (!normalized) return null;
-	const parsed = new Date(`${normalized}T00:00:00Z`);
-	if (
-		!DATE_PATTERN.test(normalized)
-		|| Number.isNaN(parsed.getTime())
-		|| parsed.toISOString().slice(0, 10) !== normalized
-	) {
+	if (!isValidIsoDate(normalized)) {
 		fail("Una delle date inserite non è valida.", 3);
 	}
 	return normalized;
@@ -156,7 +155,7 @@ function dateValue(value: unknown) {
 function timeValue(value: unknown) {
 	const normalized = textValue(value, 5, 3);
 	if (!normalized) return null;
-	if (!TIME_PATTERN.test(normalized)) fail("Uno degli orari inseriti non è valido.", 3);
+	if (!isValidTime(normalized)) fail("Uno degli orari inseriti non è valido.", 3);
 	return normalized;
 }
 
@@ -185,8 +184,7 @@ function normalizeContacts(value: unknown): AnnouncementContacts {
 	const phone = textValue(value.phone, 40, 3) ?? "";
 	if (!email && !phone) fail("Inserisci almeno un contatto tra email e telefono.", 3);
 	if (email && !EMAIL_PATTERN.test(email)) fail("Inserisci un indirizzo email valido.", 3);
-	const phoneDigits = phone.replace(/\D/g, "");
-	if (phone && (phoneDigits.length < 6 || phoneDigits.length > 20 || !/^[+\d().\s-]+$/.test(phone))) {
+	if (phone && !isValidPhone(phone)) {
 		fail("Inserisci un numero di telefono valido.", 3);
 	}
 	return {email: email.toLowerCase(), phone};
@@ -248,7 +246,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		return {
 			figura_ricercata: textValue(value.figura_ricercata, MAX_SHORT_TEXT, 3, true),
 			settore: textValue(value.settore, MAX_SHORT_TEXT, 3),
-			compenso_mensile: numericValue(value.compenso_mensile, 3, {min: 0, max: 99_999_999.99}),
+			compenso_mensile: numericValue(value.compenso_mensile, 3, {money: true}),
 			requisiti: textValue(value.requisiti, MAX_LONG_TEXT, 3, true),
 			periodo_dal: from,
 			periodo_al: to,
@@ -324,7 +322,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 			annate_ammesse_da: yearFrom,
 			annate_ammesse_a: yearTo,
 			numero_squadre: numericValue(value.numero_squadre, 3, {integer: true, min: 1, max: 100_000}),
-			costo_partecipazione: numericValue(value.costo_partecipazione, 3, {min: 0, max: 99_999_999.99}),
+			costo_partecipazione: numericValue(value.costo_partecipazione, 3, {money: true}),
 			tipo_partecipazione: participation,
 			lista_premi_trofei: normalizePrizeList(value.lista_premi_trofei),
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
@@ -335,7 +333,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 	return {
 		tipologie_sport: stringList(value.tipologie_sport, 3, true),
 		orari: textValue(value.orari, MAX_LONG_TEXT, 3),
-		costo_partenza: numericValue(value.costo_partenza, 3, {min: 0, max: 99_999_999.99}),
+		costo_partenza: numericValue(value.costo_partenza, 3, {money: true}),
 		servizi_inclusi: textValue(value.servizi_inclusi, MAX_LONG_TEXT, 3),
 		descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
 	};
@@ -381,7 +379,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 	assertExactKeys(rawValue, ["version", "submissionId", "visibility", "profileType", "teamSubtype", "anonymousProfile", "profileUpdate", "announcement", "consents"], 3);
 	if (rawValue.version !== PUBLISH_PAYLOAD_VERSION) fail("Aggiorna la pagina e ripeti la pubblicazione.", 1);
 	if (typeof rawValue.submissionId !== "string" || !UUID_PATTERN.test(rawValue.submissionId)) fail("La richiesta di pubblicazione non è valida.", 4);
-	if (!isPublishVisibility(rawValue.visibility)) fail("Seleziona la visibilità dell’annuncio.", 4);
+	if (!isPublishVisibility(rawValue.visibility)) fail("La pubblicazione prioritaria non è disponibile. Ricarica la pagina e riprova.", 4);
 	const visibility = rawValue.visibility;
 	if (typeof rawValue.profileType !== "string" || !isPublishableProfileType(rawValue.profileType)) fail("La tipologia di profilo non è valida.", 1);
 	const profileType = rawValue.profileType;

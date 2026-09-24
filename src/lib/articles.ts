@@ -70,7 +70,7 @@ export function getArticleCover(coverImage: string): string {
 		: fallbackCoverImage;
 }
 
-// TODO: implementare contatore articolo
+// TODO: implementare contatore visualizzazione articolo con call reali
 export function getPlaceholderViews(slug: string): number {
 	const hash = [...slug].reduce((total, character) => ((total * 31) + character.charCodeAt(0)) >>> 0, 0);
 	return 180 + (hash % 1800);

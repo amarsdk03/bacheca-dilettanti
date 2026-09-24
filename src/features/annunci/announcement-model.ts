@@ -352,6 +352,7 @@ export interface AnnouncementDirectoryItem {
 	description: string | null;
 	createdAt: string | null;
 	level: string | null;
+	isPriority: boolean;
 	location: string;
 	facts: AnnouncementFact[];
 	author: AnnouncementAuthor;
@@ -402,6 +403,7 @@ export interface AnnouncementPlayerRoles {
 export interface AnnouncementDetail extends AnnouncementDirectoryItem {
 	moderationStatus: string | null;
 	isListed: boolean;
+	announcementLink: string | null;
 	shareImageUrl: string | null;
 	saveCount: number | null;
 	authorFollowerCount: number | null;

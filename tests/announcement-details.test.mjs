@@ -98,6 +98,36 @@ test("detail exposes aggregate counts and complete comma-separated selections; d
 	assert.equal(card.facts.find(f => f.kind === "types").value, "2 selezionate");
 });
 
+test("priority styling follows the published activation flag and expiry", async () => {
+	const future = new Date(Date.now() + 86_400_000).toISOString();
+	const past = new Date(Date.now() - 86_400_000).toISOString();
+	const load = sourceLoader();
+	const Header = load("src/features/annunci/components/details/AnnouncementDetailsHeader.tsx").default;
+	const {ANNOUNCEMENT_DETAIL_PRESENTATIONS: presentations} = load("src/features/annunci/components/details/announcement-detail-presentation.ts");
+	for (const [changes, active, level] of [
+		[{priorita_attiva: true, priorita_fine_il: future}, true, "prioritario"],
+		[{priorita_attiva: false, priorita_fine_il: future}, false, "gratuito"],
+		[{priorita_attiva: true, priorita_fine_il: past}, false, "gratuito"],
+		[{priorita_attiva: true, priorita_fine_il: "invalid"}, false, "gratuito"],
+		[{priorita_attiva: true, priorita_fine_il: future, stato_annuncio: "in_revisione"}, false, "prioritario"],
+	]) {
+		const {queries, calls} = fixture({current: {...row(), livello_annuncio: "prioritario", ...changes}, authors: []});
+		const result = await queries.loadPublicAnnouncementDetail(id);
+		assert.equal(result.status, "success");
+		assert.equal(result.announcement.isPriority, active);
+		assert.equal(result.announcement.level, level);
+		const projection = calls.find(call => call.table === "annuncio").operations[0][1];
+		assert.match(projection, /priorita_attiva/);
+		assert.match(projection, /priorita_fine_il/);
+		const html = renderToStaticMarkup(React.createElement(Header, {
+			announcement: result.announcement,
+			presentation: presentations.annuncio_giocatore,
+		}));
+		assert.equal(html.includes("priority-announcement-header"), active);
+		assert.equal(html.includes("lucide-sparkles"), active);
+	}
+});
+
 test("detail exposes a stable metadata image URL without returning the private storage path", async () => {
 	const privatePath = "owner/submission/image.webp";
 	const {queries, calls} = fixture({media: [{id: 9, link_media: privatePath}]});

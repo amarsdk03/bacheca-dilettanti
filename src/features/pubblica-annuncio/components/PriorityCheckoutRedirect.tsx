@@ -20,6 +20,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 	"not-found": "La bozza prioritaria non è disponibile o non appartiene alla sessione attiva.",
 	price: "Il prodotto Stripe non è configurato al prezzo previsto di 7,99 EUR.",
 	refunded: "Il pagamento di questo annuncio è già stato rimborsato.",
+	unavailable: "Questa bozza non è più in attesa di pagamento.",
 	server: "Non è stato possibile preparare il pagamento. Riprova tra poco.",
 };
 

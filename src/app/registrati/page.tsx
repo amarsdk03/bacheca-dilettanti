@@ -4,6 +4,7 @@ import Link from "next/link";
 import {redirect} from "next/navigation";
 
 import GradientBackground from "@/components/styling/GradientBackground";
+import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Card} from "@/components/ui/card";
 import {DEFAULT_BANNER_PATH} from "@/const/defaultConstants";
 import HomepageWorkInProgressNotice from "@/features/homepage/components/HomepageWorkInProgressNotice";
@@ -30,6 +31,7 @@ export default async function Page({searchParams}: PageProps) {
 
 	const params = await searchParams;
 	const nextPath = sanitizeNextPath(Array.isArray(params.next) ? params.next[0] : params.next);
+	const passwordUpdated = (Array.isArray(params.password) ? params.password[0] : params.password) === "aggiornata";
 
 	return (
 		<div className="flex min-h-svh flex-col">
@@ -49,6 +51,11 @@ export default async function Page({searchParams}: PageProps) {
 							draggable={false}
 						/>
 					</Link>
+					{passwordUpdated && (
+						<Alert>
+							<AlertDescription>La password è stata aggiornata. Completa la registrazione per accedere al tuo profilo.</AlertDescription>
+						</Alert>
+					)}
 					<Card className="w-full bg-card/95 shadow-xl backdrop-blur-sm sm:[--card-spacing:--spacing(6)]">
 						<Registrati
 							nextPath={nextPath}

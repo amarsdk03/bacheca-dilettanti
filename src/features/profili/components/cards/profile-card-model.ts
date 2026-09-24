@@ -3,7 +3,7 @@ import type {ProfileType} from "@/features/profilo/profile-model";
 
 export type ProfileCardData<Type extends ProfileType = ProfileType> = Pick<DirectoryProfile,
 	"id" | "title" | "presentation" | "imageUrl" | "verified" | "facts"
-> & {type: Type};
+> & {type: Type; summary?: string};
 
 export type PlayerCardData = ProfileCardData<"giocatore"> & {
 	roles: string[];
@@ -48,4 +48,20 @@ export function getProfileFacts(
 	return kinds
 		.map((kind) => getProfileFact(profile, kind))
 		.filter(isSpecifiedFact);
+}
+
+export function summarizeProfileValues(values: readonly string[], fallback: string) {
+	const summary = values.map((value) => value.trim()).filter(Boolean).join(" · ");
+	return summary || fallback;
+}
+
+export function summarizeStaffFigures(values: readonly string[], fallback: string) {
+	const figures = values.map((value) => value.trim()).filter(Boolean);
+	if (figures.length === 0) return fallback;
+
+	const visibleFigures = figures.slice(0, 2);
+	const remainingCount = figures.length - visibleFigures.length;
+	return remainingCount > 0
+		? `${visibleFigures.join(" · ")}... +${remainingCount}`
+		: visibleFigures.join(" · ");
 }

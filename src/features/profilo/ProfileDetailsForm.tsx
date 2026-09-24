@@ -159,11 +159,12 @@ interface ProfileStartingCostFieldProps {
 	id: string;
 	value: number | null;
 	onChange: (value: number | null) => void;
+	error?: string;
 }
 
-function ProfileStartingCostField({id, value, onChange}: ProfileStartingCostFieldProps) {
+function ProfileStartingCostField({id, value, onChange, error}: ProfileStartingCostFieldProps) {
 	return (
-		<Field>
+		<Field data-invalid={Boolean(error)}>
 			<FieldLabel htmlFor={id}>Costo di partenza <OptionalLabel /></FieldLabel>
 			<InputGroup>
 				<InputGroupInput
@@ -180,7 +181,9 @@ function ProfileStartingCostField({id, value, onChange}: ProfileStartingCostFiel
 					}}
 					placeholder="50,00"
 					min={0}
+					max={99_999_999.99}
 					step={0.01}
+					aria-invalid={Boolean(error)}
 				/>
 				<InputGroupAddon align="inline-start">
 					<InputGroupText>&euro;</InputGroupText>
@@ -189,6 +192,7 @@ function ProfileStartingCostField({id, value, onChange}: ProfileStartingCostFiel
 					<InputGroupText>/ 1h</InputGroupText>
 				</InputGroupAddon>
 			</InputGroup>
+			{error && <FieldError>{error}</FieldError>}
 		</Field>
 	);
 }
@@ -930,7 +934,7 @@ function ProfileFields({
 			<TipologiaCalcioMultiselectField value={draft.tipologie_sport ?? []} onValueChange={(value) => onChange("campi-impianti-sportivi", "tipologie_sport", value)} required={requiredFields} error={errors.sports} />
 			<FieldGroup className="grid gap-4 sm:grid-cols-2">
 				<ProfileTextField id={`${prefix}-sede-principale`} label="Sede principale" value={draft.sede_principale} onChange={(value) => onChange("campi-impianti-sportivi", "sede_principale", value)} placeholder="Via Roma 1, Milano" required={requiredFields} error={errors.headquarters} />
-				<ProfileStartingCostField id={`${prefix}-costo-partenza`} value={draft.costo_partenza} onChange={(value) => onChange("campi-impianti-sportivi", "costo_partenza", value)} />
+				<ProfileStartingCostField id={`${prefix}-costo-partenza`} value={draft.costo_partenza} onChange={(value) => onChange("campi-impianti-sportivi", "costo_partenza", value)} error={errors.startingCost} />
 			</FieldGroup>
 			<OpeningHoursField idPrefix={`${prefix}-orari`} value={draft.orari} onChange={(value) => onChange("campi-impianti-sportivi", "orari", value)} />
 			<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange("campi-impianti-sportivi", "presentazione", value)} placeholder="Descrivi gli spazi e le caratteristiche dell'impianto..." />

@@ -59,7 +59,6 @@ Sviluppato da Amar Sidkir, per Gabriele Zaniboni, a partire dal 15 luglio 2026.
 | `/registrati` | Registrazione account |
 | `/password-dimenticata` | Richiesta di recupero password |
 | `/reimposta-password` | Scelta della nuova password |
-| `/visibilita` | Informazioni sui livelli di visibilità |
 | `/contatti` | Contatti e assistenza |
 | `/partner` | Sezione partner |
 | `/sitemap.xml` | Sitemap dei contenuti pubblici indicizzabili |
@@ -71,7 +70,7 @@ Sviluppato da Amar Sidkir, per Gabriele Zaniboni, a partire dal 15 luglio 2026.
 - Node.js `>= 20.9.0`.
 - npm e il lockfile del progetto.
 - Un progetto Supabase compatibile con lo schema applicativo.
-- Un account Stripe se si vuole abilitare l’annuncio prioritario.
+- Un account Stripe solo per completare i pagamenti di bozze prioritarie create prima della sospensione del servizio.
 - Un provider SMTP configurato in Supabase per gli ambienti pubblici.
 
 ## Avvio locale
@@ -100,7 +99,7 @@ SITE_ACCESS_ENABLED=false
 SITE_ACCESS_PASSWORD=<password>
 SITE_ACCESS_SECRET=<segreto-hmac-lungo-e-casuale>
 
-# Stripe, necessario soltanto per gli annunci prioritari
+# Stripe, necessario soltanto per le bozze prioritarie preesistenti
 STRIPE_SECRET_KEY=<stripe-secret-key>
 STRIPE_WEBHOOK_SECRET=<stripe-webhook-secret>
 STRIPE_ANNUNCIO_PRIORITARIO_PRICE_ID=<price-id>
@@ -204,7 +203,7 @@ Push effettuato il: 17/09/2026
     - Selezione del sottoprofilo
     - Compilazione/aggiornamento dati del sottoprofilo
     - Compilazione dati dell'annuncio
-    - Possibilità di pagamento per annuncio prioritario tramite Stripe
+    - Pubblicazione gratuita degli annunci; i pagamenti prioritari restano disponibili solo per le bozze preesistenti.
     - Verifica tramite codice OTP per utenti anonimi (rate limiting)
     - Limite giornaliero e protezione dai retry duplicati per il flusso anonimo.
 - Possibilità di visualizzare, nascondere o eliminare annunci dal proprio profilo

@@ -15,6 +15,7 @@ import {
 	ClockIcon,
 	GraduationCapIcon,
 	MapPinIcon,
+	SparklesIcon,
 	TagsIcon,
 	UserSearchIcon,
 	UsersIcon,
@@ -32,6 +33,7 @@ import {
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import type {AnnouncementCardData} from "./announcement-card-model";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
+import {cn} from "@/lib/utils";
 
 const ANNOUNCEMENT_DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {
 	day: "numeric",
@@ -119,7 +121,10 @@ export default function AnnouncementCardShell({
 
 	return (
 		<Card
-			className="group/card relative h-full gap-5 overflow-hidden font-home-body transition duration-200 focus-within:ring-3 focus-within:ring-ring/50 hover:-translate-y-0.5 hover:shadow-lg"
+			className={cn(
+				"group/card relative h-full gap-5 overflow-hidden font-home-body transition duration-200 focus-within:ring-3 focus-within:ring-ring/50 hover:-translate-y-0.5 hover:shadow-lg",
+				announcement.isPriority && "priority-announcement priority-announcement-card",
+			)}
 			style={style}
 		>
 			<Link
@@ -127,41 +132,48 @@ export default function AnnouncementCardShell({
 				className="absolute inset-0 z-0 rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
 				aria-label={`Apri l’annuncio: ${announcement.title}`}
 			/>
-			<div aria-hidden="true" className="absolute inset-x-0 top-0 z-10 h-1 bg-[color:var(--announcement-accent)]" />
+			<div aria-hidden="true" className={cn("absolute inset-x-0 top-0 z-10 h-1 bg-(--announcement-accent)", announcement.isPriority && "priority-announcement-accent")} />
 			<CardHeader className="pointer-events-none relative z-10 gap-4">
 				<div className="flex flex-wrap items-center gap-2">
-					<Badge className="border-0" style={{backgroundColor: `${accent}18`, color: accent}}>
+					<Badge className={cn("border-0", announcement.isPriority && "priority-announcement-type-badge")} style={announcement.isPriority ? undefined : {backgroundColor: `${accent}18`, color: accent}}>
 						<TypeIcon data-icon="inline-start" aria-hidden="true" />
 						{announcement.typeLabel}
 					</Badge>
-					{announcement.level && <Badge variant="secondary">{humanizeValue(announcement.level)}</Badge>}
+					{announcement.level && <Badge variant="secondary" className={cn(announcement.isPriority && "priority-announcement-level-badge")}>
+						{announcement.isPriority && <SparklesIcon data-icon="inline-start" aria-hidden="true" />}
+						{humanizeValue(announcement.level)}
+					</Badge>}
 				</div>
 				<div className="flex min-w-0 flex-col gap-2">
-					<CardTitle><h3 className="font-home-display text-2xl uppercase wrap-anywhere">{announcement.title}</h3></CardTitle>
-					<p className="text-xs font-semibold text-muted-foreground">{summary}</p>
+					<CardTitle>
+						<h3 className={cn("font-home-display text-2xl uppercase wrap-anywhere", announcement.isPriority && "underline decoration-violet-400 decoration-1 underline-offset-5 decoration-wavy")}>
+							{announcement.title}
+						</h3>
+					</CardTitle>
+					<p className="text-xs font-semibold text-muted-foreground">
+						{announcement.createdAt ? (
+							<time dateTime={announcement.createdAt} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+								<CalendarDaysIcon className="size-3.5 mb-0.5" aria-hidden="true" />
+								{formattedDate}
+							</time>
+						) : (
+							<p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+								<CalendarDaysIcon className="size-3.5 mb-0.5" aria-hidden="true" />
+								{formattedDate}
+							</p>
+						)}
+					</p>
 				</div>
-				<CardDescription className="line-clamp-3 min-h-10 wrap-anywhere">
+				<CardDescription className="text-md line-clamp-3 wrap-anywhere mb-1">
 					{announcement.description ?? emptyDescription}
 				</CardDescription>
 			</CardHeader>
-			<CardContent className="pointer-events-none relative z-10 mt-auto">
-				<AnnouncementFactGrid facts={facts} />
-				{(announcement.linkedTeams?.length ?? 0) > 0 && (
-					<TeamProfileLinks teams={announcement.linkedTeams ?? []} limit={2} className="pointer-events-auto mt-3" />
-				)}
-				{announcement.createdAt ? (
-					<time dateTime={announcement.createdAt} className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-						<CalendarDaysIcon className="size-3.5" aria-hidden="true" />
-						{formattedDate}
-					</time>
-				) : (
-					<p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-						<CalendarDaysIcon className="size-3.5" aria-hidden="true" />
-						{formattedDate}
-					</p>
-				)}
-			</CardContent>
-			<CardFooter className="pointer-events-none relative z-10 justify-between gap-3">
+			{(announcement.linkedTeams?.length ?? 0) > 0 && (
+				<CardContent className="pointer-events-none relative z-10 mt-auto">
+						<TeamProfileLinks teams={announcement.linkedTeams ?? []} limit={2} className="pointer-events-auto mt-3" />
+				</CardContent>
+			)}
+			<CardFooter className="pointer-events-none mt-auto relative z-10 justify-between gap-3">
 				<div className="pointer-events-auto min-w-0 flex-1">
 					<AnnouncementAuthorHoverCard author={announcement.author} />
 				</div>

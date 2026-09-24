@@ -14,14 +14,6 @@ export interface HomepageNotice {
 // L'ordine dell'array è l'ordine di visualizzazione; il primo comunicato è aperto.
 export const HOMEPAGE_NOTICES = [
 	{
-		id: "notizia-prova",
-		tipo: "evento",
-		titolo: "Tieni aggiornato il tuo profilo...",
-		testo: "Testo di prova.",
-		data: "2026-09-23",
-		azione: {etichetta: "Il tuo profilo", href: "/il-tuo-profilo"},
-	},
-	{
 		id: "apertura-piattaforma-settembre",
 		tipo: "notizia",
 		titolo: "Bacheca Dilettanti, presto in arrivo...",

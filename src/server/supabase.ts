@@ -39,72 +39,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      profilo_follow: {
-        Row: {
-          uuid_profilo_follower: string
-          uuid_profilo_seguito: string
-          creato_il: string
-        }
-        Insert: {
-          uuid_profilo_follower: string
-          uuid_profilo_seguito: string
-          creato_il?: string
-        }
-        Update: {
-          uuid_profilo_follower?: string
-          uuid_profilo_seguito?: string
-          creato_il?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profilo_follow_uuid_profilo_follower_fkey"
-            columns: ["uuid_profilo_follower"]
-            isOneToOne: false
-            referencedRelation: "profilo"
-            referencedColumns: ["uuid"]
-          },
-          {
-            foreignKeyName: "profilo_follow_uuid_profilo_seguito_fkey"
-            columns: ["uuid_profilo_seguito"]
-            isOneToOne: false
-            referencedRelation: "profilo"
-            referencedColumns: ["uuid"]
-          },
-        ]
-      }
-      annuncio_salvato: {
-        Row: {
-          uuid_utente: string
-          uuid_annuncio: string
-          salvato_il: string
-        }
-        Insert: {
-          uuid_utente: string
-          uuid_annuncio: string
-          salvato_il?: string
-        }
-        Update: {
-          uuid_utente?: string
-          uuid_annuncio?: string
-          salvato_il?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "annuncio_salvato_uuid_utente_fkey"
-            columns: ["uuid_utente"]
-            isOneToOne: false
-            referencedRelation: "utente"
-            referencedColumns: ["utente_uuid"]
-          },
-          {
-            foreignKeyName: "annuncio_salvato_uuid_annuncio_fkey"
-            columns: ["uuid_annuncio"]
-            isOneToOne: false
-            referencedRelation: "annuncio"
-            referencedColumns: ["uuid"]
-          },
-        ]
-      }
       annuncio: {
         Row: {
           autore_annuncio: string | null
@@ -406,6 +340,39 @@ export type Database = {
           },
         ]
       }
+      annuncio_salvato: {
+        Row: {
+          salvato_il: string
+          uuid_annuncio: string
+          uuid_utente: string
+        }
+        Insert: {
+          salvato_il?: string
+          uuid_annuncio: string
+          uuid_utente: string
+        }
+        Update: {
+          salvato_il?: string
+          uuid_annuncio?: string
+          uuid_utente?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annuncio_salvato_uuid_annuncio_fkey"
+            columns: ["uuid_annuncio"]
+            isOneToOne: false
+            referencedRelation: "annuncio"
+            referencedColumns: ["uuid"]
+          },
+          {
+            foreignKeyName: "annuncio_salvato_uuid_utente_fkey"
+            columns: ["uuid_utente"]
+            isOneToOne: false
+            referencedRelation: "utente"
+            referencedColumns: ["utente_uuid"]
+          },
+        ]
+      }
       annuncio_squadra_cerca_giocatore: {
         Row: {
           annate_ricercate: string[] | null
@@ -667,99 +634,6 @@ export type Database = {
           },
         ]
       }
-      categoria_sport: {
-        Row: {
-          categoria: string
-          creato_da: string | null
-          creato_il: string | null
-          dettagli_aggiuntivi: string | null
-          macrocategoria: string
-          nascosto: boolean | null
-          sport: string
-          ultima_modifica_da: string | null
-          ultima_modifica_il: string | null
-        }
-        Insert: {
-          categoria: string
-          creato_da?: string | null
-          creato_il?: string | null
-          dettagli_aggiuntivi?: string | null
-          macrocategoria: string
-          nascosto?: boolean | null
-          sport: string
-          ultima_modifica_da?: string | null
-          ultima_modifica_il?: string | null
-        }
-        Update: {
-          categoria?: string
-          creato_da?: string | null
-          creato_il?: string | null
-          dettagli_aggiuntivi?: string | null
-          macrocategoria?: string
-          nascosto?: boolean | null
-          sport?: string
-          ultima_modifica_da?: string | null
-          ultima_modifica_il?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "categoria_sport_creato_da_fkey"
-            columns: ["creato_da"]
-            isOneToOne: false
-            referencedRelation: "utente"
-            referencedColumns: ["utente_uuid"]
-          },
-          {
-            foreignKeyName: "Categoria_sport_sport_fkey"
-            columns: ["sport"]
-            isOneToOne: false
-            referencedRelation: "sport"
-            referencedColumns: ["nome"]
-          },
-          {
-            foreignKeyName: "categoria_sport_ultima_modifica_da_fkey"
-            columns: ["ultima_modifica_da"]
-            isOneToOne: false
-            referencedRelation: "utente"
-            referencedColumns: ["utente_uuid"]
-          },
-        ]
-      }
-      codici_otp: {
-        Row: {
-          causale: string | null
-          codice: string
-          generato_il: string | null
-          id: number
-          scadenza_il: string | null
-          utente_destinatario: string | null
-        }
-        Insert: {
-          causale?: string | null
-          codice: string
-          generato_il?: string | null
-          id?: number
-          scadenza_il?: string | null
-          utente_destinatario?: string | null
-        }
-        Update: {
-          causale?: string | null
-          codice?: string
-          generato_il?: string | null
-          id?: number
-          scadenza_il?: string | null
-          utente_destinatario?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "codici_otp_utente_destinatario_fkey"
-            columns: ["utente_destinatario"]
-            isOneToOne: false
-            referencedRelation: "utente"
-            referencedColumns: ["utente_uuid"]
-          },
-        ]
-      }
       contatto_annuncio: {
         Row: {
           id: number
@@ -786,51 +660,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "annuncio"
             referencedColumns: ["uuid"]
-          },
-        ]
-      }
-      figura_professionale: {
-        Row: {
-          creato_da: string | null
-          creato_il: string | null
-          dettagli_aggiuntivi: string | null
-          nascosto: boolean | null
-          titolo: string
-          ultima_modifica_da: string | null
-          ultima_modifica_il: string | null
-        }
-        Insert: {
-          creato_da?: string | null
-          creato_il?: string | null
-          dettagli_aggiuntivi?: string | null
-          nascosto?: boolean | null
-          titolo: string
-          ultima_modifica_da?: string | null
-          ultima_modifica_il?: string | null
-        }
-        Update: {
-          creato_da?: string | null
-          creato_il?: string | null
-          dettagli_aggiuntivi?: string | null
-          nascosto?: boolean | null
-          titolo?: string
-          ultima_modifica_da?: string | null
-          ultima_modifica_il?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "figura_professionale_creato_da_fkey"
-            columns: ["creato_da"]
-            isOneToOne: false
-            referencedRelation: "utente"
-            referencedColumns: ["utente_uuid"]
-          },
-          {
-            foreignKeyName: "figura_professionale_ultima_modifica_da_fkey"
-            columns: ["ultima_modifica_da"]
-            isOneToOne: false
-            referencedRelation: "utente"
-            referencedColumns: ["utente_uuid"]
           },
         ]
       }
@@ -1255,6 +1084,39 @@ export type Database = {
           },
         ]
       }
+      profilo_follow: {
+        Row: {
+          creato_il: string
+          uuid_profilo_follower: string
+          uuid_profilo_seguito: string
+        }
+        Insert: {
+          creato_il?: string
+          uuid_profilo_follower: string
+          uuid_profilo_seguito: string
+        }
+        Update: {
+          creato_il?: string
+          uuid_profilo_follower?: string
+          uuid_profilo_seguito?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profilo_follow_uuid_profilo_follower_fkey"
+            columns: ["uuid_profilo_follower"]
+            isOneToOne: false
+            referencedRelation: "profilo"
+            referencedColumns: ["uuid"]
+          },
+          {
+            foreignKeyName: "profilo_follow_uuid_profilo_seguito_fkey"
+            columns: ["uuid_profilo_seguito"]
+            isOneToOne: false
+            referencedRelation: "profilo"
+            referencedColumns: ["uuid"]
+          },
+        ]
+      }
       profilo_giocatore: {
         Row: {
           altezza: string | null
@@ -1570,64 +1432,6 @@ export type Database = {
           },
         ]
       }
-      ruolo_sport: {
-        Row: {
-          creato_da: string | null
-          creato_il: string | null
-          dettagli_aggiuntivi: string | null
-          macroruolo: string
-          nascosto: boolean | null
-          ruolo: string
-          sport: string
-          ultima_modifica_da: string | null
-          ultima_modifica_il: string | null
-        }
-        Insert: {
-          creato_da?: string | null
-          creato_il?: string | null
-          dettagli_aggiuntivi?: string | null
-          macroruolo: string
-          nascosto?: boolean | null
-          ruolo: string
-          sport: string
-          ultima_modifica_da?: string | null
-          ultima_modifica_il?: string | null
-        }
-        Update: {
-          creato_da?: string | null
-          creato_il?: string | null
-          dettagli_aggiuntivi?: string | null
-          macroruolo?: string
-          nascosto?: boolean | null
-          ruolo?: string
-          sport?: string
-          ultima_modifica_da?: string | null
-          ultima_modifica_il?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ruolo_sport_creato_da_fkey"
-            columns: ["creato_da"]
-            isOneToOne: false
-            referencedRelation: "utente"
-            referencedColumns: ["utente_uuid"]
-          },
-          {
-            foreignKeyName: "Ruolo_sport_sport_fkey"
-            columns: ["sport"]
-            isOneToOne: false
-            referencedRelation: "sport"
-            referencedColumns: ["nome"]
-          },
-          {
-            foreignKeyName: "ruolo_sport_ultima_modifica_da_fkey"
-            columns: ["ultima_modifica_da"]
-            isOneToOne: false
-            referencedRelation: "utente"
-            referencedColumns: ["utente_uuid"]
-          },
-        ]
-      }
       sport: {
         Row: {
           creato_da: string | null
@@ -1666,61 +1470,6 @@ export type Database = {
           },
           {
             foreignKeyName: "sport_ultima_modifica_da_fkey"
-            columns: ["ultima_modifica_da"]
-            isOneToOne: false
-            referencedRelation: "utente"
-            referencedColumns: ["utente_uuid"]
-          },
-        ]
-      }
-      tipologia_sport: {
-        Row: {
-          creato_da: string | null
-          creato_il: string | null
-          dettagli_aggiuntivi: string | null
-          nascosto: boolean | null
-          sport: string
-          tipologia: string
-          ultima_modifica_da: string | null
-          ultima_modifica_il: string | null
-        }
-        Insert: {
-          creato_da?: string | null
-          creato_il?: string | null
-          dettagli_aggiuntivi?: string | null
-          nascosto?: boolean | null
-          sport: string
-          tipologia: string
-          ultima_modifica_da?: string | null
-          ultima_modifica_il?: string | null
-        }
-        Update: {
-          creato_da?: string | null
-          creato_il?: string | null
-          dettagli_aggiuntivi?: string | null
-          nascosto?: boolean | null
-          sport?: string
-          tipologia?: string
-          ultima_modifica_da?: string | null
-          ultima_modifica_il?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tipologia_sport_creato_da_fkey"
-            columns: ["creato_da"]
-            isOneToOne: false
-            referencedRelation: "utente"
-            referencedColumns: ["utente_uuid"]
-          },
-          {
-            foreignKeyName: "Tipologia_sport_sport_fkey"
-            columns: ["sport"]
-            isOneToOne: false
-            referencedRelation: "sport"
-            referencedColumns: ["nome"]
-          },
-          {
-            foreignKeyName: "tipologia_sport_ultima_modifica_da_fkey"
             columns: ["ultima_modifica_da"]
             isOneToOne: false
             referencedRelation: "utente"
@@ -1793,16 +1542,6 @@ export type Database = {
         Args: { p_email_hash: string }
         Returns: Json
       }
-      submit_segnalazione_v1: {
-        Args: {
-          p_anonymous_key_hash: string | null
-          p_reason: string | null
-          p_reporter_user_uuid: string | null
-          p_target_kind: string
-          p_target_uuid: string
-        }
-        Returns: Json
-      }
       delete_owned_subprofile: {
         Args: { p_profile_type: string; p_user_id: string }
         Returns: string
@@ -1852,44 +1591,88 @@ export type Database = {
         }
         Returns: Json
       }
-      record_priority_checkout_event_v1: {
+      record_priority_checkout_event_v1:
+        | {
+            Args: {
+              p_amount_subtotal: number
+              p_amount_total: number
+              p_announcement_id: string
+              p_checkout_status: string
+              p_paid: boolean
+              p_payment_intent_id: string | null
+              p_payment_status: string
+              p_price_id: string
+              p_session_id: string
+              p_submission_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_announcement_id: string
+              p_checkout_status: string
+              p_paid: boolean
+              p_payment_intent_id: string | null
+              p_payment_status: string
+              p_price_id: string
+              p_session_id: string
+              p_submission_id: string
+            }
+            Returns: Json
+          }
+      record_priority_checkout_session_v1:
+        | {
+            Args: {
+              p_amount_subtotal: number
+              p_amount_total: number
+              p_announcement_id: string
+              p_attempt: number
+              p_checkout_status: string
+              p_payment_status: string
+              p_price_id: string
+              p_session_id: string
+              p_submission_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_announcement_id: string
+              p_attempt: number
+              p_checkout_status: string
+              p_payment_status: string
+              p_price_id: string
+              p_session_id: string
+              p_submission_id: string
+            }
+            Returns: Json
+          }
+      record_priority_refund_v1:
+        | {
+            Args: {
+              p_payment_intent_id: string
+              p_refund_id: string
+              p_refund_status: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_currency: string
+              p_payment_intent_id: string
+              p_refund_id: string
+              p_refund_status: string
+            }
+            Returns: Json
+          }
+      save_owned_profile_social_links_v1: {
         Args: {
-          p_amount_subtotal: number
-          p_amount_total: number
-          p_announcement_id: string
-          p_checkout_status: string
-          p_paid: boolean
-          p_payment_intent_id: string | null
-          p_payment_status: string
-          p_price_id: string
-          p_session_id: string
-          p_submission_id: string
+          p_profile_type: string
+          p_social_links: Json
+          p_user_id: string
         }
-        Returns: Json
-      }
-      record_priority_checkout_session_v1: {
-        Args: {
-          p_amount_subtotal: number
-          p_amount_total: number
-          p_announcement_id: string
-          p_attempt: number
-          p_checkout_status: string
-          p_payment_status: string
-          p_price_id: string
-          p_session_id: string
-          p_submission_id: string
-        }
-        Returns: Json
-      }
-      record_priority_refund_v1: {
-        Args: {
-          p_amount: number
-          p_currency: string
-          p_payment_intent_id: string
-          p_refund_id: string
-          p_refund_status: string
-        }
-        Returns: Json
+        Returns: undefined
       }
       save_owned_subprofile: {
         Args: {
@@ -1910,17 +1693,19 @@ export type Database = {
         }
         Returns: Json
       }
-      save_owned_profile_social_links_v1: {
-        Args: {
-          p_profile_type: string
-          p_social_links: Json
-          p_user_id: string
-        }
-        Returns: undefined
-      }
       set_owned_primary_subprofile: {
         Args: { p_profile_type: string; p_user_id: string }
         Returns: undefined
+      }
+      submit_segnalazione_v1: {
+        Args: {
+          p_anonymous_key_hash: string | null
+          p_reason: string | null
+          p_reporter_user_uuid: string | null
+          p_target_kind: string
+          p_target_uuid: string
+        }
+        Returns: Json
       }
     }
     Enums: {

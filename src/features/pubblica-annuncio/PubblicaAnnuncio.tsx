@@ -42,7 +42,6 @@ import {
 	type PublishableProfileType,
 	type PublishAnnouncementPayload,
 	type PublishProfileContext,
-	type PublishVisibility,
 	type TeamAnnouncementSubtype,
 } from "@/features/pubblica-annuncio/publish-model";
 import {getAnnouncementImageError} from "@/features/pubblica-annuncio/types/announcementExtras";
@@ -74,7 +73,6 @@ export default function PubblicaAnnuncio({
 	const [announcementLocations, setAnnouncementLocations] = useState<ProfileLocationDraft[]>([]);
 	const [contacts, setContacts] = useState<AnnouncementContacts>({email: "", phone: ""});
 	const [extras, setExtras] = useState<AnnouncementExtras>({genericLink: "", videoHighlights: ""});
-	const [visibility, setVisibility] = useState<PublishVisibility>("gratuito");
 	const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
 	const [announcementImagePreviewUrl, setAnnouncementImagePreviewUrl] = useState<string | null>(null);
 	const announcementImagePreviewUrlRef = useRef<string | null>(null);
@@ -124,7 +122,7 @@ export default function PubblicaAnnuncio({
 		return {
 			version: PUBLISH_PAYLOAD_VERSION,
 			submissionId,
-			visibility,
+			visibility: "gratuito",
 			profileType,
 			teamSubtype,
 			anonymousProfile: registered ? null : {
@@ -148,7 +146,7 @@ export default function PubblicaAnnuncio({
 			},
 			consents: {dataConfirmed: false, termsAccepted: false, privacyAccepted: false},
 		};
-	}, [announcementDrafts, announcementLocations, contacts, extras, profileDirty, profileDrafts, profileLocations, profileSocialLinks, profileType, profileUnlocked, registered, submissionId, teamSubtype, visibility]);
+	}, [announcementDrafts, announcementLocations, contacts, extras, profileDirty, profileDrafts, profileLocations, profileSocialLinks, profileType, profileUnlocked, registered, submissionId, teamSubtype]);
 
 	const scrollToTop = () => window.scrollTo({top: 0, behavior: "smooth"});
 	const updateAnnouncementImage = (image: File | null) => {
@@ -392,7 +390,7 @@ export default function PubblicaAnnuncio({
 					<TabsContent value="tab-4">
 						<Card className="my-4 pt-6">
 							<CardContent>
-								{payload && profileType && <ConfermaInvioAnnuncio payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} authenticated={authenticated} visibility={visibility} onVisibilityChange={setVisibility} onEditStep={goToStep} />}
+								{payload && profileType && <ConfermaInvioAnnuncio payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} authenticated={authenticated} onEditStep={goToStep} />}
 							</CardContent>
 						</Card>
 					</TabsContent>

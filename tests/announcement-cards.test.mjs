@@ -72,18 +72,6 @@ const FACTS = [
 	{kind: "services", label: "Servizi", value: "Spogliatoi"},
 ];
 
-const EXPECTED_FACTS = {
-	annuncio_giocatore: ["Ruoli principali", "Ruoli secondari", "Tipologie", "Categorie ricercate", "Località"],
-	annuncio_squadra_cerca_giocatore: ["Ruoli", "Annate", "Stagione", "Località"],
-	annuncio_squadra_cerca_staff: ["Figura", "Settore", "Compenso mensile", "Località"],
-	annuncio_squadra_cerca_partita: ["Categorie", "Periodo", "Trasferta", "Località"],
-	annuncio_squadra_cerca_sponsor: ["Settore", "Supporto cercato", "Offerta", "Località"],
-	annuncio_staff_sportivo: ["Figure", "Categorie", "Spostamenti", "Località"],
-	annuncio_arbitro: ["Categorie", "Disponibilità", "Automunito", "Località"],
-	annuncio_torneo_evento: ["Iscrizione", "Partecipazione", "Costo", "Località"],
-	annuncio_campo_impianto: ["Tipologie", "Costo", "Servizi", "Località"],
-};
-
 const PROFILE_TYPE_BY_ANNOUNCEMENT = {
 	annuncio_giocatore: "giocatore",
 	annuncio_squadra_cerca_giocatore: "squadra",
@@ -96,7 +84,7 @@ const PROFILE_TYPE_BY_ANNOUNCEMENT = {
 	annuncio_campo_impianto: "campi-impianti-sportivi",
 };
 
-function fixtureAnnouncement(type, facts = FACTS, linkedTeams = []) {
+function fixtureAnnouncement(type, facts = FACTS, linkedTeams = [], isPriority = false) {
 	return {
 		id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
 		type,
@@ -105,7 +93,8 @@ function fixtureAnnouncement(type, facts = FACTS, linkedTeams = []) {
 		title: "Titolo annuncio dimostrativo",
 		description: "Descrizione dimostrativa.",
 		createdAt: "2026-09-16T12:00:00.000Z",
-		level: "prioritario",
+		level: isPriority ? "prioritario" : "gratuito",
+		isPriority,
 		location: "Roma, Lazio",
 		facts,
 		linkedTeams,
@@ -124,9 +113,9 @@ function fixtureAnnouncement(type, facts = FACTS, linkedTeams = []) {
 	};
 }
 
-function renderAnnouncement(type, facts) {
+function renderAnnouncement(type, facts, isPriority = false) {
 	return renderToStaticMarkup(React.createElement(AnnouncementCard, {
-		announcement: fixtureAnnouncement(type, facts),
+		announcement: fixtureAnnouncement(type, facts, [], isPriority),
 	}));
 }
 
@@ -134,29 +123,20 @@ function factLabelIndex(html, label) {
 	return html.indexOf(`>${label}</span>`);
 }
 
-test("the dispatcher renders type-specific facts in order for all concrete announcement types", () => {
-	const allLabels = FACTS.map(({label}) => label);
-
-	for (const [type, expectedLabels] of Object.entries(EXPECTED_FACTS)) {
+test("the dispatcher preserves the compact card layout for every announcement type", () => {
+	for (const type of Object.keys(PROFILE_TYPE_BY_ANNOUNCEMENT)) {
 		const html = renderAnnouncement(type);
+		assert.match(html, /Titolo annuncio dimostrativo/);
+		assert.match(html, /Descrizione dimostrativa/);
+		assert.match(html, /<time /);
 		assert.match(html, /Apri annuncio/);
 		assert.match(html, /data-icon="inline-start"/);
 		assert.doesNotMatch(html, /data-profile-icon=/);
-
-		let previousIndex = -1;
-		for (const label of expectedLabels) {
-			const index = factLabelIndex(html, label);
-			assert.ok(index > previousIndex, `${type} must render ${label} after the preceding fact`);
-			previousIndex = index;
-		}
-
-		for (const label of allLabels.filter((label) => !expectedLabels.includes(label))) {
-			assert.equal(factLabelIndex(html, label), -1, `${type} must not render ${label}`);
-		}
+		assert.doesNotMatch(html, /<dl\b/);
 	}
 });
 
-test("unspecified announcement facts are excluded before rendering", () => {
+test("unspecified announcement facts are filtered without reintroducing them into compact cards", () => {
 	const facts = [
 		{kind: "roles", label: "Ruoli principali", value: " Non specificato "},
 		{kind: "roles", label: "Ruoli secondari", value: "Terzino destro"},
@@ -174,9 +154,19 @@ test("unspecified announcement facts are excluded before rendering", () => {
 	assert.equal(factLabelIndex(html, "Ruoli principali"), -1);
 	assert.equal(factLabelIndex(html, "Tipologie"), -1);
 	assert.equal(factLabelIndex(html, "Categorie ricercate"), -1);
-	assert.ok(factLabelIndex(html, "Ruoli secondari") >= 0);
-	assert.ok(factLabelIndex(html, "Località") >= 0);
+	assert.equal(factLabelIndex(html, "Ruoli secondari"), -1);
+	assert.equal(factLabelIndex(html, "Località"), -1);
 	assert.doesNotMatch(html, /Non specificato/);
+});
+
+test("only active priority cards receive the indigo treatment", () => {
+	const active = renderAnnouncement("annuncio_giocatore", FACTS, true);
+	const free = renderAnnouncement("annuncio_giocatore", FACTS);
+	assert.match(active, /priority-announcement-card/);
+	assert.match(active, /priority-announcement-level-badge/);
+	assert.match(active, /lucide-sparkles/);
+	assert.doesNotMatch(free, /priority-announcement/);
+	assert.doesNotMatch(free, /lucide-sparkles/);
 });
 
 test("the detail overlay and author link remain separate interactive links", () => {

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
 	BadgeEuroIcon,
 	CalendarDaysIcon,
@@ -19,6 +18,7 @@ import {announcementOption} from "@/features/annunci/announcement-model";
 import type {AnnouncementPreviewData} from "@/features/pubblica-annuncio/announcement-preview";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
+import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 
 function PreviewFactIcon({label}: {label: string}) {
 	const normalized = label.toLocaleLowerCase("it-IT");
@@ -103,8 +103,8 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 				)}
 				{(preview.genericLink || preview.videoHighlights) && (
 					<div className="grid gap-2 border-t border-black/8 pt-4 text-sm">
-						{preview.genericLink && <Link href={preview.genericLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline" style={{color: accent}}>Apri link annuncio <ExternalLinkIcon className="size-4" /></Link>}
-						{preview.videoHighlights && <Link href={preview.videoHighlights} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline" style={{color: accent}}>Guarda video highlights <ExternalLinkIcon className="size-4" /></Link>}
+						{preview.genericLink && <ExternalLink href={preview.genericLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline" style={{color: accent}}>Apri link annuncio <ExternalLinkIcon className="size-4" /></ExternalLink>}
+						{preview.videoHighlights && <ExternalLink href={preview.videoHighlights} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline" style={{color: accent}}>Guarda video highlights <ExternalLinkIcon className="size-4" /></ExternalLink>}
 					</div>
 				)}
 				{preview.imageLabel && !preview.imageUrl && <p className="inline-flex items-center gap-2 text-sm text-muted-foreground"><ImageIcon className="size-4" style={{color: accent}} />{preview.imageLabel}</p>}

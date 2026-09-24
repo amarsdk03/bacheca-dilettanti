@@ -2,6 +2,7 @@ import "server-only";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import {getBirthDateError} from "@/features/profilo/birth-date";
+import {parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 import {isProfileType, MAX_PROFILE_COUNT, type ProfileType,} from "@/features/profilo/profile-model";
 import {PROFILE_SOCIAL_PLATFORMS, type ProfileSocialLinks,} from "@/features/profilo/profile-social-links";
 import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
@@ -456,11 +457,12 @@ function normalizeDraft(
 
 	assertExactKeys(value, ["costo_partenza", "info_aggiuntive", "nome_organizzazione", "orari", "presentazione", "sede_principale", "servizi_inclusi", "sport_principale", "tipologie_sport"], type);
 	const cost = value.costo_partenza;
-	if (cost !== null && cost !== undefined && (typeof cost !== "number" || !Number.isFinite(cost) || cost < 0 || cost > 99_999_999.99 || Math.round(cost * 100) !== cost * 100)) {
+	const normalizedCost = parseOptionalMoney(cost);
+	if ((cost !== null && cost !== undefined && typeof cost !== "number") || normalizedCost === undefined) {
 		fail("Il costo di partenza non è valido.", 3, type);
 	}
 	return {
-		costo_partenza: typeof cost === "number" ? cost : null,
+		costo_partenza: normalizedCost,
 		info_aggiuntive: textValue(value.info_aggiuntive, MAX_LONG_TEXT, type),
 		nome_organizzazione: textValue(value.nome_organizzazione, MAX_SHORT_TEXT, type),
 		orari: openingHours(value.orari, type),

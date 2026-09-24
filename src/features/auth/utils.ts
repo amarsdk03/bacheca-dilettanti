@@ -21,19 +21,37 @@ export function sanitizeNextPath(
 }
 
 export function getSiteUrl() {
-	const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-	try {
-		return new URL(configuredUrl ?? "http://localhost:3000").origin;
-	} catch {
-		return "http://localhost:3000";
+	const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+	if (!configuredUrl) {
+		throw new Error("NEXT_PUBLIC_SITE_URL is required for Supabase Auth email links.");
 	}
+
+	let url: URL;
+	try {
+		url = new URL(configuredUrl);
+	} catch {
+		throw new Error("NEXT_PUBLIC_SITE_URL must be an absolute URL.");
+	}
+
+	const loopback = url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "[::1]";
+	const localHttp = process.env.NODE_ENV !== "production" && loopback && url.protocol === "http:";
+	if (
+		(url.protocol !== "https:" && !localHttp)
+		|| (process.env.NODE_ENV === "production" && loopback)
+		|| url.username
+		|| url.password
+		|| url.pathname !== "/"
+		|| url.search
+		|| url.hash
+	) {
+		throw new Error("NEXT_PUBLIC_SITE_URL must be a trusted site origin (HTTPS outside local development).");
+	}
+
+	return url.origin;
 }
 
-export function getAuthCallbackUrl(nextPath: string) {
-	const callback = new URL("/auth/callback", getSiteUrl());
-	callback.searchParams.set("next", sanitizeNextPath(nextPath));
-	return callback.toString();
+export function getAuthCallbackUrl() {
+	return new URL("/auth/callback", getSiteUrl()).toString();
 }
 
 export function getAuthConfirmUrl() {
