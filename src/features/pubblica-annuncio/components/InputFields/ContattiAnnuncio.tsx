@@ -1,6 +1,7 @@
 import {type Dispatch, type SetStateAction} from "react";
 
 import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {
@@ -52,6 +53,7 @@ export default function ContattiAnnuncioFields({
 					className="size-4 shrink-0 text-muted-foreground"
 				/>
 				{canale.etichetta}:
+				{canale.valore === "Email" && <OptionalLabel recommended />}
 			</FieldLabel>
 			<Input
 				id={`contatto-${canale.valore}`}

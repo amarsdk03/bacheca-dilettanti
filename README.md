@@ -152,15 +152,12 @@ node --test $testFiles
 Push effettuato il: ??/??/2026
 
 - Dashboard amministrativa di gestione utenti, profili, annunci e moderazione
-- Aggiunta delle pagine legali (Termini e condizioni, privacy policy, cookies...)
-- Aggiunta dei Follow e Salva per i profili e gli annunci
-- Miglioramento UI per le card/pagine dei profili e annunci
+- Miglioramento UI per le card risultati dei profili e annunci
 - Rilascio al pubblico delle altre categorie di sottoprofili
 - Personalizzazione aumentata per i vari sottoprofili
-- Completamento del flusso operativo di approvazione e rimborso degli annunci prioritari.
+- Completamento del flusso operativo di pagamento e rimborso degli annunci prioritari.
 - Analitiche visualizzazione per aggiornamenti, profili e annunci
 - Aggiunta di sponsor/partner nelle varie sezioni dedicate
-- Metadati dinamici, anteprime social, JSON-LD, sitemap e robots per i contenuti pubblici.
 
 ---
 

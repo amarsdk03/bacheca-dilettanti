@@ -25,7 +25,7 @@ export default function LinkAnnuncioField({
 	idPrefix,
 	value,
 	onValueChange,
-	label = "Link annuncio",
+	label = "Aggiungi link",
 	placeholder = "https://www.esempio.it/annuncio",
 	description = "Inserisci un link pubblico completo che inizi con http:// o https://.",
 	labelAddon,

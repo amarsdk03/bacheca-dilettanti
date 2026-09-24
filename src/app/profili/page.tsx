@@ -1,7 +1,9 @@
 import type {Metadata} from "next";
+import {Suspense} from "react";
 
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
+import {NavbarSkeleton} from "@/components/loading/PageSkeletons";
 import Profili from "@/features/profili/Profili";
 import {
 	buildProfilesHref,
@@ -47,11 +49,11 @@ export async function generateMetadata({searchParams}: ProfiliPageProps): Promis
 
 export default async function ProfiliPage({searchParams}: ProfiliPageProps) {
 	const query = parseProfileDirectoryQuery(await searchParams);
-	const result = await getProfileDirectory(query);
+	const result = getProfileDirectory(query);
 
 	return (
 		<>
-			<Navbar />
+			<Suspense fallback={<NavbarSkeleton />}><Navbar /></Suspense>
 			<Profili query={query} result={result} />
 			<Footer />
 		</>

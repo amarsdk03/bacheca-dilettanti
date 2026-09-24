@@ -212,15 +212,20 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 		const periodoDa = textValue(entry.periodoDa, 4, profileType);
 		const periodoA = textValue(entry.periodoA, 4, profileType);
 		const currentYear = new Date().getFullYear();
+		const periodoAIsToday = periodoA === "oggi";
 		const invalidYear = (year: string | null) => Boolean(year) && (
 			!YEAR_PATTERN.test(year as string)
 			|| Number(year) < 1900
 			|| Number(year) > currentYear
 		);
-		if (invalidYear(periodoDa) || invalidYear(periodoA)) {
+		if (
+			invalidYear(periodoDa)
+			|| (periodoAIsToday && profileType !== "giocatore")
+			|| (!periodoAIsToday && invalidYear(periodoA))
+		) {
 			fail("Uno dei periodi inseriti non è valido.", 3, profileType);
 		}
-		if (periodoDa && periodoA && Number(periodoA) < Number(periodoDa)) {
+		if (periodoDa && periodoA && !periodoAIsToday && Number(periodoA) < Number(periodoDa)) {
 			fail("La fine di un’esperienza non può precederne l’inizio.", 3, profileType);
 		}
 		const stato = enumText(entry.stato, EXPERIENCE_STATES, profileType);
@@ -233,7 +238,7 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 			titolo: textValue(entry.titolo, 120, profileType) ?? "",
 			ente: textValue(entry.ente, 120, profileType) ?? "",
 			periodoDa: periodoDa ?? "",
-			periodoA: periodoA ?? "",
+			periodoA: periodoDa ? periodoA ?? "" : "",
 			descrizione: textValue(entry.descrizione, MAX_LONG_TEXT, profileType) ?? "",
 			stato: stato ?? "non-specificare",
 			squadraProfiloId: squadraProfiloId?.toLocaleLowerCase("en-US") ?? null,
@@ -498,11 +503,17 @@ export function parseProfileEditorPayload(
 		fail("La tipologia di profilo non è valida.", 3);
 	}
 	assertExactKeys(rawValue, ["type", "draft", "locations", "socialLinks"], rawType);
+	const normalizedDraft = normalizeDraft(rawType, rawValue.draft);
+	const normalizedLocations = locations(rawValue.locations, rawType);
+	const requiredFieldError = Object.values(
+		getProfileRequiredFieldErrors(rawType, normalizedDraft, normalizedLocations),
+	)[0];
+	if (requiredFieldError) fail(requiredFieldError, 3, rawType);
 
 	return {
 		type: rawType,
-		draft: normalizeDraft(rawType, rawValue.draft),
-		locations: locations(rawValue.locations, rawType),
+		draft: normalizedDraft,
+		locations: normalizedLocations,
 		socialLinks: normalizeSocialLinks(rawValue.socialLinks, rawType),
 	};
 }

@@ -8,6 +8,7 @@ import {revalidatePath} from "next/cache";
 import {AUTH_EMAIL_FLOW, createAuthEmailFlowMetadata,} from "@/features/auth/email-flow";
 import {getAuthErrorMessage} from "@/features/auth/errors";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
+import {PRIVACY_VERSION, TERMS_VERSION} from "@/features/legal/legal-versions";
 import type {
 	PublishAnnouncementPayload,
 	PublishAnnouncementResult,
@@ -27,8 +28,6 @@ import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import type {Json} from "@/server/supabase";
 
-const TERMS_VERSION = "2026-08-24";
-const PRIVACY_VERSION = "2026-08-24";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const OTP_PATTERN = /^\d{6}$/;
 const REGISTERED_EMAIL_MESSAGE = "Email già registrata, accedi al profilo per pubblicare annunci";
@@ -325,6 +324,9 @@ export async function verifyPublishEmailOtp(
 }
 
 function rpcErrorMessage(message: string): PublishAnnouncementResult {
+	if (message.includes("PROFILE_REQUIRED_FIELDS_MISSING")) {
+		return {status: "error", step: 2, message: "Completa i campi obbligatori del profilo e riprova."};
+	}
 	if (message.includes("SUBMISSION_ALREADY_CONSUMED")) {
 		return {
 			status: "error",

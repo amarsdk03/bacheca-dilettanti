@@ -5,6 +5,7 @@ import {useFormStatus} from "react-dom";
 import Link from "next/link";
 
 import {Button} from "@/components/ui/button";
+import {Spinner} from "@/components/ui/spinner";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
@@ -14,7 +15,7 @@ import GradientBackground from "@/components/styling/GradientBackground";
 
 function SubmitButton() {
 	const {pending} = useFormStatus();
-	return <Button type="submit" disabled={pending} className="w-full">{pending ? "Invio in corso…" : "Invia il link"}</Button>;
+	return <Button type="submit" disabled={pending} aria-busy={pending} className="w-full">{pending && <Spinner data-icon="inline-start" aria-hidden="true" />}{pending ? "Invio in corso…" : "Invia il link"}</Button>;
 }
 
 export default function PasswordDimenticata({invalidLink = false}: {invalidLink?: boolean}) {

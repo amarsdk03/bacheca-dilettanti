@@ -1,8 +1,11 @@
 import Link from "next/link";
+import {Suspense} from "react";
 import ProfileCard from "@/features/profili/components/cards/ProfileCard";
 import {ArrowLeftIcon, ArrowRightIcon, InfoIcon, SearchIcon, SlidersHorizontalIcon,} from "lucide-react";
 
 import GradientBackground from "@/components/styling/GradientBackground";
+import {DirectoryResultsSkeleton} from "@/components/loading/PageSkeletons";
+import {DirectoryFilterSubmitButton, DirectoryGetForm, DirectorySearchButton} from "@/components/navigation/DirectoryGetForm";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
 import {Button, buttonVariants} from "@/components/ui/button";
@@ -11,7 +14,6 @@ import {Field, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {
 	InputGroup,
 	InputGroupAddon,
-	InputGroupButton,
 	InputGroupInput,
 	InputGroupText,
 } from "@/components/ui/input-group";
@@ -36,7 +38,7 @@ import Image from "next/image";
 
 interface ProfiliProps {
 	query: ProfileDirectoryQuery;
-	result: ProfileDirectoryResult;
+	result: Promise<ProfileDirectoryResult>;
 }
 
 interface FilterSelectOption {
@@ -66,7 +68,7 @@ function ProfileQueryHiddenFields({query, includeQuery}: {
 function ProfileSearch({query}: {query: ProfileDirectoryQuery}) {
 	return (
 		<div className="flex items-end gap-2">
-			<form action="/profili" method="get" role="search" className="min-w-0 flex-1">
+			<DirectoryGetForm action="/profili" role="search" className="min-w-0 flex-1">
 				<ProfileQueryHiddenFields query={query} includeQuery={false} />
 				<Field>
 					<FieldLabel htmlFor="profile-search" className="sr-only">Cerca tra i profili</FieldLabel>
@@ -80,13 +82,11 @@ function ProfileSearch({query}: {query: ProfileDirectoryQuery}) {
 							maxLength={100}
 						/>
 						<InputGroupAddon align="inline-end">
-							<InputGroupButton type="submit" size="icon-sm" aria-label="Cerca">
-								<SearchIcon aria-hidden="true" />
-							</InputGroupButton>
+						<DirectorySearchButton />
 						</InputGroupAddon>
 					</InputGroup>
 				</Field>
-			</form>
+			</DirectoryGetForm>
 			<ProfileFiltersSheet query={query} />
 		</div>
 	);
@@ -149,7 +149,7 @@ function ProfileFiltersForm({query, type, idPrefix}: {
 	});
 
 	return (
-		<form action="/profili" method="get" className="flex flex-col gap-5">
+		<DirectoryGetForm action="/profili" className="flex flex-col gap-5">
 			<ProfileQueryHiddenFields
 				query={{...query, filters: createEmptyProfileFilters()}}
 				includeQuery
@@ -245,10 +245,10 @@ function ProfileFiltersForm({query, type, idPrefix}: {
 			</FieldGroup>
 
 			<div className="flex gap-2">
-				<Button type="submit" className="flex-1">Applica filtri</Button>
+				<DirectoryFilterSubmitButton />
 				<ProfileFiltersResetButton href={resetHref} />
 			</div>
-		</form>
+		</DirectoryGetForm>
 	);
 }
 
@@ -303,7 +303,7 @@ function ProfileFiltersSheet({query}: {query: ProfileDirectoryQuery}) {
 	);
 }
 
-function DirectoryPagination({query, result}: ProfiliProps) {
+function DirectoryPagination({query, result}: {query: ProfileDirectoryQuery; result: ProfileDirectoryResult}) {
 	if (result.totalPages <= 1) return null;
 	const previousPage = Math.max(1, result.currentPage - 1);
 	const nextPage = Math.min(result.totalPages, result.currentPage + 1);
@@ -353,9 +353,37 @@ function EmptyDirectory({query}: {query: ProfileDirectoryQuery}) {
 	);
 }
 
-export default function Profili({query, result}: ProfiliProps) {
+async function ProfileResults({query, result: resultPromise}: ProfiliProps) {
+	const result = await resultPromise;
 	const resultLabel = result.total === 1 ? "1 profilo trovato" : `${result.total} profili trovati`;
 
+	return (
+		<>
+			<div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+				<h2 id="profiles-results-title" className="text-lg font-semibold tracking-tight">{resultLabel}</h2>
+			</div>
+			{result.error && (
+				<Alert variant="destructive" className="mb-5">
+					<InfoIcon aria-hidden="true" />
+					<AlertTitle>Profili temporaneamente non disponibili</AlertTitle>
+					<AlertDescription>Riprova tra poco. La ricerca non ha modificato alcun dato.</AlertDescription>
+				</Alert>
+			)}
+			{result.profiles.length > 0 ? (
+				<div className="flex flex-col gap-6">
+					<ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+						{result.profiles.map((profile) => (
+							<li key={`${profile.id}:${profile.type}`} className="h-full"><ProfileCard profile={profile} /></li>
+						))}
+					</ul>
+					<DirectoryPagination query={query} result={result} />
+				</div>
+			) : !result.error && <EmptyDirectory query={query} />}
+		</>
+	);
+}
+
+export default function Profili({query, result}: ProfiliProps) {
 	return (
 		<GradientBackground className="min-h-[calc(100vh-4rem)]">
 			<div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
@@ -408,30 +436,9 @@ export default function Profili({query, result}: ProfiliProps) {
 				</div>
 
 				<section aria-labelledby="profiles-results-title" className="mt-8 min-w-0">
-					<div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-						<h2 id="profiles-results-title" className="text-lg font-semibold tracking-tight">{resultLabel}</h2>
-					</div>
-
-					{result.error && (
-						<Alert variant="destructive" className="mb-5">
-							<InfoIcon aria-hidden="true" />
-							<AlertTitle>Profili temporaneamente non disponibili</AlertTitle>
-							<AlertDescription>Riprova tra poco. La ricerca non ha modificato alcun dato.</AlertDescription>
-						</Alert>
-					)}
-
-					{result.profiles.length > 0 ? (
-						<div className="flex flex-col gap-6">
-							<ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-								{result.profiles.map((profile) => (
-									<li key={`${profile.id}:${profile.type}`} className="h-full">
-										<ProfileCard profile={profile} />
-									</li>
-								))}
-							</ul>
-							<DirectoryPagination query={query} result={result} />
-						</div>
-					) : !result.error && <EmptyDirectory query={query} />}
+					<Suspense key={buildProfilesHref(query)} fallback={<DirectoryResultsSkeleton kind="profili" />}>
+						<ProfileResults query={query} result={result} />
+					</Suspense>
 				</section>
 			</div>
 		</GradientBackground>

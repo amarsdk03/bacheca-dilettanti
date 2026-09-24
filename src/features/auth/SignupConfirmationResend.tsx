@@ -6,6 +6,7 @@ import {CircleAlertIcon, MailCheckIcon} from "lucide-react";
 
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
+import {Spinner} from "@/components/ui/spinner";
 import {resendSignupConfirmation} from "@/features/auth/server/signup-confirmation";
 import {INITIAL_AUTH_STATE} from "@/features/auth/types";
 import {cn} from "@/lib/utils";
@@ -19,7 +20,8 @@ function ResendButton() {
 	const {pending} = useFormStatus();
 
 	return (
-		<Button type="submit" variant="outline" disabled={pending}>
+		<Button type="submit" variant="outline" disabled={pending} aria-busy={pending}>
+			{pending && <Spinner data-icon="inline-start" aria-hidden="true" />}
 			{pending ? "Invio in corso…" : "Invia di nuovo l’email"}
 		</Button>
 	);

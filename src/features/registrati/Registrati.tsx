@@ -35,6 +35,7 @@ import {
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group";
 import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
+import {Spinner} from "@/components/ui/spinner";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import ProfileDetailsForm from "@/features/profilo/ProfileDetailsForm";
 import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
@@ -86,12 +87,12 @@ const INITIAL_ACCOUNT_DRAFT: AccountDraft = {
 
 const STEPS = ["Account", "Tipo di profilo", "Dati profilo"] as const;
 
-function SubmitButton() {
+function SubmitButton({consentAccepted}: {consentAccepted: boolean}) {
 	const {pending} = useFormStatus();
 
 	return (
-		<Button type="submit" size="lg" disabled={pending}>
-			<UserPlusIcon data-icon="inline-start" />
+		<Button type="submit" size="lg" disabled={pending || !consentAccepted} aria-busy={pending}>
+			{pending ? <Spinner data-icon="inline-start" aria-hidden="true" /> : <UserPlusIcon data-icon="inline-start" />}
 			{pending ? "Creazione in corso…" : "Crea account"}
 		</Button>
 	);
@@ -626,7 +627,7 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 												<FieldError>{emailRecoveryError ?? fieldErrors.email}</FieldError>
 											)}
 										</Field>
-										{(registrationEmailStatus === "sent" || registrationEmailStatus === "verifying") && resolvedEmail === normalizedAccountEmail && (
+										{(registrationEmailStatus === "sent" || registrationEmailStatus === "verifying" || registrationEmailStatus === "checking") && resolvedEmail === normalizedAccountEmail && (
 											<Field data-invalid={Boolean(otpError)}>
 												<FieldLabel htmlFor="registration-recovery-code">Codice OTP <RequiredMark /></FieldLabel>
 												<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -652,14 +653,15 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 															))}
 														</InputOTPGroup>
 													</InputOTP>
-													<Button type="button" onClick={verifyRecoveryCode} disabled={emailRecoveryBusy}>
+													<Button type="button" onClick={verifyRecoveryCode} disabled={emailRecoveryBusy} aria-busy={registrationEmailStatus === "verifying"}>
+														{registrationEmailStatus === "verifying" && <Spinner data-icon="inline-start" aria-hidden="true" />}
 														{registrationEmailStatus === "verifying" ? "Verifica…" : "Verifica codice"}
 													</Button>
 												</div>
 												{otpFeedback && <FieldDescription role="status">{otpFeedback}</FieldDescription>}
 												<FieldError>{otpError}</FieldError>
-												<Button type="button" variant="outline" size="sm" onClick={() => requestEmailRecovery(false)} disabled={emailRecoveryBusy} className="w-fit">
-													Invia di nuovo il codice
+												<Button type="button" variant="outline" size="sm" onClick={() => requestEmailRecovery(false)} disabled={emailRecoveryBusy} aria-busy={registrationEmailStatus === "checking"} className="w-fit">
+													{registrationEmailStatus === "checking" && <Spinner data-icon="inline-start" aria-hidden="true" />}{registrationEmailStatus === "checking" ? "Invio in corso…" : "Invia di nuovo il codice"}
 												</Button>
 											</Field>
 										)}
@@ -782,7 +784,6 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 											onLocationsChange={updateProfileLocations}
 											socialLinks={profileSocialLinks[currentProfileType]}
 											onSocialLinksChange={(platform, value) => updateProfileSocialLinks(currentProfileType, platform, value)}
-											requiredFields
 											errors={currentProfileErrors}
 										/>
 										{isLastProfileDetail && (
@@ -802,8 +803,33 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 															aria-invalid={Boolean(legalConsentError)}
 														/>
 														<FieldContent>
-															<FieldLabel htmlFor="registration-legal-consent" className="font-normal">
-																Confermo di aver letto e accettato i <Link href="/termini-di-servizio" target="_blank" rel="noopener noreferrer" className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4">Termini di servizio</Link>, la <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4">Privacy policy</Link> e la <Link href="/cookie-policy" target="_blank" rel="noopener noreferrer" className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4">Cookie policy</Link>. <RequiredMark />
+															<FieldLabel htmlFor="registration-legal-consent" className="inline font-normal">
+																Confermo di aver letto e accettato i{" "}
+																<Link
+																	href="/termini-di-servizio"
+																	target="_blank"
+																	rel="noopener noreferrer"
+																	className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4"
+																>
+																	Termini di servizio
+																</Link>, la{" "}
+																<Link
+																	href="/privacy-policy"
+																	target="_blank"
+																	rel="noopener noreferrer"
+																	className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4"
+																>
+																	Privacy policy
+																</Link> e la{" "}
+																<Link
+																	href="/cookie-policy"
+																	target="_blank"
+																	rel="noopener noreferrer"
+																	className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4"
+																>
+																	Cookie policy
+																</Link>.{" "}
+																<RequiredMark />
 															</FieldLabel>
 															{legalConsentError && <FieldError>{legalConsentError}</FieldError>}
 														</FieldContent>
@@ -829,10 +855,11 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 										Indietro
 									</Button>
 								)}
-								{visibleStep === 1 && registrationEmailStatus !== "sent" && registrationEmailStatus !== "verifying" && (
-									<Button type="button" size="lg" onClick={continueFromAccount} disabled={emailRecoveryBusy}>
+				{visibleStep === 1 && registrationEmailStatus !== "sent" && registrationEmailStatus !== "verifying" && !(registrationEmailStatus === "checking" && resolvedEmail === normalizedAccountEmail) && (
+									<Button type="button" size="lg" onClick={continueFromAccount} disabled={emailRecoveryBusy} aria-busy={registrationEmailStatus === "checking"}>
+										{registrationEmailStatus === "checking" && <Spinner data-icon="inline-start" aria-hidden="true" />}
 										{registrationEmailStatus === "checking" ? "Verifica email…" : "Continua"}
-										<ArrowRightIcon data-icon="inline-end" />
+										{registrationEmailStatus !== "checking" && <ArrowRightIcon data-icon="inline-end" />}
 									</Button>
 								)}
 								{visibleStep === 2 && (selectedProfileTypes.length === 0 || registrableProfileTypes.length > 0) && (
@@ -847,7 +874,7 @@ export default function Registrati({nextPath, existingSessionEmail}: RegistratiP
 										<ArrowRightIcon data-icon="inline-end" />
 									</Button>
 								)}
-								{visibleStep === 3 && isLastProfileDetail && <SubmitButton />}
+				{visibleStep === 3 && isLastProfileDetail && <SubmitButton consentAccepted={legalAccepted} />}
 			</CardFooter>
 		</form>
 	);

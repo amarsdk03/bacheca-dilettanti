@@ -7,6 +7,7 @@ import {CircleAlertIcon, EyeIcon, EyeOffIcon} from "lucide-react";
 
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
+import {Spinner} from "@/components/ui/spinner";
 import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group";
@@ -24,7 +25,8 @@ function SubmitButton() {
 	const {pending} = useFormStatus();
 
 	return (
-		<Button type="submit" size="lg" disabled={pending} className="w-full">
+		<Button type="submit" size="lg" disabled={pending} aria-busy={pending} className="w-full">
+			{pending && <Spinner data-icon="inline-start" aria-hidden="true" />}
 			{pending ? "Accesso in corso…" : "Accedi"}
 		</Button>
 	);

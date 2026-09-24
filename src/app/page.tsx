@@ -1,10 +1,12 @@
 import {Metadata} from "next";
 import {redirect} from "next/navigation";
+import {Suspense} from "react";
 import {dynamicMetadata} from "@/server/metadata";
 
 import Homepage from "@/features/homepage/Homepage";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
+import {NavbarSkeleton} from "@/components/loading/PageSkeletons";
 
 export const metadata: Metadata = dynamicMetadata({
 	description: "Profili, annunci e opportunità per giocatori, squadre e professionisti del calcio dilettantistico.",
@@ -26,7 +28,7 @@ export default async function Page({searchParams}: PageProps) {
 
 	return (
 		<>
-			<Navbar workInProgress={false} />
+			<Suspense fallback={<NavbarSkeleton workInProgress={false} />}><Navbar workInProgress={false} /></Suspense>
 			<Homepage />
 			<Footer />
 		</>

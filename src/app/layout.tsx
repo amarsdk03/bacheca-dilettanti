@@ -10,6 +10,7 @@ import {TooltipProvider} from "@/components/ui/tooltip";
 import {Toaster} from "@/components/ui/toast";
 import {interFont, latoFont, oswaldFont} from "@/app/fonts";
 import JsonLd from "@/components/seo/JsonLd";
+import SupportBubble from "@/components/support/SupportBubble";
 
 export const metadata: Metadata = dynamicMetadata();
 
@@ -53,6 +54,7 @@ export default function RootLayout(
 					<main>{children}</main>
 				</TooltipProvider>
 				<Toaster />
+				<React.Suspense fallback={null}><SupportBubble /></React.Suspense>
 				<Analytics />
 				<SpeedInsights />
 			</body>

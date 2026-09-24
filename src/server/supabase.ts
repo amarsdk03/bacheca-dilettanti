@@ -1900,6 +1900,16 @@ export type Database = {
         }
         Returns: Json
       }
+      save_owned_subprofile_with_social_links_v1: {
+        Args: {
+          p_draft: Json
+          p_locations: Json
+          p_profile_type: string
+          p_social_links: Json
+          p_user_id: string
+        }
+        Returns: Json
+      }
       save_owned_profile_social_links_v1: {
         Args: {
           p_profile_type: string

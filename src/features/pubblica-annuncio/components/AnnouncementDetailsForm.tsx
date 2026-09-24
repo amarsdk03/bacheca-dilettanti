@@ -434,7 +434,7 @@ export default function AnnouncementDetailsForm({
 				<Field data-invalid={Boolean(errors.contacts)}>
 					<FieldGroup className="grid gap-4 sm:grid-cols-2">
 					<Field data-invalid={Boolean(errors.contacts || errors.email)}>
-						<FieldLabel htmlFor="announcement-contact-email" className="flex items-center gap-2"><MailIcon className="size-4" /> Email <OptionalLabel /></FieldLabel>
+						<FieldLabel htmlFor="announcement-contact-email" className="flex items-center gap-2"><MailIcon className="size-4" /> Email <OptionalLabel recommended /></FieldLabel>
 						<Input id="announcement-contact-email" type="email" value={contacts.email} onChange={(event) => onContactsChange((previous) => ({...previous, email: event.target.value}))} placeholder="nome@email.it" aria-invalid={Boolean(errors.contacts || errors.email)} />
 						{errors.email && <FieldError>{errors.email}</FieldError>}
 					</Field>

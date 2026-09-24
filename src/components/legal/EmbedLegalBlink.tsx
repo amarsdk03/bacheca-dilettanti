@@ -9,7 +9,7 @@ export default function EmbedLegalBlink({tipologia}: EmbedLegalBlinkProps) {
 				<div className="w-full h-128 flex flex-col">
 					<iframe
 						src="https://app.legalblink.it/api/documents/6a96dd034295910029c0bccc/condizioni-d'uso-del-sito-it"
-						className="h-full py-12"
+						className="h-full ps-4 pe-2 py-2 sm:py-12"
 					/>
 				</div>
 			);
@@ -18,7 +18,7 @@ export default function EmbedLegalBlink({tipologia}: EmbedLegalBlinkProps) {
 				<div className="w-full h-128 flex flex-col">
 					<iframe
 						src="https://app.legalblink.it/api/documents/6a96dd034295910029c0bccc/privacy-policy-per-siti-web-o-e-commerce-it"
-						className="h-full py-12"
+						className="h-full ps-4 pe-2 py-2 sm:py-12"
 					/>
 				</div>
 			);

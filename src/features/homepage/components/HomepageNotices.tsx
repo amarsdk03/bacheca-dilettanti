@@ -3,6 +3,7 @@
 import {useId} from "react";
 import Link from "next/link";
 import {
+	AlarmClockPlusIcon,
 	ArrowRightIcon,
 	CalendarDaysIcon,
 	FlameIcon,
@@ -23,8 +24,8 @@ const NOTICE_APPEARANCE: Record<HomepageNotice["tipo"], {
 	icon: LucideIcon;
 	className: string;
 }> = {
-	notizia: {label: "Notizia", icon: MegaphoneIcon, className: "homepage-notices-news"},
-	evento: {label: "Evento", icon: CalendarDaysIcon, className: "homepage-notices-event"},
+	notizia: {label: "Notizia", icon: AlarmClockPlusIcon, className: "homepage-notices-news"},
+	evento: {label: "Evento", icon: MegaphoneIcon, className: "homepage-notices-event"},
 	problema: {label: "Problema", icon: TriangleAlertIcon, className: "homepage-notices-problem"},
 };
 

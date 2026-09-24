@@ -17,6 +17,7 @@ import {Button} from "@/components/ui/button";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {toast} from "@/components/ui/toast";
 import ProfileDetailsForm from "@/features/profilo/ProfileDetailsForm";
+import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
 import {
 	PROFILE_OPTIONS,
 	type ProfileDrafts,
@@ -50,8 +51,14 @@ export default function ProfileEditorDialog({
 	const [workingLocations, setWorkingLocations] = useState<ProfileLocations>(() => structuredClone(locations));
 	const [workingSocialLinks, setWorkingSocialLinks] = useState<ProfileSocialLinksByType>(() => structuredClone(socialLinks));
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [showValidationErrors, setShowValidationErrors] = useState(false);
 	const [pending, startTransition] = useTransition();
 	const selectedOption = PROFILE_OPTIONS.find(({value}) => value === profileType);
+	const requiredFieldErrors = getProfileRequiredFieldErrors(
+		profileType,
+		workingDrafts[profileType],
+		workingLocations[profileType],
+	);
 
 	const updateProfileDraft = <
 		Type extends ProfileType,
@@ -61,10 +68,12 @@ export default function ProfileEditorDialog({
 			...previous,
 			[type]: {...previous[type], [field]: value},
 		}) as ProfileDrafts);
+		setErrorMessage(null);
 	};
 
 	const updateProfileLocations = (type: ProfileType, value: ProfileLocationDraft[]) => {
 		setWorkingLocations((previous) => ({...previous, [type]: value}));
+		setErrorMessage(null);
 	};
 
 	const updateProfileSocialLinks = (platform: ProfileSocialPlatform, value: string) => {
@@ -76,6 +85,12 @@ export default function ProfileEditorDialog({
 
 	const handleSave = () => {
 		setErrorMessage(null);
+		setShowValidationErrors(true);
+		const firstError = Object.values(requiredFieldErrors)[0];
+		if (firstError) {
+			setErrorMessage(firstError);
+			return;
+		}
 		startTransition(async () => {
 			let result: ProfileMutationResult;
 			try {
@@ -121,7 +136,7 @@ export default function ProfileEditorDialog({
 							: `Aggiorna ${selectedOption?.label ?? "profilo"}`}
 					</AlertDialogTitle>
 					<AlertDialogDescription id="profile-editor-description">
-						Compila i dati che vuoi mostrare. Il salvataggio aggiorna subito il tuo profilo.
+						Compila i campi obbligatori e gli altri dati che vuoi mostrare. Il salvataggio aggiorna subito il tuo profilo.
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 
@@ -142,6 +157,7 @@ export default function ProfileEditorDialog({
 							onLocationsChange={updateProfileLocations}
 							socialLinks={workingSocialLinks[profileType]}
 							onSocialLinksChange={updateProfileSocialLinks}
+							errors={showValidationErrors ? requiredFieldErrors : {}}
 						/>
 					</div>
 				</ScrollArea>

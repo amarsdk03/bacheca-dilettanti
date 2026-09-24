@@ -24,7 +24,7 @@ export default async function Navbar({minimal = false, backToHome = false, workI
 	const viewer = await getCurrentViewer();
 
 	return (
-		<header className="font-home-body sticky top-0 z-50 border-b border-white/10 bg-[#050505] text-white">
+		<header className="font-home-body sticky top-0 z-40 border-b border-white/10 bg-[#050505] text-white">
 			{
 				workInProgress && (<HomepageWorkInProgressNotice onNavbar={true} />)
 			}

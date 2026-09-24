@@ -102,6 +102,9 @@ function imageErrorMessage(error: unknown) {
 }
 
 function profileRpcErrorMessage(message: string) {
+	if (message.includes("PROFILE_REQUIRED_FIELDS_MISSING")) {
+		return "Completa i campi obbligatori del sottoprofilo e riprova.";
+	}
 	if (message.includes("PROFILE_LIMIT_REACHED")) {
 		return "Hai già raggiunto il limite massimo di cinque sottoprofili.";
 	}
@@ -116,6 +119,9 @@ function profileRpcErrorMessage(message: string) {
 	}
 	if (message.includes("BASE_PROFILE_NOT_FOUND")) {
 		return "Il profilo principale dell’account non è disponibile.";
+	}
+	if (message.includes("INVALID_PROFILE_SOCIAL_LINKS")) {
+		return "Controlla i link social inseriti e riprova.";
 	}
 
 	console.log("Errore: ", message);
@@ -316,11 +322,12 @@ export async function saveProfile(
 				return {status: "error", message: "Questa tipologia sarÃ  disponibile prossimamente."};
 			}
 		}
-		const {error} = await admin.rpc("save_owned_subprofile", {
+		const {error} = await admin.rpc("save_owned_subprofile_with_social_links_v1", {
 			p_user_id: userId,
 			p_profile_type: normalized.type,
 			p_draft: normalized.draft as Json,
 			p_locations: normalized.locations as Json,
+			p_social_links: normalized.socialLinks as Json,
 		});
 
 		if (error) {
@@ -328,18 +335,6 @@ export async function saveProfile(
 			return {status: "error", message: profileRpcErrorMessage(error.message)};
 		}
 
-		const {error: socialLinksError} = await admin.rpc("save_owned_profile_social_links_v1", {
-			p_user_id: userId,
-			p_profile_type: normalized.type,
-			p_social_links: normalized.socialLinks as Json,
-		});
-		if (socialLinksError) {
-			console.error("[profile-dashboard] Profile social links save failed", {code: socialLinksError.code});
-			return {
-				status: "error",
-				message: "Il profilo è stato aggiornato, ma non è stato possibile salvare i link social. Riprova.",
-			};
-		}
 	} catch (error) {
 		console.error("[profile-dashboard] Profile save request failed", {
 			cause: error instanceof Error ? error.name : "unknown",

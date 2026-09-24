@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import {Button} from "@/components/ui/button";
+import {Spinner} from "@/components/ui/spinner";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
@@ -15,7 +16,7 @@ import {INITIAL_AUTH_STATE} from "@/features/auth/types";
 
 function SubmitButton() {
 	const {pending} = useFormStatus();
-	return <Button type="submit" disabled={pending} className="w-full">{pending ? "Aggiornamento in corso…" : "Aggiorna password"}</Button>;
+	return <Button type="submit" disabled={pending} aria-busy={pending} className="w-full">{pending && <Spinner data-icon="inline-start" aria-hidden="true" />}{pending ? "Aggiornamento in corso…" : "Aggiorna password"}</Button>;
 }
 
 export default function ReimpostaPassword() {

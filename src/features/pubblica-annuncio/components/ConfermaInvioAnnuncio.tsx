@@ -8,6 +8,7 @@ import {REGEXP_ONLY_DIGITS} from "input-otp";
 
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
+import {Spinner} from "@/components/ui/spinner";
 import {Checkbox} from "@/components/ui/checkbox";
 import {
 	Field,
@@ -276,6 +277,7 @@ export default function ConfermaInvioAnnuncio({
 		if (!authenticated && (!emailVerified || registeredEmail)) return;
 
 		setIsSubmitting(true);
+		let navigating = false;
 		try {
 			const finalPayload = {
 				...payload,
@@ -294,6 +296,7 @@ export default function ConfermaInvioAnnuncio({
 					timeout: 4500,
 				});
 				router.push(`/pubblica-annuncio/conferma?id=${encodeURIComponent(result.announcementId)}`);
+				navigating = true;
 				router.refresh();
 				return;
 			}
@@ -305,6 +308,7 @@ export default function ConfermaInvioAnnuncio({
 					timeout: 4500,
 				});
 				router.push(`/pubblica-annuncio/pagamento?id=${encodeURIComponent(result.announcementId)}`);
+				navigating = true;
 				router.refresh();
 				return;
 			}
@@ -325,7 +329,7 @@ export default function ConfermaInvioAnnuncio({
 		} catch {
 			setSubmitError("Il servizio di pubblicazione non è momentaneamente disponibile. Riprova.");
 		} finally {
-			setIsSubmitting(false);
+			if (!navigating) setIsSubmitting(false);
 		}
 	};
 
@@ -365,7 +369,9 @@ export default function ConfermaInvioAnnuncio({
 										variant="outline"
 										onClick={requestOtp}
 										disabled={otpBusy || otpRetryActive || emailVerified || registeredEmail}
+										aria-busy={otpStatus === "sending"}
 									>
+										{otpStatus === "sending" && <Spinner data-icon="inline-start" aria-hidden="true" />}
 										{otpRequestLabel}
 									</Button>
 								</div>
@@ -406,7 +412,8 @@ export default function ConfermaInvioAnnuncio({
 												))}
 											</InputOTPGroup>
 										</InputOTP>
-									<Button type="button" onClick={verifyOtp} disabled={otpBusy}>
+									<Button type="button" onClick={verifyOtp} disabled={otpBusy} aria-busy={otpStatus === "verifying"}>
+										{otpStatus === "verifying" && <Spinner data-icon="inline-start" aria-hidden="true" />}
 											{otpStatus === "verifying" ? "Verifica..." : "Verifica codice"}
 										</Button>
 									</div>
@@ -473,15 +480,15 @@ export default function ConfermaInvioAnnuncio({
 					<Field orientation="horizontal" data-invalid={Boolean(consentErrors.terms)}>
 						<Checkbox id="confirm-terms" checked={termsAccepted} onCheckedChange={(checked) => setTermsAccepted(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.terms)} />
 						<FieldContent>
-							<FieldLabel htmlFor="confirm-terms" className="font-normal">
-								Confermo di aver letto e accettato i
+							<FieldLabel htmlFor="confirm-terms" className="inline font-normal">
+								Confermo di aver letto e accettato i{" "}
 								<Link
 									href="/termini-di-servizio"
 									target="_blank"
 									className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4"
 								>
 									Termini di servizio.
-								</Link>
+								</Link>{" "}
 								<RequiredMark />
 							</FieldLabel>
 						</FieldContent>
@@ -489,15 +496,15 @@ export default function ConfermaInvioAnnuncio({
 					<Field orientation="horizontal" data-invalid={Boolean(consentErrors.privacy)}>
 						<Checkbox id="confirm-privacy" checked={privacyAccepted} onCheckedChange={(checked) => setPrivacyAccepted(Boolean(checked))} required aria-required="true" aria-invalid={Boolean(consentErrors.privacy)} />
 						<FieldContent>
-							<FieldLabel htmlFor="confirm-privacy" className="font-normal">
-								Ho letto
+							<FieldLabel htmlFor="confirm-privacy" className="inline font-normal">
+								Ho letto{" "}
 								<Link
 									href="/privacy-policy"
 									target="_blank"
 									className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4"
 								>
 									l’informativa sulla Privacy
-								</Link>
+								</Link>{" "}
 								 e acconsento al trattamento dei miei dati. <RequiredMark />
 							</FieldLabel>
 						</FieldContent>
@@ -507,7 +514,8 @@ export default function ConfermaInvioAnnuncio({
 
 			<div className="flex justify-between gap-3">
 				<Button variant="outline" onClick={() => onEditStep(3)}>Indietro</Button>
-				<Button disabled={isSubmitting || otpBusy || registeredEmail} onClick={submit}>
+				<Button disabled={isSubmitting || otpBusy || registeredEmail} aria-busy={isSubmitting} onClick={submit}>
+					{isSubmitting && <Spinner data-icon="inline-start" aria-hidden="true" />}
 					{isSubmitting
 						? "Salvataggio in corso..."
 						: visibility === "prioritario" ? "Conferma e vai al pagamento" : "Conferma e invia"}

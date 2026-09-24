@@ -4,6 +4,7 @@ import {useOptimistic, useTransition} from "react";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
+import {Spinner} from "@/components/ui/spinner";
 import {ANNOUNCEMENT_DIRECTORY_OPTIONS, type AnnouncementDirectoryType,} from "@/features/annunci/announcement-model";
 
 interface AnnouncementTypeSelectorProps {
@@ -40,7 +41,7 @@ export default function AnnouncementTypeSelector({
 	}
 
 	return (
-		<div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+		<div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
 			<ToggleGroup
 				multiple
 				variant="outline"
@@ -64,6 +65,7 @@ export default function AnnouncementTypeSelector({
 					</ToggleGroupItem>
 				))}
 			</ToggleGroup>
+			{pending && <><Spinner aria-hidden="true" className="shrink-0" /><span className="sr-only" role="status">Aggiornamento annunci in corso</span></>}
 		</div>
 	);
 }

@@ -1,7 +1,7 @@
-export default function OptionalLabel() {
+export default function OptionalLabel({recommended = false}: {recommended?: boolean}) {
 	return (
 		<span className="font-normal text-neutral-400 -translate-x-1">
-			(facoltativo)
+			({recommended ? "raccomandato" : "facoltativo"})
 		</span>
 	);
 }

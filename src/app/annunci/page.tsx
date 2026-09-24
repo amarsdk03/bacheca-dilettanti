@@ -1,7 +1,9 @@
 import type {Metadata} from "next";
+import {Suspense} from "react";
 
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
+import {NavbarSkeleton} from "@/components/loading/PageSkeletons";
 import Annunci from "@/features/annunci/Annunci";
 import {
 	announcementDirectoryOption,
@@ -45,11 +47,11 @@ export async function generateMetadata({searchParams}: AnnunciPageProps): Promis
 
 export default async function AnnunciPage({searchParams}: AnnunciPageProps) {
 	const query = parseAnnouncementDirectoryQuery(await searchParams);
-	const result = await loadPublicAnnouncementDirectory(query);
+	const result = loadPublicAnnouncementDirectory(query);
 
 	return (
 		<>
-			<Navbar />
+			<Suspense fallback={<NavbarSkeleton />}><Navbar /></Suspense>
 			<Annunci query={query} result={result} />
 			<Footer />
 		</>

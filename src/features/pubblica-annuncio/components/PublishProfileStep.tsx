@@ -68,7 +68,7 @@ export default function PublishProfileStep({
 				<Alert>
 					<InfoIcon />
 					<AlertTitle>
-						Prima pubblicazione su Bacheca?
+						Prima pubblicazione come {profileType}?
 					</AlertTitle>
 					<AlertDescription>
 						Con questi dati creerai anche il tuo profilo, oltre all’annuncio. Dopo la verifica dell’email
@@ -86,7 +86,6 @@ export default function PublishProfileStep({
 					onLocationsChange={(type, value) => onLocationsChange(type as PublishableProfileType, value)}
 					socialLinks={socialLinks}
 					onSocialLinksChange={onSocialLinksChange}
-					requiredFields
 					errors={errors}
 				/>
 			</fieldset>

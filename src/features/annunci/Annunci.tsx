@@ -1,7 +1,10 @@
 import Link from "next/link";
+import {Suspense} from "react";
 import {ArrowLeftIcon, ArrowRightIcon, InfoIcon, SearchIcon, SlidersHorizontalIcon,} from "lucide-react";
 
 import GradientBackground from "@/components/styling/GradientBackground";
+import {DirectoryResultsSkeleton} from "@/components/loading/PageSkeletons";
+import {DirectoryFilterSubmitButton, DirectoryGetForm, DirectorySearchButton} from "@/components/navigation/DirectoryGetForm";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
 import {Button, buttonVariants} from "@/components/ui/button";
@@ -10,7 +13,6 @@ import {Field, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {
 	InputGroup,
 	InputGroupAddon,
-	InputGroupButton,
 	InputGroupInput,
 	InputGroupText,
 } from "@/components/ui/input-group";
@@ -37,7 +39,7 @@ import Image from "next/image";
 
 interface AnnunciProps {
 	query: AnnouncementDirectoryQuery;
-	result: AnnouncementDirectoryResult;
+	result: Promise<AnnouncementDirectoryResult>;
 }
 
 interface FilterSelectOption {
@@ -68,7 +70,7 @@ function AnnouncementQueryHiddenFields({
 function AnnouncementSearch({query}: {query: AnnouncementDirectoryQuery}) {
 	return (
 		<div className="flex items-end gap-2">
-			<form action="/annunci" method="get" role="search" className="min-w-0 flex-1">
+			<DirectoryGetForm action="/annunci" role="search" className="min-w-0 flex-1">
 				<AnnouncementQueryHiddenFields query={query} includeQuery={false} />
 				<Field>
 					<FieldLabel htmlFor="announcement-search" className="sr-only">
@@ -84,13 +86,11 @@ function AnnouncementSearch({query}: {query: AnnouncementDirectoryQuery}) {
 							maxLength={100}
 						/>
 						<InputGroupAddon align="inline-end">
-							<InputGroupButton type="submit" size="icon-sm" aria-label="Cerca">
-								<SearchIcon aria-hidden="true" />
-							</InputGroupButton>
+						<DirectorySearchButton />
 						</InputGroupAddon>
 					</InputGroup>
 				</Field>
-			</form>
+			</DirectoryGetForm>
 			<AnnouncementFiltersSheet query={query} />
 		</div>
 	);
@@ -160,7 +160,7 @@ function AnnouncementFiltersForm({
 	});
 
 	return (
-		<form action="/annunci" method="get" className="flex flex-col gap-5">
+		<DirectoryGetForm action="/annunci" className="flex flex-col gap-5">
 			<AnnouncementQueryHiddenFields
 				query={{...query, filters: createEmptyAnnouncementFilters()}}
 				includeQuery
@@ -263,10 +263,10 @@ function AnnouncementFiltersForm({
 			</FieldGroup>
 
 			<div className="flex gap-2">
-				<Button type="submit" className="flex-1">Applica filtri</Button>
+				<DirectoryFilterSubmitButton />
 				<AnnouncementFiltersResetButton href={resetHref} />
 			</div>
-		</form>
+		</DirectoryGetForm>
 	);
 }
 
@@ -355,7 +355,7 @@ function AnnouncementFiltersSheet({query}: {query: AnnouncementDirectoryQuery}) 
 	);
 }
 
-function DirectoryPagination({query, result}: AnnunciProps) {
+function DirectoryPagination({query, result}: {query: AnnouncementDirectoryQuery; result: AnnouncementDirectoryResult}) {
 	if (result.totalPages <= 1) return null;
 	const previousPage = Math.max(1, result.currentPage - 1);
 	const nextPage = Math.min(result.totalPages, result.currentPage + 1);
@@ -415,9 +415,37 @@ function showAllHref(query: AnnouncementDirectoryQuery) {
 	return suffix ? `/annunci?${suffix}` : "/annunci";
 }
 
-export default function Annunci({query, result}: AnnunciProps) {
+async function AnnouncementResults({query, result: resultPromise}: AnnunciProps) {
+	const result = await resultPromise;
 	const resultLabel = result.total === 1 ? "1 annuncio trovato" : `${result.total} annunci trovati`;
 
+	return (
+		<>
+			<div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+				<h2 id="announcements-results-title" className="text-lg font-semibold tracking-tight">{resultLabel}</h2>
+			</div>
+			{result.error && (
+				<Alert variant="destructive" className="mb-5">
+					<InfoIcon aria-hidden="true" />
+					<AlertTitle>Annunci temporaneamente non disponibili</AlertTitle>
+					<AlertDescription>Riprova tra poco. La ricerca non ha modificato alcun dato.</AlertDescription>
+				</Alert>
+			)}
+			{result.announcements.length > 0 ? (
+				<div className="flex flex-col gap-6">
+					<ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+						{result.announcements.map((announcement) => (
+							<li key={announcement.id} className="h-full"><AnnouncementCard announcement={announcement} /></li>
+						))}
+					</ul>
+					<DirectoryPagination query={query} result={result} />
+				</div>
+			) : !result.error && <EmptyDirectory query={query} />}
+		</>
+	);
+}
+
+export default function Annunci({query, result}: AnnunciProps) {
 	return (
 		<GradientBackground className="min-h-[calc(100vh-4rem)]">
 			<div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
@@ -471,32 +499,9 @@ export default function Annunci({query, result}: AnnunciProps) {
 				</div>
 
 				<section aria-labelledby="announcements-results-title" className="mt-8 min-w-0">
-					<div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-						<h2 id="announcements-results-title" className="text-lg font-semibold tracking-tight">
-							{resultLabel}
-						</h2>
-					</div>
-
-					{result.error && (
-						<Alert variant="destructive" className="mb-5">
-							<InfoIcon aria-hidden="true" />
-							<AlertTitle>Annunci temporaneamente non disponibili</AlertTitle>
-							<AlertDescription>Riprova tra poco. La ricerca non ha modificato alcun dato.</AlertDescription>
-						</Alert>
-					)}
-
-					{result.announcements.length > 0 ? (
-						<div className="flex flex-col gap-6">
-							<ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-								{result.announcements.map((announcement) => (
-									<li key={announcement.id} className="h-full">
-										<AnnouncementCard announcement={announcement} />
-									</li>
-								))}
-							</ul>
-							<DirectoryPagination query={query} result={result} />
-						</div>
-					) : !result.error && <EmptyDirectory query={query} />}
+					<Suspense key={buildAnnouncementsHref(query)} fallback={<DirectoryResultsSkeleton kind="annunci" />}>
+						<AnnouncementResults query={query} result={result} />
+					</Suspense>
 				</section>
 			</div>
 		</GradientBackground>

@@ -124,7 +124,7 @@ export default function PremiTrofeiFields({
 											id={`premio-titolo-${premio.id}`}
 											value={premio.titoloPremio}
 											onChange={(event) => updatePremioTrofeo(premio.id, "titoloPremio", event.target.value)}
-											placeholder="1000 euro"
+											placeholder="1000 euro, trofeo in bronzo, coupon Amazon..."
 											required
 											aria-required="true"
 											aria-invalid={titoloNonValido}

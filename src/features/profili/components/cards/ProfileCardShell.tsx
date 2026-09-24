@@ -38,22 +38,25 @@ const PROFILE_FACT_ICONS: Record<DirectoryProfileFactKind, LucideIcon> = {
 	types: TagsIcon,
 };
 
-function ProfileFactGrid({facts}: {facts: readonly DirectoryProfileFact[]}) {
+function ProfileFactGrid({facts, accent}: {facts: readonly DirectoryProfileFact[], accent: string}) {
 	if (facts.length === 0) {
 		return <p className="rounded-xl bg-muted/55 p-3 text-sm text-muted-foreground">Informazioni non specificate.</p>;
 	}
 
 	return (
-		<dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+		<dl className="grid grid-cols-1 gap-2 sm:grid-cols-2 py-3 px-1 gap-4">
 			{facts.map(({kind, label, value}) => {
 				const Icon = PROFILE_FACT_ICONS[kind];
 				return (
-					<div key={kind} className="min-w-0 rounded-xl bg-muted/55 p-3">
-						<dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
+					<div key={kind} className="min-w-0 rounded-xl">
+						<dt
+							className="flex items-center gap-1.5 text-muted-foreground"
+							style={{color: accent, filter: "brightness(50%)"}}
+						>
 							<Icon className="size-3.5 shrink-0" aria-hidden="true" />
-							<span className="truncate">{label}</span>
+							<span className="text-xs truncate uppercase">{label}</span>
 						</dt>
-						<dd className="mt-1 truncate font-medium" title={value}>{value}</dd>
+						<dd className="mt-1 font-medium" title={value}>{value}</dd>
 					</div>
 				);
 			})}
@@ -98,20 +101,17 @@ export default function ProfileCardShell({
 							{profile.imageUrl && <AvatarImage src={profile.imageUrl} alt={"Foto profilo di " + profile.title} />}
 							<AvatarFallback>{profileInitials(profile.title)}</AvatarFallback>
 						</Avatar>
-						<div className="flex min-w-0 flex-1 flex-col gap-2">
+						<div className="flex min-w-0 flex-1 flex-col">
 							<CardTitle><h3 className="font-home-display text-2xl uppercase wrap-anywhere">{profile.title}</h3></CardTitle>
-							<p className="text-xs font-semibold text-muted-foreground">{summary}</p>
+							<p className="text-sm font-semibold text-muted-foreground">{summary}</p>
 						</div>
 					</div>
-					<CardDescription className="line-clamp-3 min-h-10 wrap-anywhere">
-						{profile.presentation ?? emptyPresentation}
-					</CardDescription>
 				</CardHeader>
 				<CardContent className="mt-auto">
-					<ProfileFactGrid facts={facts} />
+					<ProfileFactGrid facts={facts} accent={accent} />
 				</CardContent>
 				<CardFooter className="justify-between gap-3">
-					<span className="text-sm font-semibold">Apri profilo</span>
+					<span className="text-sm font-semibold">Informazioni complete</span>
 					<ArrowUpRightIcon className="size-5 transition-transform motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:translate-x-0.5" aria-hidden="true" />
 				</CardFooter>
 			</Card>

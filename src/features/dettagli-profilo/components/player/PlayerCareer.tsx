@@ -22,7 +22,13 @@ export default function PlayerCareer({entries}: {entries: PlayerCareerEntry[]}) 
 				) : (
 					<ol className="ml-2 border-l border-border">
 						{entries.map((entry) => {
-							const period = [entry.from, entry.to ?? (entry.status === "in-corso" ? "In corso" : null)].filter(Boolean).join(" — ");
+							const period = entry.from
+								? `Dal ${entry.from}${entry.to === "oggi" ? " ad oggi" : entry.to ? ` al ${entry.to}` : ""}`
+								: entry.to === "oggi"
+									? "Ad oggi"
+									: entry.to
+										? `Al ${entry.to}`
+										: entry.status === "in-corso" ? "In corso" : null;
 							return (
 								<li key={entry.id} className="relative pb-8 pl-6 last:pb-0 sm:pl-8">
 									<span aria-hidden="true" className="profile-detail-accent absolute top-2 -left-1.5 size-3 rounded-full bg-current ring-4 ring-card" />

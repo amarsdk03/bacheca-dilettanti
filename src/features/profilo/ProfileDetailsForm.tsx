@@ -69,7 +69,6 @@ interface ProfileDetailsFormProps {
 	onLocationsChange: (type: ProfileType, value: ProfileLocationDraft[]) => void;
 	socialLinks: ProfileSocialLinks;
 	onSocialLinksChange: (platform: ProfileSocialPlatform, value: string) => void;
-	requiredFields?: boolean;
 	errors?: ProfileValidationErrors;
 }
 
@@ -374,7 +373,9 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze}: CareerHistor
 										value={esperienza.periodoDa || null}
 										onValueChange={(value) => {
 											const periodoDa = value ?? "";
-											const periodoA = periodoDa && esperienza.periodoA && Number(esperienza.periodoA) < Number(periodoDa)
+											const periodoA = !periodoDa
+												? ""
+												: esperienza.periodoA && esperienza.periodoA !== "oggi" && Number(esperienza.periodoA) < Number(periodoDa)
 												? ""
 												: esperienza.periodoA;
 											updateEsperienza(esperienza.id, {periodoDa, periodoA});
@@ -407,6 +408,7 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze}: CareerHistor
 										<SelectContent>
 											<SelectGroup>
 												<SelectItem value={null}>Non specificare</SelectItem>
+												<SelectItem value="oggi">Ad oggi</SelectItem>
 												{endYearOptions.map((year) => (
 													<SelectItem key={year} value={year}>{year}</SelectItem>
 												))}
@@ -857,8 +859,6 @@ function ProfileFields({
 					onGiornoNascitaChange={(value) => onChange(type, "giorno_nascita", value)}
 					onMeseNascitaChange={(value) => onChange(type, "mese_nascita", value)}
 					onAnnoNascitaChange={(value) => onChange(type, "anno_nascita", value)}
-					nameRequired={requiredFields}
-					nameError={errors.name}
 				/>
 				<FieldGroup className="grid gap-4 sm:grid-cols-2">
 					<FiguraProfessionaleMultiselectField value={draft.figure_professionali ?? []} onValueChange={(value) => onChange(type, "figure_professionali", value)} />
@@ -948,23 +948,22 @@ export default function ProfileDetailsForm({
 	onLocationsChange,
 	socialLinks,
 	onSocialLinksChange,
-	requiredFields = false,
 	errors = {},
 }: ProfileDetailsFormProps) {
 	const prefix = `registration-profile-${type}`;
 
 	return (
-		<FieldSet>
+		<FieldSet className="[&_input::placeholder]:text-sm [&_textarea::placeholder]:text-sm">
 			<FieldLegend variant="label" className="field-legend-title mb-2">Inserisci i dati del tuo profilo:</FieldLegend>
 			<FieldGroup className="mt-2 grid gap-4">
-				<ProfileFields type={type} drafts={drafts} prefix={prefix} onChange={onChange} requiredFields={requiredFields} errors={errors} />
+				<ProfileFields type={type} drafts={drafts} prefix={prefix} onChange={onChange} requiredFields={true} errors={errors} />
 				<ProfileSocialLinksFields socialLinks={socialLinks} onSocialLinksChange={onSocialLinksChange} />
 				<LocationsField
 					type={type}
 					prefix={prefix}
 					locations={locations}
 					onLocationsChange={onLocationsChange}
-					required={requiredFields}
+					required={true}
 					error={errors.locations ?? null}
 				/>
 			</FieldGroup>
