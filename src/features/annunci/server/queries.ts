@@ -5,8 +5,6 @@ import {
 	ACTIVE_ANNOUNCEMENT_TYPES,
 	announcementContent,
 	finiteNumber,
-	formatLocation,
-	humanizeValue,
 	isActiveAnnouncementType,
 	type AnnouncementFilterData,
 	type AnnouncementLocation,
@@ -23,9 +21,8 @@ import {
 	type AnnouncementDirectoryItem,
 	type AnnouncementDirectoryQuery,
 	type AnnouncementDirectoryResult,
-	type AnnouncementFact,
-	type AnnouncementFactKind,
 	announcementOption,
+	announcementDisplayLabel,
 	type AnnouncementPlayerRoles,
 	ANNOUNCEMENTS_PER_PAGE,
 	type AnnouncementType,
@@ -46,13 +43,9 @@ import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database} from "@/server/supabase";
-import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
-import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {categoryLabel, normalizeCategories, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
 
 const ANNOUNCEMENT_BATCH_SIZE = 500;
 const AUTHOR_BATCH_SIZE = 100;
-const NOT_SPECIFIED = "Non specificato";
 
 const PROFILE_ANNOUNCEMENT_TYPES = {
 	giocatore: ["annuncio_giocatore"],
@@ -142,15 +135,14 @@ function officialAuthorQuery(supabase: SupabaseClient<Database>) {
 			link_foto_profilo,
 			confermato_il,
 			verificato_il,
-			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
-			profilo_giocatore(id, nascosto, nome, cognome, disponibilita, presentazione, ruoli_sport, tipologie_sport, categorie_ricercate),
-			profilo_squadra(id, nascosto, nome_societa, presentazione, tipologie_sport, categoria_attuale),
-			profilo_staff_sportivo(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione),
-			profilo_professionista_studente(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, presentazione_servizi, specializzazioni, tipologie_sport),
-			profilo_arbitro(id, nascosto, nome, cognome, disponibilita, presentazione),
-			profilo_creator(id, nascosto, nome_creator, presentazione, tipologia_contenuti),
-			profilo_torneo_evento(id, nascosto, nome_organizzazione, presentazione, sede_principale, tipologie_sport),
-			profilo_campi_impianti(id, nascosto, nome_organizzazione, presentazione, sede_principale, tipologie_sport, costo_partenza, servizi_inclusi)
+			profilo_giocatore(nascosto, nome, cognome, presentazione),
+			profilo_squadra(nascosto, nome_societa, presentazione),
+			profilo_staff_sportivo(nascosto, nome, cognome, presentazione),
+			profilo_professionista_studente(nascosto, nome, cognome, presentazione),
+			profilo_arbitro(nascosto, nome, cognome, presentazione),
+			profilo_creator(nascosto, nome_creator, presentazione),
+			profilo_torneo_evento(nascosto, nome_organizzazione, presentazione),
+			profilo_campi_impianti(nascosto, nome_organizzazione, presentazione)
 		`)
 		.eq("nascosto", false)
 		.not("uuid_utente", "is", null);
@@ -215,42 +207,6 @@ function cleanStringArray(value: unknown) {
 	)];
 }
 
-function jsonStringArray(value: unknown, key: string) {
-	return isRecord(value) ? cleanStringArray(value[key]) : [];
-}
-
-function shortFactValue(value: string | null) {
-	if (!value) return NOT_SPECIFIED;
-	return value.length > 96 ? `${value.slice(0, 93).trimEnd()}…` : value;
-}
-
-function fact(kind: AnnouncementFactKind, label: string, value: string | null, compact = true): AnnouncementFact {
-	const normalizedValue = kind === "location" && value === "Località non specificata"
-		? null
-		: value;
-	return {kind, label, value: compact ? shortFactValue(normalizedValue) : normalizedValue ?? NOT_SPECIFIED};
-}
-
-function formatSelection(
-	values: string[],
-	plural: "selezionati" | "selezionate",
-	compact = true,
-) {
-	if (values.length === 0) return NOT_SPECIFIED;
-	if (!compact) return values.join(", ");
-	if (values.length === 1) return values[0];
-	return `${values.length} ${plural}`;
-}
-
-function formatCurrency(value: number | null) {
-	if (value === null) return NOT_SPECIFIED;
-	return new Intl.NumberFormat("it-IT", {
-		style: "currency",
-		currency: "EUR",
-		maximumFractionDigits: 2,
-	}).format(value);
-}
-
 function announcementLocations(row: AnnouncementQueryRow) {
 	const source = (row as unknown as Record<string, unknown>).localita_annuncio;
 	return relationRecords(source)
@@ -313,7 +269,7 @@ function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 		item: {
 			id: row.uuid,
 			type,
-			typeLabel: option.label,
+			typeLabel: announcementDisplayLabel(type),
 			profileType: option.profileType,
 			title: content.title,
 			description: content.description,
@@ -365,34 +321,6 @@ function matchesDirectoryQuery(
 	return true;
 }
 
-function profileLocationRecords(row: OfficialAuthorQueryRow) {
-	return relationRecords((row as unknown as Record<string, unknown>).localita_profilo);
-}
-
-function profileLocations(
-	row: OfficialAuthorQueryRow,
-	profileType: ProfileType,
-	childId: number,
-) {
-	const locations = profileLocationRecords(row).flatMap((location): AnnouncementLocation[] => {
-		if (location.sottoprofilo !== profileType) return [];
-		const scopedChildId = finiteNumber(location.id_sottoprofilo);
-		if (scopedChildId !== null && scopedChildId !== childId) return [];
-		const region = cleanText(location.regione, 80);
-		if (!region) return [];
-		return [{region, city: cleanText(location.citta, 120)}];
-	});
-	return locations
-		.filter((location, index, all) =>
-			all.findIndex((candidate) => candidate.region === location.region && candidate.city === location.city) === index,
-		)
-		.sort((left, right) => {
-			const leftLabel = [left.region, left.city].filter(Boolean).join(", ");
-			const rightLabel = [right.region, right.city].filter(Boolean).join(", ");
-			return leftLabel.localeCompare(rightLabel, "it-IT");
-		});
-}
-
 function fullName(name: unknown, surname: unknown) {
 	return [cleanText(name, 160), cleanText(surname, 160)].filter(Boolean).join(" ") || null;
 }
@@ -407,72 +335,16 @@ function registeredAuthor(
 	const child = relationRecords((row as unknown as Record<string, unknown>)[table])
 		.find((candidate) => candidate.nascosto === false);
 	if (!child) return null;
-	const childId = finiteNumber(child.id);
-	if (childId === null) return null;
-	const locations = profileLocations(row, profileType, childId);
-	const location = formatLocation(locations);
-	let title: string | null = null;
-	let highlights: AnnouncementFact[] = [];
 
-	if (profileType === "giocatore") {
-		const roles = [
-			...normalizePlayerPrimaryRoles(jsonStringArray(child.ruoli_sport, "principali")),
-			...normalizePlayerSpecificRoles(jsonStringArray(child.ruoli_sport, "specifici")),
-		];
+	let title: string | null = null;
+	if (profileType === "giocatore" || profileType === "staff-sportivo" || profileType === "professionisti-studi" || profileType === "arbitro") {
 		title = fullName(child.nome, child.cognome);
-		highlights = [
-			fact("roles", "Ruoli", formatSelection([...new Set(roles)], "selezionati")),
-			fact("categories", "Categorie", formatSelection(normalizeCategories(cleanStringArray(child.categorie_ricercate)).map(categoryLabel), "selezionate")),
-			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
-			fact("location", "Località", location),
-		];
 	} else if (profileType === "squadra") {
 		title = cleanText(child.nome_societa, 160);
-		highlights = [
-			fact("types", "Tipologie", formatSelection(ordinaTipologieCalcio(cleanStringArray(child.tipologie_sport)), "selezionate")),
-			fact("types", "Categoria attuale", cleanText(child.categoria_attuale, 120)),
-			fact("location", "Località", location),
-		];
-	} else if (profileType === "staff-sportivo") {
-		title = fullName(child.nome, child.cognome);
-		highlights = [
-			fact("figures", "Figure", formatSelection(normalizeFigures(cleanStringArray(child.figure_professionali)), "selezionate")),
-			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
-			fact("location", "Località", location),
-		];
-	} else if (profileType === "professionisti-studi") {
-		title = fullName(child.nome, child.cognome);
-		highlights = [
-			fact("figures", "Figure", formatSelection(normalizeFigures(cleanStringArray(child.figure_professionali)), "selezionate")),
-			fact("specializations", "Specializzazioni", cleanText(child.specializzazioni, 160)),
-			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
-		];
-	} else if (profileType === "arbitro") {
-		title = fullName(child.nome, child.cognome);
-		highlights = [
-			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
-			fact("location", "Località", location),
-		];
 	} else if (profileType === "creators") {
 		title = cleanText(child.nome_creator, 160);
-		highlights = [
-			fact("content", "Contenuti", cleanText(child.tipologia_contenuti, 160)),
-		];
-	} else if (profileType === "torneo-evento") {
-		title = cleanText(child.nome_organizzazione, 160);
-		highlights = [
-			fact("types", "Tipologie", formatSelection(ordinaTipologieCalcio(cleanStringArray(child.tipologie_sport)), "selezionate")),
-			fact("headquarters", "Sede", cleanText(child.sede_principale, 160)),
-			fact("location", "Località", location),
-		];
 	} else {
 		title = cleanText(child.nome_organizzazione, 160);
-		const cost = finiteNumber(child.costo_partenza);
-		highlights = [
-			fact("types", "Tipologie", formatSelection(ordinaTipologieCalcio(cleanStringArray(child.tipologie_sport)), "selezionate")),
-			fact("price", "Costo", cost === null ? null : `Da ${formatCurrency(cost)}`),
-			fact("location", "Località", location),
-		];
 	}
 
 	if (!title) return null;
@@ -485,9 +357,6 @@ function registeredAuthor(
 		emailConfirmed: Boolean(row.confermato_il),
 		officialVerified: Boolean(row.verificato_il),
 		presentation: cleanText(child.presentazione),
-		location,
-		locations,
-		highlights,
 	};
 }
 

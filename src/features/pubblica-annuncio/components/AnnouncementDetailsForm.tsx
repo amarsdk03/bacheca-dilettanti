@@ -1,7 +1,7 @@
 "use client";
 
 import {type Dispatch, type SetStateAction, useMemo} from "react";
-import {CircleHelpIcon, MailIcon, PhoneIcon} from "lucide-react";
+import {MailIcon, PhoneIcon} from "lucide-react";
 
 import {
 	Field,
@@ -18,7 +18,6 @@ import {TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/tipol
 import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/components/ui/input-group";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
-import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import ProfileLocationsField from "@/features/profilo/ProfileLocationsField";
 import type {ProfileLocationDraft} from "@/features/profilo/profile-model";
 import {OpeningHoursField} from "@/features/profilo/ProfileDetailsForm";
@@ -53,8 +52,8 @@ import {
 	RUOLI_SPECIFICI_PER_RUOLO,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {STAFF_CATEGORY_GROUPS, staffCategoryLabel} from "@/features/pubblica-annuncio/types/staff-category-catalog";
-import Link from "next/link";
 import type {Json} from "@/server/supabase";
+import {getPlayerSpecificRoleGroups} from "@/features/profilo/player-roles";
 
 interface AnnouncementDetailsFormProps {
 	profileType: PublishableProfileType;
@@ -245,6 +244,7 @@ export default function AnnouncementDetailsForm({
 						<MultiselectField
 							label="Ruoli specifici"
 							options={playerSpecificRoles}
+							groups={getPlayerSpecificRoleGroups(drafts.squadraCercaGiocatore.ruoli_principali)}
 							value={drafts.squadraCercaGiocatore.ruoli_secondari}
 							onValueChange={(value) => updateDraft("squadraCercaGiocatore", "ruoli_secondari", value)}
 							placeholder={playerSpecificRoles.length > 0 ? "Seleziona i ruoli specifici..." : "Seleziona prima un ruolo principale"}
@@ -411,7 +411,9 @@ export default function AnnouncementDetailsForm({
 				{profileType === "campi-impianti-sportivi" && (
 					<FieldGroup>
 						<Field>
-							<FieldLabel htmlFor="facility-sport-type">Tipologia campo <RequiredMark /></FieldLabel>
+							<FieldLabel htmlFor="facility-sport-type">
+								Tipologia campo da pubblicizzare <RequiredMark />
+							</FieldLabel>
 							<Select value={drafts.campoImpianto.tipologie_sport[0] ?? null} onValueChange={(value) => updateDraft("campoImpianto", "tipologie_sport", value ? [value] : [])}>
 								<SelectTrigger id="facility-sport-type" className="w-full" aria-required="true" aria-invalid={Boolean(errors.sports)}><SelectValue placeholder="Seleziona una tipologia di campo" /></SelectTrigger>
 								<SelectContent>{TIPOLOGIA_CALCIO_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
@@ -419,7 +421,7 @@ export default function AnnouncementDetailsForm({
 							{errors.sports && <FieldError>{errors.sports}</FieldError>}
 						</Field>
 						<FieldSet data-invalid={Boolean(errors.locations || errors.facilityAddress)}>
-							<FieldLegend variant="label" className="field-legend-title">Indirizzo dell’impianto/struttura</FieldLegend>
+							<FieldLegend variant="label" className="field-legend-title">Indirizzo del campo</FieldLegend>
 							<FieldGroup className="grid gap-4 sm:grid-cols-2">
 								<Field data-invalid={Boolean(errors.locations)}>
 									<FieldLabel htmlFor="facility-announcement-region">Regione <RequiredMark /></FieldLabel>
@@ -445,7 +447,7 @@ export default function AnnouncementDetailsForm({
 							<FieldLabel htmlFor="facility-cost">Prezzo orario <OptionalLabel /></FieldLabel>
 							<InputGroup>
 								<InputGroupAddon><InputGroupText>€</InputGroupText></InputGroupAddon>
-								<InputGroupInput id="facility-cost" type="number" min={0} max={99_999_999.99} step={0.01} value={drafts.campoImpianto.costo_partenza} onChange={(event) => updateDraft("campoImpianto", "costo_partenza", event.target.value)} placeholder="A partire da..." aria-invalid={Boolean(errors.facilityCost)} />
+								<InputGroupInput id="facility-cost" type="number" min={0} max={999_999.99} step={5} value={drafts.campoImpianto.costo_partenza} onChange={(event) => updateDraft("campoImpianto", "costo_partenza", event.target.value)} placeholder="A partire da..." aria-invalid={Boolean(errors.facilityCost)} />
 								<InputGroupAddon align="inline-end"><InputGroupText>/ 1h</InputGroupText></InputGroupAddon>
 							</InputGroup>
 							{errors.facilityCost && <FieldError>{errors.facilityCost}</FieldError>}
@@ -466,28 +468,6 @@ export default function AnnouncementDetailsForm({
 						onValueChange={(genericLink) => onExtrasChange((previous) => ({...previous, genericLink}))}
 						error={errors.genericLink}
 					/>
-					{profileType === "giocatore" && (
-						<LinkAnnuncioField
-							idPrefix="announcement-highlights"
-							label="Link video highlights"
-							placeholder="https://youtu.be/dQEemdsoLDM"
-							description="Inserisci il link pubblico a un video con le tue azioni migliori"
-							value={extras.videoHighlights}
-							onValueChange={(videoHighlights) => onExtrasChange((previous) => ({...previous, videoHighlights}))}
-							error={errors.videoHighlights}
-							labelAddon={(
-								<Tooltip>
-									<TooltipTrigger render={<button type="button" className="inline-flex size-5 items-center justify-center rounded-full text-brand-indigo outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo/40" aria-label="Informazioni sul link video highlights" />}>
-										<CircleHelpIcon className="size-4" />
-									</TooltipTrigger>
-									<TooltipContent className={"block"}>
-										Possiedi il video nella tua galleria ma non hai modo di caricare un link?
-										<Link href="/contatti" className="text-fuchsia-200 font-medium"> Contattaci e lo caricheremo noi su YouTube per te!</Link>
-									</TooltipContent>
-								</Tooltip>
-							)}
-						/>
-					)}
 					<ImmagineAnnuncioField idPrefix="announcement" value={image} onValueChangeAction={onImageChange} />
 				</FieldGroup>
 			</FieldSet>
@@ -498,7 +478,7 @@ export default function AnnouncementDetailsForm({
 				<Field data-invalid={Boolean(errors.contacts)}>
 					<FieldGroup className="grid gap-4 sm:grid-cols-2">
 					<Field data-invalid={Boolean(errors.contacts || errors.email)}>
-						<FieldLabel htmlFor="announcement-contact-email" className="flex items-center gap-2"><MailIcon className="size-4" /> Email <OptionalLabel recommended /></FieldLabel>
+						<FieldLabel htmlFor="announcement-contact-email" className="flex items-center gap-2"><MailIcon className="size-4" /> Email <OptionalLabel value={"consigliato"} /></FieldLabel>
 						<Input id="announcement-contact-email" type="email" maxLength={254} value={contacts.email} onChange={(event) => onContactsChange((previous) => ({...previous, email: event.target.value}))} placeholder="nome@email.it" aria-invalid={Boolean(errors.contacts || errors.email)} />
 						{errors.email && <FieldError>{errors.email}</FieldError>}
 					</Field>
@@ -512,11 +492,8 @@ export default function AnnouncementDetailsForm({
 				</Field>
 			</FieldSet>
 
-				{!(profileType === "squadra" && teamSubtype === "cerca-sponsor") && (
-					<>
-						<ProfileLocationsField idPrefix="announcement-locations" value={locations} onValueChange={onLocationsChange} label="Zone di ricerca" required error={errors.locations ?? null} />
-					<FieldDescription>Puoi modificare le località precompilate senza cambiare quelle salvate nel profilo.</FieldDescription>
-				</>
+			{!(profileType === "squadra" && teamSubtype === "cerca-sponsor") && (
+				<ProfileLocationsField idPrefix="announcement-locations" value={locations} onValueChange={onLocationsChange} label="Zone di ricerca" required error={errors.locations ?? null} />
 			)}
 		</FieldGroup>
 	);

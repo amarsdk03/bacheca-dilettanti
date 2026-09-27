@@ -32,7 +32,7 @@ const payload = () => ({
 	announcement: {
 		type: "annuncio_squadra_cerca_giocatore",
 		detail: {ruoli_principali: ["Difensore"], ruoli_secondari: [], annata_da: "2004", annata_a: "2008", stagione: "2026/27", descrizione_aggiuntiva: "Cerchiamo giocatori."},
-		locations: [{regione: "Lazio", citta: "Roma"}], contacts: {email: "info@example.com", phone: ""}, extras: {genericLink: "", videoHighlights: ""},
+		locations: [{regione: "Lazio", citta: "Roma"}], contacts: {email: "info@example.com", phone: ""}, extras: {genericLink: ""},
 	},
 	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
 });

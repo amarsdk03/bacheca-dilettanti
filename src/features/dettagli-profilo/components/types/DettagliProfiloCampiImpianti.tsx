@@ -7,8 +7,8 @@ import type {ProfileDetailPresentation} from "../profile-detail-presentation";
 const PRESENTATION = {
 	announcementsLabel: "Campi disponibili",
 	facts: [
-		{label: "Tipologia campo", icon: ShirtIcon},
-		{label: "Indirizzo", icon: MapPinIcon},
+		{label: "Tipologia campi disponibili", icon: ShirtIcon},
+		{label: "Indirizzo del campo", icon: MapPinIcon},
 		{label: "Costo di partenza", icon: EuroIcon},
 	],
 	narrativeFieldLabels: ["Orari", "Servizi inclusi", "Informazioni aggiuntive"],

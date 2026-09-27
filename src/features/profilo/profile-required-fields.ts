@@ -1,4 +1,5 @@
 import type {ProfileLocationDraft, ProfileType} from "@/features/profilo/profile-model";
+import {isPlayerNationalityCode} from "@/features/profilo/player-nationalities";
 import {parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 
 export type ProfileValidationField =
@@ -6,6 +7,7 @@ export type ProfileValidationField =
 	| "sports"
 	| "mainRole"
 	| "gender"
+	| "nationality"
 	| "birthYear"
 	| "availability"
 	| "professionalRole"
@@ -49,6 +51,7 @@ export function getProfileRequiredFieldErrors(
 		if (values.disponibilita !== "svincolato" && values.disponibilita !== "sotto-contratto") errors.availability = "Seleziona la disponibilità.";
 		if (!hasItems(values.tipologie_sport)) errors.sports = "Seleziona almeno una tipologia di calcio.";
 		if (!hasMainPlayerRole(values.ruoli_sport)) errors.mainRole = "Seleziona almeno un ruolo principale.";
+		if (nonEmpty(values.nazionalita) && !isPlayerNationalityCode(values.nazionalita as string)) errors.nationality = "La nazionalità salvata non è più disponibile. Selezionane un’altra o svuota il campo.";
 	}
 	if (type === "squadra") {
 		if (!nonEmpty(values.nome_societa)) errors.name = "Inserisci il nome della società.";

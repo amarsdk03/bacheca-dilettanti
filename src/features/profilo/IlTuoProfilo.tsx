@@ -671,12 +671,12 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 					</span>
 					<div className="flex min-w-0 flex-1 flex-col gap-3">
 						<div className="flex flex-wrap gap-1.5">
-							<Badge variant="secondary" className="profile-dashboard-type-badge">{announcement.type}</Badge>
-							<Badge variant="outline">{announcement.subtype}</Badge>
+							<Badge variant="secondary" className="profile-dashboard-type-badge">{announcement.profileType === "squadra" ? "Squadra" : announcement.type}</Badge>
+							{announcement.profileType !== "squadra" && <Badge variant="outline">{announcement.subtype}</Badge>}
 							<Badge variant={moderationVariant(announcement.moderationStatus)}>{moderationLabel(announcement.moderationStatus)}</Badge>
 							{announcement.level === "prioritario" && <Badge variant="secondary"><StarIcon data-icon="inline-start" aria-hidden="true" /> Prioritario</Badge>}
 						</div>
-						<CardTitle className="wrap-anywhere">{announcement.title}</CardTitle>
+						<CardTitle className={`wrap-anywhere${announcement.title.startsWith("Ricerca ") ? " uppercase" : ""}`}>{announcement.title}</CardTitle>
 					</div>
 				</div>
 			</CardHeader>

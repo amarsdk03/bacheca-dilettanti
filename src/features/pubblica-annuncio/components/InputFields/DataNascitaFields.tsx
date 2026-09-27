@@ -60,11 +60,10 @@ export default function DataNascitaFields({
 	return (
 		<Field data-invalid={Boolean(yearError)}>
 			<FieldLabel>
-				Data di nascita {!yearRequired && <OptionalLabel />}
+				Data di nascita {!yearRequired ? <OptionalLabel /> : <OptionalLabel value={"anno obbligatorio"} />}
 			</FieldLabel>
-			<FieldGroup className="grid grid-cols-3 gap-3">
+			<FieldGroup className="grid grid-cols-3 gap-1 sm:gap-3">
 				<Field data-invalid={Boolean(yearError)}>
-					{yearRequired && <FieldLabel htmlFor={`${idPrefix}-anno-nascita`}>Anno <span className="text-destructive" aria-hidden="true">*</span> (Anno obbligatorio)</FieldLabel>}
 				<Select
 					value={annoNascita || (yearRequired ? null : ANNO_PLACEHOLDER)}
 					onValueChange={(value) => {
@@ -163,7 +162,7 @@ export default function DataNascitaFields({
 				</SelectContent>
 				</Select>
 			</FieldGroup>
-			<FieldDescription>Devi avere almeno {MINIMUM_PROFILE_AGE} anni compiuti.</FieldDescription>
+			<FieldDescription>L&apos;anno è obbligatorio: per pubblicare, devi avere almeno {MINIMUM_PROFILE_AGE} anni compiuti.</FieldDescription>
 			{yearError && <FieldError>{yearError}</FieldError>}
 		</Field>
 	);

@@ -110,6 +110,9 @@ test("player profile accepts year only, preserves old category preferences and n
 		invalid.profiles[0].draft[field] = "";
 		assert.throws(() => parseRegistrationPayload(JSON.stringify(invalid)), (error) => error instanceof RegistrationPayloadError && error.step === 3, field);
 	}
+	const obsoleteNationality = validPlayerPayload();
+	obsoleteNationality.profiles[0].draft.nazionalita = "AN";
+	assert.throws(() => parseRegistrationPayload(JSON.stringify(obsoleteNationality)), (error) => error instanceof RegistrationPayloadError && error.step === 3);
 });
 
 test("registration requires current legal versions and preserves the optional newsletter choice", () => {

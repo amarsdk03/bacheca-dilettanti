@@ -1,4 +1,5 @@
 import {isCompleteValidBirthDate} from "@/features/profilo/birth-date";
+import {isPlayerNationalityCode} from "@/features/profilo/player-nationalities";
 import type {ProfileDrafts, ProfileLocations, ProfileType,} from "@/features/profilo/profile-model";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 
@@ -74,7 +75,7 @@ export function getProfileCompletion(
 			hasPlayerRoles(draft.ruoli_sport, "principali"),
 			hasPlayerRoles(draft.ruoli_sport, "specifici"),
 			hasText(draft.categoria_attuale),
-			hasText(draft.nazionalita),
+			isPlayerNationalityCode(draft.nazionalita),
 			hasText(draft.altezza),
 			hasText(draft.peso),
 			hasText(draft.piede_principale),
@@ -157,7 +158,6 @@ export function getProfileCompletion(
 		return completion([
 			hasText(draft.nome_organizzazione),
 			hasItems(draft.tipologie_sport),
-			hasText(draft.sede_principale),
 			hasText(draft.presentazione),
 			hasLocations,
 		]);

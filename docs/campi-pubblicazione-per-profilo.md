@@ -12,19 +12,19 @@ Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium s
 | Profilo | Cognome | Testo | No |
 | Profilo | Data di nascita | Anno obbligatorio; giorno e mese facoltativi | Sì, anno |
 | Profilo | Genere | Maschio o Femmina | Sì |
-| Profilo | Nazionalità | Paese singolo ricercabile | No |
+| Profilo | Nazionalità | Paese singolo ricercabile con bandiera SVG, se disponibile | No |
 | Profilo | Tipologie di calcio | Selezione multipla | Sì |
 | Profilo | Disponibilità | Svincolato o sotto contratto | Sì |
 | Profilo | Ruolo principale | Selezione multipla | Sì |
-| Profilo | Ruolo specifico | Selezione multipla | No |
-| Profilo | Categoria attuale | Selezione singola, disabilitata se Svincolato | No |
+| Profilo | Ruolo specifico | Selezione multipla raggruppata per ruolo principale | No |
+| Profilo | Categoria attuale | Selezione singola raggruppata per macrocategoria, disabilitata se Svincolato | No |
 | Profilo | Altezza, peso, piede | Testi e selezione | No |
 | Profilo | Presentazione | Testo lungo | No |
 | Profilo | Storico carriera | Elenco di esperienze | No |
+| Profilo | Video highlights | URL del profilo Giocatore | No |
 | Profilo | In che zona vivi? | Regione singola obbligatoria; città/comune facoltativa | Sì, regione |
 | Annuncio | Categorie ricercate | Selezione multipla | No |
 | Annuncio | Descrizione | Testo lungo | Sì |
-| Annuncio | Link video highlights | URL HTTP/HTTPS Premium | No |
 | Annuncio | Link annuncio | URL HTTP/HTTPS Premium | No |
 | Annuncio | Immagine | PNG, JPEG o WebP, massimo 5 MB, Premium | No |
 | Annuncio | Contatti pubblici per questo annuncio | Email e/o telefono | Sì, almeno uno |
@@ -36,12 +36,12 @@ Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium s
 | --- | --- | --- | --- |
 | Profilo | Nome società | Testo | Sì |
 | Profilo | Tipologia di calcio | Dropdown singolo | Sì |
-| Profilo | Categoria attuale | Dropdown singolo | No |
+| Profilo | Categoria attuale | Dropdown singolo raggruppato per macrocategoria | No |
 | Profilo | Presentazione | Testo lungo | No |
 | Profilo | Dove ha sede la società? | Regione singola obbligatoria; città/comune facoltativa, riferimento pubblico della località | Sì, regione |
 | Tipo annuncio | Ricerca | Ricerca giocatori, staff, partita amichevole o sponsor | Sì |
 | Ricerca giocatori | Ruolo/i cercati | Selezione multipla | Sì |
-| Ricerca giocatori | Ruoli specifici | Selezione multipla | No |
+| Ricerca giocatori | Ruoli specifici | Selezione multipla raggruppata per ruolo principale | No |
 | Ricerca giocatori | Annate Dal / Al | Due dropdown: Dal parte da Qualsiasi; Al è obbligatorio se Dal è valorizzato e non può precederlo | No, se Dal è Qualsiasi |
 | Ricerca giocatori | Stagione | Testo | No |
 | Ricerca giocatori | Descrizione della ricerca | Testo lungo | Sì |
@@ -69,7 +69,7 @@ Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium s
 | Profilo | Figura professionale | Selezione multipla | Sì |
 | Profilo | Disponibilità, da remoto e presentazione | Selezione, checkbox e testo lungo | No |
 | Profilo | Lista esperienze | Società, ruolo/i svolti e stagioni | No |
-| Profilo | Qualifiche / Licenze | Elenco; Stato obbligatorio per ogni nuova voce | No, ma Stato sì se aggiunta una voce |
+| Profilo | Qualifica / patentino / licenza | Elenco; ente / società / organizzazione e Stato, con valore “Conseguito” | No, ma Stato sì se aggiunta una voce |
 | Profilo | Qualifiche / Licenze precedenti | Voci storiche leggibili, senza stato attribuito automaticamente | No |
 | Profilo | In che zona vivi? | Regione singola obbligatoria; città/comune facoltativa | Sì, regione |
 | Annuncio | Tipologie di calcio | Selezione multipla | Sì |
@@ -126,11 +126,12 @@ Questa tipologia è attualmente **Coming soon** e non può ancora inviare annunc
 
 ## Torneo / Evento
 
+La sede principale storica resta nel database, ma non viene più richiesta o mostrata nell'applicazione.
+
 | Sezione | Campo | Tipo / dato | Obbligatorio |
 | --- | --- | --- | --- |
 | Profilo | Nome organizzazione | Testo | Sì |
 | Profilo | Tipologie di calcio | Selezione multipla | Sì |
-| Profilo | Sede principale | Testo | No |
 | Profilo | Presentazione torneo | Testo lungo | No |
 | Profilo | Zona di svolgimento manifestazione | Regioni e città multiple | Sì, almeno una regione |
 | Annuncio | Nome torneo / evento | Testo | Sì |
@@ -150,14 +151,14 @@ Questa tipologia è attualmente **Coming soon** e non può ancora inviare annunc
 | Sezione | Campo | Tipo / dato | Obbligatorio |
 | --- | --- | --- | --- |
 | Profilo | Nome campo/struttura | Testo | Sì |
-| Profilo | Tipologia campo | Selezione multipla | Sì |
+| Profilo | Tipologia campi disponibili | Selezione multipla | Sì |
 | Profilo | Sede dell’impianto/struttura | Una Regione e una Città/comune | Sì, entrambe |
 | Profilo | Indirizzo | Testo | No |
 | Profilo | Presentazione | Testo lungo | No |
 | Profilo | Informazioni aggiuntive | Testo lungo | No |
 | Profilo storico | Sede principale, Orari, Costo di partenza, Servizi inclusi | Conservati e leggibili; assenti dal nuovo editor | No |
-| Annuncio | Tipologia campo | Selezione singola | Sì |
-| Annuncio | Indirizzo dell’impianto/struttura | Regione, Città/comune e indirizzo | Sì, tutti |
+| Annuncio | Tipologia campo da pubblicizzare | Selezione singola | Sì |
+| Annuncio | Indirizzo del campo | Regione, Città/comune e indirizzo | Sì, tutti |
 | Annuncio | Orari | Giorni e orari strutturati | No |
 | Annuncio | Prezzo orario | Importo | No |
 | Annuncio | Servizi inclusi | Testo lungo | No |

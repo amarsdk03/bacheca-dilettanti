@@ -13,9 +13,20 @@ export default function DettagliProfiloGiocatore({profile, actions}: {profile: P
 
 	return (
 		<div className="public-profile-detail flex min-w-0 flex-col gap-6 font-home-body" style={{"--profile-accent": getProfileAccent("giocatore")} as CSSProperties}>
-			<PlayerHeader title={profile.title} imageUrl={profile.imageUrl} emailConfirmed={profile.emailConfirmed} officialVerified={profile.officialVerified} primary={profile.primary} availabilityLabel={profile.availabilityLabel} player={player} followerCount={profile.followerCount} announcementCount={profile.announcementCount} actions={actions} />
+			<PlayerHeader
+				title={profile.title}
+				imageUrl={profile.imageUrl}
+				emailConfirmed={profile.emailConfirmed}
+				officialVerified={profile.officialVerified}
+				primary={profile.primary}
+				availabilityLabel={profile.availabilityLabel}
+				followerCount={profile.followerCount}
+				announcementCount={profile.announcementCount}
+				player={player}
+				actions={actions}
+			/>
 			<PlayerTabs
-				overview={<PlayerOverview presentation={player.presentation} highlightsUrl={player.highlightsUrl} locations={profile.locations} socialLinks={profile.socialLinks} primaryRoles={player.primaryRoles} specificRoles={player.specificRoles} currentCategory={player.currentCategory} preferredCategories={player.preferredCategories} profileId={profile.id} />}
+				overview={<PlayerOverview presentation={player.presentation} highlightsUrl={player.highlightsUrl} locations={profile.locations} socialLinks={profile.socialLinks} sportTypes={player.sportTypes} primaryRoles={player.primaryRoles} specificRoles={player.specificRoles} currentCategory={player.currentCategory} preferredCategories={player.preferredCategories} profileId={profile.id} />}
 				career={<PlayerCareer entries={player.career} />}
 				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} />}
 				similarProfiles={<SimilarProfiles profiles={profile.similarProfiles} unavailable={profile.similarProfilesUnavailable} />}

@@ -219,7 +219,7 @@ function staffHistoryLines(value: unknown, qualification = false): string[] {
 		const from = cleanText(entry.periodoDa, 4);
 		const to = cleanText(entry.periodoA, 4);
 		const description = cleanText(entry.descrizione);
-		const status = entry.stato === "in-corso" ? "In corso" : entry.stato === "conseguito" ? "Esperienza conclusa" : null;
+		const status = entry.stato === "in-corso" ? "In corso" : entry.stato === "conseguito" ? "Conseguito" : null;
 		const extra = qualification ? Object.entries(entry)
 			.filter(([key, item]) => !["id", "titolo", "ente", "periodoDa", "periodoA", "descrizione", "squadraProfiloId"].includes(key) && !(key === "stato" && ["in-corso", "conseguito", "non-specificare"].includes(String(item))))
 			.map(([key, item]) => `${key}: ${typeof item === "string" ? item : JSON.stringify(item)}`) : [];
@@ -269,7 +269,7 @@ export function announcementContent(
 		const secondaryRoles = normalizePlayerSpecificRoles(cleanStringArray(detail.ruoli_secondari));
 		const categoryValues = normalizeCategories(cleanStringArray(detail.categorie_ricercate));
 		const categories = categoryValues.map(categoryLabel);
-		title = "RICERCA OPPORTUNITÀ";
+		title = "Ricerca opportunità";
 		facts = [
 			contentFact("roles", "Ruoli principali", selection(primaryRoles, "selezionati")),
 			contentFact("roles", "Ruoli secondari", selection(secondaryRoles, "selezionati")),
@@ -307,8 +307,8 @@ export function announcementContent(
 				? primaryRoles[0] ?? secondaryRoles[0]
 				: null;
 		title = singleRole
-			? `RICERCA ${singleRole.toLocaleUpperCase("it-IT")}`
-			: "RICERCA GIOCATORI";
+			? `Ricerca ${singleRole}`
+			: "Ricerca giocatori";
 		facts = [
 			contentFact("roles", "Ruolo/i cercati", selection(primaryRoles, "selezionati")),
 			contentFact("categories", "Annate", yearLabel),
@@ -338,8 +338,8 @@ export function announcementContent(
 		const requirements = cleanText(detail.requisiti);
 		const historicalPeriod = formatPeriod(detail.periodo_dal, detail.periodo_al);
 		title = figures.length === 1
-			? `RICERCA ${figure?.toLocaleUpperCase("it-IT")}`
-			: "RICERCA STAFF SPORTIVO";
+			? `Ricerca ${figure}`
+			: "Ricerca staff sportivo";
 		description = description ?? requirements;
 		facts = [
 			contentFact("figures", figures.length === 1 ? "Figura ricercata" : "Figure ricercate", selection(figures, "selezionate")),
@@ -364,7 +364,7 @@ export function announcementContent(
 		const travel = cleanText(detail.disponibilita_trasferta, 40);
 		const period = formatPeriod(detail.periodo_dal, detail.periodo_al);
 		const time = formatTimeRange(detail.orario_dalle, detail.orario_alle);
-		title = "RICERCA PARTITE/AMICHEVOLI";
+		title = "Ricerca partite/amichevoli";
 		facts = [
 			contentFact("categories", "Livelli cercati", selection(categories, "selezionati")),
 			contentFact("period", "Periodo", period),
@@ -383,7 +383,7 @@ export function announcementContent(
 		const sector = cleanText(detail.categoria_settore, 160);
 		const support = cleanText(detail.supporto_cercato);
 		const offer = cleanText(detail.offerta_fornita);
-		title = "RICERCA SPONSOR";
+		title = "Ricerca sponsor";
 		description = description ?? support;
 		facts = [
 			contentFact("sector", "Settore", sector),
@@ -407,7 +407,7 @@ export function announcementContent(
 		const remote = detail.disponibile_remoto === true;
 		const experienceLines = staffHistoryLines(detail.lista_esperienze);
 		const qualificationLines = staffHistoryLines(detail.qualifiche_licenze, true);
-		title = "RICERCA OPPORTUNITÀ";
+		title = "Ricerca opportunità";
 		facts = [
 			contentFact("figures", "Figure", selection(figures, "selezionate")),
 			contentFact("categories", "Categorie", selection(categories, "selezionate")),
@@ -436,7 +436,7 @@ export function announcementContent(
 		const occupation = cleanText(detail.disponibilita_occupazione, 160);
 		const travel = cleanText(detail.disponibilita_spostamento, 40);
 		const car = cleanText(detail.automunito, 40);
-		title = "RICERCA OPPORTUNITÀ";
+		title = "Ricerca opportunità";
 		facts = [
 			...(categories.length > 0 ? [contentFact("categories", "Categorie", selection(categories, "selezionate"))] : []),
 			contentFact("availability", "Disponibilità", humanizeValue(occupation)),
@@ -464,7 +464,7 @@ export function announcementContent(
 		const years = formatYearRange(detail.annate_ammesse_da, detail.annate_ammesse_a);
 		const prizes = formatPrizes(detail.lista_premi_trofei);
 		const prizesText = prizes.length > 0 ? prizes.join("; ") : NOT_SPECIFIED;
-		title = name ?? "RICERCA OPPORTUNITÀ";
+		title = name ?? "Ricerca opportunità";
 		facts = [
 			contentFact("registration", "Iscrizione", registration),
 			contentFact("participation", "Partecipazione", participation),
@@ -489,17 +489,17 @@ export function announcementContent(
 		const services = cleanText(detail.servizi_inclusi);
 		const address = cleanText(detail.indirizzo);
 		const hours = formatOpeningHours(detail.orari);
-		title = "RICERCA OPPORTUNITÀ";
+		title = "CAMPO DISPONIBILE";
 		description = description ?? services;
 		facts = [
-			contentFact("types", "Tipologia campo", selection(types, "selezionate")),
+			contentFact("types", "Tipologia campo da pubblicizzare", selection(types, "selezionate")),
 			contentFact("price", "Prezzo orario", cost === null ? null : `Da ${formatCurrency(cost)}`),
 			contentFact("services", "Servizi", services),
 			contentFact("location", "Località", location),
 		];
 		fields = [
-			detailListField("Tipologia campo", types, selection(types, "selezionate")),
-			detailField("Indirizzo dell’impianto/struttura", address),
+			detailListField("Tipologia campo da pubblicizzare", types, selection(types, "selezionate")),
+			detailField("Indirizzo del campo", address),
 			detailField("Orari", hours, true),
 			detailField("Prezzo orario", cost === null ? null : formatCurrency(cost)),
 			detailField("Servizi inclusi", services, true),

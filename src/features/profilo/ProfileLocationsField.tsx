@@ -92,7 +92,6 @@ export default function ProfileLocationsField({
 						<Input id={`${idPrefix}-citta`} value={first?.citta ?? ""} onChange={(event) => onValueChange([{regione: region, citta: event.target.value || null}])} disabled={!region} maxLength={120} placeholder="Es. Roma" />
 					</Field>
 				</FieldGroup>
-				{value.length > 1 && <FieldDescription>Altre {value.length - 1} località storiche restano visibili nel profilo. Modificando questa zona, saranno sostituite dalla nuova scelta.</FieldDescription>}
 			</FieldSet>
 		);
 	}

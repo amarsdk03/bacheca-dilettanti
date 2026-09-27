@@ -40,7 +40,7 @@ const payload = () => ({
 	announcement: {
 		type: "annuncio_staff_sportivo",
 		detail: {tipologie_sport: ["Calcio 5"], categorie_ricercate: [male, female], disponibilita_spostamento: "Da valutare", descrizione_aggiuntiva: "Cerco incarico."},
-		locations: [{regione: "Lazio", citta: "Roma"}], contacts: {email: "staff@example.com", phone: ""}, extras: {genericLink: "", videoHighlights: ""},
+		locations: [{regione: "Lazio", citta: "Roma"}], contacts: {email: "staff@example.com", phone: ""}, extras: {genericLink: ""},
 	},
 	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
 });
@@ -79,4 +79,10 @@ test("Staff publication accepts only Catalog C and persists Da valutare", () => 
 	invalid.announcement.detail.categorie_ricercate = [male];
 	invalid.announcement.detail.disponibilita_spostamento = "forse";
 	assert.throws(() => parsePublishPayload(invalid, true), /spostamenti/i);
+});
+
+test("announcement payload rejects the removed video highlights field", () => {
+	const legacy = payload();
+	legacy.announcement.extras.videoHighlights = "https://example.test/video";
+	assert.throws(() => parsePublishPayload(legacy, true), /dati inviati non sono validi/i);
 });

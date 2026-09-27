@@ -32,7 +32,7 @@ const payload = () => ({
 	announcement: {
 		type: "annuncio_squadra_cerca_staff",
 		detail: {figure_ricercate: ["Allenatore", "Preparatore atletico"], settore: "Juniores", compenso_mensile: "1200", requisiti: "Esperienza.", stagione: "2026/27", descrizione_aggiuntiva: ""},
-		locations: [{regione: "Lazio", citta: "Roma"}], contacts: {email: "info@example.com", phone: ""}, extras: {genericLink: "", videoHighlights: ""},
+		locations: [{regione: "Lazio", citta: "Roma"}], contacts: {email: "info@example.com", phone: ""}, extras: {genericLink: ""},
 	},
 	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
 });

@@ -70,6 +70,13 @@ export function getPlayerSpecificRoleOptions(primaryRoles: readonly unknown[]) {
 	return normalizePlayerPrimaryRoles(primaryRoles).flatMap(role => [...PLAYER_SPECIFIC_ROLES_BY_PRIMARY[role]]);
 }
 
+export function getPlayerSpecificRoleGroups(primaryRoles: readonly unknown[]) {
+	return normalizePlayerPrimaryRoles(primaryRoles).flatMap(role => {
+		const options = [...PLAYER_SPECIFIC_ROLES_BY_PRIMARY[role]];
+		return options.length > 0 ? [{label: role, options}] : [];
+	});
+}
+
 export function normalizePlayerRoleSelection(
 	primaryRoles: readonly unknown[],
 	specificRoles: readonly unknown[],

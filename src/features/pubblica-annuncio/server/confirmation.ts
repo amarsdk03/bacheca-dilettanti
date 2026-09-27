@@ -6,6 +6,7 @@ import {announcementContent, isActiveAnnouncementType, type ActiveAnnouncementTy
 import {
 	type AnnouncementDirectoryItem,
 	announcementOption,
+	announcementDisplayLabel,
 	isValidAnnouncementId,
 } from "@/features/annunci/announcement-model";
 import {loadRelatedPublicAnnouncements} from "@/features/annunci/server/queries";
@@ -133,7 +134,6 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 		const contacts = records(row.contatto_annuncio).flatMap((contact) => cleanText(contact.valore) ?? []);
 		const links = records(row.link_social_annuncio);
 		const genericLink = cleanText(links.find(({piattaforma}) => piattaforma === "link_annuncio")?.sublink);
-		const videoHighlights = cleanText(links.find(({piattaforma}) => piattaforma === "video_highlights")?.sublink);
 		const media = records(row.media_annuncio).find(({formato_media}) => typeof formato_media === "string" && formato_media.startsWith("image/"));
 		const imagePath = cleanText(media?.link_media);
 		let imageUrl: string | null = null;
@@ -175,7 +175,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			announcementType: type,
 			profileType: option.profileType,
 			title: content.title,
-			typeLabel: option.label,
+			typeLabel: announcementDisplayLabel(type),
 			author,
 			description: content.description,
 			locations: content.locations,
@@ -184,7 +184,6 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			fields: content.fields,
 			playerRoles: content.playerRoles,
 			genericLink,
-			videoHighlights,
 			imageUrl,
 			imageLabel: imagePath ? "Immagine allegata" : null,
 			status: formatPreviewStatus(cleanText(data.stato_annuncio)),

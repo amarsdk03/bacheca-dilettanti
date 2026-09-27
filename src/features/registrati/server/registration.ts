@@ -428,11 +428,10 @@ function normalizeDraft(
 	}
 
 	if (type === "torneo-evento") {
-		assertExactKeys(value, ["nome_organizzazione", "presentazione", "sede_principale", "sport_principale", "tipologie_sport"], type);
+		assertExactKeys(value, ["nome_organizzazione", "presentazione", "sport_principale", "tipologie_sport"], type);
 		return {
 			nome_organizzazione: textValue(value.nome_organizzazione, MAX_SHORT_TEXT, type),
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
-			sede_principale: textValue(value.sede_principale, MAX_SHORT_TEXT, type),
 			sport_principale: baseSport(value.sport_principale, type),
 			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
 		};

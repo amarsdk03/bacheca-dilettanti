@@ -7,7 +7,7 @@ export default function GiocatoreCard({profile}: {profile: PlayerCardData}) {
 			profile={profile}
 			summary={profile.roles.join(" · ") || "Profilo giocatore"}
 			emptyPresentation="Questo giocatore non ha ancora aggiunto una presentazione."
-			facts={getProfileFacts(profile, ["roles", "types", "category", "location", "availability"])}
+			facts={getProfileFacts(profile, ["age", "gender", "availability", "category"])}
 		/>
 	);
 }

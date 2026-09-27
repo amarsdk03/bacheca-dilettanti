@@ -43,7 +43,7 @@ const payload = () => ({
 		detail: {tipologie_sport: ["Calcio 11"], orari: schedule(), costo_partenza: "20.00", servizi_inclusi: "Spogliatoi", indirizzo: "Via Roma 1", descrizione_aggiuntiva: ""},
 		locations: [{regione: "Lazio", citta: "Roma"}],
 		contacts: {email: "campo@example.com", phone: ""},
-		extras: {genericLink: "", videoHighlights: ""},
+		extras: {genericLink: ""},
 	},
 	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
 });

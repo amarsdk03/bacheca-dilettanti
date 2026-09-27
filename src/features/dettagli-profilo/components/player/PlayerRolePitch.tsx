@@ -29,7 +29,7 @@ export default function PlayerRolePitch({
 					backgroundImage: "url('/sfondi/campo.png')",
 					backgroundPosition: "center",
 					backgroundSize: "cover",
-					filter: "invert(1) opacity(75%)"
+					filter: "invert(0) opacity(100%)"
 				}}
 			>
 				{markers.map((marker) => (
@@ -38,7 +38,7 @@ export default function PlayerRolePitch({
 						variant={"default"}
 						aria-label={marker.role}
 						title={marker.role}
-						className="z-10 min-w-8 place-self-center border border-white/25 bg-[#dcaf40] text-black shadow-md px-1.5 font-bold tracking-wide"
+						className="z-10 min-w-8 place-self-center px-1.5 font-bold tracking-wide"
 						style={{gridColumn: marker.column, gridRow: marker.row}}
 					>
 						{marker.abbreviation}

@@ -2,10 +2,10 @@ import {TargetIcon} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import type {PlayerProfileData} from "../../profile-detail-model";
-import PlayerRolePitch from "@/features/dettagli-profilo/components/player/PlayerRolePitch";
 
-export default function PlayerRolesCard({primaryRoles, specificRoles, currentCategory, preferredCategories}: Pick<PlayerProfileData, "primaryRoles" | "specificRoles" | "currentCategory" | "preferredCategories">) {
+export default function PlayerRolesCard({sportTypes, primaryRoles, specificRoles, currentCategory, preferredCategories}: Pick<PlayerProfileData, "sportTypes" | "primaryRoles" | "specificRoles" | "currentCategory" | "preferredCategories">) {
 	const groups = [
+		{label: "Tipologie calcio", values: sportTypes},
 		{label: "Ruoli principali", values: primaryRoles},
 		{label: "Ruoli specifici", values: specificRoles},
 		{label: "Categoria attuale", values: currentCategory ? [currentCategory] : []},
@@ -22,9 +22,6 @@ export default function PlayerRolesCard({primaryRoles, specificRoles, currentCat
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<div className="mt-2 mb-8">
-					<PlayerRolePitch primaryRoles={primaryRoles} specificRoles={specificRoles} />
-				</div>
 				<dl className="flex flex-col gap-5">
 					{groups.map(({label, values}) => <div key={label} className="flex min-w-0 flex-col gap-2">
 						<dt className="text-sm font-semibold">{label}</dt>

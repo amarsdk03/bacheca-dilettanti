@@ -7,9 +7,13 @@ import {
 	ComboboxChips,
 	ComboboxChipsInput,
 	ComboboxContent,
+	ComboboxCollection,
 	ComboboxEmpty,
+	ComboboxGroup,
 	ComboboxItem,
+	ComboboxLabel,
 	ComboboxList,
+	ComboboxSeparator,
 	ComboboxValue,
 	useComboboxAnchor,
 } from "@/components/ui/combobox";
@@ -18,6 +22,7 @@ import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/I
 type MultiselectFieldProps = {
 	label: ReactNode;
 	options: readonly string[];
+	groups?: readonly {label: string; options: readonly string[]}[];
 	value: string[];
 	onValueChange: (value: string[]) => void;
 	placeholder?: string;
@@ -30,6 +35,7 @@ type MultiselectFieldProps = {
 export default function MultiselectField({
 	label,
 	options,
+	groups,
 	value,
 	onValueChange,
 	placeholder = "Seleziona una o più opzioni...",
@@ -48,7 +54,7 @@ export default function MultiselectField({
 			<Combobox
 				multiple
 				autoHighlight
-				items={[...options]}
+				items={groups ? groups.map(group => ({label: group.label, options: [...group.options]})) : [...options]}
 				value={value}
 				onValueChange={onValueChange}
 			>
@@ -68,11 +74,13 @@ export default function MultiselectField({
 				<ComboboxContent anchor={anchor}>
 					<ComboboxEmpty>{emptyText}</ComboboxEmpty>
 					<ComboboxList>
-						{(item) => (
-							<ComboboxItem key={item} value={item}>
-								{item}
-							</ComboboxItem>
-						)}
+						{(item, index) => typeof item === "string"
+							? <ComboboxItem key={item} value={item}>{item}</ComboboxItem>
+							: <ComboboxGroup key={item.label} items={item.options}>
+								<ComboboxLabel>{item.label}</ComboboxLabel>
+								<ComboboxCollection>{(option) => <ComboboxItem key={option} value={option}>{option}</ComboboxItem>}</ComboboxCollection>
+								{index < (groups?.length ?? 0) - 1 && <ComboboxSeparator />}
+							</ComboboxGroup>}
 					</ComboboxList>
 				</ComboboxContent>
 			</Combobox>

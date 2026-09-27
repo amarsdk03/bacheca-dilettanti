@@ -1,6 +1,7 @@
 import {announcementContent} from "@/features/annunci/announcement-content";
 import {
 	announcementOption,
+	announcementDisplayLabel,
 	type AnnouncementDetailField,
 	type AnnouncementFact,
 	type AnnouncementPlayerRoles,
@@ -25,7 +26,6 @@ export interface AnnouncementPreviewData {
 	fields: AnnouncementDetailField[];
 	playerRoles: AnnouncementPlayerRoles | null;
 	genericLink: string | null;
-	videoHighlights: string | null;
 	imageUrl: string | null;
 	imageLabel: string | null;
 	status: string | null;
@@ -92,7 +92,7 @@ export function buildPublishPreview(
 		announcementType: type,
 		profileType: payload.profileType,
 		title: content.title,
-		typeLabel: announcementOption(type).label,
+		typeLabel: announcementDisplayLabel(type),
 		author: profileTitle(payload, drafts),
 		description: content.description,
 		locations: content.locations,
@@ -101,7 +101,6 @@ export function buildPublishPreview(
 		fields: content.fields,
 		playerRoles: content.playerRoles,
 		genericLink: payload.announcement.extras.genericLink.trim() || null,
-		videoHighlights: payload.announcement.extras.videoHighlights.trim() || null,
 		imageUrl,
 		imageLabel,
 		status: "In revisione dopo l’invio",

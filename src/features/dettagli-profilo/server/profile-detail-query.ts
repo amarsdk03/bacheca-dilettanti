@@ -38,8 +38,8 @@ const PRIMARY_FIELD_LABELS = {
 	"professionisti-studi": ["Figure professionali", "Specializzazioni", "Disponibilità"],
 	arbitro: ["Disponibilità"],
 	creators: ["Tipologia di contenuti"],
-	"torneo-evento": ["Tipologie sportive", "Sede principale"],
-	"campi-impianti-sportivi": ["Tipologia campo", "Indirizzo"],
+	"torneo-evento": ["Tipologie sportive"],
+	"campi-impianti-sportivi": ["Tipologia campi disponibili", "Indirizzo del campo"],
 } as const satisfies Record<ProfileType, readonly string[]>;
 
 const DAY_LABELS: Record<string, string> = {
@@ -352,7 +352,7 @@ async function loadProfileContent(
 	if (type === "torneo-evento") {
 		const {data, error} = await supabase
 			.from("profilo_torneo_evento")
-			.select("id, nome_organizzazione, sport_principale, tipologie_sport, sede_principale, presentazione")
+			.select("id, nome_organizzazione, sport_principale, tipologie_sport, presentazione")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -366,7 +366,6 @@ async function loadProfileContent(
 				availability: null,
 				fields: [
 					detailListField("Tipologie sportive", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
-					detailField("Sede principale", data.sede_principale),
 					detailField("Presentazione torneo", data.presentazione, true),
 				],
 			},
@@ -390,8 +389,8 @@ async function loadProfileContent(
 			title: cleanText(data.nome_organizzazione),
 			availability: null,
 			fields: [
-				detailListField("Tipologia campo", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
-				detailField("Indirizzo", data.indirizzo),
+				detailListField("Tipologia campi disponibili", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
+				detailField("Indirizzo del campo", data.indirizzo),
 				detailField("Sede principale storica", data.sede_principale),
 				detailField("Costo di partenza", formatCurrency(data.costo_partenza)),
 				detailListField("Orari", formatOpeningHours(data.orari), "rows", true),

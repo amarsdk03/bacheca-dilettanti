@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect, useMemo, useRef, useState} from "react";
+import {type ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import Link from "next/link";
 import {ClipboardPenIcon, MailCheckIcon} from "lucide-react";
 
@@ -35,7 +35,6 @@ import {
 	getAnnouncementValidationMessage,
 	getDatabaseAnnouncementType,
 	getProfileValidationErrors,
-	getProfileValidationMessage,
 	isPublishableProfileType,
 	isTeamAnnouncementSubtype,
 	PUBLISH_PAYLOAD_VERSION,
@@ -51,6 +50,21 @@ interface PubblicaAnnuncioProps {
 	authenticated: boolean;
 	registered: boolean;
 	profileContext: PublishProfileContext | null;
+}
+
+function PublishStepTab({value, locked, reason, resetKey, children}: {
+	value: string;
+	locked: boolean;
+	reason: string;
+	resetKey: string;
+	children: ReactNode;
+}) {
+	const tab = <TabsTrigger value={value} disabled={locked} className="w-full">{children}</TabsTrigger>;
+	if (!locked) return tab;
+	return <Tooltip key={resetKey}>
+		<TooltipTrigger render={<span className="w-full" />}>{tab}</TooltipTrigger>
+		<TooltipContent><p>{reason}</p></TooltipContent>
+	</Tooltip>;
 }
 
 export default function PubblicaAnnuncio({
@@ -73,7 +87,7 @@ export default function PubblicaAnnuncio({
 	const [announcementDrafts, setAnnouncementDrafts] = useState(createAnnouncementDetailsDrafts);
 	const [announcementLocations, setAnnouncementLocations] = useState<ProfileLocationDraft[]>([]);
 	const [contacts, setContacts] = useState<AnnouncementContacts>({email: "", phone: ""});
-	const [extras, setExtras] = useState<AnnouncementExtras>({genericLink: "", videoHighlights: ""});
+	const [extras, setExtras] = useState<AnnouncementExtras>({genericLink: ""});
 	const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
 	const [announcementImagePreviewUrl, setAnnouncementImagePreviewUrl] = useState<string | null>(null);
 	const announcementImagePreviewUrlRef = useRef<string | null>(null);
@@ -99,11 +113,14 @@ export default function PubblicaAnnuncio({
 	);
 	const imageError = getAnnouncementImageError(announcementImage);
 
-	const profileValidationErrors = profileType
+	const allProfileValidationErrors = profileType
 		? getProfileValidationErrors(profileType, profileDrafts, profileLocations)
 		: {};
+	const profileValidationErrors = registered && (!profileUnlocked || !profileDirty)
+		? {...allProfileValidationErrors, nationality: undefined}
+		: allProfileValidationErrors;
 	const profileValidationMessage = profileType
-		? getProfileValidationMessage(profileType, profileDrafts, profileLocations)
+		? Object.values(profileValidationErrors).find(Boolean) ?? null
 		: "Seleziona una tipologia di profilo.";
 	const announcementValidationErrors = profileType
 		? getAnnouncementValidationErrors(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras)
@@ -114,6 +131,7 @@ export default function PubblicaAnnuncio({
 	const step1Valid = profileType !== "" && (profileType !== "squadra" || teamSubtype !== null);
 	const step2Valid = step1Valid && profileValidationMessage === null;
 	const step3Valid = step2Valid && announcementValidationMessage === null && imageError === null;
+	const tooltipResetKey = `${profileType}:${teamSubtype ?? ""}`;
 
 	const payload = useMemo<PublishAnnouncementPayload | null>(() => {
 		if (!profileType) return null;
@@ -183,9 +201,6 @@ export default function PubblicaAnnuncio({
 		setProfileValidationVisible(false);
 		setAnnouncementValidationVisible(false);
 		setProfileUnlocked(false);
-		if (value !== "giocatore") {
-			setExtras((previous) => ({...previous, videoHighlights: ""}));
-		}
 		setAnnouncementLocations([]);
 		profileLocationSnapshot.current = null;
 	};
@@ -294,33 +309,18 @@ export default function PubblicaAnnuncio({
 							<span className="hidden sm:block">1. Tipo annuncio</span>
 							<span className="sm:hidden">Tipo</span>
 						</TabsTrigger>
-						<Tooltip>
-							<TooltipTrigger render={<span className="w-full" />}>
-								<TabsTrigger value="tab-2" disabled={!step1Valid} className="w-full">
-									<span className="hidden sm:block">2. Dati profilo</span>
-									<span className="sm:hidden">Profilo</span>
-								</TabsTrigger>
-							</TooltipTrigger>
-							{!step1Valid && <TooltipContent><p>Seleziona prima il tipo di annuncio.</p></TooltipContent>}
-						</Tooltip>
-						<Tooltip>
-							<TooltipTrigger render={<span className="w-full" />}>
-								<TabsTrigger value="tab-3" disabled={!step2Valid} className="w-full">
-									<span className="hidden sm:block">3. Dati annuncio</span>
-									<span className="sm:hidden">Annuncio</span>
-								</TabsTrigger>
-							</TooltipTrigger>
-							{!step2Valid && <TooltipContent><p>Completa i dati essenziali del profilo.</p></TooltipContent>}
-						</Tooltip>
-						<Tooltip>
-							<TooltipTrigger render={<span className="w-full" />}>
-								<TabsTrigger value="tab-4" disabled={!step3Valid} className="w-full">
-									<span className="hidden sm:block">4. Conferma e invia</span>
-									<span className="sm:hidden">Invia</span>
-								</TabsTrigger>
-							</TooltipTrigger>
-							{!step3Valid && <TooltipContent><p>Completa i dati dell’annuncio.</p></TooltipContent>}
-						</Tooltip>
+						<PublishStepTab value="tab-2" locked={!step1Valid} reason="Seleziona prima il tipo di annuncio." resetKey={tooltipResetKey}>
+							<span className="hidden sm:block">2. Dati profilo</span>
+							<span className="sm:hidden">Profilo</span>
+						</PublishStepTab>
+						<PublishStepTab value="tab-3" locked={!step2Valid} reason="Completa i dati essenziali del profilo." resetKey={tooltipResetKey}>
+							<span className="hidden sm:block">3. Dati annuncio</span>
+							<span className="sm:hidden">Annuncio</span>
+						</PublishStepTab>
+						<PublishStepTab value="tab-4" locked={!step3Valid} reason="Completa i dati dell’annuncio." resetKey={tooltipResetKey}>
+							<span className="hidden sm:block">4. Conferma e invia</span>
+							<span className="sm:hidden">Invia</span>
+						</PublishStepTab>
 					</TabsList>
 
 					<TabsContent value="tab-1">

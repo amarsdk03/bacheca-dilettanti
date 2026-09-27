@@ -13,7 +13,7 @@ import {UUID_PATTERN} from "@/features/profilo/team-profile";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
 import {categoryLabel, normalizeCategories} from "@/features/pubblica-annuncio/types/category-catalog";
-import {nationalityLabel, nationalityFlag} from "@/features/profilo/player-nationalities";
+import {nationalityLabel} from "@/features/profilo/player-nationalities";
 
 type PlayerRow = Pick<Tables<"profilo_giocatore">,
 	"giorno_nascita" | "mese_nascita" | "anno_nascita" | "tipologie_sport" | "ruoli_sport" |
@@ -109,7 +109,8 @@ export function toPublicPlayerData(data: PlayerRow, highlights: unknown, now = n
 		preferredCategories: normalizeCategories(strings(data.categorie_ricercate)).map(categoryLabel),
 		preferredFoot: data.piede_principale === "Ambipiede" ? "Ambidestro" : cleanText(data.piede_principale),
 		gender: cleanText(data.genere),
-		nationality: nationality && data.nazionalita ? `${nationality} ${nationalityFlag(data.nazionalita)}` : cleanText(data.nazionalita),
+		nationality,
+		nationalityCode: nationality ? cleanText(data.nazionalita) : null,
 		height: cleanText(data.altezza),
 		weight: cleanText(data.peso),
 		presentation: cleanText(data.presentazione),

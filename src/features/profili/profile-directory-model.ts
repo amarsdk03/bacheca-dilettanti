@@ -76,9 +76,11 @@ export interface DirectoryProfileFilterData {
 
 export type DirectoryProfileFactKind =
 	| "availability"
+	| "age"
 	| "category"
 	| "content"
 	| "figures"
+	| "gender"
 	| "headquarters"
 	| "location"
 	| "price"

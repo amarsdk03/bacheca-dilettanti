@@ -65,8 +65,65 @@ export function DetailPageSkeleton({kind}: {kind: "annuncio" | "profilo"}) {
 }
 
 export function DashboardPageSkeleton() {
-	return <><NavbarSkeleton /><div className="min-h-screen bg-muted/20"><div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-		<LoadingRegion label="Caricamento del tuo profilo in corso"><Block className="h-9 w-56" /><Block className="mt-3 h-4 w-72" /><div className="mt-8 flex gap-3 overflow-hidden">{Array.from({length: 5}, (_, index) => <Block key={index} className="h-10 w-32 shrink-0" />)}</div><div className="mt-8 grid gap-6 lg:grid-cols-3"><div className="rounded-xl border bg-card p-6"><Block className="size-24 rounded-full" /><Block className="mt-5 h-6 w-2/3" /><Block className="mt-3 h-4 w-1/2" /></div><div className="rounded-xl border bg-card p-6 lg:col-span-2"><Block className="h-6 w-1/3" /><Block className="mt-6 h-4 w-full" /><Block className="mt-4 h-4 w-4/5" /><Block className="mt-8 h-32 w-full" /></div></div></LoadingRegion>
+	return <><NavbarSkeleton /><div className="min-h-screen bg-muted/20"><div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+		<LoadingRegion label="Caricamento del tuo profilo in corso" className="flex flex-col gap-6 sm:gap-8">
+			<div aria-hidden="true" className="rounded-xl border border-t-2 border-t-primary bg-card p-5 shadow-sm sm:p-6">
+				<div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+					<div className="flex min-w-0 items-center gap-4 sm:gap-5">
+						<Block className="size-16 shrink-0 rounded-full sm:size-20" />
+						<div className="flex min-w-0 flex-1 flex-col gap-2">
+							<Block className="h-3 w-24" />
+							<Block className="h-8 w-56 max-w-full" />
+							<Block className="h-4 w-48 max-w-full" />
+						</div>
+					</div>
+					<div className="grid gap-2 sm:grid-cols-2 md:w-52 md:grid-cols-1">
+						<Block className="h-11 w-full rounded-md" />
+						<Block className="h-11 w-full rounded-md" />
+					</div>
+				</div>
+				<div className="mt-5 flex flex-wrap items-center gap-2 border-t pt-4">
+					<Block className="h-6 w-36 rounded-full" />
+					<Block className="h-6 w-40 rounded-full" />
+					<Block className="h-4 w-32" />
+					<Block className="ml-auto h-8 w-20" />
+				</div>
+			</div>
+
+			<div aria-hidden="true" className="overflow-hidden rounded-xl border bg-card">
+				<div className="flex min-w-max gap-2 px-3 sm:gap-4 sm:px-5">
+					{["w-32", "w-32", "w-36", "w-40", "w-32", "w-20"].map((width, index) => <Block key={index} className={`h-12 ${width} shrink-0`} />)}
+				</div>
+			</div>
+
+			<div aria-hidden="true" className="flex flex-col gap-6">
+				<section className="flex flex-col gap-5">
+					<div className="flex flex-col gap-2">
+						<div className="flex items-center gap-2"><Block className="h-6 w-48" /><Block className="h-6 w-12 rounded-full" /></div>
+						<Block className="h-4 w-2/3 max-w-xl" />
+					</div>
+					<div className="grid gap-4 md:grid-cols-2">
+						{Array.from({length: 2}, (_, index) => <div key={index} className="flex min-h-56 flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm">
+							<div className="flex items-center gap-3"><Block className="size-12 shrink-0 rounded-full" /><div className="flex-1 space-y-2"><Block className="h-5 w-2/3" /><Block className="h-3 w-1/3" /></div></div>
+							<Block className="h-4 w-3/4" />
+							<Block className="h-2 w-full rounded-full" />
+							<div className="mt-auto flex gap-2"><Block className="h-9 w-24" /><Block className="h-9 w-24" /></div>
+						</div>)}
+					</div>
+				</section>
+
+				<div className="border-t pt-6">
+					<div className="mb-5 flex flex-col gap-2"><Block className="h-6 w-44" /><Block className="h-4 w-2/3 max-w-xl" /></div>
+					<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+						{Array.from({length: 3}, (_, index) => <div key={index} className="flex min-h-40 flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm">
+							<div className="flex items-center gap-3"><Block className="size-10 shrink-0 rounded-full" /><Block className="h-5 flex-1" /></div>
+							<Block className="h-4 w-4/5" />
+							<Block className="mt-auto h-9 w-28" />
+						</div>)}
+					</div>
+				</div>
+			</div>
+		</LoadingRegion>
 	</div></div></>;
 }
 

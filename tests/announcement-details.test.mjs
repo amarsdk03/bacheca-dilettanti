@@ -192,7 +192,7 @@ test("Staff, Arbitro and Impianto share the public profile title across cards, l
 		assert.equal(detail.announcement.title, title, `${type}: detail`);
 		const hidden = fixture({current: row(type), authors: [{...author, [table]: [{id: 7, nascosto: true, ...child}]}]});
 		const [hiddenCard] = await hidden.queries.loadPublicAnnouncementsByIds([id]);
-		assert.equal(hiddenCard.title, "RICERCA OPPORTUNITÀ", `${type}: hidden profile`);
+		assert.equal(hiddenCard.title, type === "annuncio_campo_impianto" ? "CAMPO DISPONIBILE" : "RICERCA OPPORTUNITÀ", `${type}: hidden profile`);
 	}
 });
 
@@ -419,7 +419,7 @@ test("confirmation renders the saved preview and opens its detail in a new tab b
 		const preview = {
 			id, announcementType: "annuncio_giocatore", profileType: "giocatore", title: "Annuncio salvato",
 			typeLabel: "Giocatore", author: "Autore", description: null, locations: [], contacts: [], facts: [], fields: [], playerRoles: null, linkedTeams: [],
-			genericLink: null, videoHighlights: null, imageUrl: null, imageLabel: null, statusInfo: null,
+			genericLink: null, imageUrl: null, imageLabel: null, statusInfo: null,
 			status: awaitingPayment ? "Pagamento da completare" : "In attesa di approvazione",
 		};
 		const html = renderToStaticMarkup(React.createElement(Confirmation, {result: {status: "ok", preview, suggestions: [], awaitingPayment, isListed: false}}));
@@ -440,10 +440,10 @@ test("publish preview stays light and compact while retaining locations, image, 
 		typeLabel: "Giocatore", author: "Mario Rossi", description: "Descrizione completa",
 		locations: [{region: "Lazio", city: "Roma"}, {region: "Lazio", city: "Viterbo"}, {region: "Toscana", city: null}],
 		contacts: ["info@example.test", "+39 333 1234567"],
-		facts: [{kind: "roles", label: "Ruoli principali", value: "Difensore"}],
+		facts: [{kind: "roles", label: "Ruoli principali", value: "Difensore"}, {kind: "categories", label: "Categorie", value: "Serie D"}],
 		fields: [{label: "Ruoli principali", value: "Difensore", items: ["Difensore"], listStyle: "chips"}],
 		playerRoles: {primaryRoles: ["Difensore"], secondaryRoles: []},
-		genericLink: "https://example.test/annuncio", videoHighlights: null,
+		genericLink: "https://example.test/annuncio",
 		imageUrl: "https://example.test/immagine.webp", imageLabel: "Foto del campo",
 		status: "In attesa di approvazione", statusInfo: "Annuncio ricevuto", linkedTeams: [],
 	};
@@ -457,6 +457,8 @@ test("publish preview stays light and compact while retaining locations, image, 
 	assert.ok(html.indexOf("Descrizione completa") < html.indexOf('src="https://example.test/immagine.webp"'));
 	assert.match(html, /href="https:\/\/example\.test\/annuncio"/);
 	assert.match(html, /Link annuncio/);
+	assert.match(html, /Categorie cercate/);
+	assert.match(html, /Zone di ricerca/);
 });
 
 test("publish preview shows the persisted facts and supporting fields for all nine announcement types", () => {
@@ -481,7 +483,7 @@ test("publish preview shows the persisted facts and supporting fields for all ni
 		["annuncio_staff_sportivo", "staff-sportivo", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", descrizione_aggiuntiva: "Collaborazioni cercate"}, ["RICERCA OPPORTUNITÀ", "Juniores", "Calcio 11"]],
 		["annuncio_arbitro", "arbitro", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", automunito: "Auto propria", descrizione_aggiuntiva: "Disponibile nel Lazio"}, ["RICERCA OPPORTUNITÀ", "Auto propria", "Calcio 11"]],
 		["annuncio_torneo_evento", "torneo-evento", {nome_evento: "Coppa Lazio", tipologie_sport: ["Calcio a 11"], modalita_iscrizione: "online", annate_ammesse_da: "2004", annate_ammesse_a: "2008", numero_squadre: "8", costo_partecipazione: "50", tipo_partecipazione: "squadre", lista_premi_trofei: [{posto: "Primo posto", titoloPremio: "Coppa"}], descrizione_aggiuntiva: "Torneo estivo"}, ["Coppa Lazio", "Premi e trofei", "Primo posto: Coppa"]],
-		["annuncio_campo_impianto", "campi-impianti-sportivi", {tipologie_sport: ["Calcio a 11"], orari: "Lun-Ven 18-22", costo_partenza: "60", servizi_inclusi: "Spogliatoi", descrizione_aggiuntiva: "Campo disponibile"}, ["RICERCA OPPORTUNITÀ", "Lun-Ven 18-22", "Spogliatoi"]],
+		["annuncio_campo_impianto", "campi-impianti-sportivi", {tipologie_sport: ["Calcio a 11"], orari: "Lun-Ven 18-22", costo_partenza: "60", servizi_inclusi: "Spogliatoi", descrizione_aggiuntiva: "Campo disponibile"}, ["CAMPO DISPONIBILE", "Lun-Ven 18-22", "Spogliatoi"]],
 	];
 	for (const [type, profileType, detail, expected] of cases) {
 		const payload = {
@@ -489,13 +491,13 @@ test("publish preview shows the persisted facts and supporting fields for all ni
 			announcement: {
 				type, detail, locations: [{regione: "Lazio", citta: "Roma"}],
 				contacts: {email: "info@example.test", phone: ""},
-				extras: {genericLink: "", videoHighlights: ""},
+				extras: {genericLink: ""},
 			},
 		};
 		const preview = buildPublishPreview(payload, drafts, null, null);
 		const html = renderToStaticMarkup(React.createElement(PreviewCard, {preview}));
 		for (const value of expected) assert.ok(html.includes(value), `${type}: missing ${value}`);
-		assert.match(html, /Roma/);
+		if (type !== "annuncio_squadra_cerca_sponsor") assert.match(html, /Roma/);
 		assert.match(html, /info@example\.test/);
 	}
 });
@@ -528,7 +530,7 @@ test("all nine supported types render balanced fact grids and preserve supportin
 		annuncio_staff_sportivo: ["Figure", "Categorie", "Num. salvataggi", "Follower autore"],
 		annuncio_arbitro: ["Categorie", "Disponibilità", "Num. salvataggi", "Follower autore"],
 		annuncio_torneo_evento: ["Iscrizione", "Costo", "Num. salvataggi", "Follower autore"],
-		annuncio_campo_impianto: ["Tipologia campo", "Prezzo orario", "Num. salvataggi", "Follower autore"],
+		annuncio_campo_impianto: ["Tipologia campo da pubblicizzare", "Prezzo orario", "Num. salvataggi", "Follower autore"],
 	};
 	const supportingValues = {
 		annuncio_squadra_cerca_giocatore: "2026/27",

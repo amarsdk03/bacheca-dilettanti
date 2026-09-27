@@ -422,7 +422,7 @@ export async function publishAnnouncement(
 			contacts: payload.contacts,
 			extras: {
 				generic_link: payload.extras.genericLink || null,
-				video_highlights: payload.extras.videoHighlights || null,
+				video_highlights: null,
 				image_path: uploadedImage?.path ?? null,
 				image_mime: uploadedImage?.mimeType ?? null,
 			},

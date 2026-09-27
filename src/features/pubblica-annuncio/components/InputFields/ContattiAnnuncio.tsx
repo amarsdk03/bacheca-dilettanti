@@ -53,7 +53,7 @@ export default function ContattiAnnuncioFields({
 					className="size-4 shrink-0 text-muted-foreground"
 				/>
 				{canale.etichetta}:
-				{canale.valore === "Email" && <OptionalLabel recommended />}
+				{canale.valore === "Email" && <OptionalLabel value="consigliato" />}
 			</FieldLabel>
 			<Input
 				id={`contatto-${canale.valore}`}

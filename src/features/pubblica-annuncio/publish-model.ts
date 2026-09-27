@@ -133,7 +133,6 @@ export type RegisteredProfileUpdatePayload = AnonymousProfilePayload;
 
 export interface AnnouncementExtras {
 	genericLink: string;
-	videoHighlights: string;
 }
 
 export const PUBLISH_VISIBILITIES = ["gratuito"] as const;
@@ -215,7 +214,6 @@ export type AnnouncementValidationField =
 	| "facilityAddress"
 	| "facilityHours"
 	| "genericLink"
-	| "videoHighlights"
 	| "sponsorSector"
 	| "sponsorOffer"
 	| "sports"
@@ -389,7 +387,7 @@ export function getAnnouncementValidationMessage(
 	drafts: AnnouncementDetailsDrafts,
 	locations: ProfileLocationDraft[],
 	contacts: AnnouncementContacts,
-	extras: AnnouncementExtras = {genericLink: "", videoHighlights: ""},
+	extras: AnnouncementExtras = {genericLink: ""},
 ): string | null {
 	return Object.values(getAnnouncementValidationErrors(type, teamSubtype, drafts, locations, contacts, extras))[0] ?? null;
 }
@@ -400,7 +398,7 @@ export function getAnnouncementValidationErrors(
 	drafts: AnnouncementDetailsDrafts,
 	locations: ProfileLocationDraft[],
 	contacts: AnnouncementContacts,
-	extras: AnnouncementExtras = {genericLink: "", videoHighlights: ""},
+	extras: AnnouncementExtras = {genericLink: ""},
 ): AnnouncementValidationErrors {
 	const errors: AnnouncementValidationErrors = {};
 	const email = contacts.email.trim();
@@ -410,8 +408,6 @@ export function getAnnouncementValidationErrors(
 	if (phone && !isValidPhone(phone)) errors.phone = "Inserisci un numero di telefono valido.";
 	if (!(type === "squadra" && teamSubtype === "cerca-sponsor") && locations.length === 0) errors.locations = "Seleziona almeno una località per l’annuncio.";
 	if (!isLinkAnnuncioValid(extras.genericLink)) errors.genericLink = "Inserisci un link completo che inizi con http:// o https://.";
-	if (type === "giocatore" && !isLinkAnnuncioValid(extras.videoHighlights)) errors.videoHighlights = "Inserisci un link video completo che inizi con http:// o https://.";
-	if (type !== "giocatore" && extras.videoHighlights.trim()) errors.videoHighlights = "Il link video highlights è disponibile soltanto per gli annunci Giocatore.";
 
 	const detail = getAnnouncementDetail(type, teamSubtype, drafts);
 	if (!detail) errors.type = "La tipologia di annuncio non è valida.";

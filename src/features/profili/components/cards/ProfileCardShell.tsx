@@ -5,12 +5,14 @@ import {
 	ArrowUpRightIcon,
 	BriefcaseBusinessIcon,
 	Building2Icon,
+	CalendarDaysIcon,
 	CalendarCheckIcon,
 	CircleDollarSignIcon,
 	ClapperboardIcon,
 	GraduationCapIcon,
 	ListChecksIcon,
 	MapPinIcon,
+	ShirtIcon,
 	TagsIcon,
 	UsersIcon,
 } from "lucide-react";
@@ -27,9 +29,11 @@ import type {ProfileCardData} from "./profile-card-model";
 
 const PROFILE_FACT_ICONS: Record<DirectoryProfileFactKind, LucideIcon> = {
 	availability: CalendarCheckIcon,
+	age: CalendarDaysIcon,
 	category: TagsIcon,
 	content: ClapperboardIcon,
 	figures: BriefcaseBusinessIcon,
+	gender: ShirtIcon,
 	headquarters: Building2Icon,
 	location: MapPinIcon,
 	price: CircleDollarSignIcon,

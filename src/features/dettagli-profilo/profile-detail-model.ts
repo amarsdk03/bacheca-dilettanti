@@ -66,6 +66,7 @@ export interface PlayerProfileData {
 	preferredFoot: string | null;
 	gender: string | null;
 	nationality: string | null;
+	nationalityCode: string | null;
 	height: string | null;
 	weight: string | null;
 	presentation: string | null;

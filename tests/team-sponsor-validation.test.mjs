@@ -32,7 +32,7 @@ const payload = () => ({
 	announcement: {
 		type: "annuncio_squadra_cerca_sponsor",
 		detail: {categoria_settore: "Prima squadra", offerta_fornita: "Logo sulle divise", descrizione_aggiuntiva: ""},
-		locations: [], contacts: {email: "info@example.com", phone: ""}, extras: {genericLink: "", videoHighlights: ""},
+		locations: [], contacts: {email: "info@example.com", phone: ""}, extras: {genericLink: ""},
 	},
 	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
 });

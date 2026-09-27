@@ -55,7 +55,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		supabase.from("profilo_squadra").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_staff_sportivo").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_arbitro").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
-		supabase.from("profilo_torneo_evento").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_torneo_evento").select("id, nome_organizzazione, presentazione, sport_principale, tipologie_sport").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_campi_impianti").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
 		supabase.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["instagram", "facebook", "youtube", "linkedin"]),

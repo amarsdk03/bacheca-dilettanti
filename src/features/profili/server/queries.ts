@@ -22,6 +22,7 @@ import type {Database, Json} from "@/server/supabase";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {categoryLabel, normalizeCategories, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
+import {publicPlayerAge} from "@/features/dettagli-profilo/server/player-profile-data";
 
 const PROFILE_DIRECTORY_BATCH_SIZE = 500;
 const NOT_SPECIFIED = "Non specificato";
@@ -39,7 +40,8 @@ const PROFILE_TABLE_BY_TYPE = {
 
 function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: number) {
 	// The admin client bypasses owner-only RLS: keep this select as an explicit
-	// allowlist and never add private identity, contact or birth-date fields.
+	// allowlist. Birth-date parts are selected only to derive age server-side and
+	// are never added to the public directory profile.
 	return supabase
 		.from("profilo")
 		.select(`
@@ -50,13 +52,13 @@ function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: numbe
 			verificato_il,
 			ultima_modifica_il,
 			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
-			profilo_giocatore(id, nascosto, nome, cognome, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categoria_attuale, categorie_ricercate, genere, nazionalita),
+			profilo_giocatore(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categoria_attuale, categorie_ricercate, genere, nazionalita),
 			profilo_squadra(id, nascosto, nome_societa, presentazione, sport_principale, tipologie_sport, categoria_attuale),
 			profilo_staff_sportivo(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, sport_principale),
 			profilo_professionista_studente(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, presentazione_servizi, specializzazioni, sport_principale, tipologie_sport, automunito),
 			profilo_arbitro(id, nascosto, nome, cognome, disponibilita, presentazione, sport_principale),
 			profilo_creator(id, nascosto, nome_creator, presentazione, sport_principale, tipologia_contenuti),
-			profilo_torneo_evento(id, nascosto, nome_organizzazione, presentazione, sede_principale, sport_principale, tipologie_sport),
+			profilo_torneo_evento(id, nascosto, nome_organizzazione, presentazione, sport_principale, tipologie_sport),
 			profilo_campi_impianti(id, nascosto, nome_organizzazione, presentazione, sede_principale, indirizzo, sport_principale, tipologie_sport, costo_partenza, servizi_inclusi)
 		`, {count: "exact"})
 		.eq("nascosto", false)
@@ -82,8 +84,10 @@ interface ProfileContent {
 	searchValues?: Array<string | null | undefined>;
 	filterData?: Partial<DirectoryProfileFilterData>;
 	factData?: {
+		age?: number | null;
 		roles?: string[];
 		category?: string | null;
+		gender?: string | null;
 		services?: string | null;
 		specializations?: string | null;
 	};
@@ -157,16 +161,14 @@ function buildProfileFacts(
 ): DirectoryProfileFact[] {
 	const location = formatFactLocation(locations);
 	const types = selectionCount(filterData.tipologie, true);
-	const roles = selectionCount(factData?.roles ?? filterData.ruoli, false);
 	const figures = selectionCount(filterData.figure, true);
 
 	if (type === "giocatore") {
 		return [
-			profileFact("roles", "Ruoli", roles),
-			profileFact("types", "Tipologie", types),
-			profileFact("category", "Categoria attuale", factData?.category ?? null),
-			profileFact("location", "Località", location),
+			profileFact("age", "Età", factData?.age == null ? null : `${factData.age} anni`),
+			profileFact("gender", "Genere", factData?.gender ?? null),
 			profileFact("availability", "Disponibilità", availability),
+			profileFact("category", "Categoria attuale", factData?.category ?? null),
 		];
 	}
 	if (type === "squadra") {
@@ -207,11 +209,10 @@ function buildProfileFacts(
 		return [
 			profileFact("types", "Tipologie", types),
 			profileFact("location", "Località", location),
-			profileFact("headquarters", "Sede", highlight),
 		];
 	}
 	return [
-		profileFact("types", "Tipologia campo", types),
+		profileFact("types", "Tipologia campi disponibili", types),
 		profileFact("location", "Località", location),
 		profileFact(
 			"price",
@@ -308,7 +309,11 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 			availability: player.disponibilita,
 			searchValues: [...specificRoles, ...categories, currentCategory ? categoryLabel(currentCategory) : null, player.genere, nationalityLabel(player.nazionalita)],
 			filterData: {tipologie: sportTypes, ruoli: primaryRoles},
-			factData: {roles: [...new Set([...primaryRoles, ...specificRoles])], category: currentCategory ? categoryLabel(currentCategory) : null},
+		factData: {
+			age: publicPlayerAge({day: player.giorno_nascita, month: player.mese_nascita, year: player.anno_nascita}),
+			category: currentCategory ? categoryLabel(currentCategory) : null,
+			gender: cleanText(player.genere),
+		},
 		}, profileImages));
 	}
 
@@ -392,9 +397,9 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 			title: tournament.nome_organizzazione,
 			presentation: tournament.presentazione,
 			sport: cleanText(tournament.sport_principale) ?? sportTypes[0],
-			highlight: cleanText(tournament.sede_principale),
+			highlight: null,
 			availability: null,
-			searchValues: [tournament.sede_principale],
+			searchValues: [],
 			filterData: {tipologie: sportTypes},
 		}, profileImages));
 	}

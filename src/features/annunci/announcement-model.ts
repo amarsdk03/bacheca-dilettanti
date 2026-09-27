@@ -332,9 +332,6 @@ export type AnnouncementAuthor =
 		emailConfirmed: boolean;
 		officialVerified: boolean;
 		presentation: string | null;
-		location: string;
-		locations: PublicProfileLocation[];
-		highlights: AnnouncementFact[];
 	}
 	| {
 		kind: "anonymous";
@@ -651,6 +648,10 @@ export function buildAnnouncementsHref(
 export function announcementOption(type: AnnouncementType) {
 	return ANNOUNCEMENT_OPTIONS.find(({value}) => value === type)
 		?? ANNOUNCEMENT_OPTIONS[0];
+}
+
+export function announcementDisplayLabel(type: AnnouncementType) {
+	return isTeamAnnouncementType(type) ? "Squadra" : announcementOption(type).label;
 }
 
 export function announcementDirectoryOption(type: AnnouncementDirectoryType) {

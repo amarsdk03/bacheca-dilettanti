@@ -7,7 +7,7 @@ export default function AnnouncementFacilityCard({announcement}: {announcement: 
 			announcement={announcement}
 			summary="Spazi e servizi sportivi"
 			emptyDescription="L’impianto non ha aggiunto una descrizione all’annuncio."
-			facts={getAnnouncementFacts(announcement, ["Tipologie", "Costo", "Servizi", "Località"])}
+			facts={getAnnouncementFacts(announcement, ["Tipologia campo da pubblicizzare", "Prezzo orario", "Servizi", "Località"])}
 		/>
 	);
 }

@@ -32,6 +32,7 @@ import {
 	RUOLI_SPECIFICI_PER_RUOLO,
 	TIPOLOGIA_PRINCIPALE_SQUADRA_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {getPlayerSpecificRoleGroups} from "@/features/profilo/player-roles";
 
 export type {
 	CercaAmichevoliSquadra,
@@ -193,6 +194,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 						<MultiselectField
 							label="Ruolo specifico"
 							options={ruoliAvanzatiDisponibili}
+							groups={getPlayerSpecificRoleGroups(cercaGiocatore.ruoliPrincipali)}
 							value={cercaGiocatore.ruoliSpecifici}
 							onValueChange={(value) => setCercaGiocatore((previous) => ({...previous, ruoliSpecifici: value}))}
 							placeholder={cercaGiocatore.ruoliPrincipali.length > 0 ? "Seleziona i ruoli specifici..." : "Prima seleziona un ruolo principale"}

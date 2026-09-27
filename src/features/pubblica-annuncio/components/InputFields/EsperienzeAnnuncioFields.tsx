@@ -98,7 +98,9 @@ export default function EsperienzeAnnuncioFields({
 					{esperienze.map((esperienza, index) => (
 						<div key={esperienza.id} className="rounded-lg border bg-background p-4">
 							<div className="mb-4 flex items-center justify-between gap-3">
-								<p className="text-base font-semibold">Esperienza #{index + 1}</p>
+								<p className="text-base font-semibold">
+									Qualifica #{index + 1}
+								</p>
 								<Button
 									type="button"
 									variant="ghost"
@@ -113,7 +115,7 @@ export default function EsperienzeAnnuncioFields({
 							<div className="grid gap-4 sm:grid-cols-2">
 								<Field>
 									<FieldLabel htmlFor={`${idPrefix}-esperienza-${esperienza.id}`}>
-										Esperienza / patentino / licenza <OptionalLabel />
+										Qualifica / patentino / licenza <OptionalLabel />
 									</FieldLabel>
 									<Input
 										id={`${idPrefix}-esperienza-${esperienza.id}`}
@@ -127,7 +129,7 @@ export default function EsperienzeAnnuncioFields({
 
 								<Field>
 									<FieldLabel htmlFor={`${idPrefix}-ente-${esperienza.id}`}>
-										Squadra / società / ente <OptionalLabel />
+										Ente / società / organizzazione <OptionalLabel />
 									</FieldLabel>
 									<TeamProfileComboboxField
 										id={`${idPrefix}-ente-${esperienza.id}`}
@@ -148,10 +150,10 @@ export default function EsperienzeAnnuncioFields({
 								<RadioGroup
 									value={esperienza.stato}
 									onValueChange={(value) => updateEsperienza(esperienza.id, "stato", value as StatoEsperienza)}
-									className={requireState ? "sm:flex sm:flex-wrap sm:gap-5" : undefined}
+									className="flex flex-wrap items-center gap-x-5 gap-y-3"
 								>
 									{STATO_ESPERIENZA_OPTIONS.filter((option) => !requireState || option.value !== "non-specificare").map((opzione) => (
-										<Field key={opzione.value} orientation="horizontal">
+										<Field key={opzione.value} orientation="horizontal" className="w-auto flex-none">
 											<RadioGroupItem
 												value={opzione.value}
 												id={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
@@ -160,7 +162,7 @@ export default function EsperienzeAnnuncioFields({
 												htmlFor={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
 												className="font-normal"
 											>
-												{requireState && opzione.value === "conseguito" ? "Esperienza conclusa" : opzione.label}
+												{opzione.label}
 											</FieldLabel>
 										</Field>
 									))}

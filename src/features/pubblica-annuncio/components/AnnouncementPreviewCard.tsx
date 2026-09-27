@@ -42,7 +42,12 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 		...(hasWholeRegion ? [`Tutta la regione ${region}`] : []),
 		...cities.map(city => `${city} (${region})`),
 	]);
-	const hasContactLinks = preview.contacts.length > 0 || Boolean(preview.genericLink || preview.videoHighlights);
+	const hasContactLinks = preview.contacts.length > 0 || Boolean(preview.genericLink);
+	const locationLabel = preview.announcementType === "annuncio_campo_impianto"
+		? "Località del campo"
+		: preview.announcementType === "annuncio_torneo_evento"
+			? "Zona di svolgimento"
+			: "Zone di ricerca";
 	const style = {"--preview-accent": accent} as CSSProperties;
 
 	return (
@@ -58,11 +63,11 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4 pb-4">
 				{preview.statusInfo && <Alert><AlertDescription>{preview.statusInfo}</AlertDescription></Alert>}
-				{facts.length > 0 && <dl aria-label="Informazioni principali" className="grid gap-x-5 sm:grid-cols-2">
+				{facts.length > 0 && <dl aria-label="Informazioni principali" className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
 					{facts.map(({kind, label, value}) => {
 						const Icon = FACT_ICONS[kind];
-						return <div key={`${kind}-${label}`} className="flex min-w-0 flex-wrap items-baseline gap-x-2 border-b border-border/70 py-2">
-							<dt className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground"><Icon className="size-3.5 shrink-0" aria-hidden="true" />{label}</dt>
+						return <div key={`${kind}-${label}`} className="flex min-w-0 flex-col items-start gap-1.5 border-b border-border/70 py-2.5">
+							<dt className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground"><Icon className="size-3.5 shrink-0" aria-hidden="true" />{label === "Categorie" ? "Categorie cercate" : label}</dt>
 							<dd className="min-w-0 text-sm font-semibold leading-5 wrap-anywhere">{value}</dd>
 						</div>;
 					})}
@@ -78,10 +83,10 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 				</section>
 				{fields.length > 0 && <section className="flex flex-col gap-1.5">
 					<h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dettagli</h3>
-					<dl className="grid gap-x-5 sm:grid-cols-2">
+					<dl className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
 						{fields.map(field => <div key={field.label} className={cn("min-w-0 border-b border-border/70 py-2", field.wide && "sm:col-span-2")}>
 							<dt className="text-xs font-medium text-muted-foreground">{field.label}</dt>
-							<dd className="mt-0.5 text-sm leading-5 whitespace-pre-wrap wrap-anywhere">
+							<dd className="mt-2 text-sm leading-5 whitespace-pre-wrap wrap-anywhere">
 								{field.items?.length && field.listStyle === "rows"
 									? <StructuredFieldList items={field.items} style="rows" />
 									: field.items?.length
@@ -95,12 +100,12 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 					<h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Squadre collegate</h3>
 					<TeamProfileLinks teams={preview.linkedTeams} />
 				</section>}
-				<section aria-label="Località" className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-					<h3 className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />Località</h3>
+				{preview.announcementType !== "annuncio_squadra_cerca_sponsor" && <section aria-label={locationLabel} className="flex flex-col items-start gap-2">
+					<h3 className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />{locationLabel}</h3>
 					{locations.length > 0
 						? <InlineTextList items={locations} className="text-xs sm:text-sm" />
 						: <p className="text-xs text-muted-foreground">Nessuna località indicata</p>}
-				</section>
+				</section>}
 				{hasContactLinks && <>
 					<Separator />
 					<div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs sm:text-sm">
@@ -108,7 +113,6 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 							{contact.includes("@") ? <MailIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" /> : <PhoneIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />}{contact}
 						</span>)}
 						{preview.genericLink && <ExternalLink href={preview.genericLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium text-primary underline underline-offset-4">Link annuncio <ExternalLinkIcon className="size-3.5" aria-hidden="true" /></ExternalLink>}
-						{preview.videoHighlights && <ExternalLink href={preview.videoHighlights} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium text-primary underline underline-offset-4">Guarda video highlights <ExternalLinkIcon className="size-3.5" aria-hidden="true" /></ExternalLink>}
 					</div>
 				</>}
 				{preview.imageLabel && !preview.imageUrl && <p className="inline-flex items-center gap-2 text-xs text-muted-foreground"><ImageIcon className="size-3.5" aria-hidden="true" />{preview.imageLabel}</p>}

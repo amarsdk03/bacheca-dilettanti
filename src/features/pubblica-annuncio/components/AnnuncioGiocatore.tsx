@@ -16,6 +16,7 @@ import MultiselectField from "@/features/pubblica-annuncio/components/InputField
 import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
 import {RUOLI_SPECIFICI_PER_RUOLO} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {getPlayerSpecificRoleGroups} from "@/features/profilo/player-roles";
 import DisponibilitaProfiloSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaProfiloSelect";
 
 export default function AnnuncioGiocatore() {
@@ -133,6 +134,7 @@ export default function AnnuncioGiocatore() {
 				<MultiselectField
 					label="Ruolo specifico"
 					options={ruoliAvanzatiDisponibili}
+					groups={getPlayerSpecificRoleGroups(ruoliPrincipali)}
 					value={ruoliSpecifici}
 					onValueChange={(value) => setField("ruoliSpecifici", value)}
 					placeholder={ruoliPrincipali.length > 0 ? "Seleziona i ruoli specifici..." : "Prima seleziona un ruolo principale"}

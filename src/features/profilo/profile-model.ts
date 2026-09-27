@@ -62,7 +62,7 @@ export type ProfileDrafts = {
 	"professionisti-studi": EditableProfileDraft<"profilo_professionista_studente">;
 	arbitro: EditableProfileDraft<"profilo_arbitro">;
 	creators: EditableProfileDraft<"profilo_creator">;
-	"torneo-evento": EditableProfileDraft<"profilo_torneo_evento">;
+	"torneo-evento": Omit<EditableProfileDraft<"profilo_torneo_evento">, "sede_principale">;
 	"campi-impianti-sportivi": EditableProfileDraft<"profilo_campi_impianti">;
 };
 
@@ -256,7 +256,6 @@ export function createProfileDrafts(): ProfileDrafts {
 		"torneo-evento": {
 			nome_organizzazione: "",
 			presentazione: "",
-			sede_principale: "",
 			sport_principale: "Calcio",
 			tipologie_sport: [],
 		},

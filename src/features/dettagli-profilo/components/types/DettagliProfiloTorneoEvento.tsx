@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-import {MapPinIcon, ShirtIcon} from "lucide-react";
+import {ShirtIcon} from "lucide-react";
 import type {GenericProfileDetail} from "../../profile-detail-model";
 import ProfileDetailsLayout from "../ProfileDetailsLayout";
 import type {ProfileDetailPresentation} from "../profile-detail-presentation";
@@ -7,7 +7,6 @@ import type {ProfileDetailPresentation} from "../profile-detail-presentation";
 const PRESENTATION = {
 	facts: [
 		{label: "Tipologie sportive", icon: ShirtIcon},
-		{label: "Sede principale", icon: MapPinIcon},
 	],
 	narrativeFieldLabels: [],
 } satisfies ProfileDetailPresentation;

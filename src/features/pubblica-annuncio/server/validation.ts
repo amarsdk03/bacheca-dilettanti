@@ -193,18 +193,12 @@ function normalizeContacts(value: unknown): AnnouncementContacts {
 	return {email: email.toLowerCase(), phone};
 }
 
-function normalizeExtras(value: unknown, profileType: PublishableProfileType): AnnouncementExtras {
+function normalizeExtras(value: unknown): AnnouncementExtras {
 	if (!isRecord(value)) fail("I contenuti aggiuntivi non sono validi.", 3);
-	assertExactKeys(value, ["genericLink", "videoHighlights"], 3);
+	assertExactKeys(value, ["genericLink"], 3);
 	const genericLink = textValue(value.genericLink, 2048, 3) ?? "";
-	const videoHighlights = textValue(value.videoHighlights, 2048, 3) ?? "";
-	if (!isLinkAnnuncioValid(genericLink) || !isLinkAnnuncioValid(videoHighlights)) {
-		fail("Inserisci link completi che inizino con http:// o https://.", 3);
-	}
-	if (profileType !== "giocatore" && videoHighlights) {
-		fail("Il link video highlights è disponibile soltanto per gli annunci Giocatore.", 3);
-	}
-	return {genericLink, videoHighlights};
+	if (!isLinkAnnuncioValid(genericLink)) fail("Inserisci un link completo che inizi con http:// o https://.", 3);
+	return {genericLink};
 }
 
 function normalizePrizeList(value: unknown): Json[] {
@@ -477,7 +471,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		fail("Seleziona una sola Regione e inserisci la Città o il comune dell’impianto.", 3);
 	}
 	const contacts = normalizeContacts(rawValue.announcement.contacts);
-	const extras = normalizeExtras(rawValue.announcement.extras, profileType);
+	const extras = normalizeExtras(rawValue.announcement.extras);
 
 	const normalizedDrafts = {
 		giocatore: {categorie_ricercate: [], descrizione_aggiuntiva: ""},

@@ -1,5 +1,8 @@
 const countryNames = new Intl.DisplayNames(["it"], {type: "region"});
-const NON_COUNTRY_CODES = new Set(["AC", "CP", "DG", "EA", "EU", "EZ", "IC", "QO", "TA", "UN", "XA", "XB", "ZZ"]);
+const NON_COUNTRY_CODES = new Set([
+	"AC", "CP", "DG", "EA", "EU", "EZ", "IC", "QO", "TA", "UN", "XA", "XB", "ZZ",
+	"DY", "HV", "ZR", "AN", "FX", "DD", "BU", "UK", "SU", "CQ", "CS", "YU", "TP", "NH", "VD", "YD", "RH",
+]);
 
 export const PLAYER_NATIONALITIES = Array.from({length: 26 * 26}, (_, index) => {
 	const code = String.fromCharCode(65 + Math.floor(index / 26), 65 + index % 26);
@@ -8,10 +11,10 @@ export const PLAYER_NATIONALITIES = Array.from({length: 26 * 26}, (_, index) => 
 	.filter(({code, label}) => label !== code && !NON_COUNTRY_CODES.has(code))
 	.sort((left, right) => left.label.localeCompare(right.label, "it"));
 
-export function nationalityFlag(code: string): string {
-	return /^[A-Z]{2}$/.test(code)
-		? [...code].map((letter) => String.fromCodePoint(letter.charCodeAt(0) + 127397)).join("")
-		: "";
+const PLAYER_NATIONALITY_CODES = new Set(PLAYER_NATIONALITIES.map(({code}) => code));
+
+export function isPlayerNationalityCode(code: string | null | undefined): boolean {
+	return typeof code === "string" && PLAYER_NATIONALITY_CODES.has(code);
 }
 
 export function nationalityLabel(code: string | null | undefined): string | null {
