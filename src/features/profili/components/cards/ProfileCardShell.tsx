@@ -27,6 +27,7 @@ import type {ProfileCardData} from "./profile-card-model";
 
 const PROFILE_FACT_ICONS: Record<DirectoryProfileFactKind, LucideIcon> = {
 	availability: CalendarCheckIcon,
+	category: TagsIcon,
 	content: ClapperboardIcon,
 	figures: BriefcaseBusinessIcon,
 	headquarters: Building2Icon,

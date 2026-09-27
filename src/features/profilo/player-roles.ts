@@ -5,7 +5,7 @@ export type PlayerPrimaryRole = typeof PLAYER_PRIMARY_ROLES[number];
 export const PLAYER_SPECIFIC_ROLES_BY_PRIMARY = {
 	Portiere: [],
 	Difensore: ["Terzino destro", "Difensore centrale", "Terzino sinistro"],
-	Centrocampista: ["Mediano", "Esterno sinistro", "Centrale", "Esterno destro", "Trequartista"],
+	Centrocampista: ["Mediano", "Esterno sinistro", "Centrocampista Centrale", "Esterno destro", "Trequartista"],
 	Attaccante: ["Ala sinistra", "Seconda Punta", "Ala destra", "Punta centrale"],
 } as const satisfies Record<PlayerPrimaryRole, readonly string[]>;
 
@@ -17,7 +17,8 @@ const LEGACY_SPECIFIC_ROLE_ALIASES: Record<string, PlayerSpecificRole> = {
 	Libero: "Difensore centrale",
 	"Esterno sinistro a tutta fascia": "Esterno sinistro",
 	"Centrocampista sinistro": "Esterno sinistro",
-	"Centrocampista centrale": "Centrale",
+	"Centrale": "Centrocampista Centrale",
+	"Centrocampista centrale": "Centrocampista Centrale",
 	"Centrocampista destro": "Esterno destro",
 	"Esterno destro a tutta fascia": "Esterno destro",
 	"Attaccante sinistro / Seconda punta sinistra": "Ala sinistra",
@@ -99,7 +100,7 @@ export const PLAYER_ROLE_PITCH_POSITIONS: Record<PlayerRole, PlayerRolePitchPosi
 	"Ala destra": {abbreviation: "AD", column: 3, row: 2},
 	"Trequartista": {abbreviation: "TQ", column: 2, row: 3},
 	"Esterno sinistro": {abbreviation: "ES", column: 1, row: 4},
-	"Centrale": {abbreviation: "CC", column: 2, row: 4},
+	"Centrocampista Centrale": {abbreviation: "CC", column: 2, row: 4},
 	"Esterno destro": {abbreviation: "ED", column: 3, row: 4},
 	"Mediano": {abbreviation: "MED", column: 2, row: 5},
 	"Terzino sinistro": {abbreviation: "TS", column: 1, row: 6},

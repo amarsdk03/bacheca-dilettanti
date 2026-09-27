@@ -25,7 +25,7 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 					regioni={data.sedePrincipale.regioniInteressate}
 					cittaComuniPerRegione={data.sedePrincipale.cittaComuniPerRegione}
 				/>
-				<RecapField label="Contatti pubblici" wide>{formatContatti(data.contatti)}</RecapField>
+				<RecapField label="Contatti pubblici per questo annuncio" wide>{formatContatti(data.contatti)}</RecapField>
 				{data.presentazioneAggiuntiva.trim() !== "" && (
 					<RecapField label="Breve presentazione aggiuntiva" wide>{data.presentazioneAggiuntiva}</RecapField>
 				)}
@@ -52,7 +52,7 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 
 				{sottotipologia === "cerca-partite-amichevoli" && (
 					<>
-						<RecapField label="Categorie avversario" wide>{data.cercaAmichevoli.categorieAvversario.join(", ") || "—"}</RecapField>
+						<RecapField label="Livello avversario cercato" wide>{data.cercaAmichevoli.categorieAvversario.join(", ") || "—"}</RecapField>
 						<RecapField label="Periodo">{formatPeriodo(data.cercaAmichevoli.periodoDa, data.cercaAmichevoli.periodoA)}</RecapField>
 						<RecapField label="Orario indicativo">
 							{data.cercaAmichevoli.orarioIndicativoDa && data.cercaAmichevoli.orarioIndicativoA
@@ -69,9 +69,8 @@ export default function RecapAnnuncioSquadra({sottotipologia}: {sottotipologia: 
 
 				{sottotipologia === "cerca-sponsor" && (
 					<>
-						<RecapField label="Categoria / settore">{data.cercaSponsor.categoriaSettore || "—"}</RecapField>
-						<RecapField label="Supporto ricercato">{data.cercaSponsor.supportoRicercato || "—"}</RecapField>
-						<RecapField label="Cosa offrite" wide>{data.cercaSponsor.cosaOffrite || "—"}</RecapField>
+						<RecapField label="Settore">{data.cercaSponsor.categoriaSettore || "—"}</RecapField>
+						<RecapField label="Visibilità offerta" wide>{data.cercaSponsor.cosaOffrite || "—"}</RecapField>
 					</>
 				)}
 				<AnnouncementImageRecap image={data.immagineAnnuncio} />

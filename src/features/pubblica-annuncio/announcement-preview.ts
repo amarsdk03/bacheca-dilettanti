@@ -73,10 +73,11 @@ export function buildPublishPreview(
 	} else if (type === "annuncio_staff_sportivo") {
 		detail.figure_professionali = drafts["staff-sportivo"].figure_professionali;
 		detail.disponibilita_occupazione = drafts["staff-sportivo"].disponibilita;
+		detail.disponibile_remoto = drafts["staff-sportivo"].disponibile_remoto;
+		detail.lista_esperienze = drafts["staff-sportivo"].lista_esperienze;
+		detail.qualifiche_licenze = [...(Array.isArray(drafts["staff-sportivo"].storico_esperienze) ? drafts["staff-sportivo"].storico_esperienze : []), ...(Array.isArray(drafts["staff-sportivo"].qualifiche_licenze) ? drafts["staff-sportivo"].qualifiche_licenze : [])];
 	} else if (type === "annuncio_arbitro") {
 		detail.disponibilita_occupazione = drafts.arbitro.disponibilita;
-	} else if (type === "annuncio_campo_impianto") {
-		detail.orari = {descrizione: detail.orari};
 	}
 
 	const locations = payload.announcement.locations.map(({regione, citta}) => ({region: regione, city: citta}));
@@ -84,7 +85,7 @@ export function buildPublishPreview(
 	const profileExperiences = type === "annuncio_giocatore"
 		? drafts.giocatore.storico_carriera
 		: type === "annuncio_staff_sportivo"
-			? drafts["staff-sportivo"].storico_esperienze
+			? drafts["staff-sportivo"].lista_esperienze
 			: type === "annuncio_arbitro" ? drafts.arbitro.storico_esperienze : [];
 
 	return {
@@ -105,6 +106,6 @@ export function buildPublishPreview(
 		imageLabel,
 		status: "In revisione dopo l’invio",
 		statusInfo: null,
-		linkedTeams: experienceTeamReferences(profileExperiences, type === "annuncio_giocatore" ? "titolo" : "ente"),
+		linkedTeams: experienceTeamReferences(profileExperiences, type === "annuncio_giocatore" || type === "annuncio_staff_sportivo" ? "titolo" : "ente"),
 	};
 }

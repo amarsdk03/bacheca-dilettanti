@@ -14,7 +14,7 @@ import {
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import {
-	CATEGORIE_CALCIO_GROUPS,
+	ANNATE_OPTIONS,
 	DISPONIBILITA_SPOSTAMENTO_OPTIONS,
 	FIGURA_PROFESSIONALE_OPTIONS,
 	RUOLO_PRINCIPALE_OPTIONS,
@@ -23,6 +23,9 @@ import {
 import type {ProfileType} from "@/features/profilo/profile-model";
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 import type {TeamProfileReference} from "@/features/profilo/team-profile";
+import {normalizeTipologiaCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
+import {CATEGORY_FILTER_OPTIONS, normalizeCategory, normalizeFigure, UNRESOLVED_LEGACY_CATEGORY_FILTERS} from "@/features/pubblica-annuncio/types/category-catalog";
+import {normalizeStaffCategory, STAFF_CATEGORY_FILTER_OPTIONS, STAFF_CATEGORY_GROUPS} from "@/features/pubblica-annuncio/types/staff-category-catalog";
 
 export const ANNOUNCEMENTS_PER_PAGE = 12;
 
@@ -100,28 +103,28 @@ export const ANNOUNCEMENT_OPTIONS: readonly AnnouncementOption[] = [
 	},
 	{
 		value: "annuncio_squadra_cerca_giocatore",
-		label: "Squadra cerca giocatore",
+		label: "Ricerca giocatori",
 		description: "Squadre alla ricerca di nuovi giocatori",
 		profileType: "squadra",
 		icon: UserSearchIcon,
 	},
 	{
 		value: "annuncio_squadra_cerca_staff",
-		label: "Squadra cerca staff",
+		label: "Ricerca staff sportivo",
 		description: "Opportunità negli staff tecnici e societari",
 		profileType: "squadra",
 		icon: BriefcaseBusinessIcon,
 	},
 	{
 		value: "annuncio_squadra_cerca_partita",
-		label: "Squadra cerca partita",
+		label: "Ricerca partite/amichevoli",
 		description: "Squadre disponibili per amichevoli e incontri",
 		profileType: "squadra",
 		icon: CalendarDaysIcon,
 	},
 	{
 		value: "annuncio_squadra_cerca_sponsor",
-		label: "Squadra cerca sponsor",
+		label: "Ricerca sponsor",
 		description: "Società che cercano collaborazioni e sponsorizzazioni",
 		profileType: "squadra",
 		icon: HandshakeIcon,
@@ -224,10 +227,10 @@ export const ANNOUNCEMENT_DIRECTORY_OPTIONS: readonly AnnouncementDirectoryOptio
 ];
 
 export const ANNOUNCEMENT_TEAM_SEARCH_OPTIONS = [
-	{value: "giocatore", label: "Squadra cerca giocatore"},
-	{value: "staff", label: "Squadra cerca staff"},
-	{value: "partita", label: "Squadra cerca partita"},
-	{value: "sponsor", label: "Squadra cerca sponsor"},
+	{value: "giocatore", label: "Ricerca giocatori"},
+	{value: "staff", label: "Ricerca staff sportivo"},
+	{value: "partita", label: "Ricerca partite/amichevoli"},
+	{value: "sponsor", label: "Ricerca sponsor"},
 ] as const satisfies readonly {value: AnnouncementTeamSearch; label: string}[];
 
 export const ANNOUNCEMENT_FILTER_PARAM_KEYS = [
@@ -235,6 +238,7 @@ export const ANNOUNCEMENT_FILTER_PARAM_KEYS = [
 	"regione",
 	"tipologia",
 	"ruolo",
+	"annata",
 	"figura",
 	"categoria",
 	"automunito",
@@ -246,7 +250,7 @@ export type AnnouncementFilterParam = typeof ANNOUNCEMENT_FILTER_PARAM_KEYS[numb
 
 export const ANNOUNCEMENT_FILTERS_BY_TYPE = {
 	annuncio_giocatore: ["regione", "tipologia", "ruolo", "categoria"],
-	annuncio_squadra_cerca_giocatore: ["regione", "tipologia", "ruolo"],
+	annuncio_squadra_cerca_giocatore: ["regione", "tipologia", "ruolo", "annata"],
 	annuncio_squadra_cerca_staff: ["regione", "figura", "compensoMin"],
 	annuncio_squadra_cerca_partita: ["regione", "categoria"],
 	annuncio_squadra_cerca_sponsor: ["regione"],
@@ -258,16 +262,14 @@ export const ANNOUNCEMENT_FILTERS_BY_TYPE = {
 	annuncio_creators: ["regione"],
 } as const satisfies Record<AnnouncementType, readonly AnnouncementFilterParam[]>;
 
-const CATEGORY_OPTIONS = [...new Set(
-	CATEGORIE_CALCIO_GROUPS.flatMap(({opzioni}) => opzioni),
-)];
-
 export const ANNOUNCEMENT_FILTER_OPTIONS = {
 	regioni: REGIONI_ITALIANE.map(({nome}) => nome),
 	tipologie: [...TIPOLOGIA_CALCIO_OPTIONS],
 	ruoli: [...RUOLO_PRINCIPALE_OPTIONS],
+	annate: [...ANNATE_OPTIONS],
 	figure: [...FIGURA_PROFESSIONALE_OPTIONS],
-	categorie: CATEGORY_OPTIONS,
+	categorie: CATEGORY_FILTER_OPTIONS,
+	staffCategorie: STAFF_CATEGORY_FILTER_OPTIONS,
 	automunito: DISPONIBILITA_SPOSTAMENTO_OPTIONS
 		.filter((value) => value !== "Non specificare")
 		.map((value) => ({value, label: value === "Si" ? "Sì" : value})),
@@ -278,6 +280,7 @@ export interface AnnouncementDirectoryFilters {
 	regione: string;
 	tipologia: string;
 	ruolo: string;
+	annata: string;
 	figura: string;
 	categoria: string;
 	automunito: string;
@@ -430,8 +433,18 @@ export type RawAnnouncementSearchParams = Record<string, string | string[] | und
 const REGION_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.regioni);
 const TYPE_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.tipologie);
 const ROLE_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.ruoli);
+const YEAR_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.annate);
 const FIGURE_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.figure);
-const CATEGORY_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.categorie);
+const CATEGORY_SET = new Set<string>([
+	...ANNOUNCEMENT_FILTER_OPTIONS.categorie.map(({value}) => value),
+	...UNRESOLVED_LEGACY_CATEGORY_FILTERS,
+]);
+const STAFF_CATEGORY_SET = new Set<string>([
+	...STAFF_CATEGORY_FILTER_OPTIONS.map(({value}) => value),
+	...CATEGORY_FILTER_OPTIONS.map(({value}) => value),
+	...UNRESOLVED_LEGACY_CATEGORY_FILTERS,
+	...STAFF_CATEGORY_GROUPS.flatMap(({opzioni}) => opzioni),
+]);
 const CAR_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.automunito.map(({value}) => value));
 const TEAM_SEARCH_SET = new Set<string>(ANNOUNCEMENT_TEAM_SEARCHES);
 const UUID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
@@ -465,6 +478,7 @@ export function createEmptyAnnouncementFilters(): AnnouncementDirectoryFilters {
 		regione: "",
 		tipologia: "",
 		ruolo: "",
+		annata: "",
 		figura: "",
 		categoria: "",
 		automunito: "",
@@ -549,16 +563,21 @@ export function parseAnnouncementDirectoryQuery(
 			filters.regione = allowedValue(firstValue(params.regione), REGION_SET);
 		}
 		if (supportsFilter(selectedType, filters.ricercaSquadra, "tipologia")) {
-			filters.tipologia = allowedValue(firstValue(params.tipologia), TYPE_SET);
+			filters.tipologia = allowedValue(normalizeTipologiaCalcio(firstValue(params.tipologia)), TYPE_SET);
 		}
 		if (supportsFilter(selectedType, filters.ricercaSquadra, "ruolo")) {
 			filters.ruolo = allowedValue(firstValue(params.ruolo), ROLE_SET);
 		}
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "annata")) {
+			filters.annata = allowedValue(firstValue(params.annata), YEAR_SET);
+		}
 		if (supportsFilter(selectedType, filters.ricercaSquadra, "figura")) {
-			filters.figura = allowedValue(firstValue(params.figura), FIGURE_SET);
+			filters.figura = allowedValue(normalizeFigure(firstValue(params.figura)), FIGURE_SET);
 		}
 		if (supportsFilter(selectedType, filters.ricercaSquadra, "categoria")) {
-			filters.categoria = allowedValue(firstValue(params.categoria), CATEGORY_SET);
+			filters.categoria = selectedType === "annuncio_staff_sportivo"
+				? allowedValue(normalizeStaffCategory(firstValue(params.categoria)), STAFF_CATEGORY_SET)
+				: allowedValue(normalizeCategory(firstValue(params.categoria)), CATEGORY_SET);
 		}
 		if (supportsFilter(selectedType, filters.ricercaSquadra, "automunito")) {
 			filters.automunito = allowedValue(firstValue(params.automunito), CAR_SET);
@@ -592,6 +611,7 @@ export function getAnnouncementFilterEntries(
 	if (filters.regione) entries.push(["regione", filters.regione]);
 	if (filters.tipologia) entries.push(["tipologia", filters.tipologia]);
 	if (filters.ruolo) entries.push(["ruolo", filters.ruolo]);
+	if (filters.annata) entries.push(["annata", filters.annata]);
 	if (filters.figura) entries.push(["figura", filters.figura]);
 	if (filters.categoria) entries.push(["categoria", filters.categoria]);
 	if (filters.automunito) entries.push(["automunito", filters.automunito]);

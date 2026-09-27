@@ -7,7 +7,7 @@ export default function AnnouncementTeamSponsorSearchCard({announcement}: {annou
 			announcement={announcement}
 			summary="Ricerca partner e sponsor"
 			emptyDescription="La squadra non ha aggiunto una descrizione alla ricerca."
-			facts={getAnnouncementFacts(announcement, ["Settore", "Supporto cercato", "Offerta", "Località"])}
+			facts={getAnnouncementFacts(announcement, ["Settore", "Visibilità offerta", "Supporto cercato", "Località"])}
 		/>
 	);
 }

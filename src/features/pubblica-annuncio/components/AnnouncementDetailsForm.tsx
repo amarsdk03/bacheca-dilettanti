@@ -13,15 +13,18 @@ import {
 	FieldSet
 } from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
+import {REGIONI_ITALIANE} from "@/const/defaultConstants";
+import {TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText} from "@/components/ui/input-group";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import ProfileLocationsField from "@/features/profilo/ProfileLocationsField";
 import type {ProfileLocationDraft} from "@/features/profilo/profile-model";
-import AnnateMultiselectField from "@/features/pubblica-annuncio/components/InputFields/AnnateMultiselectField";
+import {OpeningHoursField} from "@/features/profilo/ProfileDetailsForm";
 import CategorieCalcioMultiselectField
 	from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
+import FiguraProfessionaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/FiguraProfessionaleMultiselectField";
 import FieldRequirementIndicator, {
 	RequiredMark
 } from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
@@ -49,7 +52,9 @@ import {
 	MODALITA_ISCRIZIONE_OPTIONS,
 	RUOLI_SPECIFICI_PER_RUOLO,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {STAFF_CATEGORY_GROUPS, staffCategoryLabel} from "@/features/pubblica-annuncio/types/staff-category-catalog";
 import Link from "next/link";
+import type {Json} from "@/server/supabase";
 
 interface AnnouncementDetailsFormProps {
 	profileType: PublishableProfileType;
@@ -211,6 +216,7 @@ export default function AnnouncementDetailsForm({
 							value={drafts.giocatore.categorie_ricercate}
 							onValueChangeAction={(value) => updateDraft("giocatore", "categorie_ricercate", value)}
 						/>
+						<FieldDescription>Se non trovi la tua categoria specifica, scrivila nella descrizione dell’annuncio.</FieldDescription>
 						<DescriptionField
 							id="announcement-player-description"
 							label="Descrizione"
@@ -226,6 +232,7 @@ export default function AnnouncementDetailsForm({
 				{profileType === "squadra" && teamSubtype === "cerca-giocatore" && (
 					<FieldGroup>
 						<RuoloPrincipaleMultiselectField
+							label="Ruolo/i cercati"
 							value={drafts.squadraCercaGiocatore.ruoli_principali}
 							onValueChange={(value) => {
 								const allowed = new Set(value.flatMap((role) => RUOLI_SPECIFICI_PER_RUOLO[role] ?? []));
@@ -242,11 +249,28 @@ export default function AnnouncementDetailsForm({
 							onValueChange={(value) => updateDraft("squadraCercaGiocatore", "ruoli_secondari", value)}
 							placeholder={playerSpecificRoles.length > 0 ? "Seleziona i ruoli specifici..." : "Seleziona prima un ruolo principale"}
 						/>
-						<AnnateMultiselectField
-							label="Annate ricercate"
-							value={drafts.squadraCercaGiocatore.annate_ricercate}
-							onValueChange={(value) => updateDraft("squadraCercaGiocatore", "annate_ricercate", value)}
-						/>
+						<div className="grid gap-4 sm:grid-cols-2">
+							<Field data-invalid={Boolean(errors.yearFrom)}>
+								<FieldLabel htmlFor="team-player-year-from">Dal <OptionalLabel /></FieldLabel>
+								<Select value={drafts.squadraCercaGiocatore.annata_da || null} onValueChange={(value) => onDraftsChange((previous) => {
+									const from = value ?? "";
+									const to = previous.squadraCercaGiocatore.annata_a;
+									return {...previous, squadraCercaGiocatore: {...previous.squadraCercaGiocatore, annata_da: from, annata_a: from && to && Number(to) >= Number(from) ? to : ""}};
+								})}>
+									<SelectTrigger id="team-player-year-from" className="w-full" aria-invalid={Boolean(errors.yearFrom)}><SelectValue placeholder="Qualsiasi" /></SelectTrigger>
+									<SelectContent><SelectItem value={null}>Qualsiasi</SelectItem>{ANNATE_OPTIONS.map((year) => <SelectItem key={year} value={year}>{year}</SelectItem>)}</SelectContent>
+								</Select>
+								{errors.yearFrom && <FieldError>{errors.yearFrom}</FieldError>}
+							</Field>
+							<Field data-invalid={Boolean(errors.yearTo)} data-disabled={!drafts.squadraCercaGiocatore.annata_da}>
+								<FieldLabel htmlFor="team-player-year-to">Al {drafts.squadraCercaGiocatore.annata_da ? <RequiredMark /> : <OptionalLabel />}</FieldLabel>
+								<Select value={drafts.squadraCercaGiocatore.annata_a || null} onValueChange={(value) => updateDraft("squadraCercaGiocatore", "annata_a", value ?? "")}>
+									<SelectTrigger id="team-player-year-to" className="w-full" disabled={!drafts.squadraCercaGiocatore.annata_da} aria-required={Boolean(drafts.squadraCercaGiocatore.annata_da)} aria-invalid={Boolean(errors.yearTo)}><SelectValue placeholder="Seleziona l'annata finale" /></SelectTrigger>
+									<SelectContent><SelectItem value={null}>Seleziona</SelectItem>{ANNATE_OPTIONS.filter((year) => Number(year) >= Number(drafts.squadraCercaGiocatore.annata_da)).map((year) => <SelectItem key={year} value={year}>{year}</SelectItem>)}</SelectContent>
+								</Select>
+								{errors.yearTo && <FieldError>{errors.yearTo}</FieldError>}
+							</Field>
+						</div>
 						<TextField id="team-player-season" label="Stagione" value={drafts.squadraCercaGiocatore.stagione} onChange={(value) => updateDraft("squadraCercaGiocatore", "stagione", value)} maxLength={80} placeholder="Es. 2026/2027" />
 						<DescriptionField id="team-player-description" label="Descrizione della ricerca" value={drafts.squadraCercaGiocatore.descrizione_aggiuntiva} onChange={(value) => updateDraft("squadraCercaGiocatore", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Indica requisiti, impegno richiesto e informazioni utili..." />
 					</FieldGroup>
@@ -254,15 +278,12 @@ export default function AnnouncementDetailsForm({
 
 				{profileType === "squadra" && teamSubtype === "cerca-staff" && (
 					<FieldGroup>
+						<FiguraProfessionaleMultiselectField label="Figure ricercate" value={drafts.squadraCercaStaff.figure_ricercate} onValueChange={(value) => updateDraft("squadraCercaStaff", "figure_ricercate", value)} required error={errors.professionalRole} />
 						<div className="grid gap-4 sm:grid-cols-2">
-							<TextField id="team-staff-role" label="Figura ricercata" value={drafts.squadraCercaStaff.figura_ricercata} onChange={(value) => updateDraft("squadraCercaStaff", "figura_ricercata", value)} required error={errors.professionalRole} placeholder="Es. Preparatore atletico" />
 							<TextField id="team-staff-sector" label="Settore" value={drafts.squadraCercaStaff.settore} onChange={(value) => updateDraft("squadraCercaStaff", "settore", value)} placeholder="Es. Prima squadra" />
-						</div>
-						<div className="grid gap-4 sm:grid-cols-3">
 							<TextField id="team-staff-compensation" label="Compenso mensile" type="number" min={0} max={99_999_999.99} step={0.01} value={drafts.squadraCercaStaff.compenso_mensile} onChange={(value) => updateDraft("squadraCercaStaff", "compenso_mensile", value)} error={errors.monthlyCompensation} placeholder="EUR" />
-							<TextField id="team-staff-from" label="Periodo dal" type="date" value={drafts.squadraCercaStaff.periodo_dal} onChange={(value) => updateDraft("squadraCercaStaff", "periodo_dal", value)} error={errors.periodFrom} />
-							<TextField id="team-staff-to" label="Periodo al" type="date" value={drafts.squadraCercaStaff.periodo_al} onChange={(value) => updateDraft("squadraCercaStaff", "periodo_al", value)} error={errors.periodTo} />
 						</div>
+						<TextField id="team-staff-season" label="Stagione" value={drafts.squadraCercaStaff.stagione} onChange={(value) => updateDraft("squadraCercaStaff", "stagione", value)} maxLength={80} placeholder="Es. 2026/2027" />
 						<DescriptionField id="team-staff-requirements" label="Requisiti" value={drafts.squadraCercaStaff.requisiti} onChange={(value) => updateDraft("squadraCercaStaff", "requisiti", value)} required error={errors.requirements} placeholder="Qualifiche, esperienza e disponibilità richieste..." />
 						<DescriptionField id="team-staff-description" label="Informazioni aggiuntive" value={drafts.squadraCercaStaff.descrizione_aggiuntiva} onChange={(value) => updateDraft("squadraCercaStaff", "descrizione_aggiuntiva", value)} placeholder="Dettagli sull’incarico e sull’ambiente di lavoro..." />
 					</FieldGroup>
@@ -270,7 +291,7 @@ export default function AnnouncementDetailsForm({
 
 				{profileType === "squadra" && teamSubtype === "cerca-partite-amichevoli" && (
 					<FieldGroup>
-						<CategorieCalcioMultiselectField label="Categorie avversarie" items={CATEGORIE_CALCIO_GROUPS} value={drafts.squadraCercaPartita.categorie_avversario} onValueChangeAction={(value) => updateDraft("squadraCercaPartita", "categorie_avversario", value)} required error={errors.matchCategories} />
+						<CategorieCalcioMultiselectField label="Livello avversario cercato" items={CATEGORIE_CALCIO_GROUPS} value={drafts.squadraCercaPartita.categorie_avversario} onValueChangeAction={(value) => updateDraft("squadraCercaPartita", "categorie_avversario", value)} required error={errors.matchCategories} />
 						<div className="grid gap-4 sm:grid-cols-2">
 							<TextField id="team-match-from" label="Periodo dal" type="date" value={drafts.squadraCercaPartita.periodo_dal} onChange={(value) => updateDraft("squadraCercaPartita", "periodo_dal", value)} error={errors.periodFrom} />
 							<TextField id="team-match-to" label="Periodo al" type="date" value={drafts.squadraCercaPartita.periodo_al} onChange={(value) => updateDraft("squadraCercaPartita", "periodo_al", value)} error={errors.periodTo} />
@@ -290,9 +311,8 @@ export default function AnnouncementDetailsForm({
 
 				{profileType === "squadra" && teamSubtype === "cerca-sponsor" && (
 					<FieldGroup>
-						<TextField id="team-sponsor-sector" label="Categoria / settore" value={drafts.squadraCercaSponsor.categoria_settore} onChange={(value) => updateDraft("squadraCercaSponsor", "categoria_settore", value)} required error={errors.sponsorSector} placeholder="Es. Ristorazione locale" />
-						<DescriptionField id="team-sponsor-support" label="Supporto cercato" value={drafts.squadraCercaSponsor.supporto_cercato} onChange={(value) => updateDraft("squadraCercaSponsor", "supporto_cercato", value)} required error={errors.sponsorSupport} placeholder="Descrivi il contributo o la collaborazione cercata..." />
-						<DescriptionField id="team-sponsor-offer" label="Cosa offre la società" value={drafts.squadraCercaSponsor.offerta_fornita} onChange={(value) => updateDraft("squadraCercaSponsor", "offerta_fornita", value)} required error={errors.sponsorOffer} placeholder="Visibilità, iniziative, materiali e altre contropartite..." />
+						<TextField id="team-sponsor-sector" label="Settore" value={drafts.squadraCercaSponsor.categoria_settore} onChange={(value) => updateDraft("squadraCercaSponsor", "categoria_settore", value)} required error={errors.sponsorSector} placeholder="Es. Tutta la società, Prima squadra, Settore Giovanile..." />
+						<DescriptionField id="team-sponsor-offer" label="Visibilità offerta" value={drafts.squadraCercaSponsor.offerta_fornita} onChange={(value) => updateDraft("squadraCercaSponsor", "offerta_fornita", value)} required error={errors.sponsorOffer} placeholder="Iniziative, materiali, spazi e altre opportunità di visibilità..." />
 						<DescriptionField id="team-sponsor-description" label="Informazioni aggiuntive" value={drafts.squadraCercaSponsor.descrizione_aggiuntiva} onChange={(value) => updateDraft("squadraCercaSponsor", "descrizione_aggiuntiva", value)} placeholder="Aggiungi eventuali dettagli utili..." />
 					</FieldGroup>
 				)}
@@ -300,13 +320,14 @@ export default function AnnouncementDetailsForm({
 				{profileType === "staff-sportivo" && (
 					<FieldGroup>
 						<TipologiaCalcioMultiselectField value={drafts.staffSportivo.tipologie_sport} onValueChange={(value) => updateDraft("staffSportivo", "tipologie_sport", value)} required error={errors.sports} />
-						<CategorieCalcioMultiselectField label="Categorie ricercate" items={CATEGORIE_CALCIO_GROUPS} value={drafts.staffSportivo.categorie_ricercate} onValueChangeAction={(value) => updateDraft("staffSportivo", "categorie_ricercate", value)} />
-						<Field>
+						<CategorieCalcioMultiselectField label="Categorie ricercate" items={STAFF_CATEGORY_GROUPS} formatValue={staffCategoryLabel} value={drafts.staffSportivo.categorie_ricercate} onValueChangeAction={(value) => updateDraft("staffSportivo", "categorie_ricercate", value)} error={errors.staffCategories} />
+						<Field data-invalid={Boolean(errors.staffTravel)}>
 							<FieldLabel htmlFor="staff-travel">Disponibilità agli spostamenti <OptionalLabel /></FieldLabel>
 							<Select value={drafts.staffSportivo.disponibilita_spostamento || null} onValueChange={(value) => updateDraft("staffSportivo", "disponibilita_spostamento", value ?? "")}>
-								<SelectTrigger id="staff-travel" className="w-full"><SelectValue placeholder="Non specificata" /></SelectTrigger>
-								<SelectContent><SelectItem value={null}>Non specificare</SelectItem><SelectItem value="Si">Sì</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
+								<SelectTrigger id="staff-travel" className="w-full" aria-invalid={Boolean(errors.staffTravel)}><SelectValue placeholder="Non specificata" /></SelectTrigger>
+								<SelectContent><SelectItem value={null}>Non specificare</SelectItem><SelectItem value="Si">Sì</SelectItem><SelectItem value="No">No</SelectItem><SelectItem value="Da valutare">Da valutare</SelectItem></SelectContent>
 							</Select>
+							{errors.staffTravel && <FieldError>{errors.staffTravel}</FieldError>}
 						</Field>
 						<DescriptionField id="staff-description" label="Descrizione" value={drafts.staffSportivo.descrizione_aggiuntiva} onChange={(value) => updateDraft("staffSportivo", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Descrivi l’opportunità professionale che cerchi..." />
 					</FieldGroup>
@@ -315,7 +336,6 @@ export default function AnnouncementDetailsForm({
 				{profileType === "arbitro" && (
 					<FieldGroup>
 						<TipologiaCalcioMultiselectField value={drafts.arbitro.tipologie_sport} onValueChange={(value) => updateDraft("arbitro", "tipologie_sport", value)} required error={errors.sports} />
-						<CategorieCalcioMultiselectField label="Categorie di interesse" items={CATEGORIE_CALCIO_GROUPS} value={drafts.arbitro.categorie_ricercate} onValueChangeAction={(value) => updateDraft("arbitro", "categorie_ricercate", value)} />
 						<div className="grid gap-4 sm:grid-cols-2">
 							<Field>
 								<FieldLabel htmlFor="referee-car">Automunito <OptionalLabel /></FieldLabel>
@@ -332,14 +352,21 @@ export default function AnnouncementDetailsForm({
 								</Select>
 							</Field>
 						</div>
-						<DescriptionField id="referee-description" label="Descrizione" value={drafts.arbitro.descrizione_aggiuntiva} onChange={(value) => updateDraft("arbitro", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Descrivi disponibilità, categorie e tipo di incarichi cercati..." />
+						<DescriptionField id="referee-description" label="Descrizione" value={drafts.arbitro.descrizione_aggiuntiva} onChange={(value) => updateDraft("arbitro", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Descrivi disponibilità e tipo di incarichi cercati..." />
 					</FieldGroup>
 				)}
 
 				{profileType === "torneo-evento" && (
 					<FieldGroup>
 						<TextField id="tournament-name" label="Nome torneo / evento" value={drafts.torneoEvento.nome_evento} onChange={(value) => updateDraft("torneoEvento", "nome_evento", value)} required error={errors.tournamentName} placeholder="Torneo estivo 2026" />
-						<TipologiaCalcioMultiselectField value={drafts.torneoEvento.tipologie_sport} onValueChange={(value) => updateDraft("torneoEvento", "tipologie_sport", value)} required error={errors.sports} />
+						<Field data-invalid={Boolean(errors.sports)}>
+							<FieldLabel htmlFor="tournament-sport-type">Tipologia calcio <RequiredMark /></FieldLabel>
+							<Select value={drafts.torneoEvento.tipologie_sport[0] ?? null} onValueChange={(value) => updateDraft("torneoEvento", "tipologie_sport", value ? [value] : [])}>
+								<SelectTrigger id="tournament-sport-type" className="w-full" aria-required="true" aria-invalid={Boolean(errors.sports)}><SelectValue placeholder="Seleziona una tipologia" /></SelectTrigger>
+								<SelectContent><SelectItem value={null}>Seleziona una tipologia</SelectItem>{TIPOLOGIA_CALCIO_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+							</Select>
+							{errors.sports && <FieldError>{errors.sports}</FieldError>}
+						</Field>
 						<Field>
 							<FieldLabel htmlFor="tournament-registration">Modalità di iscrizione <OptionalLabel /></FieldLabel>
 							<Select value={drafts.torneoEvento.modalita_iscrizione || null} onValueChange={(value) => updateDraft("torneoEvento", "modalita_iscrizione", value ?? "")}>
@@ -383,19 +410,48 @@ export default function AnnouncementDetailsForm({
 
 				{profileType === "campi-impianti-sportivi" && (
 					<FieldGroup>
-						<TipologiaCalcioMultiselectField value={drafts.campoImpianto.tipologie_sport} onValueChange={(value) => updateDraft("campoImpianto", "tipologie_sport", value)} required error={errors.sports} />
-						<TextField id="facility-hours" label="Disponibilità / orari" value={drafts.campoImpianto.orari} onChange={(value) => updateDraft("campoImpianto", "orari", value)} maxLength={5000} placeholder="Es. Lun–Ven 18:00–23:00" />
+						<Field>
+							<FieldLabel htmlFor="facility-sport-type">Tipologia campo <RequiredMark /></FieldLabel>
+							<Select value={drafts.campoImpianto.tipologie_sport[0] ?? null} onValueChange={(value) => updateDraft("campoImpianto", "tipologie_sport", value ? [value] : [])}>
+								<SelectTrigger id="facility-sport-type" className="w-full" aria-required="true" aria-invalid={Boolean(errors.sports)}><SelectValue placeholder="Seleziona una tipologia di campo" /></SelectTrigger>
+								<SelectContent>{TIPOLOGIA_CALCIO_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+							</Select>
+							{errors.sports && <FieldError>{errors.sports}</FieldError>}
+						</Field>
+						<FieldSet data-invalid={Boolean(errors.locations || errors.facilityAddress)}>
+							<FieldLegend variant="label" className="field-legend-title">Indirizzo dell’impianto/struttura</FieldLegend>
+							<FieldGroup className="grid gap-4 sm:grid-cols-2">
+								<Field data-invalid={Boolean(errors.locations)}>
+									<FieldLabel htmlFor="facility-announcement-region">Regione <RequiredMark /></FieldLabel>
+									<Select value={locations[0]?.regione ?? null} onValueChange={(region) => onLocationsChange(region ? [{regione: region, citta: null}] : [])}>
+										<SelectTrigger id="facility-announcement-region" className="w-full" aria-required="true" aria-invalid={Boolean(errors.locations)}><SelectValue placeholder="Seleziona una regione" /></SelectTrigger>
+										<SelectContent>{REGIONI_ITALIANE.map(({nome}) => <SelectItem key={nome} value={nome}>{nome}</SelectItem>)}</SelectContent>
+									</Select>
+								</Field>
+								<Field data-invalid={Boolean(errors.locations && locations[0]?.regione)}>
+									<FieldLabel htmlFor="facility-announcement-city">Città/comune <RequiredMark /></FieldLabel>
+									<Input id="facility-announcement-city" value={locations[0]?.citta ?? ""} onChange={(event) => onLocationsChange([{regione: locations[0]?.regione ?? "", citta: event.target.value || null}])} disabled={!locations[0]?.regione} maxLength={120} required aria-required="true" aria-invalid={Boolean(errors.locations && locations[0]?.regione)} placeholder="Es. Roma" />
+								</Field>
+								<Field data-invalid={Boolean(errors.facilityAddress)} className="sm:col-span-2">
+									<FieldLabel htmlFor="facility-announcement-address">Indirizzo <RequiredMark /></FieldLabel>
+									<Input id="facility-announcement-address" value={drafts.campoImpianto.indirizzo} onChange={(event) => updateDraft("campoImpianto", "indirizzo", event.target.value)} maxLength={160} required aria-required="true" aria-invalid={Boolean(errors.facilityAddress)} placeholder="Via, numero civico e altri dettagli" />
+									{errors.facilityAddress && <FieldError>{errors.facilityAddress}</FieldError>}
+								</Field>
+							</FieldGroup>
+							{errors.locations && <FieldError>{errors.locations}</FieldError>}
+						</FieldSet>
+						<OpeningHoursField idPrefix="facility-announcement-hours" value={drafts.campoImpianto.orari as unknown as Json} onChange={(value) => updateDraft("campoImpianto", "orari", value as unknown as AnnouncementDetailsDrafts["campoImpianto"]["orari"])} error={errors.facilityHours} />
 						<Field data-invalid={Boolean(errors.facilityCost)}>
-							<FieldLabel htmlFor="facility-cost">Costo di partenza <OptionalLabel /></FieldLabel>
+							<FieldLabel htmlFor="facility-cost">Prezzo orario <OptionalLabel /></FieldLabel>
 							<InputGroup>
 								<InputGroupAddon><InputGroupText>€</InputGroupText></InputGroupAddon>
-								<InputGroupInput id="facility-cost" type="number" min={0} max={99_999_999.99} step={0.01} value={drafts.campoImpianto.costo_partenza} onChange={(event) => updateDraft("campoImpianto", "costo_partenza", event.target.value)} aria-invalid={Boolean(errors.facilityCost)} />
+								<InputGroupInput id="facility-cost" type="number" min={0} max={99_999_999.99} step={0.01} value={drafts.campoImpianto.costo_partenza} onChange={(event) => updateDraft("campoImpianto", "costo_partenza", event.target.value)} placeholder="A partire da..." aria-invalid={Boolean(errors.facilityCost)} />
 								<InputGroupAddon align="inline-end"><InputGroupText>/ 1h</InputGroupText></InputGroupAddon>
 							</InputGroup>
 							{errors.facilityCost && <FieldError>{errors.facilityCost}</FieldError>}
 						</Field>
 						<DescriptionField id="facility-services" label="Servizi inclusi" value={drafts.campoImpianto.servizi_inclusi} onChange={(value) => updateDraft("campoImpianto", "servizi_inclusi", value)} placeholder="Spogliatoi, illuminazione, parcheggio, bar..." />
-						<DescriptionField id="facility-description" label="Descrizione" value={drafts.campoImpianto.descrizione_aggiuntiva} onChange={(value) => updateDraft("campoImpianto", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Descrivi spazi, caratteristiche e modalità di utilizzo..." />
+						<DescriptionField id="facility-description" label="Descrizione" value={drafts.campoImpianto.descrizione_aggiuntiva} onChange={(value) => updateDraft("campoImpianto", "descrizione_aggiuntiva", value)} placeholder="Descrivi tipologia del terreno, dimensioni, presenza porte/attrezzatura..." />
 					</FieldGroup>
 				)}
 			</FieldSet>
@@ -437,7 +493,7 @@ export default function AnnouncementDetailsForm({
 			</FieldSet>
 
 			<FieldSet>
-				<FieldLegend variant="label" className="field-legend-title mb-1.5">Contatti pubblici <RequiredMark /></FieldLegend>
+				<FieldLegend variant="label" className="field-legend-title mb-1.5">Contatti pubblici per questo annuncio <RequiredMark /></FieldLegend>
 				<FieldDescription>Inserisci almeno un indirizzo email o un recapito telefonico.</FieldDescription>
 				<Field data-invalid={Boolean(errors.contacts)}>
 					<FieldGroup className="grid gap-4 sm:grid-cols-2">
@@ -456,11 +512,12 @@ export default function AnnouncementDetailsForm({
 				</Field>
 			</FieldSet>
 
-			<FieldSet>
-				<FieldLegend variant="label" className="field-legend-title mb-1.5">Località dell’annuncio</FieldLegend>
-				<FieldDescription>Puoi modificare le località precompilate senza cambiare quelle salvate nel profilo.</FieldDescription>
-				<ProfileLocationsField idPrefix="announcement-locations" value={locations} onValueChange={onLocationsChange} required error={errors.locations ?? null} />
-			</FieldSet>
+				{!(profileType === "squadra" && teamSubtype === "cerca-sponsor") && (
+					<>
+						<ProfileLocationsField idPrefix="announcement-locations" value={locations} onValueChange={onLocationsChange} label="Zone di ricerca" required error={errors.locations ?? null} />
+					<FieldDescription>Puoi modificare le località precompilate senza cambiare quelle salvate nel profilo.</FieldDescription>
+				</>
+			)}
 		</FieldGroup>
 	);
 }

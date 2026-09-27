@@ -57,7 +57,7 @@ export type ProfileDrafts = {
 	giocatore: EditableProfileDraft<"profilo_giocatore"> & {
 		video_highlights: string;
 	};
-	squadra: EditableProfileDraft<"profilo_squadra">;
+	squadra: Omit<EditableProfileDraft<"profilo_squadra">, "sede_principale">;
 	"staff-sportivo": EditableProfileDraft<"profilo_staff_sportivo">;
 	"professionisti-studi": EditableProfileDraft<"profilo_professionista_studente">;
 	arbitro: EditableProfileDraft<"profilo_arbitro">;
@@ -122,14 +122,14 @@ export const PROFILE_OPTIONS: readonly ProfileOption[] = [
 	{
 		value: "squadra",
 		label: "Squadra",
-		description: "Cerca nuove figure calcistiche, staff, partite o sponsor per la tua squadra",
+		description: "Trova giocatori, staff, partite o sponsor per la tua squadra",
 		icon: AwardIcon,
 		colore: "#2FAE66",
 	},
 	{
 		value: "staff-sportivo",
 		label: "Staff sportivo",
-		description: "Cerca e applica per occupazioni retribuite nel settore sportivo",
+		description: "Trova posto nello Staff del Club",
 		icon: SearchIcon,
 		colore: "#F28A2E",
 	},
@@ -150,7 +150,7 @@ export const PROFILE_OPTIONS: readonly ProfileOption[] = [
 	{
 		value: "campi-impianti-sportivi",
 		label: "Campi e impianti",
-		description: "Fornisci e pubblicizza i tuoi campi e impianti sportivi",
+		description: "Pubblicizza i tuoi campi o impianti sportivi",
 		icon: TrafficConeIcon,
 		colore: "#5B8F63",
 	},
@@ -179,12 +179,15 @@ export function createProfileDrafts(): ProfileDrafts {
 		giocatore: {
 			altezza: "",
 			anno_nascita: "",
+			categoria_attuale: "",
 			categorie_ricercate: [],
 			cognome: "",
-			disponibilita: "non-specificare",
+			disponibilita: "",
+			genere: "",
 			giorno_nascita: "",
 			mese_nascita: "",
 			nome: "",
+			nazionalita: "",
 			peso: "",
 			piede_principale: "",
 			presentazione: "",
@@ -198,7 +201,7 @@ export function createProfileDrafts(): ProfileDrafts {
 		squadra: {
 			nome_societa: "",
 			presentazione: "",
-			sede_principale: "",
+			categoria_attuale: "",
 			sport_principale: "Calcio",
 			tipologie_sport: [],
 		},
@@ -206,6 +209,7 @@ export function createProfileDrafts(): ProfileDrafts {
 			anno_nascita: "",
 			cognome: "",
 			disponibilita: "non-specificare",
+			disponibile_remoto: false,
 			figure_professionali: [],
 			giorno_nascita: "",
 			mese_nascita: "",
@@ -213,6 +217,8 @@ export function createProfileDrafts(): ProfileDrafts {
 			presentazione: "",
 			sport_principale: "Calcio",
 			storico_esperienze: [],
+			lista_esperienze: [],
+			qualifiche_licenze: [],
 		},
 		"professionisti-studi": {
 			anno_nascita: "",
@@ -256,6 +262,7 @@ export function createProfileDrafts(): ProfileDrafts {
 		},
 		"campi-impianti-sportivi": {
 			costo_partenza: null,
+			indirizzo: "",
 			info_aggiuntive: "",
 			nome_organizzazione: "",
 			orari: [],

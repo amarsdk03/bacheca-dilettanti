@@ -1,0 +1,82 @@
+import assert from "node:assert/strict";
+import {existsSync, readFileSync} from "node:fs";
+import {createRequire} from "node:module";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+import {test} from "node:test";
+import ts from "typescript";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const require = createRequire(import.meta.url);
+const cache = new Map();
+function load(file) {
+	if (cache.has(file)) return cache.get(file).exports;
+	const loaded = {exports: {}};
+	cache.set(file, loaded);
+	const {outputText} = ts.transpileModule(readFileSync(file, "utf8"), {
+		fileName: file, compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true},
+	});
+	new Function("require", "module", "exports", outputText)((specifier) => {
+		if (specifier === "server-only") return {};
+		if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
+		const base = specifier.startsWith("@/") ? path.join(root, "src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+		return load([base, `${base}.ts`, `${base}.tsx`].find((candidate) => existsSync(candidate)));
+	}, loaded, loaded.exports);
+	return loaded.exports;
+}
+
+const {categoryKey} = load(path.join(root, "src/features/pubblica-annuncio/types/category-catalog.ts"));
+const catalog = load(path.join(root, "src/features/pubblica-annuncio/types/staff-category-catalog.ts"));
+const {announcementContent} = load(path.join(root, "src/features/annunci/announcement-content.ts"));
+const {parseAnnouncementDirectoryQuery, ANNOUNCEMENT_FILTER_OPTIONS} = load(path.join(root, "src/features/annunci/announcement-model.ts"));
+const {parsePublishPayload} = load(path.join(root, "src/features/pubblica-annuncio/server/validation.ts"));
+const {createAnnouncementDetailsDrafts, getAnnouncementValidationErrors} = load(path.join(root, "src/features/pubblica-annuncio/publish-model.ts"));
+
+const male = categoryKey("Calcio 5 (Maschile)", "Serie A");
+const female = categoryKey("Calcio 5 (Femminile)", "Serie A");
+const payload = () => ({
+	version: 3, submissionId: "11111111-1111-4111-8111-111111111111", visibility: "gratuito",
+	profileType: "staff-sportivo", teamSubtype: null, anonymousProfile: null, profileUpdate: null,
+	announcement: {
+		type: "annuncio_staff_sportivo",
+		detail: {tipologie_sport: ["Calcio 5"], categorie_ricercate: [male, female], disponibilita_spostamento: "Da valutare", descrizione_aggiuntiva: "Cerco incarico."},
+		locations: [{regione: "Lazio", citta: "Roma"}], contacts: {email: "staff@example.com", phone: ""}, extras: {genericLink: "", videoHighlights: ""},
+	},
+	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
+});
+
+test("Staff catalogue keeps homonymous categories distinct from the Player catalogue and filters", () => {
+	assert.equal(catalog.STAFF_CATEGORY_FILTER_OPTIONS.length, 40);
+	assert.equal(new Set(catalog.STAFF_CATEGORY_FILTER_OPTIONS.map(({value}) => value)).size, 40);
+	assert.notEqual(male, female);
+	assert.equal(catalog.staffCategoryLabel(male), "Calcio 5 (Maschile) · Serie A");
+	assert.equal(catalog.staffCategoryLabel(female), "Calcio 5 (Femminile) · Serie A");
+	assert.ok(ANNOUNCEMENT_FILTER_OPTIONS.staffCategorie.some(({value}) => value === male));
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: male}).filters.categoria, male);
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: female}).filters.categoria, female);
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: categoryKey("Calcio 11 (Maschile)", "Settore Giovanile")}).filters.categoria, "");
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: "Serie A"}).filters.categoria, "Serie A");
+	const content = announcementContent("annuncio_staff_sportivo", {categorie_ricercate: [male, female], disponibilita_spostamento: "Da valutare"}, [], true);
+	assert.deepEqual(content.filters.categories, [male, female]);
+	assert.deepEqual(content.fields.find(({label}) => label === "Categorie ricercate").items, ["Calcio 5 (Maschile) · Serie A", "Calcio 5 (Femminile) · Serie A"]);
+	assert.equal(content.fields.find(({label}) => label === "Disponibilità agli spostamenti").value, "Da valutare");
+});
+
+test("Staff publication accepts only Catalog C and persists Da valutare", () => {
+	const valid = payload();
+	const normalized = parsePublishPayload(valid, true);
+	assert.deepEqual(normalized.detail.categorie_ricercate, [male, female]);
+	assert.equal(normalized.detail.disponibilita_spostamento, "Da valutare");
+	const drafts = createAnnouncementDetailsDrafts();
+	drafts.staffSportivo = valid.announcement.detail;
+	const errors = getAnnouncementValidationErrors("staff-sportivo", null, drafts, valid.announcement.locations, valid.announcement.contacts);
+	assert.equal(errors.staffCategories, undefined);
+	assert.equal(errors.staffTravel, undefined);
+	const invalid = payload();
+	invalid.announcement.detail.categorie_ricercate = [categoryKey("Calcio 11 (Maschile)", "Primavera 1")];
+	assert.throws(() => parsePublishPayload(invalid, true), /catalogo Staff/i);
+	assert.ok(getAnnouncementValidationErrors("staff-sportivo", null, {...drafts, staffSportivo: invalid.announcement.detail}, invalid.announcement.locations, invalid.announcement.contacts).staffCategories);
+	invalid.announcement.detail.categorie_ricercate = [male];
+	invalid.announcement.detail.disponibilita_spostamento = "forse";
+	assert.throws(() => parsePublishPayload(invalid, true), /spostamenti/i);
+});

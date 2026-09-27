@@ -70,7 +70,7 @@ export default function ContattiAnnuncioFields({
 		<FieldSet>
 			<div>
 				<FieldLegend variant="label" className="field-legend-title mb-0">
-					Contatti pubblici
+					Contatti pubblici per questo annuncio
 				</FieldLegend>
 				<FieldDescription
 					className="text-red-800 font-medium mb-2 pt-1.5"

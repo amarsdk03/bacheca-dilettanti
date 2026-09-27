@@ -61,8 +61,11 @@ export interface PlayerProfileData {
 	sportTypes: string[];
 	primaryRoles: string[];
 	specificRoles: string[];
+	currentCategory: string | null;
 	preferredCategories: string[];
 	preferredFoot: string | null;
+	gender: string | null;
+	nationality: string | null;
 	height: string | null;
 	weight: string | null;
 	presentation: string | null;
@@ -82,6 +85,7 @@ export type GenericProfileDetail<Type extends NonPlayerProfileType = NonPlayerPr
 	primaryFields: ProfileDetailField[];
 	fields: ProfileDetailField[];
 	experiences: PublicProfileExperience[];
+	qualifications?: PublicProfileExperience[];
 };
 
 export type ProfileDetail = PlayerProfileDetail | {

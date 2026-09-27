@@ -99,14 +99,14 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 				privato,
 				info_stato_annuncio,
 				annuncio_giocatore(categorie_ricercate, tipologie_sport, ruoli_principali, ruoli_secondari, descrizione_aggiuntiva),
-				annuncio_squadra_cerca_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, annate_ricercate, stagione, descrizione_aggiuntiva),
-				annuncio_squadra_cerca_staff(figura_ricercata, settore, compenso_mensile, requisiti, periodo_dal, periodo_al, descrizione_aggiuntiva),
+				annuncio_squadra_cerca_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, annate_ricercate, annata_da, annata_a, stagione, descrizione_aggiuntiva),
+				annuncio_squadra_cerca_staff(figura_ricercata, figure_ricercate, settore, compenso_mensile, requisiti, stagione, periodo_dal, periodo_al, descrizione_aggiuntiva),
 				annuncio_squadra_cerca_partita(categorie_avversario, disponibilita_trasferta, periodo_dal, periodo_al, orario_dalle, orario_alle, descrizione_aggiuntiva),
 				annuncio_squadra_cerca_sponsor(categoria_settore, supporto_cercato, offerta_fornita, descrizione_aggiuntiva),
-				annuncio_staff_sportivo(figure_professionali, tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
+				annuncio_staff_sportivo(figure_professionali, tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, disponibile_remoto, descrizione_aggiuntiva, lista_esperienze, qualifiche_licenze),
 				annuncio_arbitro(tipologie_sport, categorie_ricercate, disponibilita_occupazione, automunito, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
 				annuncio_torneo_evento(nome_evento, tipologie_sport, modalita_iscrizione, annate_ammesse_da, annate_ammesse_a, numero_squadre, costo_partecipazione, tipo_partecipazione, lista_premi_trofei, descrizione_aggiuntiva),
-				annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva),
+				annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva, indirizzo),
 				localita_annuncio(regione, citta),
 				contatto_annuncio(tipo, valore),
 				link_social_annuncio(piattaforma, sublink),
@@ -146,7 +146,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 		}
 
 		const author = await loadAuthorName(String(data.autore_annuncio), type) ?? option.label;
-		let teamReferences = experienceTeamReferences(detail.lista_esperienze);
+		let teamReferences = experienceTeamReferences(detail.lista_esperienze, type === "annuncio_staff_sportivo" ? "titolo" : "ente");
 		if (type === "annuncio_giocatore") {
 			const {data: player, error: playerError} = await createAdminClient()
 				.from("profilo_giocatore")

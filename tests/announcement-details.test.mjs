@@ -88,9 +88,10 @@ test("detail exposes aggregate counts and complete comma-separated selections; d
 	assert.equal(result.announcement.saveCount, 3);
 	assert.equal(result.announcement.authorFollowerCount, 8);
 	assert.equal(result.announcement.author.kind, "registered");
+	assert.equal(result.announcement.title, "Mario Rossi");
 	assert.equal(result.announcement.author.emailConfirmed, true);
 	assert.equal(result.announcement.author.officialVerified, false);
-	assert.equal(result.announcement.facts.find(f => f.kind === "types").value, "Calcio a 11, Calcio a 5");
+	assert.equal(result.announcement.facts.find(f => f.kind === "types").value, "Calcio 11, Calcio 5");
 	assert.equal(result.announcement.fields.find(f => f.label === "Ruoli secondari").value, "Terzino destro, Difensore centrale");
 	assert.equal(result.announcement.facts.find(f => f.kind === "location").value, "Firenze, Toscana, Roma, Lazio");
 	assert.doesNotMatch(JSON.stringify(result), /uuid_utente|uuid_profilo_follower/);
@@ -98,6 +99,129 @@ test("detail exposes aggregate counts and complete comma-separated selections; d
 	assert.deepEqual(calls.find(c => c.table === "profilo_follow").operations, [["select", "uuid_profilo_seguito", {count: "exact", head: true}], ["eq", "uuid_profilo_seguito", authorId]]);
 	const [card] = await queries.loadPublicAnnouncementsByIds([id]);
 	assert.equal(card.facts.find(f => f.kind === "types").value, "2 selezionate");
+});
+
+test("category directory filters distinguish the same label in different groups", async () => {
+	const male = "Calcio 5 (Maschile)::Serie A";
+	const female = "Calcio 5 (Femminile)::Serie A";
+	const {queries, load} = fixture({current: row("annuncio_giocatore", {categorie_ricercate: [male]})});
+	const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
+	assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: male}))).total, 1);
+	assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: female}))).total, 0);
+});
+
+test("Staff directory filters keep equal category names separate and detail reads profile snapshot", async () => {
+	const male = "Calcio 5 (Maschile)::Serie A";
+	const female = "Calcio 5 (Femminile)::Serie A";
+	const current = fixture({current: row("annuncio_staff_sportivo", {
+		categorie_ricercate: [male], disponibilita_spostamento: "Da valutare", disponibile_remoto: true,
+		lista_esperienze: [{id: "work", titolo: "Società Alfa", ente: "Dirigenza"}],
+		qualifiche_licenze: [{id: "license", titolo: "Licenza", stato: "conseguito"}, "voce storica libera"],
+	})});
+	const {parseAnnouncementDirectoryQuery} = current.load("src/features/annunci/announcement-model.ts");
+	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: male}))).total, 1);
+	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: female}))).total, 0);
+	const detail = await current.queries.loadPublicAnnouncementDetail(id);
+	assert.equal(detail.announcement.fields.find(({label}) => label === "Disponibilità agli spostamenti").value, "Da valutare");
+	assert.ok(detail.announcement.fields.find(({label}) => label === "Lista esperienze").items.some((item) => item.includes("Dirigenza")));
+	assert.ok(detail.announcement.fields.find(({label}) => label === "Qualifiche / Licenze").items.some((item) => item.includes("voce storica libera")));
+});
+
+test("team year filter includes a saved interval without filling gaps in legacy selections", async () => {
+	const params = (annata) => ({type: "annuncio_squadra", ricercaSquadra: "giocatore", annata});
+	const legacy = fixture({current: row("annuncio_squadra_cerca_giocatore", {annate_ricercate: ["2004", "2007"], annata_da: null, annata_a: null})});
+	const {parseAnnouncementDirectoryQuery} = legacy.load("src/features/annunci/announcement-model.ts");
+	const oldDetail = await legacy.queries.loadPublicAnnouncementDetail(id);
+	assert.deepEqual(oldDetail.announcement.fields.find(({label}) => label === "Annate ricercate").items, ["2004", "2007"]);
+	assert.equal((await legacy.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery(params("2005")))).total, 0);
+	assert.equal((await legacy.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery(params("2007")))).total, 1);
+
+	const current = fixture({current: row("annuncio_squadra_cerca_giocatore", {annate_ricercate: [], annata_da: 2004, annata_a: 2007})});
+	const newDetail = await current.queries.loadPublicAnnouncementDetail(id);
+	assert.equal(newDetail.announcement.fields.find(({label}) => label === "Annate ricercate").value, "Dal 2004 al 2007");
+	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery(params("2005")))).total, 1);
+	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery(params("2008")))).total, 0);
+});
+
+test("team staff search reads multiple saved figures and keeps historical free text and dates", async () => {
+	const current = fixture({current: row("annuncio_squadra_cerca_staff", {
+		figura_ricercata: "Allenatore", figure_ricercate: ["Allenatore", "Preparatore atletico"],
+		stagione: "2026/27", periodo_dal: null, periodo_al: null, requisiti: "Esperienza richiesta",
+	})});
+	const {parseAnnouncementDirectoryQuery} = current.load("src/features/annunci/announcement-model.ts");
+	const detail = await current.queries.loadPublicAnnouncementDetail(id);
+	assert.equal(detail.announcement.title, "RICERCA STAFF SPORTIVO");
+	assert.deepEqual(detail.announcement.fields.find(({label}) => label === "Figure ricercate").items, ["Allenatore", "Preparatore atletico"]);
+	assert.equal(detail.announcement.fields.find(({label}) => label === "Stagione").value, "2026/27");
+	const directory = await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_squadra_cerca_staff", figura: "Preparatore atletico"}));
+	assert.equal(directory.total, 1);
+	assert.equal(directory.announcements[0].typeLabel, "Ricerca staff sportivo");
+	assert.equal(directory.announcements[0].facts.find(({kind}) => kind === "figures").value, "2 selezionate");
+	const historical = fixture({current: row("annuncio_squadra_cerca_staff", {
+		figura_ricercata: "Responsabile tecnico", periodo_dal: "2026-10-01", periodo_al: "2027-06-30",
+	})});
+	const oldDetail = await historical.queries.loadPublicAnnouncementDetail(id);
+	assert.equal(oldDetail.announcement.title, "RICERCA RESPONSABILE TECNICO");
+	assert.equal(oldDetail.announcement.fields.find(({label}) => label === "Periodo").value, "Dal 01/10/2026 al 30/06/2027");
+	assert.equal(oldDetail.announcement.fields.find(({label}) => label === "Stagione"), undefined);
+});
+
+test("announcement card titles use public names and fall back when profile data is unavailable", async () => {
+	const {queries} = fixture({current: row("annuncio_giocatore"), authors: [profile]});
+	const [named] = await queries.loadPublicAnnouncementsByIds([id]);
+	assert.equal(named.title, "Mario Rossi");
+	const unavailable = fixture({current: row("annuncio_giocatore"), authors: []});
+	const [anonymous] = await unavailable.queries.loadPublicAnnouncementsByIds([id]);
+	assert.equal(anonymous.title, "RICERCA OPPORTUNITÀ");
+});
+
+test("Staff, Arbitro and Impianto share the public profile title across cards, latest and details", async () => {
+	const cases = [
+		["annuncio_staff_sportivo", "profilo_staff_sportivo", {nome: "Anna", cognome: "Verdi"}, "Anna Verdi"],
+		["annuncio_arbitro", "profilo_arbitro", {nome: "Luca", cognome: "Neri"}, "Luca Neri"],
+		["annuncio_campo_impianto", "profilo_campi_impianti", {nome_organizzazione: "Centro Sportivo Roma"}, "Centro Sportivo Roma"],
+	];
+	for (const [type, table, child, title] of cases) {
+		const author = {uuid: authorId, confermato_il: null, verificato_il: null, [table]: [{id: 7, nascosto: false, ...child}]};
+		const current = fixture({current: row(type), authors: [author]});
+		const [card] = await current.queries.loadPublicAnnouncementsByIds([id]);
+		const latest = await current.queries.loadLatestPublicAnnouncements();
+		const detail = await current.queries.loadPublicAnnouncementDetail(id);
+		assert.equal(card.title, title, `${type}: card`);
+		assert.equal(latest.announcements[0].title, title, `${type}: latest`);
+		assert.equal(detail.announcement.title, title, `${type}: detail`);
+		const hidden = fixture({current: row(type), authors: [{...author, [table]: [{id: 7, nascosto: true, ...child}]}]});
+		const [hiddenCard] = await hidden.queries.loadPublicAnnouncementsByIds([id]);
+		assert.equal(hiddenCard.title, "RICERCA OPPORTUNITÀ", `${type}: hidden profile`);
+	}
+});
+
+test("team search titles count effective roles and keep sponsor sector separate", () => {
+	const content = sourceLoader()("src/features/annunci/announcement-content.ts").announcementContent;
+	assert.equal(content("annuncio_squadra_cerca_giocatore", {}, []).title, "RICERCA GIOCATORI");
+	assert.equal(content("annuncio_squadra_cerca_giocatore", {ruoli_principali: ["Portiere"]}, []).title, "RICERCA PORTIERE");
+	assert.equal(content("annuncio_squadra_cerca_giocatore", {ruoli_principali: ["Difensore"], ruoli_secondari: ["Difensore centrale"]}, []).title, "RICERCA DIFENSORE CENTRALE");
+	assert.equal(content("annuncio_squadra_cerca_giocatore", {ruoli_principali: ["Difensore"], ruoli_secondari: ["Difensore centrale", "Terzino destro"]}, []).title, "RICERCA GIOCATORI");
+	assert.equal(content("annuncio_squadra_cerca_giocatore", {ruoli_principali: ["Portiere", "Difensore"]}, []).title, "RICERCA GIOCATORI");
+	assert.equal(content("annuncio_squadra_cerca_staff", {}, []).title, "RICERCA STAFF SPORTIVO");
+	assert.equal(content("annuncio_squadra_cerca_staff", {figure_ricercate: ["Allenatore"]}, []).title, "RICERCA ALLENATORE");
+	assert.equal(content("annuncio_squadra_cerca_staff", {figure_ricercate: ["Allenatore", "Preparatore atletico"]}, []).title, "RICERCA STAFF SPORTIVO");
+	assert.equal(content("annuncio_torneo_evento", {}, []).title, "RICERCA OPPORTUNITÀ");
+	const sponsor = content("annuncio_squadra_cerca_sponsor", {categoria_settore: "Abbigliamento"}, []);
+	assert.equal(sponsor.title, "RICERCA SPONSOR");
+	assert.equal(sponsor.facts.find(({label}) => label === "Settore").value, "Abbigliamento");
+});
+
+test("referee categories remain readable only on historical announcements", async () => {
+	const oldAnnouncement = fixture({current: row("annuncio_arbitro", {categorie_ricercate: ["Calcio 11 (Maschile)::Eccellenza"]})});
+	const oldDetail = await oldAnnouncement.queries.loadPublicAnnouncementDetail(id);
+	assert.equal(oldDetail.status, "success");
+	assert.deepEqual(oldDetail.announcement.fields.find(field => field.label === "Categorie storiche").items, ["Calcio 11 (Maschile) · Eccellenza"]);
+	const newAnnouncement = fixture({current: row("annuncio_arbitro", {categorie_ricercate: []})});
+	const newDetail = await newAnnouncement.queries.loadPublicAnnouncementDetail(id);
+	assert.equal(newDetail.status, "success");
+	assert.ok(!newDetail.announcement.fields.some(field => field.label.includes("Categorie")));
+	assert.ok(!newDetail.announcement.facts.some(fact => fact.kind === "categories"));
 });
 
 test("recent announcements on a profile reuse the public card title, facts and visibility rules", async () => {
@@ -349,15 +473,15 @@ test("publish preview shows the persisted facts and supporting fields for all ni
 	drafts["staff-sportivo"].disponibilita = "disponibile";
 	drafts.arbitro.disponibilita = "disponibile";
 	const cases = [
-		["annuncio_giocatore", "giocatore", {categorie_ricercate: ["Eccellenza"], descrizione_aggiuntiva: "Disponibile da subito"}, ["Difensore disponibile", "Terzino destro", "Eccellenza"]],
-		["annuncio_squadra_cerca_giocatore", "squadra", {ruoli_principali: ["Difensore"], ruoli_secondari: ["Terzino destro"], annate_ricercate: ["2004"], stagione: "2026/27", descrizione_aggiuntiva: "Cerchiamo difensore"}, ["Ricerca difensore", "2004", "2026/27"]],
-		["annuncio_squadra_cerca_staff", "squadra", {figura_ricercata: "Allenatore", settore: "Juniores", compenso_mensile: "1200", requisiti: "Patentino UEFA B", periodo_dal: "2026-10-01", periodo_al: "2027-06-30", descrizione_aggiuntiva: "Staff cercato"}, ["Ricerca allenatore", "Patentino UEFA B", "Dal 01/10/2026 al 30/06/2027"]],
-		["annuncio_squadra_cerca_partita", "squadra", {categorie_avversario: ["Juniores"], disponibilita_trasferta: "Regionale", periodo_dal: "2026-10-01", periodo_al: "2026-10-31", orario_dalle: "18:00", orario_alle: "20:00", descrizione_aggiuntiva: "Amichevole cercata"}, ["Ricerca partita", "Juniores", "Dalle 18:00 alle 20:00"]],
-		["annuncio_squadra_cerca_sponsor", "squadra", {categoria_settore: "Abbigliamento", supporto_cercato: "Materiale tecnico", offerta_fornita: "Visibilità", descrizione_aggiuntiva: "Sponsor cercato"}, ["Ricerca sponsor: Abbigliamento", "Materiale tecnico", "Visibilità"]],
-		["annuncio_staff_sportivo", "staff-sportivo", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", descrizione_aggiuntiva: "Collaborazioni cercate"}, ["Allenatore disponibile", "Juniores", "Calcio a 11"]],
-		["annuncio_arbitro", "arbitro", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", automunito: "Auto propria", descrizione_aggiuntiva: "Disponibile nel Lazio"}, ["Arbitro disponibile", "Auto propria", "Calcio a 11"]],
+		["annuncio_giocatore", "giocatore", {categorie_ricercate: ["Eccellenza"], descrizione_aggiuntiva: "Disponibile da subito"}, ["RICERCA OPPORTUNITÀ", "Terzino destro", "Eccellenza"]],
+		["annuncio_squadra_cerca_giocatore", "squadra", {ruoli_principali: ["Difensore"], ruoli_secondari: ["Terzino destro"], annate_ricercate: ["2004"], stagione: "2026/27", descrizione_aggiuntiva: "Cerchiamo difensore"}, ["RICERCA TERZINO DESTRO", "2004", "2026/27"]],
+		["annuncio_squadra_cerca_staff", "squadra", {figura_ricercata: "Allenatore", settore: "Juniores", compenso_mensile: "1200", requisiti: "Patentino UEFA B", periodo_dal: "2026-10-01", periodo_al: "2027-06-30", descrizione_aggiuntiva: "Staff cercato"}, ["RICERCA ALLENATORE", "Patentino UEFA B", "Dal 01/10/2026 al 30/06/2027"]],
+		["annuncio_squadra_cerca_partita", "squadra", {categorie_avversario: ["Juniores"], disponibilita_trasferta: "Regionale", periodo_dal: "2026-10-01", periodo_al: "2026-10-31", orario_dalle: "18:00", orario_alle: "20:00", descrizione_aggiuntiva: "Amichevole cercata"}, ["RICERCA PARTITE/AMICHEVOLI", "Juniores", "Dalle 18:00 alle 20:00"]],
+		["annuncio_squadra_cerca_sponsor", "squadra", {categoria_settore: "Abbigliamento", supporto_cercato: "Materiale tecnico", offerta_fornita: "Visibilità", descrizione_aggiuntiva: "Sponsor cercato"}, ["RICERCA SPONSOR", "Abbigliamento", "Materiale tecnico", "Visibilità"]],
+		["annuncio_staff_sportivo", "staff-sportivo", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", descrizione_aggiuntiva: "Collaborazioni cercate"}, ["RICERCA OPPORTUNITÀ", "Juniores", "Calcio 11"]],
+		["annuncio_arbitro", "arbitro", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", automunito: "Auto propria", descrizione_aggiuntiva: "Disponibile nel Lazio"}, ["RICERCA OPPORTUNITÀ", "Auto propria", "Calcio 11"]],
 		["annuncio_torneo_evento", "torneo-evento", {nome_evento: "Coppa Lazio", tipologie_sport: ["Calcio a 11"], modalita_iscrizione: "online", annate_ammesse_da: "2004", annate_ammesse_a: "2008", numero_squadre: "8", costo_partecipazione: "50", tipo_partecipazione: "squadre", lista_premi_trofei: [{posto: "Primo posto", titoloPremio: "Coppa"}], descrizione_aggiuntiva: "Torneo estivo"}, ["Coppa Lazio", "Premi e trofei", "Primo posto: Coppa"]],
-		["annuncio_campo_impianto", "campi-impianti-sportivi", {tipologie_sport: ["Calcio a 11"], orari: "Lun-Ven 18-22", costo_partenza: "60", servizi_inclusi: "Spogliatoi", descrizione_aggiuntiva: "Campo disponibile"}, ["Campo o impianto disponibile", "Lun-Ven 18-22", "Spogliatoi"]],
+		["annuncio_campo_impianto", "campi-impianti-sportivi", {tipologie_sport: ["Calcio a 11"], orari: "Lun-Ven 18-22", costo_partenza: "60", servizi_inclusi: "Spogliatoi", descrizione_aggiuntiva: "Campo disponibile"}, ["RICERCA OPPORTUNITÀ", "Lun-Ven 18-22", "Spogliatoi"]],
 	];
 	for (const [type, profileType, detail, expected] of cases) {
 		const payload = {
@@ -397,14 +521,14 @@ test("all nine supported types render balanced fact grids and preserve supportin
 	const types = ["annuncio_giocatore", "annuncio_squadra_cerca_giocatore", "annuncio_squadra_cerca_staff", "annuncio_squadra_cerca_partita", "annuncio_squadra_cerca_sponsor", "annuncio_staff_sportivo", "annuncio_arbitro", "annuncio_torneo_evento", "annuncio_campo_impianto"];
 	const expectedHeaderLabels = {
 		annuncio_giocatore: ["Ruoli principali", "Ruoli secondari", "Tipologie", "Categorie ricercate", "Num. salvataggi", "Follower autore"],
-		annuncio_squadra_cerca_giocatore: ["Ruoli", "Annate", "Num. salvataggi", "Follower autore"],
-		annuncio_squadra_cerca_staff: ["Figura", "Compenso mensile", "Num. salvataggi", "Follower autore"],
-		annuncio_squadra_cerca_partita: ["Categorie", "Periodo", "Num. salvataggi", "Follower autore"],
+		annuncio_squadra_cerca_giocatore: ["Ruolo/i cercati", "Annate", "Num. salvataggi", "Follower autore"],
+		annuncio_squadra_cerca_staff: ["Figure ricercate", "Compenso mensile", "Num. salvataggi", "Follower autore"],
+		annuncio_squadra_cerca_partita: ["Livelli cercati", "Periodo", "Num. salvataggi", "Follower autore"],
 		annuncio_squadra_cerca_sponsor: ["Settore", "Num. salvataggi", "Follower autore"],
 		annuncio_staff_sportivo: ["Figure", "Categorie", "Num. salvataggi", "Follower autore"],
 		annuncio_arbitro: ["Categorie", "Disponibilità", "Num. salvataggi", "Follower autore"],
 		annuncio_torneo_evento: ["Iscrizione", "Costo", "Num. salvataggi", "Follower autore"],
-		annuncio_campo_impianto: ["Tipologie", "Costo", "Num. salvataggi", "Follower autore"],
+		annuncio_campo_impianto: ["Tipologia campo", "Prezzo orario", "Num. salvataggi", "Follower autore"],
 	};
 	const supportingValues = {
 		annuncio_squadra_cerca_giocatore: "2026/27",

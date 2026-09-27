@@ -119,7 +119,7 @@ function formatPublishedAt(createdAt: string | null) {
 const PROMOTIONS = [
 	{
 		eyebrow: "Bacheca",
-		title: "Trova o pubblica un'opportunità",
+		title: "Proponiti o cerca opportunità",
 		description: "Sfoglia gli annunci oppure pubblica gratuitamente quello che stai cercando.",
 		href: "/annunci",
 		cta: "Vai alla bacheca",

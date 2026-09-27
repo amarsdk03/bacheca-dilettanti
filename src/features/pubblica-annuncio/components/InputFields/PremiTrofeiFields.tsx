@@ -113,13 +113,13 @@ export default function PremiTrofeiFields({
 											value={premio.posto}
 											onChange={(event) => updatePremioTrofeo(premio.id, "posto", event.target.value)}
 											maxLength={160}
-											placeholder="1° posto Amatoriali"
+												placeholder="Primo posto"
 										/>
 									</Field>
 
 									<Field data-invalid={titoloNonValido}>
 										<FieldLabel htmlFor={`premio-titolo-${premio.id}`}>
-											Titolo premio <RequiredMark />
+											Premio <RequiredMark />
 										</FieldLabel>
 										<Input
 											id={`premio-titolo-${premio.id}`}

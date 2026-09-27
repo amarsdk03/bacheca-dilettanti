@@ -1,13 +1,13 @@
 import type {ReactNode} from "react";
-import {MapPinIcon, ShirtIcon} from "lucide-react";
+import {ShirtIcon, TagsIcon} from "lucide-react";
 import type {GenericProfileDetail} from "../../profile-detail-model";
 import ProfileDetailsLayout from "../ProfileDetailsLayout";
 import type {ProfileDetailPresentation} from "../profile-detail-presentation";
 
 const PRESENTATION = {
 	facts: [
-		{label: "Tipologie sportive", icon: ShirtIcon},
-		{label: "Sede principale", icon: MapPinIcon},
+		{label: "Tipologia calcio", icon: ShirtIcon},
+		{label: "Categoria attuale", icon: TagsIcon},
 	],
 	narrativeFieldLabels: [],
 } satisfies ProfileDetailPresentation;

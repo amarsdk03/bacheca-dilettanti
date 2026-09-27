@@ -82,7 +82,7 @@ function AnnouncementSearch({query}: {query: AnnouncementDirectoryQuery}) {
 							id="announcement-search"
 							name="q"
 							defaultValue={query.q}
-							placeholder="Cerca per ruolo, località, categoria o opportunità…"
+							placeholder="Cerca per parole chiave..."
 							maxLength={100}
 						/>
 						<InputGroupAddon align="inline-end">
@@ -210,6 +210,17 @@ function AnnouncementFiltersForm({
 					/>
 				)}
 
+				{hasFilter(availableFilters, "annata") && (
+					<FilterSelect
+						id={`${idPrefix}-annata`}
+						name="annata"
+						label="Annata cercata"
+						value={query.filters.annata}
+						allLabel="Qualsiasi annata"
+						options={ANNOUNCEMENT_FILTER_OPTIONS.annate.map((value) => ({value, label: value}))}
+					/>
+				)}
+
 				{hasFilter(availableFilters, "figura") && (
 					<FilterSelect
 						id={`${idPrefix}-figura`}
@@ -225,10 +236,10 @@ function AnnouncementFiltersForm({
 					<FilterSelect
 						id={`${idPrefix}-categoria`}
 						name="categoria"
-						label="Categoria"
+						label={query.filters.ricercaSquadra === "partita" ? "Livello avversario" : "Categoria"}
 						value={query.filters.categoria}
-						allLabel="Tutte le categorie"
-						options={ANNOUNCEMENT_FILTER_OPTIONS.categorie.map((value) => ({value, label: value}))}
+						allLabel={query.filters.ricercaSquadra === "partita" ? "Tutti i livelli" : "Tutte le categorie"}
+						options={type === "annuncio_staff_sportivo" ? ANNOUNCEMENT_FILTER_OPTIONS.staffCategorie : ANNOUNCEMENT_FILTER_OPTIONS.categorie}
 					/>
 				)}
 

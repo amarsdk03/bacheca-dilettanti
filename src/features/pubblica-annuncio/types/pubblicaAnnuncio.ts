@@ -68,8 +68,9 @@ export const CITTA_ESEMPIO_PER_REGIONE: Record<string, string[]> = {
 
 import {TIPOLOGIA_CALCIO_OPTIONS} from "./tipologie-calcio";
 export {TIPOLOGIA_CALCIO_OPTIONS, ordinaTipologieCalcio} from "./tipologie-calcio";
+export {CATEGORIE_CALCIO_GROUPS, FIGURA_PROFESSIONALE_GROUPS, FIGURA_PROFESSIONALE_OPTIONS} from "./category-catalog";
 
-export type DisponibilitaProfilo = "non-specificare" | "disponibile-subito" | "sotto-contratto";
+export type DisponibilitaProfilo = "non-specificare" | "disponibile-subito" | "svincolato" | "sotto-contratto";
 export const DISPONIBILITA_PROFILO_OPTIONS: readonly {
 	valore: DisponibilitaProfilo;
 	etichetta: string;
@@ -88,21 +89,6 @@ import {PLAYER_PRIMARY_ROLES, PLAYER_SPECIFIC_ROLES_BY_PRIMARY,} from "@/feature
 
 export const RUOLO_PRINCIPALE_OPTIONS = PLAYER_PRIMARY_ROLES;
 export const RUOLI_SPECIFICI_PER_RUOLO: Readonly<Record<string, readonly string[]>> = PLAYER_SPECIFIC_ROLES_BY_PRIMARY;
-
-export const FIGURA_PROFESSIONALE_OPTIONS = [
-	"Analisi", "Coaching/Preparatore", "Osservatore/Scouting", "Esecutivo/Amministrativo",
-	"Manutenzione/Infrastruttura", "HR", "Fisioterapia/Medicina sportiva", "Commerciale/Business",
-	"Educativo/Sociale", "Media/Design", "Altro",
-] as const;
-
-export const CATEGORIE_CALCIO_GROUPS = [
-	{gruppo: "Calcio professionistico", opzioni: ["Serie A", "Serie B", "Serie C"]},
-	{gruppo: "Calcio dilettantistico", opzioni: ["Serie D", "Eccellenza", "Promozione", "Prima Categoria", "Seconda Categoria", "Terza Categoria"]},
-	{gruppo: "Calcio giovanile", opzioni: ["Primavera 1", "Primavera 2", "Primavera 3", "Primavera 4"]},
-	{gruppo: "Calcio femminile", opzioni: ["Serie A Femminile", "Serie B Femminile", "Serie C Femminile", "Eccellenza Femminile", "Promozione Femminile"]},
-	{gruppo: "Calcio a 5", opzioni: ["Serie A C5", "Serie A2 Élite", "Serie A2", "Serie B C5", "Serie C C5"]},
-	{gruppo: "Calcio amatoriale", opzioni: ["Calcio amatoriale"]},
-] as const;
 
 export const DISPONIBILITA_SPOSTAMENTO_OPTIONS = ["Non specificare", "Si", "No"] as const;
 export const DISPONIBILITA_TRASFERTA_OPTIONS = [
@@ -183,10 +169,10 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		icona: "Award",
 		descrizione: "Cerca giocatori, membri dello staff, o altre figure per la tua squadra.",
 		sottotipologie: [
-			{valore: "cerca-giocatore", nome: "Cerca giocatore", icona: "UserSearch"},
-			{valore: "cerca-staff", nome: "Cerca staff sportivo", icona: "UsersRound"},
-			{valore: "cerca-partite-amichevoli", nome: "Cerca partite/amichevoli", icona: "Swords"},
-			{valore: "cerca-sponsor", nome: "Cerca sponsor", icona: "Handshake"},
+			{valore: "cerca-giocatore", nome: "Ricerca giocatori", icona: "UserSearch"},
+			{valore: "cerca-staff", nome: "Ricerca staff sportivo", icona: "UsersRound"},
+			{valore: "cerca-partite-amichevoli", nome: "Ricerca partite/amichevoli", icona: "Swords"},
+			{valore: "cerca-sponsor", nome: "Ricerca sponsor", icona: "Handshake"},
 		],
 	},
 	{

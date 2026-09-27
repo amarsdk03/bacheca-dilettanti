@@ -1,9 +1,11 @@
 import type {ProfileDraft, ProfileDrafts, ProfileLocationDraft, ProfileType,} from "@/features/profilo/profile-model";
 import type {ProfileSocialLinks, ProfileSocialLinksByType,} from "@/features/profilo/profile-social-links";
 import {getProfileRequiredFieldErrors, type ProfileValidationErrors,} from "@/features/profilo/profile-required-fields";
-import {isValidIsoDate, isValidPhone, isValidTime, parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
-import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {isValidIsoDate, isValidPhone, isValidTime, normalizeFacilityOpeningHours, parseOptionalMoney, type FacilityOpeningHour} from "@/features/pubblica-annuncio/publish-field-validation";
+import {ANNATE_OPTIONS, EMAIL_PATTERN, FIGURA_PROFESSIONALE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
+import {isStaffCategory} from "@/features/pubblica-annuncio/types/staff-category-catalog";
+import {TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 
 export const PUBLISH_PAYLOAD_VERSION = 3 as const;
 
@@ -57,17 +59,17 @@ export interface AnnouncementDetailsDrafts {
 	squadraCercaGiocatore: {
 		ruoli_principali: string[];
 		ruoli_secondari: string[];
-		annate_ricercate: string[];
+		annata_da: string;
+		annata_a: string;
 		stagione: string;
 		descrizione_aggiuntiva: string;
 	};
 	squadraCercaStaff: {
-		figura_ricercata: string;
+		figure_ricercate: string[];
 		settore: string;
 		compenso_mensile: string;
 		requisiti: string;
-		periodo_dal: string;
-		periodo_al: string;
+		stagione: string;
 		descrizione_aggiuntiva: string;
 	};
 	squadraCercaPartita: {
@@ -81,7 +83,6 @@ export interface AnnouncementDetailsDrafts {
 	};
 	squadraCercaSponsor: {
 		categoria_settore: string;
-		supporto_cercato: string;
 		offerta_fornita: string;
 		descrizione_aggiuntiva: string;
 	};
@@ -93,7 +94,6 @@ export interface AnnouncementDetailsDrafts {
 	};
 	arbitro: {
 		tipologie_sport: string[];
-		categorie_ricercate: string[];
 		automunito: string;
 		disponibilita_spostamento: string;
 		descrizione_aggiuntiva: string;
@@ -112,9 +112,10 @@ export interface AnnouncementDetailsDrafts {
 	};
 	campoImpianto: {
 		tipologie_sport: string[];
-		orari: string;
+		orari: FacilityOpeningHour[];
 		costo_partenza: string;
 		servizi_inclusi: string;
+		indirizzo: string;
 		descrizione_aggiuntiva: string;
 	};
 }
@@ -197,6 +198,8 @@ export type AnnouncementValidationField =
 	| "locations"
 	| "description"
 	| "mainRoles"
+	| "yearFrom"
+	| "yearTo"
 	| "professionalRole"
 	| "requirements"
 	| "matchCategories"
@@ -209,12 +212,15 @@ export type AnnouncementValidationField =
 	| "tournamentTeams"
 	| "tournamentCost"
 	| "facilityCost"
+	| "facilityAddress"
+	| "facilityHours"
 	| "genericLink"
 	| "videoHighlights"
 	| "sponsorSector"
-	| "sponsorSupport"
 	| "sponsorOffer"
 	| "sports"
+	| "staffCategories"
+	| "staffTravel"
 	| "tournamentName"
 	| "tournamentYears"
 	| "tournamentPrizes"
@@ -278,17 +284,17 @@ export function createAnnouncementDetailsDrafts(): AnnouncementDetailsDrafts {
 		squadraCercaGiocatore: {
 			ruoli_principali: [],
 			ruoli_secondari: [],
-			annate_ricercate: [],
+			annata_da: "",
+			annata_a: "",
 			stagione: "",
 			descrizione_aggiuntiva: "",
 		},
 		squadraCercaStaff: {
-			figura_ricercata: "",
+			figure_ricercate: [],
 			settore: "",
 			compenso_mensile: "",
 			requisiti: "",
-			periodo_dal: "",
-			periodo_al: "",
+			stagione: "",
 			descrizione_aggiuntiva: "",
 		},
 		squadraCercaPartita: {
@@ -302,7 +308,6 @@ export function createAnnouncementDetailsDrafts(): AnnouncementDetailsDrafts {
 		},
 		squadraCercaSponsor: {
 			categoria_settore: "",
-			supporto_cercato: "",
 			offerta_fornita: "",
 			descrizione_aggiuntiva: "",
 		},
@@ -314,7 +319,6 @@ export function createAnnouncementDetailsDrafts(): AnnouncementDetailsDrafts {
 		},
 		arbitro: {
 			tipologie_sport: [],
-			categorie_ricercate: [],
 			automunito: "",
 			disponibilita_spostamento: "",
 			descrizione_aggiuntiva: "",
@@ -333,9 +337,10 @@ export function createAnnouncementDetailsDrafts(): AnnouncementDetailsDrafts {
 		},
 		campoImpianto: {
 			tipologie_sport: [],
-			orari: "",
+			orari: [],
 			costo_partenza: "",
 			servizi_inclusi: "",
+			indirizzo: "",
 			descrizione_aggiuntiva: "",
 		},
 	};
@@ -403,7 +408,7 @@ export function getAnnouncementValidationErrors(
 	if (!email && !phone) errors.contacts = "Inserisci almeno un contatto tra email e telefono.";
 	if (email && (email.length > 254 || !EMAIL_PATTERN.test(email))) errors.email = "Inserisci un indirizzo email valido.";
 	if (phone && !isValidPhone(phone)) errors.phone = "Inserisci un numero di telefono valido.";
-	if (locations.length === 0) errors.locations = "Seleziona almeno una località per l’annuncio.";
+	if (!(type === "squadra" && teamSubtype === "cerca-sponsor") && locations.length === 0) errors.locations = "Seleziona almeno una località per l’annuncio.";
 	if (!isLinkAnnuncioValid(extras.genericLink)) errors.genericLink = "Inserisci un link completo che inizi con http:// o https://.";
 	if (type === "giocatore" && !isLinkAnnuncioValid(extras.videoHighlights)) errors.videoHighlights = "Inserisci un link video completo che inizi con http:// o https://.";
 	if (type !== "giocatore" && extras.videoHighlights.trim()) errors.videoHighlights = "Il link video highlights è disponibile soltanto per gli annunci Giocatore.";
@@ -415,21 +420,25 @@ export function getAnnouncementValidationErrors(
 		errors.description = "Inserisci una descrizione dell’annuncio.";
 	}
 	if (type === "squadra" && teamSubtype === "cerca-giocatore") {
-		if (drafts.squadraCercaGiocatore.ruoli_principali.length === 0) errors.mainRoles = "Seleziona almeno un ruolo cercato.";
-		if (!nonEmpty(drafts.squadraCercaGiocatore.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione della ricerca.";
+		const draft = drafts.squadraCercaGiocatore;
+		if (draft.ruoli_principali.length === 0) errors.mainRoles = "Seleziona almeno un ruolo cercato.";
+		if (draft.annata_da && !ANNATE_OPTIONS.includes(draft.annata_da)) errors.yearFrom = "Seleziona un'annata iniziale valida.";
+		if (draft.annata_da && !draft.annata_a) errors.yearTo = "Seleziona l'annata finale.";
+		if (!draft.annata_da && draft.annata_a) errors.yearTo = "Seleziona prima l'annata iniziale.";
+		if (draft.annata_a && !ANNATE_OPTIONS.includes(draft.annata_a)) errors.yearTo = "Seleziona un'annata finale valida.";
+		if (!errors.yearFrom && !errors.yearTo && draft.annata_da && draft.annata_a && Number(draft.annata_a) < Number(draft.annata_da)) errors.yearTo = "L'annata finale non può precedere quella iniziale.";
+		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione della ricerca.";
 	}
 	if (type === "squadra" && teamSubtype === "cerca-staff") {
 		const draft = drafts.squadraCercaStaff;
-		if (!nonEmpty(draft.figura_ricercata)) errors.professionalRole = "Inserisci la figura professionale cercata.";
+		if (draft.figure_ricercate.length === 0) errors.professionalRole = "Seleziona almeno una figura cercata.";
+		else if (draft.figure_ricercate.length > 32 || draft.figure_ricercate.some((figure) => !FIGURA_PROFESSIONALE_OPTIONS.includes(figure as typeof FIGURA_PROFESSIONALE_OPTIONS[number]))) errors.professionalRole = "Seleziona figure valide dal catalogo.";
 		if (!nonEmpty(draft.requisiti)) errors.requirements = "Inserisci i requisiti richiesti.";
 		if (parseOptionalMoney(draft.compenso_mensile) === undefined) errors.monthlyCompensation = "Inserisci un importo valido con massimo due decimali.";
-		if (draft.periodo_dal && !isValidIsoDate(draft.periodo_dal)) errors.periodFrom = "Inserisci una data iniziale valida.";
-		if (draft.periodo_al && !isValidIsoDate(draft.periodo_al)) errors.periodTo = "Inserisci una data finale valida.";
-		if (!errors.periodFrom && !errors.periodTo && draft.periodo_dal && draft.periodo_al && draft.periodo_dal > draft.periodo_al) errors.periodTo = "La data finale non può precedere quella iniziale.";
 	}
 	if (type === "squadra" && teamSubtype === "cerca-partite-amichevoli") {
 		const draft = drafts.squadraCercaPartita;
-		if (draft.categorie_avversario.length === 0) errors.matchCategories = "Seleziona almeno una categoria avversaria.";
+		if (draft.categorie_avversario.length === 0) errors.matchCategories = "Seleziona almeno un livello avversario.";
 		if (draft.periodo_dal && !isValidIsoDate(draft.periodo_dal)) errors.periodFrom = "Inserisci una data iniziale valida.";
 		if (draft.periodo_al && !isValidIsoDate(draft.periodo_al)) errors.periodTo = "Inserisci una data finale valida.";
 		if (!errors.periodFrom && !errors.periodTo && draft.periodo_dal && draft.periodo_al && draft.periodo_dal > draft.periodo_al) errors.periodTo = "La data finale non può precedere quella iniziale.";
@@ -439,13 +448,14 @@ export function getAnnouncementValidationErrors(
 	}
 	if (type === "squadra" && teamSubtype === "cerca-sponsor") {
 		const draft = drafts.squadraCercaSponsor;
-		if (!nonEmpty(draft.categoria_settore)) errors.sponsorSector = "Inserisci la categoria o il settore dello sponsor.";
-		if (!nonEmpty(draft.supporto_cercato)) errors.sponsorSupport = "Descrivi il supporto cercato.";
-		if (!nonEmpty(draft.offerta_fornita)) errors.sponsorOffer = "Descrivi cosa offre la società.";
+		if (!nonEmpty(draft.categoria_settore)) errors.sponsorSector = "Inserisci il settore dello sponsor.";
+		if (!nonEmpty(draft.offerta_fornita)) errors.sponsorOffer = "Descrivi la visibilità offerta.";
 	}
 	if (type === "staff-sportivo") {
 		const draft = drafts.staffSportivo;
 		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
+		if (draft.categorie_ricercate.length > 32 || draft.categorie_ricercate.some((category) => !isStaffCategory(category))) errors.staffCategories = "Seleziona categorie valide dal catalogo Staff.";
+		if (draft.disponibilita_spostamento && !["Si", "No", "Da valutare"].includes(draft.disponibilita_spostamento)) errors.staffTravel = "Seleziona una disponibilità agli spostamenti valida.";
 		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’annuncio.";
 	}
 	if (type === "arbitro") {
@@ -458,7 +468,7 @@ export function getAnnouncementValidationErrors(
 		const currentYear = new Date().getFullYear();
 		const validYear = (value: string) => !value || (/^\d{4}$/.test(value) && Number(value) >= 1900 && Number(value) <= currentYear);
 		if (!nonEmpty(draft.nome_evento)) errors.tournamentName = "Inserisci il nome del torneo o evento.";
-		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
+		if (draft.tipologie_sport.length !== 1 || !TIPOLOGIA_CALCIO_OPTIONS.includes(draft.tipologie_sport[0] as typeof TIPOLOGIA_CALCIO_OPTIONS[number])) errors.sports = "Seleziona una tipologia di calcio valida.";
 		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’evento.";
 		if (!validYear(draft.annate_ammesse_da) || !validYear(draft.annate_ammesse_a) || (draft.annate_ammesse_da && draft.annate_ammesse_a && Number(draft.annate_ammesse_da) > Number(draft.annate_ammesse_a))) errors.tournamentYears = "L’intervallo delle annate non è valido.";
 		if (draft.numero_squadre && (!/^\d+$/.test(draft.numero_squadre) || Number(draft.numero_squadre) < 1 || Number(draft.numero_squadre) > 100_000)) errors.tournamentTeams = "Inserisci un numero di squadre valido.";
@@ -467,9 +477,11 @@ export function getAnnouncementValidationErrors(
 	}
 	if (type === "campi-impianti-sportivi") {
 		const draft = drafts.campoImpianto;
-		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
-		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’impianto.";
+		if (draft.tipologie_sport.length !== 1 || !TIPOLOGIA_CALCIO_OPTIONS.includes(draft.tipologie_sport[0] as typeof TIPOLOGIA_CALCIO_OPTIONS[number])) errors.sports = "Seleziona una tipologia di campo valida.";
+		if (locations.length !== 1 || !nonEmpty(locations[0]?.regione) || !nonEmpty(locations[0]?.citta)) errors.locations = "Seleziona una Regione e inserisci la Città o il comune dell’impianto.";
+		if (!nonEmpty(draft.indirizzo)) errors.facilityAddress = "Inserisci l’indirizzo dell’impianto.";
 		if (parseOptionalMoney(draft.costo_partenza) === undefined) errors.facilityCost = "Inserisci un importo valido con massimo due decimali.";
+		if (!normalizeFacilityOpeningHours(draft.orari)) errors.facilityHours = "Controlla gli orari selezionati.";
 	}
 
 	return errors;

@@ -2,6 +2,7 @@ import MultiselectField from "@/features/pubblica-annuncio/components/InputField
 import {RUOLO_PRINCIPALE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type RuoloPrincipaleMultiselectFieldProps = {
+	label?: string;
 	value: string[];
 	onValueChange: (value: string[]) => void;
 	required?: boolean;
@@ -9,6 +10,7 @@ type RuoloPrincipaleMultiselectFieldProps = {
 };
 
 export default function RuoloPrincipaleMultiselectField({
+	label = "Ruolo principale",
 	value,
 	onValueChange,
 	required = false,
@@ -16,7 +18,7 @@ export default function RuoloPrincipaleMultiselectField({
 }: RuoloPrincipaleMultiselectFieldProps) {
 	return (
 		<MultiselectField
-			label="Ruolo principale"
+			label={label}
 			options={RUOLO_PRINCIPALE_OPTIONS}
 			value={value}
 			onValueChange={onValueChange}

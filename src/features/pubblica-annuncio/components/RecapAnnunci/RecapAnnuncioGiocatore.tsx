@@ -24,7 +24,7 @@ export default function RecapAnnuncioGiocatore() {
 				</RecapField>
 				<RecapField label="Ruolo principale">{data.ruoliPrincipali.join(", ") || "—"}</RecapField>
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
-				<RecapField label="Contatti pubblici" wide>{formatContatti(data.contatti)}</RecapField>
+				<RecapField label="Contatti pubblici per questo annuncio" wide>{formatContatti(data.contatti)}</RecapField>
 				<AnnouncementImageRecap image={data.immagineAnnuncio} />
 				{data.descrizioneAggiuntiva.trim() !== "" && (
 					<RecapField label="Breve descrizione aggiuntiva" wide>{data.descrizioneAggiuntiva}</RecapField>

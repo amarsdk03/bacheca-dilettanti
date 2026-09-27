@@ -28,8 +28,9 @@ export default function ProfileDetailsLayout<Type extends NonPlayerProfileType>(
 				label="Informazioni del profilo"
 				presentation="profile"
 				overview={<ProfileDetailsOverview profile={profile} presentation={presentation} />}
-				career={presentation.hasExperiences ? <ProfileExperienceHistory experiences={profile.experiences} /> : undefined}
+				career={presentation.hasExperiences ? profile.type === "staff-sportivo" ? <div className="grid gap-6"><ProfileExperienceHistory title="Lista esperienze" experiences={profile.experiences} /><ProfileExperienceHistory title="Qualifiche / Licenze" concludedLabel="Esperienza conclusa" experiences={profile.qualifications ?? []} /></div> : <ProfileExperienceHistory experiences={profile.experiences} /> : undefined}
 				careerLabel="Esperienze"
+				announcementsLabel={presentation.announcementsLabel}
 				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} />}
 				similarProfiles={<SimilarProfiles profiles={profile.similarProfiles} unavailable={profile.similarProfilesUnavailable} />}
 			/>

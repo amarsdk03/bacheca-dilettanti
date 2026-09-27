@@ -1,7 +1,7 @@
 import {type Dispatch, type SetStateAction} from "react";
 
-import {Field, FieldDescription, FieldLabel} from "@/components/ui/field";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {
 	birthMonthNumber,
 	daysInBirthMonth,
@@ -21,6 +21,8 @@ type DataNascitaFieldsProps = {
 	setMeseNascita: Dispatch<SetStateAction<string>>;
 	annoNascita: string;
 	setAnnoNascita: Dispatch<SetStateAction<string>>;
+	yearRequired?: boolean;
+	yearError?: string;
 };
 
 export default function DataNascitaFields({
@@ -31,6 +33,8 @@ export default function DataNascitaFields({
 	setMeseNascita,
 	annoNascita,
 	setAnnoNascita,
+	yearRequired = false,
+	yearError,
 }: DataNascitaFieldsProps) {
 	const cutoff = getMinimumBirthDate();
 	const selectedYear = /^\d{4}$/.test(annoNascita) ? Number(annoNascita) : null;
@@ -54,13 +58,15 @@ export default function DataNascitaFields({
 	);
 
 	return (
-		<Field>
+		<Field data-invalid={Boolean(yearError)}>
 			<FieldLabel>
-				Data di nascita <OptionalLabel />
+				Data di nascita {!yearRequired && <OptionalLabel />}
 			</FieldLabel>
-			<div className="grid grid-cols-3 gap-3">
+			<FieldGroup className="grid grid-cols-3 gap-3">
+				<Field data-invalid={Boolean(yearError)}>
+					{yearRequired && <FieldLabel htmlFor={`${idPrefix}-anno-nascita`}>Anno <span className="text-destructive" aria-hidden="true">*</span> (Anno obbligatorio)</FieldLabel>}
 				<Select
-					value={annoNascita || ANNO_PLACEHOLDER}
+					value={annoNascita || (yearRequired ? null : ANNO_PLACEHOLDER)}
 					onValueChange={(value) => {
 						if (value === ANNO_PLACEHOLDER) {
 							setAnnoNascita("");
@@ -85,16 +91,19 @@ export default function DataNascitaFields({
 						}
 					}}
 				>
-					<SelectTrigger id={`${idPrefix}-anno-nascita`} className="w-full">
+					<SelectTrigger id={`${idPrefix}-anno-nascita`} className="w-full" aria-required={yearRequired} aria-invalid={Boolean(yearError)}>
 						<SelectValue placeholder="Anno" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value={ANNO_PLACEHOLDER}>Non specificare</SelectItem>
+						<SelectGroup>
+						{!yearRequired && <SelectItem value={ANNO_PLACEHOLDER}>Non specificare</SelectItem>}
 						{yearOptions.map((anno) => (
 							<SelectItem key={anno} value={anno}>{anno}</SelectItem>
 						))}
+						</SelectGroup>
 					</SelectContent>
 				</Select>
+				</Field>
 
 				<Select
 					value={meseNascita || MESE_PLACEHOLDER}
@@ -123,12 +132,14 @@ export default function DataNascitaFields({
 					>
 						<SelectValue placeholder="Mese" />
 					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value={MESE_PLACEHOLDER}>Non specificare</SelectItem>
-						{monthOptions.map((mese) => (
-							<SelectItem key={mese} value={mese}>{mese}</SelectItem>
-						))}
-					</SelectContent>
+				<SelectContent>
+					<SelectGroup>
+					<SelectItem value={MESE_PLACEHOLDER}>Non specificare</SelectItem>
+					{monthOptions.map((mese) => (
+						<SelectItem key={mese} value={mese}>{mese}</SelectItem>
+					))}
+					</SelectGroup>
+				</SelectContent>
 				</Select>
 
 				<Select
@@ -142,15 +153,18 @@ export default function DataNascitaFields({
 					>
 						<SelectValue placeholder="Giorno" />
 					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value={GIORNO_PLACEHOLDER}>Non specificare</SelectItem>
-						{dayOptions.map((giorno) => (
-							<SelectItem key={giorno} value={giorno}>{giorno}</SelectItem>
-						))}
-					</SelectContent>
+				<SelectContent>
+					<SelectGroup>
+					<SelectItem value={GIORNO_PLACEHOLDER}>Non specificare</SelectItem>
+					{dayOptions.map((giorno) => (
+						<SelectItem key={giorno} value={giorno}>{giorno}</SelectItem>
+					))}
+					</SelectGroup>
+				</SelectContent>
 				</Select>
-			</div>
+			</FieldGroup>
 			<FieldDescription>Devi avere almeno {MINIMUM_PROFILE_AGE} anni compiuti.</FieldDescription>
+			{yearError && <FieldError>{yearError}</FieldError>}
 		</Field>
 	);
 }

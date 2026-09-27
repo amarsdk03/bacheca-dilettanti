@@ -12,7 +12,8 @@ import type {
 } from "@/features/dettagli-profilo/profile-detail-model";
 import {loadPublicProfileAnnouncements} from "@/features/annunci/server/queries";
 import {DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {parsePlayerCareer, toPublicPlayerData} from "./player-profile-data";
+import {categoryLabel, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
+import {parseLegacyStaffQualifications, parsePlayerCareer, toPublicPlayerData} from "./player-profile-data";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
 import {
 	PROFILE_SOCIAL_PLATFORMS,
@@ -32,13 +33,13 @@ const NOT_SPECIFIED = "Non specificato";
 
 const PRIMARY_FIELD_LABELS = {
 	giocatore: ["Ruoli principali", "Tipologie sportive", "Disponibilità"],
-	squadra: ["Tipologie sportive", "Sede principale"],
+	squadra: ["Tipologia calcio", "Categoria attuale"],
 	"staff-sportivo": ["Figure professionali", "Disponibilità"],
 	"professionisti-studi": ["Figure professionali", "Specializzazioni", "Disponibilità"],
 	arbitro: ["Disponibilità"],
 	creators: ["Tipologia di contenuti"],
 	"torneo-evento": ["Tipologie sportive", "Sede principale"],
-	"campi-impianti-sportivi": ["Tipologie sportive", "Costo di partenza", "Servizi inclusi"],
+	"campi-impianti-sportivi": ["Tipologia campo", "Indirizzo"],
 } as const satisfies Record<ProfileType, readonly string[]>;
 
 const DAY_LABELS: Record<string, string> = {
@@ -58,6 +59,7 @@ interface ProfileContent {
 	fields: ProfileDetailField[];
 	player?: PlayerProfileData;
 	experiences?: PublicProfileExperience[];
+	qualifications?: PublicProfileExperience[];
 }
 
 type ProfileContentResult =
@@ -188,7 +190,7 @@ async function loadProfileContent(
 		const [playerResult, mediaResult] = await Promise.all([
 			supabase
 				.from("profilo_giocatore")
-				.select("id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, tipologie_sport, categorie_ricercate, disponibilita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
+				.select("id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, tipologie_sport, categoria_attuale, categorie_ricercate, disponibilita, genere, nazionalita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
 				.eq("uuid_profilo", id)
 				.eq("nascosto", false)
 				.maybeSingle(),
@@ -220,7 +222,7 @@ async function loadProfileContent(
 	if (type === "squadra") {
 		const {data, error} = await supabase
 			.from("profilo_squadra")
-			.select("id, nome_societa, sport_principale, tipologie_sport, sede_principale, presentazione")
+			.select("id, nome_societa, sport_principale, tipologie_sport, categoria_attuale, presentazione")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -233,8 +235,8 @@ async function loadProfileContent(
 				title: cleanText(data.nome_societa),
 				availability: null,
 				fields: [
-					detailListField("Tipologie sportive", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
-					detailField("Sede principale", data.sede_principale),
+					detailListField("Tipologia calcio", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
+					detailField("Categoria attuale", data.categoria_attuale ? categoryLabel(data.categoria_attuale) : null),
 					detailField("Presentazione", data.presentazione, true),
 				],
 			},
@@ -244,7 +246,7 @@ async function loadProfileContent(
 	if (type === "staff-sportivo") {
 		const {data, error} = await supabase
 			.from("profilo_staff_sportivo")
-			.select("id, nome, cognome, sport_principale, figure_professionali, disponibilita, presentazione, storico_esperienze")
+			.select("id, nome, cognome, sport_principale, figure_professionali, disponibilita, disponibile_remoto, presentazione, storico_esperienze, lista_esperienze, qualifiche_licenze")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -257,11 +259,16 @@ async function loadProfileContent(
 				title: fullName(data.nome, data.cognome),
 				availability: data.disponibilita,
 				fields: [
-					detailListField("Figure professionali", cleanStringArray(data.figure_professionali)),
+					detailListField("Figure professionali", normalizeFigures(cleanStringArray(data.figure_professionali))),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
+					detailField("Disponibile anche da remoto", data.disponibile_remoto ? "Sì" : "No"),
 					detailField("Presentazione", data.presentazione, true),
 				],
-				experiences: parsePlayerCareer(data.storico_esperienze),
+				experiences: parsePlayerCareer(data.lista_esperienze),
+				qualifications: [
+					...parseLegacyStaffQualifications(data.storico_esperienze),
+					...parsePlayerCareer(data.qualifiche_licenze),
+				],
 			},
 		};
 	}
@@ -283,7 +290,7 @@ async function loadProfileContent(
 				availability: data.disponibilita,
 				fields: [
 					detailListField("Tipologie sportive", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
-					detailListField("Figure professionali", cleanStringArray(data.figure_professionali)),
+					detailListField("Figure professionali", normalizeFigures(cleanStringArray(data.figure_professionali))),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Automunito", formatVehicleAvailability(data.automunito)),
 					detailField("Specializzazioni", data.specializzazioni, true),
@@ -360,7 +367,7 @@ async function loadProfileContent(
 				fields: [
 					detailListField("Tipologie sportive", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
 					detailField("Sede principale", data.sede_principale),
-					detailField("Presentazione", data.presentazione, true),
+					detailField("Presentazione torneo", data.presentazione, true),
 				],
 			},
 		};
@@ -370,7 +377,7 @@ async function loadProfileContent(
 
 	const {data, error} = await supabase
 		.from("profilo_campi_impianti")
-		.select("id, nome_organizzazione, sport_principale, tipologie_sport, sede_principale, costo_partenza, orari, presentazione, servizi_inclusi, info_aggiuntive")
+		.select("id, nome_organizzazione, sport_principale, tipologie_sport, sede_principale, indirizzo, costo_partenza, orari, presentazione, servizi_inclusi, info_aggiuntive")
 		.eq("uuid_profilo", id)
 		.eq("nascosto", false)
 		.maybeSingle();
@@ -383,8 +390,9 @@ async function loadProfileContent(
 			title: cleanText(data.nome_organizzazione),
 			availability: null,
 			fields: [
-				detailListField("Tipologie sportive", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
-				detailField("Sede principale", data.sede_principale),
+				detailListField("Tipologia campo", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
+				detailField("Indirizzo", data.indirizzo),
+				detailField("Sede principale storica", data.sede_principale),
 				detailField("Costo di partenza", formatCurrency(data.costo_partenza)),
 				detailListField("Orari", formatOpeningHours(data.orari), "rows", true),
 				detailField("Presentazione", data.presentazione, true),
@@ -492,7 +500,7 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 		const {content} = contentResult;
 		const rawExperiences = type === "giocatore"
 			? content.player?.career ?? []
-			: content.experiences ?? [];
+			: [...(content.experiences ?? []), ...(content.qualifications ?? [])];
 		let teamProfiles = new Map<string, Awaited<ReturnType<typeof loadPublicTeamProfiles>>[number]>();
 		try {
 			const teams = await loadPublicTeamProfiles(
@@ -505,7 +513,7 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 				cause: error instanceof Error ? error.name : "unknown",
 			});
 		}
-		const experiences = rawExperiences.map((experience) => ({
+		const enrichedExperiences = rawExperiences.map((experience) => ({
 			...experience,
 			linkedTeam: experience.teamProfileId ? teamProfiles.get(experience.teamProfileId) ?? null : null,
 		}));
@@ -534,12 +542,14 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			return {status: "ok", profile: {
 				...common,
 				type,
-				player: {...content.player, career: experiences},
+				player: {...content.player, career: enrichedExperiences},
 				locations,
 			}};
 		}
 
-		const profile: ProfileDetail = {...common, type, locations, ...splitFields, experiences};
+		const experiences = enrichedExperiences.slice(0, content.experiences?.length ?? 0);
+		const qualifications = enrichedExperiences.slice(content.experiences?.length ?? 0);
+		const profile: ProfileDetail = {...common, type, locations, ...splitFields, experiences, qualifications};
 		return {status: "ok", profile};
 	} catch (error) {
 		console.error("[dettagli-profilo] Profile lookup unavailable", {

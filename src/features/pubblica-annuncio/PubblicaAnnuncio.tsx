@@ -44,6 +44,7 @@ import {
 	type PublishProfileContext,
 	type TeamAnnouncementSubtype,
 } from "@/features/pubblica-annuncio/publish-model";
+import {normalizeFacilityOpeningHours} from "@/features/pubblica-annuncio/publish-field-validation";
 import {getAnnouncementImageError} from "@/features/pubblica-annuncio/types/announcementExtras";
 
 interface PubblicaAnnuncioProps {
@@ -140,7 +141,7 @@ export default function PubblicaAnnuncio({
 			announcement: {
 				type: announcementType,
 				detail,
-				locations: announcementLocations,
+				locations: profileType === "squadra" && teamSubtype === "cerca-sponsor" ? [] : announcementLocations,
 				contacts,
 				extras,
 			},
@@ -213,7 +214,9 @@ export default function PubblicaAnnuncio({
 			return;
 		}
 
-		const sourceLocations = profileLocations[profileType];
+		const sourceLocations = profileType === "campi-impianti-sportivi"
+			? profileLocations[profileType].slice(0, 1)
+			: profileLocations[profileType];
 		const nextSnapshot = JSON.stringify(sourceLocations);
 		if (profileLocationSnapshot.current !== nextSnapshot) {
 			setAnnouncementLocations(structuredClone(sourceLocations));
@@ -236,15 +239,18 @@ export default function PubblicaAnnuncio({
 					torneoEvento: {...previous.torneoEvento, tipologie_sport: [...(profileDrafts["torneo-evento"].tipologie_sport ?? [])]},
 				};
 			}
-			if (profileType === "campi-impianti-sportivi" && previous.campoImpianto.tipologie_sport.length === 0) {
+			if (profileType === "campi-impianti-sportivi") {
 				const facility = profileDrafts["campi-impianti-sportivi"];
+				const openingHours = normalizeFacilityOpeningHours(facility.orari);
 				return {
 					...previous,
 					campoImpianto: {
 						...previous.campoImpianto,
-						tipologie_sport: [...(facility.tipologie_sport ?? [])],
-						costo_partenza: facility.costo_partenza === null ? "" : String(facility.costo_partenza),
-						servizi_inclusi: facility.servizi_inclusi ?? "",
+						tipologie_sport: previous.campoImpianto.tipologie_sport.length === 0 ? [...(facility.tipologie_sport ?? []).slice(0, 1)] : previous.campoImpianto.tipologie_sport,
+						orari: previous.campoImpianto.orari.length === 0 && openingHours ? openingHours : previous.campoImpianto.orari,
+						costo_partenza: previous.campoImpianto.costo_partenza || (facility.costo_partenza === null ? "" : String(facility.costo_partenza)),
+						servizi_inclusi: previous.campoImpianto.servizi_inclusi || facility.servizi_inclusi || "",
+						indirizzo: previous.campoImpianto.indirizzo || facility.indirizzo || "",
 					},
 				};
 			}

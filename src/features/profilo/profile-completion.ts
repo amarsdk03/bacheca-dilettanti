@@ -46,12 +46,6 @@ function hasExperiences(value: unknown) {
 	});
 }
 
-function hasOpeningHours(value: unknown) {
-	return Array.isArray(value) && value.some((entry) => (
-		isRecord(entry) && entry.attivo === true && hasText(entry.giorno)
-	));
-}
-
 function completion(checks: readonly boolean[]): ProfileCompletion {
 	const completed = checks.filter(Boolean).length;
 	return {
@@ -73,12 +67,14 @@ export function getProfileCompletion(
 		return completion([
 			hasText(draft.nome),
 			hasText(draft.cognome),
-			hasBirthDate(draft),
+			hasText(draft.anno_nascita),
+			hasText(draft.genere),
 			hasItems(draft.tipologie_sport),
 			hasText(draft.disponibilita) && draft.disponibilita !== "non-specificare",
 			hasPlayerRoles(draft.ruoli_sport, "principali"),
 			hasPlayerRoles(draft.ruoli_sport, "specifici"),
-			hasItems(draft.categorie_ricercate),
+			hasText(draft.categoria_attuale),
+			hasText(draft.nazionalita),
 			hasText(draft.altezza),
 			hasText(draft.peso),
 			hasText(draft.piede_principale),
@@ -93,8 +89,8 @@ export function getProfileCompletion(
 		const draft = drafts.squadra;
 		return completion([
 			hasText(draft.nome_societa),
-			hasItems(draft.tipologie_sport),
-			hasText(draft.sede_principale),
+			Array.isArray(draft.tipologie_sport) && draft.tipologie_sport.length === 1,
+			hasText(draft.categoria_attuale),
 			hasText(draft.presentazione),
 			hasLocations,
 		]);
@@ -109,7 +105,8 @@ export function getProfileCompletion(
 			hasItems(draft.figure_professionali),
 			hasText(draft.disponibilita) && draft.disponibilita !== "non-specificare",
 			hasText(draft.presentazione),
-			hasExperiences(draft.storico_esperienze),
+			hasExperiences(draft.lista_esperienze),
+			hasExperiences(draft.qualifiche_licenze) || hasExperiences(draft.storico_esperienze),
 			hasLocations,
 		]);
 	}
@@ -170,12 +167,9 @@ export function getProfileCompletion(
 	return completion([
 		hasText(draft.nome_organizzazione),
 		hasItems(draft.tipologie_sport),
-		hasText(draft.sede_principale),
-		typeof draft.costo_partenza === "number" && Number.isFinite(draft.costo_partenza),
-		hasOpeningHours(draft.orari),
+		locations["campi-impianti-sportivi"].length === 1 && hasText(locations["campi-impianti-sportivi"][0]?.citta),
+		hasText(draft.indirizzo),
 		hasText(draft.presentazione),
-		hasText(draft.servizi_inclusi),
 		hasText(draft.info_aggiuntive),
-		hasLocations,
 	]);
 }

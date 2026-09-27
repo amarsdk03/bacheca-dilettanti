@@ -9,6 +9,7 @@ export interface ProfileDetailPresentation {
 		getValue?: (profile: GenericProfileDetail) => string | null;
 	}[];
 	narrativeFieldLabels: readonly string[];
+	announcementsLabel?: string;
 	hasExperiences?: boolean;
 }
 

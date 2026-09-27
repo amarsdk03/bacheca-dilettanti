@@ -2,7 +2,7 @@ import {type Dispatch, type SetStateAction} from "react";
 import {PlusIcon, Trash2} from "lucide-react";
 
 import {Button} from "@/components/ui/button";
-import {Field, FieldDescription, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import TeamProfileComboboxField from "@/features/profilo/TeamProfileComboboxField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
@@ -44,6 +44,8 @@ type EsperienzeAnnuncioFieldsProps = {
 	setEsperienze: Dispatch<SetStateAction<EsperienzaAnnuncio[]>>;
 	idPrefix: string;
 	titolo?: string;
+	requireState?: boolean;
+	error?: string;
 };
 
 export default function EsperienzeAnnuncioFields({
@@ -51,6 +53,8 @@ export default function EsperienzeAnnuncioFields({
 	                                                 setEsperienze,
 	                                                 idPrefix,
 	                                                 titolo = "Qualifiche / Patentini",
+	                                                 requireState = false,
+	                                                 error,
                                                  }: EsperienzeAnnuncioFieldsProps) {
 	const addEsperienza = () => {
 		setEsperienze((prev) => [...prev, createEsperienzaAnnuncio()]);
@@ -140,12 +144,13 @@ export default function EsperienzeAnnuncioFields({
 							</div>
 
 							<Field className="mt-4">
-								<FieldLabel>Stato <OptionalLabel /></FieldLabel>
+								<FieldLabel>Stato {requireState ? <span aria-hidden="true" className="text-destructive">*</span> : <OptionalLabel />}</FieldLabel>
 								<RadioGroup
 									value={esperienza.stato}
 									onValueChange={(value) => updateEsperienza(esperienza.id, "stato", value as StatoEsperienza)}
+									className={requireState ? "sm:flex sm:flex-wrap sm:gap-5" : undefined}
 								>
-									{STATO_ESPERIENZA_OPTIONS.map((opzione) => (
+									{STATO_ESPERIENZA_OPTIONS.filter((option) => !requireState || option.value !== "non-specificare").map((opzione) => (
 										<Field key={opzione.value} orientation="horizontal">
 											<RadioGroupItem
 												value={opzione.value}
@@ -155,11 +160,12 @@ export default function EsperienzeAnnuncioFields({
 												htmlFor={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
 												className="font-normal"
 											>
-												{opzione.label}
+												{requireState && opzione.value === "conseguito" ? "Esperienza conclusa" : opzione.label}
 											</FieldLabel>
 										</Field>
 									))}
 								</RadioGroup>
+								{requireState && esperienza.stato === "non-specificare" && error && <FieldError>{error}</FieldError>}
 							</Field>
 						</div>
 					))}

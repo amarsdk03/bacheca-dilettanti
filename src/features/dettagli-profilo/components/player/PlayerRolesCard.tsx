@@ -4,11 +4,12 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import type {PlayerProfileData} from "../../profile-detail-model";
 import PlayerRolePitch from "@/features/dettagli-profilo/components/player/PlayerRolePitch";
 
-export default function PlayerRolesCard({primaryRoles, specificRoles, preferredCategories}: Pick<PlayerProfileData, "primaryRoles" | "specificRoles" | "preferredCategories">) {
+export default function PlayerRolesCard({primaryRoles, specificRoles, currentCategory, preferredCategories}: Pick<PlayerProfileData, "primaryRoles" | "specificRoles" | "currentCategory" | "preferredCategories">) {
 	const groups = [
 		{label: "Ruoli principali", values: primaryRoles},
 		{label: "Ruoli specifici", values: specificRoles},
-		{label: "Categorie ricercate", values: preferredCategories},
+		{label: "Categoria attuale", values: currentCategory ? [currentCategory] : []},
+		...(preferredCategories.length > 0 ? [{label: "Categorie ricercate storiche", values: preferredCategories}] : []),
 	];
 
 	return (

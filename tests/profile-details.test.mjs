@@ -41,7 +41,16 @@ function sourceLoader(overrides = {}) {
 }
 
 const load = sourceLoader();
-const {publicPlayerAge, parsePlayerCareer, toPublicPlayerData} = load("src/features/dettagli-profilo/server/player-profile-data.ts");
+const {publicPlayerAge, parsePlayerCareer, parseLegacyStaffQualifications, toPublicPlayerData} = load("src/features/dettagli-profilo/server/player-profile-data.ts");
+
+test("staff legacy qualification keeps free text and unknown fields without assigning a status", () => {
+	const parsed = parseLegacyStaffQualifications(["testo libero precedente", {titolo: "Licenza", note: "annotazione storica", stato: "non-specificare"}]);
+	assert.equal(parsed[0].description, "testo libero precedente");
+	assert.equal(parsed[0].status, null);
+	assert.equal(parsed[1].title, "Licenza");
+	assert.match(parsed[1].description, /annotazione storica/);
+	assert.equal(parsed[1].status, null);
+});
 const {availabilityLabel} = load("src/features/profilo/public-profile-display.ts");
 const {groupPublicProfileLocations, publicProfileLocationLabel} = load("src/features/profilo/public-profile-locations.ts");
 const {parseProfileDetailParams} = load("src/features/dettagli-profilo/profile-detail-model.ts");
@@ -59,7 +68,8 @@ const player = {
 	giorno_nascita: "14", mese_nascita: "Settembre", anno_nascita: "2000",
 	tipologie_sport: ["Calcio a 5", "Calcio a 11", "Calcio storico"],
 	ruoli_sport: {principali: ["Difensore"], specifici: ["Terzino destro"]},
-	categorie_ricercate: ["Eccellenza"], piede_principale: "Destro",
+	categoria_attuale: "Calcio 11 (Maschile)::Eccellenza", categorie_ricercate: ["Eccellenza"],
+	genere: "Maschio", nazionalita: "IT", piede_principale: "Destro",
 	altezza: "180", peso: "75", presentazione: " Presentazione ",
 	storico_carriera: [{titolo: "Prima squadra", ente: "Società", periodoDa: "2024/25", stato: "in-corso"}],
 };
@@ -90,11 +100,14 @@ test("leap birthdays use March 1 in a non-leap year", () => {
 
 test("public projection contains only approved properties and safe highlights", () => {
 	const result = toPublicPlayerData({...player, email: "private@example.test", note: "private"}, "javascript:alert(1)", now);
-	assert.deepEqual(Object.keys(result).sort(), ["age", "sportTypes", "primaryRoles", "specificRoles", "preferredCategories", "preferredFoot", "height", "weight", "presentation", "career", "highlightsUrl"].sort());
+	assert.deepEqual(Object.keys(result).sort(), ["age", "sportTypes", "primaryRoles", "specificRoles", "currentCategory", "preferredCategories", "preferredFoot", "gender", "nationality", "height", "weight", "presentation", "career", "highlightsUrl"].sort());
 	assert.equal(result.age, 26);
 	assert.equal(result.highlightsUrl, null);
-	assert.deepEqual(result.sportTypes, ["Calcio a 11", "Calcio a 5", "Calcio storico"]);
+	assert.deepEqual(result.sportTypes, ["Calcio 11", "Calcio 5", "Calcio storico"]);
 	assert.equal(result.presentation, "Presentazione");
+	assert.equal(result.currentCategory, "Calcio 11 (Maschile) · Eccellenza");
+	assert.equal(result.gender, "Maschio");
+	assert.match(result.nationality, /Italia.*🇮🇹/);
 	assert.doesNotMatch(JSON.stringify(result), /nascita|private@example|2000/);
 	assert.equal(toPublicPlayerData(player, "https://example.test/video", now).highlightsUrl, "https://example.test/video");
 });
@@ -115,6 +128,7 @@ test("unspecified availability stays hidden and URL validation stays strict", ()
 	assert.equal(availabilityLabel("non-specificare"), null);
 	assert.equal(availabilityLabel("unknown"), null);
 	assert.equal(availabilityLabel("disponibile-subito"), "Disponibile subito");
+	assert.equal(availabilityLabel("svincolato"), "Svincolato");
 	assert.equal(parseProfileDetailParams({id: "invalid", type: "giocatore"}), null);
 	assert.equal(parseProfileDetailParams({id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "unknown"}), null);
 	assert.deepEqual(parseProfileDetailParams({id: "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA", type: "giocatore"}), {id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "giocatore"});
@@ -185,15 +199,47 @@ test("player role catalog exposes only the canonical taxonomy and normalizes leg
 	assert.deepEqual(PLAYER_SPECIFIC_ROLES_BY_PRIMARY, {
 		Portiere: [],
 		Difensore: ["Terzino destro", "Difensore centrale", "Terzino sinistro"],
-		Centrocampista: ["Mediano", "Esterno sinistro", "Centrale", "Esterno destro", "Trequartista"],
+		Centrocampista: ["Mediano", "Esterno sinistro", "Centrocampista Centrale", "Esterno destro", "Trequartista"],
 		Attaccante: ["Ala sinistra", "Seconda Punta", "Ala destra", "Punta centrale"],
 	});
 	assert.deepEqual(normalizePlayerSpecificRoles([
 		"Libero", "Esterno sinistro a tutta fascia", "Centrocampista sinistro",
-		"Centrocampista centrale", "Centrocampista destro", "Esterno destro a tutta fascia",
+		"Centrale", "Centrocampista Centrale", "Centrocampista centrale", "Centrocampista destro", "Esterno destro a tutta fascia",
 		"Attaccante sinistro / Seconda punta sinistra", "Attaccante destro / Seconda punta destra",
 		"Centravanti", "Seconda punta", "Non mappato",
-	]), ["Difensore centrale", "Esterno sinistro", "Centrale", "Esterno destro", "Ala sinistra", "Ala destra", "Punta centrale", "Seconda Punta"]);
+	]), ["Difensore centrale", "Esterno sinistro", "Centrocampista Centrale", "Esterno destro", "Ala sinistra", "Ala destra", "Punta centrale", "Seconda Punta"]);
+});
+
+test("legacy football type filters resolve to the current label", () => {
+	const {parseProfileDirectoryQuery} = load("src/features/profili/profile-directory-model.ts");
+	const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
+	assert.equal(parseProfileDirectoryQuery({type: "giocatore", tipologia: "Calcio a 11"}).filters.tipologia, "Calcio 11");
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", tipologia: "Calcio a 11"}).filters.tipologia, "Calcio 11");
+});
+
+test("single-location profile editor shows the first saved location and retains historical ones until edited", () => {
+	const ProfileLocationsField = sourceLoader()("src/features/profilo/ProfileLocationsField.tsx").default;
+	const html = renderToStaticMarkup(React.createElement(ProfileLocationsField, {
+		idPrefix: "player-location", mode: "single", label: "In che zona vivi?", required: true,
+		value: [{regione: "Lazio", citta: "Roma"}, {regione: "Sicilia", citta: "Palermo"}], onValueChange: () => {},
+	}));
+	assert.match(html, /In che zona vivi\?/);
+	assert.match(html, /value="Roma"/);
+	assert.doesNotMatch(html, /value="Palermo"/);
+	assert.match(html, /Altre 1 località storiche/);
+});
+
+test("player form disables current category when availability is Svincolato", () => {
+	const Form = load("src/features/profilo/ProfileDetailsForm.tsx").default;
+	const {createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
+	const drafts = createProfileDrafts();
+	drafts.giocatore.disponibilita = "svincolato";
+	const html = renderToStaticMarkup(React.createElement(Form, {type: "giocatore", drafts, locations: createProfileLocations(), socialLinks: createProfileSocialLinks().giocatore, onChange: () => {}, onLocationsChange: () => {}, onSocialLinksChange: () => {}}));
+	assert.match(html, /Categoria attuale/);
+	assert.match(html, /id="[^"]*-categoria-attuale"[^>]*disabled/);
+	assert.match(html, /Anno obbligatorio/);
+	assert.match(html, /Nazionalità/);
 });
 
 test("player role pitch uses the 3x7 grid and hides only specialized primary groups", () => {
@@ -201,7 +247,7 @@ test("player role pitch uses the 3x7 grid and hides only specialized primary gro
 		getPlayerRolePitchMarkers(["Difensore", "Centrocampista", "Attaccante", "Portiere"], ["Terzino destro", "Centrale", "Ala sinistra"]),
 		[
 			{role: "Ala sinistra", isPrimary: false, abbreviation: "AS", column: 1, row: 2},
-			{role: "Centrale", isPrimary: false, abbreviation: "CC", column: 2, row: 4},
+			{role: "Centrocampista Centrale", isPrimary: false, abbreviation: "CC", column: 2, row: 4},
 			{role: "Terzino destro", isPrimary: false, abbreviation: "TD", column: 3, row: 6},
 			{role: "Portiere", isPrimary: true, abbreviation: "POR", column: 2, row: 7},
 		],
@@ -219,28 +265,28 @@ test("player role pitch uses the 3x7 grid and hides only specialized primary gro
 	);
 });
 
-test("player header renders the ordered eight-fact grid", () => {
+test("player header renders the ordered public facts", () => {
 	const PlayerHeader = load("src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(PlayerHeader, {
 		title: "Mario Rossi", imageUrl: null, emailConfirmed: false, officialVerified: false, primary: false,
 		availabilityLabel: "Disponibile subito",
 		followerCount: 42,
 		announcementCount: 7,
-		player: {...toPublicPlayerData(player, null, now), sportTypes: ["Calcio a 11", "Calcio a 5"], specificRoles: ["Terzino destro", "Difensore centrale"]},
+		player: {...toPublicPlayerData(player, null, now), sportTypes: ["Calcio 11", "Calcio 5"], specificRoles: ["Terzino destro", "Difensore centrale"]},
 		actions: React.createElement("button", null, "Condividi"),
 	}));
 	assert.doesNotMatch(html, /campo\.png/);
 	assert.match(html, /lucide-user-round-plus/);
 	assert.match(html, /lucide-megaphone/);
 	assert.match(html, /min-h-24/);
-	assert.match(html, /Calcio a 11, Calcio a 5/);
-	const factLabels = ["Età", "Altezza", "Peso", "Piede", "Disponibilità", "Tipologie di calcio", "Follower", "Num. annunci"];
+	assert.match(html, /Calcio 11, Calcio 5/);
+	const factLabels = ["Età", "Altezza", "Peso", "Piede", "Genere", "Nazionalità", "Disponibilità", "Tipologie di calcio", "Follower", "Num. annunci"];
 	for (let index = 1; index < factLabels.length; index += 1) {
 		assert.ok(html.indexOf(`>${factLabels[index - 1]}<`) < html.indexOf(`>${factLabels[index]}<`), factLabels[index]);
 	}
 	for (const value of [">42<", ">7<"]) assert.ok(html.includes(value), value);
 	assert.doesNotMatch(html, /Principale:/);
-	for (const value of ["26 anni", "Disponibile subito", "Destro", "180 cm", "75 kg", "Calcio a 11", "Condividi"]) assert.ok(html.includes(value), value);
+	for (const value of ["26 anni", "Disponibile subito", "Destro", "Maschio", "Italia", "180 cm", "75 kg", "Calcio 11", "Condividi"]) assert.ok(html.includes(value), value);
 	assert.doesNotMatch(html, /Ruoli principali|Ruoli specifici|Categorie ricercate|Eccellenza/);
 	assert.match(html, /<header[^>]*>[\s\S]*public-profile-hero[\s\S]*<dl[\s\S]*<\/header>/);
 	assert.doesNotMatch(html, /nascita|>2000<|Una presentazione/);
@@ -459,13 +505,13 @@ test("an announcement failure leaves player details available", async (t) => {
 });
 
 const nonPlayerCases = [
-	["squadra", "Squadra", ["Tipologie sportive", "Sede principale"]],
+	["squadra", "Squadra", ["Tipologia calcio", "Categoria attuale"]],
 	["staff-sportivo", "StaffSportivo", ["Figure professionali", "Disponibilità"]],
 	["professionisti-studi", "ProfessionistiStudi", ["Figure professionali", "Tipologie sportive", "Disponibilità", "Automunito"]],
 	["arbitro", "Arbitro", ["Disponibilità", "Esperienze"]],
 	["creators", "Creator", ["Tipologia di contenuti", "Canali social"]],
 	["torneo-evento", "TorneoEvento", ["Tipologie sportive", "Sede principale"]],
-	["campi-impianti-sportivi", "CampiImpianti", ["Tipologie sportive", "Sede principale", "Costo di partenza"]],
+	["campi-impianti-sportivi", "CampiImpianti", ["Tipologia campo", "Indirizzo", "Costo di partenza"]],
 ];
 
 function genericProfile(type, overrides = {}) {
@@ -490,7 +536,9 @@ function renderedFacts(html) {
 
 test("all seven non-player profiles show ordered facts, integrated actions and sidebar contacts", () => {
 	const values = {
-		"Tipologie sportive": "Calcio a 11, Calcio a 5", "Sede principale": "Sede di Roma",
+		"Tipologie sportive": "Calcio 11, Calcio 5", "Sede principale": "Sede di Roma",
+		"Tipologia campo": "Calcio 11, Calcio 5", "Indirizzo": "Via Roma 1",
+		"Tipologia calcio": "Calcio 11, Calcio 5", "Categoria attuale": "Calcio 11 (Maschile) · Eccellenza",
 		"Figure professionali": "Allenatore, Preparatore", "Disponibilità": "Disponibile subito",
 		"Automunito": "Sì", "Tipologia di contenuti": "Video, podcast", "Costo di partenza": "30 € / 1h",
 	};
@@ -505,6 +553,7 @@ test("all seven non-player profiles show ordered facts, integrated actions and s
 		assert.match(html, /Profilo verificato ufficialmente/);
 		assert.match(html, /profile-section-navigation/);
 		assert.match(html, /aria-label="Informazioni del profilo"/);
+		assert.match(html, type === "campi-impianti-sportivi" ? /<span>Campi disponibili<\/span>/ : /<span>Annunci<\/span>/);
 		assert.match(html, /Profili simili/);
 		assert.match(html, /Descrizione dimostrativa/);
 		const sidebar = html.match(/<aside\b[\s\S]*?<\/aside>/)?.[0] ?? "";
@@ -593,6 +642,7 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 	const Card = load("src/features/profili/components/cards/ProfileCard.tsx").default;
 	const facts = [
 		{kind: "availability", label: "Disponibilità", value: "Disponibile subito"},
+		{kind: "category", label: "Categoria attuale", value: "Calcio 11 (Maschile) · Eccellenza"},
 		{kind: "content", label: "Contenuti", value: "Video"},
 		{kind: "figures", label: "Figure", value: "Allenatore"},
 		{kind: "headquarters", label: "Sede", value: "Roma"},
@@ -601,10 +651,10 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 		{kind: "roles", label: "Ruoli", value: "Difensore"},
 		{kind: "services", label: "Servizi", value: "Spogliatoi"},
 		{kind: "specializations", label: "Specializzazioni", value: "Fisioterapia"},
-		{kind: "types", label: "Tipologie", value: "Calcio a 11"},
+		{kind: "types", label: "Tipologie", value: "Calcio 11"},
 	];
 	const expectedLabels = {
-		giocatore: ["Ruoli", "Tipologie", "Località", "Disponibilità"],
+		giocatore: ["Ruoli", "Tipologie", "Categoria attuale", "Località", "Disponibilità"],
 		squadra: ["Tipologie", "Sede", "Località"],
 		"staff-sportivo": ["Figure", "Disponibilità", "Località"],
 		"professionisti-studi": ["Figure", "Specializzazioni", "Disponibilità", "Località"],
@@ -618,7 +668,7 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 			id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type, title: "Profilo dimostrativo",
 			presentation: null, imageUrl: null, emailConfirmed: true, officialVerified: true, availabilityLabel: null,
 			location: "Città dimostrativa", facts,
-			filterData: {ruoli: ["Difensore"], tipologie: ["Calcio a 11"], figure: []},
+			filterData: {ruoli: ["Difensore"], tipologie: ["Calcio 11"], figure: []},
 		}}));
 		assert.equal((html.match(/<a /g) ?? []).length, 1);
 		assert.ok(html.includes('data-profile-icon="' + type + '"'));

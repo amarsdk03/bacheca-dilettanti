@@ -1,7 +1,11 @@
-import MultiselectField from "@/features/pubblica-annuncio/components/InputFields/MultiselectField";
-import {FIGURA_PROFESSIONALE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
+import {FIGURA_PROFESSIONALE_GROUPS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+
+const figureValue = (_group: string, option: string) => option;
+const figureLabel = (value: string) => value;
 
 type FiguraProfessionaleMultiselectFieldProps = {
+	label?: string;
 	value: string[];
 	onValueChange: (value: string[]) => void;
 	required?: boolean;
@@ -9,17 +13,20 @@ type FiguraProfessionaleMultiselectFieldProps = {
 };
 
 export default function FiguraProfessionaleMultiselectField({
+	label = "Figura professionale",
 	value,
 	onValueChange,
 	required = false,
 	error,
 }: FiguraProfessionaleMultiselectFieldProps) {
 	return (
-		<MultiselectField
-			label="Figura professionale"
-			options={FIGURA_PROFESSIONALE_OPTIONS}
+		<CategorieCalcioMultiselectField
+			label={label}
+			items={FIGURA_PROFESSIONALE_GROUPS}
 			value={value}
-			onValueChange={onValueChange}
+			onValueChangeAction={onValueChange}
+			optionValue={figureValue}
+			formatValue={figureLabel}
 			placeholder="Seleziona le figure..."
 			emptyText="Nessuna figura trovata."
 			required={required}

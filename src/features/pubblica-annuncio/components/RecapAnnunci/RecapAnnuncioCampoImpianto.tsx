@@ -17,7 +17,7 @@ export default function RecapAnnuncioCampoImpianto() {
 				<RecapField label="Nome impianto">{data.nomeImpianto || "—"}</RecapField>
 				<RecapField label="Indirizzo">{data.indirizzo || "—"}</RecapField>
 				<RecapField label="Tipologia calcio">{data.tipologieCalcio.join(", ") || "—"}</RecapField>
-				<RecapField label="Contatti pubblici" wide>{formatContatti(data.contatti)}</RecapField>
+				<RecapField label="Contatti pubblici per questo annuncio" wide>{formatContatti(data.contatti)}</RecapField>
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
 				{data.presentazione.trim() !== "" && <RecapField label="Breve presentazione" wide>{data.presentazione}</RecapField>}
 				<RecapField label="Orario">{data.disponibilita.orario || "—"}</RecapField>

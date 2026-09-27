@@ -24,12 +24,14 @@ type PlayerHeaderProps = Pick<PlayerProfileDetail, "title" | "imageUrl" | "email
 };
 
 export default function PlayerHeader({title, imageUrl, emailConfirmed, officialVerified, primary, availabilityLabel, player, followerCount, announcementCount, actions}: PlayerHeaderProps) {
-	const {age, sportTypes, preferredFoot, height, weight} = player;
+	const {age, sportTypes, preferredFoot, height, weight, gender, nationality} = player;
 	const facts: ProfileFact[] = [
 		{label: "Età", icon: CalendarDaysIcon, value: age !== null ? `${age} anni` : null},
 		{label: "Altezza", icon: RulerIcon, value: height ? `${height} cm` : null},
 		{label: "Peso", icon: ScaleIcon, value: weight ? `${weight} kg` : null},
 		{label: "Piede", icon: FootprintsIcon, value: preferredFoot},
+		{label: "Genere", icon: ShirtIcon, value: gender},
+		{label: "Nazionalità", icon: ShirtIcon, value: nationality},
 		{label: "Disponibilità", icon: CircleCheckBigIcon, value: availabilityLabel},
 		{label: "Tipologie di calcio", icon: ShirtIcon, value: sportTypes},
 		{label: "Follower", icon: UserRoundPlusIcon, value: followerCount?.toLocaleString("it-IT") ?? null},

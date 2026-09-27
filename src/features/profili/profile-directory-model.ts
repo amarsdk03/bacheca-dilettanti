@@ -7,6 +7,8 @@ import {
 	TIPOLOGIA_CALCIO_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {isLimitedProfileType, isProfileType, PROFILE_TYPES, type ProfileType,} from "@/features/profilo/profile-model";
+import {normalizeTipologiaCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
+import {normalizeFigure} from "@/features/pubblica-annuncio/types/category-catalog";
 
 export const PROFILE_DIRECTORY_PAGE_SIZE = 12;
 
@@ -40,7 +42,7 @@ export const PROFILE_FILTER_OPTIONS = {
 	figure: [...FIGURA_PROFESSIONALE_OPTIONS],
 	disponibilita: DISPONIBILITA_PROFILO_OPTIONS
 		.filter(({valore}) => valore !== "non-specificare")
-		.map(({valore, etichetta}) => ({value: valore, label: etichetta})),
+		.map(({valore, etichetta}) => ({value: valore, label: etichetta})).concat([{value: "svincolato", label: "Svincolato"}]),
 	automunito: DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS
 		.map(({valore, etichetta}) => ({value: valore, label: etichetta})),
 } as const;
@@ -74,6 +76,7 @@ export interface DirectoryProfileFilterData {
 
 export type DirectoryProfileFactKind =
 	| "availability"
+	| "category"
 	| "content"
 	| "figures"
 	| "headquarters"
@@ -174,16 +177,17 @@ export function parseProfileDirectoryQuery(params: RawProfileSearchParams): Prof
 			filters.regione = allowedValue(firstValue(params.regione), REGION_SET);
 		}
 		if (supportsFilter(selectedType, "tipologia")) {
-			filters.tipologia = allowedValue(firstValue(params.tipologia), TIPOLOGIA_SET);
+			filters.tipologia = allowedValue(normalizeTipologiaCalcio(firstValue(params.tipologia)), TIPOLOGIA_SET);
 		}
 		if (supportsFilter(selectedType, "ruolo")) {
 			filters.ruolo = allowedValue(firstValue(params.ruolo), ROLE_SET);
 		}
 		if (supportsFilter(selectedType, "figura")) {
-			filters.figura = allowedValue(firstValue(params.figura), FIGURE_SET);
+			filters.figura = allowedValue(normalizeFigure(firstValue(params.figura)), FIGURE_SET);
 		}
 		if (supportsFilter(selectedType, "disponibilita")) {
-			filters.disponibilita = allowedValue(firstValue(params.disponibilita), AVAILABILITY_SET);
+			const rawAvailability = firstValue(params.disponibilita);
+			filters.disponibilita = allowedValue(selectedType === "giocatore" && rawAvailability === "disponibile-subito" ? "svincolato" : rawAvailability, AVAILABILITY_SET);
 		}
 		if (supportsFilter(selectedType, "automunito")) {
 			filters.automunito = allowedValue(firstValue(params.automunito), CAR_SET);

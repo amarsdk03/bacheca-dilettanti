@@ -6,11 +6,11 @@ import {Empty, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty"
 import type {PublicProfileExperience} from "@/features/dettagli-profilo/profile-detail-model";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 
-export default function ProfileExperienceHistory({experiences}: {experiences: PublicProfileExperience[]}) {
+export default function ProfileExperienceHistory({experiences, title = "Esperienze", concludedLabel = "Conseguito"}: {experiences: PublicProfileExperience[]; title?: string; concludedLabel?: string}) {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle><h2 className="font-home-display text-2xl uppercase">Esperienze</h2></CardTitle>
+				<CardTitle><h2 className="font-home-display text-2xl uppercase">{title}</h2></CardTitle>
 			</CardHeader>
 			<CardContent>
 				{experiences.length === 0 ? (
@@ -34,7 +34,7 @@ export default function ProfileExperienceHistory({experiences}: {experiences: Pu
 										<h3 className="min-w-0 text-lg font-semibold wrap-anywhere">
 											{experience.title}
 										</h3>
-										{experience.status && <Badge variant={experience.status === "in-corso" ? "default" : "secondary"}>{experience.status === "in-corso" ? "In corso" : "Conseguito"}</Badge>}
+										{experience.status && <Badge variant={experience.status === "in-corso" ? "default" : "secondary"}>{experience.status === "in-corso" ? "In corso" : concludedLabel}</Badge>}
 									</div>
 									{experience.linkedTeam ? (
 										<TeamProfileLinks teams={[experience.linkedTeam]} />

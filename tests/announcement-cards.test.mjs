@@ -48,7 +48,7 @@ const {getAnnouncementFacts} = load("src/features/annunci/components/cards/annou
 const FACTS = [
 	{kind: "roles", label: "Ruoli principali", value: "Difensore"},
 	{kind: "roles", label: "Ruoli secondari", value: "Terzino destro"},
-	{kind: "types", label: "Tipologie", value: "Calcio a 11"},
+	{kind: "types", label: "Tipologie", value: "Calcio 11"},
 	{kind: "categories", label: "Categorie ricercate", value: "Eccellenza"},
 	{kind: "location", label: "Località", value: "Roma, Lazio"},
 	{kind: "roles", label: "Ruoli", value: "Attaccante"},
@@ -61,7 +61,7 @@ const FACTS = [
 	{kind: "period", label: "Periodo", value: "Giugno"},
 	{kind: "availability", label: "Trasferta", value: "Sì"},
 	{kind: "services", label: "Supporto cercato", value: "Materiale"},
-	{kind: "services", label: "Offerta", value: "Visibilità"},
+	{kind: "services", label: "Visibilità offerta", value: "Visibilità"},
 	{kind: "figures", label: "Figure", value: "Preparatore"},
 	{kind: "availability", label: "Spostamenti", value: "Disponibile"},
 	{kind: "availability", label: "Disponibilità", value: "Disponibile subito"},

@@ -10,6 +10,7 @@ export default function ProfileTabs({
 	overview,
 	career,
 	careerLabel = "Carriera",
+	announcementsLabel = "Annunci",
 	announcements,
 	similarProfiles,
 	presentation = "default",
@@ -18,6 +19,7 @@ export default function ProfileTabs({
 	overview: ReactNode;
 	career?: ReactNode;
 	careerLabel?: string;
+	announcementsLabel?: string;
 	announcements: ReactNode;
 	similarProfiles?: ReactNode;
 	presentation?: "default" | "profile";
@@ -30,7 +32,7 @@ export default function ProfileTabs({
 	const navigation = <TabsList variant="line" aria-label={label} className={isProfile ? "profile-section-tab-list" : "h-12 w-max min-w-full justify-center sm:min-w-0"}>
 		<TabsTrigger value="overview" className={triggerClassName}><IdCardIcon data-icon="inline-start" aria-hidden="true" /><span>Panoramica</span></TabsTrigger>
 		{hasCareer && <TabsTrigger value="career" className={triggerClassName}><CalendarRangeIcon data-icon="inline-start" aria-hidden="true" /><span>{careerLabel}</span></TabsTrigger>}
-		<TabsTrigger value="announcements" className={triggerClassName}><MegaphoneIcon data-icon="inline-start" aria-hidden="true" /><span>Annunci</span></TabsTrigger>
+		<TabsTrigger value="announcements" className={triggerClassName}><MegaphoneIcon data-icon="inline-start" aria-hidden="true" /><span>{announcementsLabel}</span></TabsTrigger>
 		{hasSimilarProfiles && <TabsTrigger value="similar-profiles" className={triggerClassName}><UsersIcon data-icon="inline-start" aria-hidden="true" /><span>Profili simili</span></TabsTrigger>}
 	</TabsList>;
 

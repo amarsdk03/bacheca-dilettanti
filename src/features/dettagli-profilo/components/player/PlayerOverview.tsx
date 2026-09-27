@@ -8,7 +8,7 @@ import ProfileSocialLinksCard from "../ProfileSocialLinks";
 import ProfileIdentifier from "../ProfileIdentifier";
 import PlayerRolesCard from "./PlayerRolesCard";
 
-type PlayerOverviewProps = Pick<PlayerProfileData, "presentation" | "highlightsUrl" | "primaryRoles" | "specificRoles" | "preferredCategories"> & Pick<PlayerProfileDetail, "locations" | "socialLinks"> & {profileId: string};
+type PlayerOverviewProps = Pick<PlayerProfileData, "presentation" | "highlightsUrl" | "primaryRoles" | "specificRoles" | "currentCategory" | "preferredCategories"> & Pick<PlayerProfileDetail, "locations" | "socialLinks"> & {profileId: string};
 
 function youtubeEmbedUrl(value: string) {
 	try {
@@ -35,7 +35,7 @@ function youtubeEmbedUrl(value: string) {
 	}
 }
 
-export default function PlayerOverview({presentation, highlightsUrl, locations, socialLinks, primaryRoles, specificRoles, preferredCategories, profileId}: PlayerOverviewProps) {
+export default function PlayerOverview({presentation, highlightsUrl, locations, socialLinks, primaryRoles, specificRoles, currentCategory, preferredCategories, profileId}: PlayerOverviewProps) {
 	const embedUrl = highlightsUrl ? youtubeEmbedUrl(highlightsUrl) : null;
 
 	return (
@@ -73,7 +73,7 @@ export default function PlayerOverview({presentation, highlightsUrl, locations, 
 				</Card>}
 			</div>
 			<aside aria-label="Informazioni sportive e contatti" className="flex min-w-0 flex-col gap-5">
-				<PlayerRolesCard primaryRoles={primaryRoles} specificRoles={specificRoles} preferredCategories={preferredCategories} />
+				<PlayerRolesCard primaryRoles={primaryRoles} specificRoles={specificRoles} currentCategory={currentCategory} preferredCategories={preferredCategories} />
 				<ProfileLocationsCard locations={locations} />
 				<ProfileSocialLinksCard socialLinks={socialLinks} presentation="profile" />
 				<ProfileIdentifier profileId={profileId} />

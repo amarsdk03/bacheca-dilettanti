@@ -48,6 +48,7 @@ import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database} from "@/server/supabase";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {categoryLabel, normalizeCategories, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
 
 const ANNOUNCEMENT_BATCH_SIZE = 500;
 const AUTHOR_BATCH_SIZE = 100;
@@ -106,14 +107,14 @@ function announcementContentQuery(
 			nascosto,
 			privato,
 			annuncio_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, categorie_ricercate, descrizione_aggiuntiva),
-			annuncio_squadra_cerca_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, annate_ricercate, stagione, descrizione_aggiuntiva),
-			annuncio_squadra_cerca_staff(figura_ricercata, settore, compenso_mensile, requisiti, periodo_dal, periodo_al, descrizione_aggiuntiva),
+			annuncio_squadra_cerca_giocatore(tipologie_sport, ruoli_principali, ruoli_secondari, annate_ricercate, annata_da, annata_a, stagione, descrizione_aggiuntiva),
+			annuncio_squadra_cerca_staff(figura_ricercata, figure_ricercate, settore, compenso_mensile, requisiti, stagione, periodo_dal, periodo_al, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_partita(categorie_avversario, disponibilita_trasferta, periodo_dal, periodo_al, orario_dalle, orario_alle, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_sponsor(categoria_settore, supporto_cercato, offerta_fornita, descrizione_aggiuntiva),
-			annuncio_staff_sportivo(figure_professionali, tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze),
+			annuncio_staff_sportivo(figure_professionali, tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, disponibile_remoto, descrizione_aggiuntiva, lista_esperienze, qualifiche_licenze),
 			annuncio_arbitro(tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, automunito, descrizione_aggiuntiva, lista_esperienze),
 			annuncio_torneo_evento(nome_evento, modalita_iscrizione, annate_ammesse_da, annate_ammesse_a, numero_squadre, costo_partecipazione, tipo_partecipazione, lista_premi_trofei, descrizione_aggiuntiva, tipologie_sport),
-			annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva),
+			annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva, indirizzo),
 			localita_annuncio(regione, citta)
 		`, options);
 }
@@ -143,7 +144,7 @@ function officialAuthorQuery(supabase: SupabaseClient<Database>) {
 			verificato_il,
 			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
 			profilo_giocatore(id, nascosto, nome, cognome, disponibilita, presentazione, ruoli_sport, tipologie_sport, categorie_ricercate),
-			profilo_squadra(id, nascosto, nome_societa, presentazione, sede_principale, tipologie_sport),
+			profilo_squadra(id, nascosto, nome_societa, presentazione, tipologie_sport, categoria_attuale),
 			profilo_staff_sportivo(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione),
 			profilo_professionista_studente(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, presentazione_servizi, specializzazioni, tipologie_sport),
 			profilo_arbitro(id, nascosto, nome, cognome, disponibilita, presentazione),
@@ -297,7 +298,7 @@ function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 	const detail = detailForType(row, type);
 	const locations = announcementLocations(row);
 	const content = announcementContent(type, detail, locations);
-	const teamReferences = experienceTeamReferences(detail.lista_esperienze);
+	const teamReferences = experienceTeamReferences(detail.lista_esperienze, type === "annuncio_staff_sportivo" ? "titolo" : "ente");
 	const searchText = normalizeAnnouncementSearchText([
 		content.title,
 		content.description,
@@ -355,6 +356,7 @@ function matchesDirectoryQuery(
 	if (filters.regione && !normalizedIncludes(data.regions, filters.regione)) return false;
 	if (filters.tipologia && !normalizedIncludes(data.types, filters.tipologia)) return false;
 	if (filters.ruolo && !normalizedIncludes(data.roles, filters.ruolo)) return false;
+	if (filters.annata && !normalizedIncludes(data.years, filters.annata)) return false;
 	if (filters.figura && !normalizedIncludes(data.figures, filters.figura)) return false;
 	if (filters.categoria && !normalizedIncludes(data.categories, filters.categoria)) return false;
 	if (filters.automunito && normalizeAnnouncementSearchText(data.car ?? "") !== normalizeAnnouncementSearchText(filters.automunito)) return false;
@@ -420,7 +422,7 @@ function registeredAuthor(
 		title = fullName(child.nome, child.cognome);
 		highlights = [
 			fact("roles", "Ruoli", formatSelection([...new Set(roles)], "selezionati")),
-			fact("categories", "Categorie", formatSelection(cleanStringArray(child.categorie_ricercate), "selezionate")),
+			fact("categories", "Categorie", formatSelection(normalizeCategories(cleanStringArray(child.categorie_ricercate)).map(categoryLabel), "selezionate")),
 			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
 			fact("location", "Località", location),
 		];
@@ -428,20 +430,20 @@ function registeredAuthor(
 		title = cleanText(child.nome_societa, 160);
 		highlights = [
 			fact("types", "Tipologie", formatSelection(ordinaTipologieCalcio(cleanStringArray(child.tipologie_sport)), "selezionate")),
-			fact("headquarters", "Sede", cleanText(child.sede_principale, 160)),
+			fact("types", "Categoria attuale", cleanText(child.categoria_attuale, 120)),
 			fact("location", "Località", location),
 		];
 	} else if (profileType === "staff-sportivo") {
 		title = fullName(child.nome, child.cognome);
 		highlights = [
-			fact("figures", "Figure", formatSelection(cleanStringArray(child.figure_professionali), "selezionate")),
+			fact("figures", "Figure", formatSelection(normalizeFigures(cleanStringArray(child.figure_professionali)), "selezionate")),
 			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
 			fact("location", "Località", location),
 		];
 	} else if (profileType === "professionisti-studi") {
 		title = fullName(child.nome, child.cognome);
 		highlights = [
-			fact("figures", "Figure", formatSelection(cleanStringArray(child.figure_professionali), "selezionate")),
+			fact("figures", "Figure", formatSelection(normalizeFigures(cleanStringArray(child.figure_professionali)), "selezionate")),
 			fact("specializations", "Specializzazioni", cleanText(child.specializzazioni, 160)),
 			fact("availability", "Disponibilità", humanizeValue(child.disponibilita)),
 		];
@@ -558,7 +560,16 @@ function withLoadedAuthor(
 		announcement.authorId,
 		announcement.item.profileType,
 	));
-	return author ? {...announcement.item, author} : announcement.item;
+	if (!author) return announcement.item;
+	const hasProfileTitle = announcement.item.type === "annuncio_giocatore"
+		|| announcement.item.type === "annuncio_staff_sportivo"
+		|| announcement.item.type === "annuncio_arbitro"
+		|| announcement.item.type === "annuncio_campo_impianto";
+	return {
+		...announcement.item,
+		...(author.kind === "registered" && hasProfileTitle ? {title: author.title} : {}),
+		author,
+	};
 }
 
 function emptyDirectoryResult(error = false): AnnouncementDirectoryResult {
@@ -604,10 +615,13 @@ export async function loadLatestPublicAnnouncements(): Promise<LatestAnnouncemen
 			return {announcements: [], error: true};
 		}
 
-		const announcements = (data ?? [])
+		const mapped = (data ?? [])
 			.map(mapAnnouncement)
-			.filter((item): item is MappedAnnouncement => Boolean(item))
-			.map(({item}) => ({
+			.filter((item): item is MappedAnnouncement => Boolean(item));
+		const authorResult = await loadOfficialAuthors(supabase, mapped);
+		const announcements = mapped
+			.map((item) => withLoadedAuthor(item, authorResult.authors, authorResult.error))
+			.map((item) => ({
 				id: item.id,
 				profileType: item.profileType,
 				typeLabel: item.typeLabel,

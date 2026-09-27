@@ -163,6 +163,7 @@ export type Database = {
         Row: {
           costo_partenza: number | null
           descrizione_aggiuntiva: string | null
+          indirizzo: string | null
           info_mostrate: Json | null
           orari: Json | null
           servizi_inclusi: string | null
@@ -172,6 +173,7 @@ export type Database = {
         Insert: {
           costo_partenza?: number | null
           descrizione_aggiuntiva?: string | null
+          indirizzo?: string | null
           info_mostrate?: Json | null
           orari?: Json | null
           servizi_inclusi?: string | null
@@ -181,6 +183,7 @@ export type Database = {
         Update: {
           costo_partenza?: number | null
           descrizione_aggiuntiva?: string | null
+          indirizzo?: string | null
           info_mostrate?: Json | null
           orari?: Json | null
           servizi_inclusi?: string | null
@@ -375,6 +378,8 @@ export type Database = {
       }
       annuncio_squadra_cerca_giocatore: {
         Row: {
+          annata_da: number | null
+          annata_a: number | null
           annate_ricercate: string[] | null
           descrizione_aggiuntiva: string | null
           info_mostrate: Json | null
@@ -385,6 +390,8 @@ export type Database = {
           uuid_annuncio: string
         }
         Insert: {
+          annata_da?: number | null
+          annata_a?: number | null
           annate_ricercate?: string[] | null
           descrizione_aggiuntiva?: string | null
           info_mostrate?: Json | null
@@ -395,6 +402,8 @@ export type Database = {
           uuid_annuncio: string
         }
         Update: {
+          annata_da?: number | null
+          annata_a?: number | null
           annate_ricercate?: string[] | null
           descrizione_aggiuntiva?: string | null
           info_mostrate?: Json | null
@@ -498,33 +507,39 @@ export type Database = {
           compenso_mensile: number | null
           descrizione_aggiuntiva: string | null
           figura_ricercata: string | null
+          figure_ricercate: string[] | null
           info_mostrate: Json | null
           periodo_al: string | null
           periodo_dal: string | null
           requisiti: string | null
           settore: string | null
+          stagione: string | null
           uuid_annuncio: string
         }
         Insert: {
           compenso_mensile?: number | null
           descrizione_aggiuntiva?: string | null
           figura_ricercata?: string | null
+          figure_ricercate?: string[] | null
           info_mostrate?: Json | null
           periodo_al?: string | null
           periodo_dal?: string | null
           requisiti?: string | null
           settore?: string | null
+          stagione?: string | null
           uuid_annuncio: string
         }
         Update: {
           compenso_mensile?: number | null
           descrizione_aggiuntiva?: string | null
           figura_ricercata?: string | null
+          figure_ricercate?: string[] | null
           info_mostrate?: Json | null
           periodo_al?: string | null
           periodo_dal?: string | null
           requisiti?: string | null
           settore?: string | null
+          stagione?: string | null
           uuid_annuncio?: string
         }
         Relationships: [
@@ -541,33 +556,39 @@ export type Database = {
         Row: {
           categorie_ricercate: string[] | null
           descrizione_aggiuntiva: string | null
+          disponibile_remoto: boolean
           disponibilita_occupazione: string | null
           disponibilita_spostamento: string | null
           figure_professionali: string[] | null
           info_mostrate: Json | null
           lista_esperienze: Json | null
+          qualifiche_licenze: Json | null
           tipologie_sport: string[] | null
           uuid_annuncio: string
         }
         Insert: {
           categorie_ricercate?: string[] | null
           descrizione_aggiuntiva?: string | null
+          disponibile_remoto?: boolean
           disponibilita_occupazione?: string | null
           disponibilita_spostamento?: string | null
           figure_professionali?: string[] | null
           info_mostrate?: Json | null
           lista_esperienze?: Json | null
+          qualifiche_licenze?: Json | null
           tipologie_sport?: string[] | null
           uuid_annuncio: string
         }
         Update: {
           categorie_ricercate?: string[] | null
           descrizione_aggiuntiva?: string | null
+          disponibile_remoto?: boolean
           disponibilita_occupazione?: string | null
           disponibilita_spostamento?: string | null
           figure_professionali?: string[] | null
           info_mostrate?: Json | null
           lista_esperienze?: Json | null
+          qualifiche_licenze?: Json | null
           tipologie_sport?: string[] | null
           uuid_annuncio?: string
         }
@@ -1031,6 +1052,7 @@ export type Database = {
         Row: {
           costo_partenza: number | null
           id: number
+          indirizzo: string | null
           info_aggiuntive: string | null
           nascosto: boolean
           nome_organizzazione: string | null
@@ -1045,6 +1067,7 @@ export type Database = {
         Insert: {
           costo_partenza?: number | null
           id?: number
+          indirizzo?: string | null
           info_aggiuntive?: string | null
           nascosto?: boolean
           nome_organizzazione?: string | null
@@ -1059,6 +1082,7 @@ export type Database = {
         Update: {
           costo_partenza?: number | null
           id?: number
+          indirizzo?: string | null
           info_aggiuntive?: string | null
           nascosto?: boolean
           nome_organizzazione?: string | null
@@ -1169,13 +1193,16 @@ export type Database = {
         Row: {
           altezza: string | null
           anno_nascita: string | null
+          categoria_attuale: string | null
           categorie_ricercate: string[] | null
           cognome: string | null
           disponibilita: string | null
+          genere: string | null
           giorno_nascita: string | null
           id: number
           mese_nascita: string | null
           nascosto: boolean
+          nazionalita: string | null
           nome: string | null
           peso: string | null
           piede_principale: string | null
@@ -1190,13 +1217,16 @@ export type Database = {
         Insert: {
           altezza?: string | null
           anno_nascita?: string | null
+          categoria_attuale?: string | null
           categorie_ricercate?: string[] | null
           cognome?: string | null
           disponibilita?: string | null
+          genere?: string | null
           giorno_nascita?: string | null
           id?: number
           mese_nascita?: string | null
           nascosto?: boolean
+          nazionalita?: string | null
           nome?: string | null
           peso?: string | null
           piede_principale?: string | null
@@ -1211,13 +1241,16 @@ export type Database = {
         Update: {
           altezza?: string | null
           anno_nascita?: string | null
+          categoria_attuale?: string | null
           categorie_ricercate?: string[] | null
           cognome?: string | null
           disponibilita?: string | null
+          genere?: string | null
           giorno_nascita?: string | null
           id?: number
           mese_nascita?: string | null
           nascosto?: boolean
+          nazionalita?: string | null
           nome?: string | null
           peso?: string | null
           piede_principale?: string | null
@@ -1323,6 +1356,7 @@ export type Database = {
       }
       profilo_squadra: {
         Row: {
+		  categoria_attuale: string | null
           id: number
           nascosto: boolean
           nome_societa: string | null
@@ -1333,6 +1367,7 @@ export type Database = {
           uuid_profilo: string
         }
         Insert: {
+		  categoria_attuale?: string | null
           id?: number
           nascosto?: boolean
           nome_societa?: string | null
@@ -1343,6 +1378,7 @@ export type Database = {
           uuid_profilo: string
         }
         Update: {
+		  categoria_attuale?: string | null
           id?: number
           nascosto?: boolean
           nome_societa?: string | null
@@ -1374,13 +1410,16 @@ export type Database = {
           anno_nascita: string | null
           cognome: string | null
           disponibilita: string | null
+          disponibile_remoto: boolean
           figure_professionali: string[] | null
           giorno_nascita: string | null
           id: number
+          lista_esperienze: Json | null
           mese_nascita: string | null
           nascosto: boolean
           nome: string | null
           presentazione: string | null
+          qualifiche_licenze: Json | null
           sport_principale: string | null
           storico_esperienze: Json | null
           uuid_profilo: string
@@ -1389,13 +1428,16 @@ export type Database = {
           anno_nascita?: string | null
           cognome?: string | null
           disponibilita?: string | null
+          disponibile_remoto?: boolean
           figure_professionali?: string[] | null
           giorno_nascita?: string | null
           id?: number
+          lista_esperienze?: Json | null
           mese_nascita?: string | null
           nascosto?: boolean
           nome?: string | null
           presentazione?: string | null
+          qualifiche_licenze?: Json | null
           sport_principale?: string | null
           storico_esperienze?: Json | null
           uuid_profilo: string
@@ -1404,13 +1446,16 @@ export type Database = {
           anno_nascita?: string | null
           cognome?: string | null
           disponibilita?: string | null
+          disponibile_remoto?: boolean
           figure_professionali?: string[] | null
           giorno_nascita?: string | null
           id?: number
+          lista_esperienze?: Json | null
           mese_nascita?: string | null
           nascosto?: boolean
           nome?: string | null
           presentazione?: string | null
+          qualifiche_licenze?: Json | null
           sport_principale?: string | null
           storico_esperienze?: Json | null
           uuid_profilo?: string

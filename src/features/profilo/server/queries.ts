@@ -15,6 +15,8 @@ import {profileImageMapKey, resolvedProfileImageUrl,} from "@/features/profilo/p
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import type {ManagedAnnouncement, ProfileDashboardData,} from "@/features/profilo/types";
 import {createAdminClient} from "@/lib/supabase/admin";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
+import {categoryLabel, normalizeCategories, normalizeFigure, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
 import {createClient} from "@/lib/supabase/server";
 import type {Database} from "@/server/supabase";
 import {getDashboardInteractions} from "@/features/interazioni/server/queries";
@@ -42,30 +44,30 @@ const DETAIL_DEFINITIONS = [
 		key: "annuncio_squadra_cerca_giocatore",
 		profileType: "squadra",
 		subtype: "Squadra cerca giocatore",
-		fallbackTitle: "Ricerca giocatore",
+		fallbackTitle: "Ricerca giocatori",
 		titleFields: ["ruoli_principali"],
 		descriptionFields: ["descrizione_aggiuntiva", "stagione"],
 	},
 	{
 		key: "annuncio_squadra_cerca_staff",
 		profileType: "squadra",
-		subtype: "Squadra cerca staff",
+		subtype: "Ricerca staff sportivo",
 		fallbackTitle: "Ricerca staff sportivo",
-		titleFields: ["figura_ricercata"],
+		titleFields: ["figure_ricercate", "figura_ricercata"],
 		descriptionFields: ["descrizione_aggiuntiva", "requisiti"],
 	},
 	{
 		key: "annuncio_squadra_cerca_partita",
 		profileType: "squadra",
-		subtype: "Squadra cerca partita",
-		fallbackTitle: "Ricerca partita",
+		subtype: "Ricerca partite/amichevoli",
+		fallbackTitle: "Ricerca partite/amichevoli",
 		titleFields: ["categorie_avversario"],
 		descriptionFields: ["descrizione_aggiuntiva"],
 	},
 	{
 		key: "annuncio_squadra_cerca_sponsor",
 		profileType: "squadra",
-		subtype: "Squadra cerca sponsor",
+		subtype: "Ricerca sponsor",
 		fallbackTitle: "Ricerca sponsor",
 		titleFields: ["categoria_settore"],
 		descriptionFields: ["descrizione_aggiuntiva", "supporto_cercato", "offerta_fornita"],
@@ -83,7 +85,7 @@ const DETAIL_DEFINITIONS = [
 		profileType: "arbitro",
 		subtype: "Arbitro",
 		fallbackTitle: "Disponibilità arbitro",
-		titleFields: ["categorie_ricercate"],
+		titleFields: [],
 		descriptionFields: ["descrizione_aggiuntiva"],
 	},
 	{
@@ -135,7 +137,7 @@ function announcementQuery(supabase: SupabaseClient<Database>) {
 			annuncio_generico(titolo, contenuto),
 			annuncio_giocatore(ruoli_principali, categorie_ricercate, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_giocatore(ruoli_principali, stagione, descrizione_aggiuntiva),
-			annuncio_squadra_cerca_staff(figura_ricercata, requisiti, descrizione_aggiuntiva),
+			annuncio_squadra_cerca_staff(figura_ricercata, figure_ricercate, requisiti, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_partita(categorie_avversario, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_sponsor(categoria_settore, supporto_cercato, offerta_fornita, descrizione_aggiuntiva),
 			annuncio_staff_sportivo(figure_professionali, descrizione_aggiuntiva),
@@ -181,7 +183,11 @@ function firstDetailText(
 ): string | null {
 	for (const field of fields) {
 		const value = firstText(detail[field]);
-		if (value) return value;
+		if (value) {
+			if (field === "categorie_ricercate" || field === "categorie_avversario") return categoryLabel(value);
+			if (field === "figure_professionali" || field === "figure_ricercate" || field === "figura_ricercata") return normalizeFigure(value);
+			return value;
+		}
 	}
 	return null;
 }
@@ -284,12 +290,22 @@ function hydrateDraft<Shape extends object>(
 ): Shape {
 	if (!row) return defaults;
 	const source = row as Record<string, unknown>;
-	return Object.fromEntries(
+	const hydrated = Object.fromEntries(
 		Object.entries(defaults).map(([key, defaultValue]) => [
 			key,
 			source[key] ?? defaultValue,
 		]),
-	) as Shape;
+	) as Record<string, unknown>;
+	if (Array.isArray(hydrated.tipologie_sport)) {
+		hydrated.tipologie_sport = ordinaTipologieCalcio(hydrated.tipologie_sport.filter((value): value is string => typeof value === "string"));
+	}
+	if (Array.isArray(hydrated.categorie_ricercate)) {
+		hydrated.categorie_ricercate = normalizeCategories(hydrated.categorie_ricercate.filter((value): value is string => typeof value === "string"));
+	}
+	if (Array.isArray(hydrated.figure_professionali)) {
+		hydrated.figure_professionali = normalizeFigures(hydrated.figure_professionali.filter((value): value is string => typeof value === "string"));
+	}
+	return hydrated as Shape;
 }
 
 function queryFailed(error: {code?: string} | null, source: string) {
@@ -396,6 +412,9 @@ export async function getProfileDashboardData(
 	queryFailed(socialLinksResult.error, "link_social_profilo");
 
 	drafts.giocatore = hydrateDraft(drafts.giocatore, playerResult.data);
+	if (drafts.giocatore.piede_principale === "Ambipiede") drafts.giocatore.piede_principale = "Ambidestro";
+	if (drafts.giocatore.disponibilita === "disponibile-subito") drafts.giocatore.disponibilita = "svincolato";
+	if (drafts.giocatore.disponibilita === "svincolato") drafts.giocatore.categoria_attuale = "";
 	drafts.giocatore.video_highlights = playerMediaResult.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, teamResult.data);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staffResult.data);

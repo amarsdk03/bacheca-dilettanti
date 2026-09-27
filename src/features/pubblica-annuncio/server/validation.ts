@@ -20,9 +20,12 @@ import {
 	type PublishVisibility,
 	type TeamAnnouncementSubtype,
 } from "@/features/pubblica-annuncio/publish-model";
-import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {isValidIsoDate, isValidPhone, isValidTime, parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
+import {ANNATE_OPTIONS, EMAIL_PATTERN, FIGURA_PROFESSIONALE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {isValidIsoDate, isValidPhone, isValidTime, normalizeFacilityOpeningHours, parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
+import {ordinaTipologieCalcio, TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/tipologie-calcio";
+import {normalizeCategories, normalizeFigure} from "@/features/pubblica-annuncio/types/category-catalog";
+import {isStaffCategory} from "@/features/pubblica-annuncio/types/staff-category-catalog";
 import {parseProfileEditorPayload, RegistrationPayloadError,} from "@/features/registrati/server/registration";
 import type {Json} from "@/server/supabase";
 import {
@@ -159,8 +162,8 @@ function timeValue(value: unknown) {
 	return normalized;
 }
 
-function normalizeLocations(value: unknown, step: 2 | 3) {
-	if (!Array.isArray(value) || value.length === 0 || value.length > MAX_LOCATIONS) {
+function normalizeLocations(value: unknown, step: 2 | 3, allowEmpty = false) {
+	if (!Array.isArray(value) || (!allowEmpty && value.length === 0) || value.length > MAX_LOCATIONS) {
 		fail("Seleziona almeno una località valida.", step);
 	}
 	const seen = new Set<string>();
@@ -223,33 +226,40 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 	if (type === "annuncio_giocatore") {
 		assertExactKeys(value, ["categorie_ricercate", "descrizione_aggiuntiva"], 3);
 		return {
-			categorie_ricercate: stringList(value.categorie_ricercate, 3),
+			categorie_ricercate: normalizeCategories(stringList(value.categorie_ricercate, 3)),
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
 		};
 	}
 	if (type === "annuncio_squadra_cerca_giocatore") {
-		assertExactKeys(value, ["ruoli_principali", "ruoli_secondari", "annate_ricercate", "stagione", "descrizione_aggiuntiva"], 3);
+		assertExactKeys(value, ["ruoli_principali", "ruoli_secondari", "annata_da", "annata_a", "stagione", "descrizione_aggiuntiva"], 3);
 		const roles = playerRoles(value.ruoli_principali, value.ruoli_secondari);
+		const from = textValue(value.annata_da, 4, 3);
+		const to = textValue(value.annata_a, 4, 3);
+		if ((from && !ANNATE_OPTIONS.includes(from)) || (to && !ANNATE_OPTIONS.includes(to)) || Boolean(from) !== Boolean(to) || (from && to && Number(to) < Number(from))) {
+			fail("L'intervallo delle annate non è valido.", 3);
+		}
 		return {
 			ruoli_principali: roles.primary,
 			ruoli_secondari: roles.specific,
-			annate_ricercate: stringList(value.annate_ricercate, 3),
+			annate_ricercate: [],
+			annata_da: from,
+			annata_a: to,
 			stagione: textValue(value.stagione, 80, 3),
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
 		};
 	}
 	if (type === "annuncio_squadra_cerca_staff") {
-		assertExactKeys(value, ["figura_ricercata", "settore", "compenso_mensile", "requisiti", "periodo_dal", "periodo_al", "descrizione_aggiuntiva"], 3);
-		const from = dateValue(value.periodo_dal);
-		const to = dateValue(value.periodo_al);
-		if (from && to && from > to) fail("La data finale non può precedere quella iniziale.", 3);
+		assertExactKeys(value, ["figure_ricercate", "settore", "compenso_mensile", "requisiti", "stagione", "descrizione_aggiuntiva"], 3);
+		const figures = stringList(value.figure_ricercate, 3, true).map(normalizeFigure);
+		if (!figures.every((figure) => FIGURA_PROFESSIONALE_OPTIONS.includes(figure as typeof FIGURA_PROFESSIONALE_OPTIONS[number]))) fail("Seleziona figure valide dal catalogo.", 3);
 		return {
-			figura_ricercata: textValue(value.figura_ricercata, MAX_SHORT_TEXT, 3, true),
+			// The existing core writer still requires one text value; the full selection is saved by the step 07 wrapper.
+			figura_ricercata: figures[0],
+			figure_ricercate: figures,
 			settore: textValue(value.settore, MAX_SHORT_TEXT, 3),
 			compenso_mensile: numericValue(value.compenso_mensile, 3, {money: true}),
 			requisiti: textValue(value.requisiti, MAX_LONG_TEXT, 3, true),
-			periodo_dal: from,
-			periodo_al: to,
+			stagione: textValue(value.stagione, 80, 3),
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
 		};
 	}
@@ -262,7 +272,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		const timeTo = timeValue(value.orario_alle);
 		if (Boolean(timeFrom) !== Boolean(timeTo)) fail("Completa entrambi gli orari indicativi.", 3);
 		return {
-			categorie_avversario: stringList(value.categorie_avversario, 3, true),
+			categorie_avversario: normalizeCategories(stringList(value.categorie_avversario, 3, true)),
 			periodo_dal: from,
 			periodo_al: to,
 			orario_dalle: timeFrom,
@@ -272,28 +282,30 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		};
 	}
 	if (type === "annuncio_squadra_cerca_sponsor") {
-		assertExactKeys(value, ["categoria_settore", "supporto_cercato", "offerta_fornita", "descrizione_aggiuntiva"], 3);
+		assertExactKeys(value, ["categoria_settore", "offerta_fornita", "descrizione_aggiuntiva"], 3);
 		return {
 			categoria_settore: textValue(value.categoria_settore, MAX_SHORT_TEXT, 3, true),
-			supporto_cercato: textValue(value.supporto_cercato, MAX_LONG_TEXT, 3, true),
 			offerta_fornita: textValue(value.offerta_fornita, MAX_LONG_TEXT, 3, true),
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
 		};
 	}
 	if (type === "annuncio_staff_sportivo") {
 		assertExactKeys(value, ["tipologie_sport", "categorie_ricercate", "disponibilita_spostamento", "descrizione_aggiuntiva"], 3);
+		const staffCategories = stringList(value.categorie_ricercate, 3);
+		if (staffCategories.some((category) => !isStaffCategory(category))) fail("Seleziona categorie valide dal catalogo Staff.", 3);
+		const staffTravel = textValue(value.disponibilita_spostamento, 40, 3);
+		if (staffTravel && !["Si", "No", "Da valutare"].includes(staffTravel)) fail("La disponibilità agli spostamenti non è valida.", 3);
 		return {
-			tipologie_sport: stringList(value.tipologie_sport, 3, true),
-			categorie_ricercate: stringList(value.categorie_ricercate, 3),
-			disponibilita_spostamento: textValue(value.disponibilita_spostamento, 40, 3),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, 3, true)),
+			categorie_ricercate: staffCategories,
+			disponibilita_spostamento: staffTravel,
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
 		};
 	}
 	if (type === "annuncio_arbitro") {
-		assertExactKeys(value, ["tipologie_sport", "categorie_ricercate", "automunito", "disponibilita_spostamento", "descrizione_aggiuntiva"], 3);
+		assertExactKeys(value, ["tipologie_sport", "automunito", "disponibilita_spostamento", "descrizione_aggiuntiva"], 3);
 		return {
-			tipologie_sport: stringList(value.tipologie_sport, 3, true),
-			categorie_ricercate: stringList(value.categorie_ricercate, 3),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, 3, true)),
 			automunito: textValue(value.automunito, 40, 3),
 			disponibilita_spostamento: textValue(value.disponibilita_spostamento, 40, 3),
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
@@ -301,6 +313,8 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 	}
 	if (type === "annuncio_torneo_evento") {
 		assertExactKeys(value, ["nome_evento", "tipologie_sport", "modalita_iscrizione", "annate_ammesse_da", "annate_ammesse_a", "numero_squadre", "costo_partecipazione", "tipo_partecipazione", "lista_premi_trofei", "descrizione_aggiuntiva"], 3);
+		const sports = stringList(value.tipologie_sport, 3, true);
+		if (sports.length !== 1 || !TIPOLOGIA_CALCIO_OPTIONS.includes(sports[0] as typeof TIPOLOGIA_CALCIO_OPTIONS[number])) fail("Seleziona una sola tipologia di calcio.", 3);
 		const yearFrom = textValue(value.annate_ammesse_da, 4, 3);
 		const yearTo = textValue(value.annate_ammesse_a, 4, 3);
 		const currentYear = new Date().getFullYear();
@@ -317,7 +331,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		if (!["giocatore", "squadra"].includes(participation)) fail("La modalità di partecipazione non è valida.", 3);
 		return {
 			nome_evento: textValue(value.nome_evento, MAX_SHORT_TEXT, 3, true),
-			tipologie_sport: stringList(value.tipologie_sport, 3, true),
+			tipologie_sport: ordinaTipologieCalcio(sports),
 			modalita_iscrizione: registration,
 			annate_ammesse_da: yearFrom,
 			annate_ammesse_a: yearTo,
@@ -329,13 +343,18 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		};
 	}
 
-	assertExactKeys(value, ["tipologie_sport", "orari", "costo_partenza", "servizi_inclusi", "descrizione_aggiuntiva"], 3);
+	assertExactKeys(value, ["tipologie_sport", "orari", "costo_partenza", "servizi_inclusi", "indirizzo", "descrizione_aggiuntiva"], 3);
+	const sports = ordinaTipologieCalcio(stringList(value.tipologie_sport, 3, true));
+	const openingHours = normalizeFacilityOpeningHours(value.orari);
+	if (sports.length !== 1 || !TIPOLOGIA_CALCIO_OPTIONS.includes(sports[0] as typeof TIPOLOGIA_CALCIO_OPTIONS[number])) fail("Seleziona una tipologia di campo valida.", 3);
+	if (!openingHours) fail("Gli orari inseriti non sono validi.", 3);
 	return {
-		tipologie_sport: stringList(value.tipologie_sport, 3, true),
-		orari: textValue(value.orari, MAX_LONG_TEXT, 3),
+		tipologie_sport: sports,
+		orari: openingHours as unknown as Json,
 		costo_partenza: numericValue(value.costo_partenza, 3, {money: true}),
 		servizi_inclusi: textValue(value.servizi_inclusi, MAX_LONG_TEXT, 3),
-		descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
+		indirizzo: textValue(value.indirizzo, MAX_SHORT_TEXT, 3, true),
+		descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
 	};
 }
 
@@ -448,20 +467,28 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 	}
 
 	const detail = normalizeDetail(expectedAnnouncementType, rawValue.announcement.detail);
-	const announcementLocations = normalizeLocations(rawValue.announcement.locations, 3);
+	const sponsorHasNoLocations = expectedAnnouncementType === "annuncio_squadra_cerca_sponsor";
+	if (sponsorHasNoLocations && (!Array.isArray(rawValue.announcement.locations) || rawValue.announcement.locations.length > 0)) {
+		fail("La ricerca sponsor non prevede località.", 3);
+	}
+	const announcementLocations = normalizeLocations(rawValue.announcement.locations, 3, sponsorHasNoLocations);
+	if (expectedAnnouncementType === "annuncio_campo_impianto"
+		&& (announcementLocations.length !== 1 || !announcementLocations[0]?.citta)) {
+		fail("Seleziona una sola Regione e inserisci la Città o il comune dell’impianto.", 3);
+	}
 	const contacts = normalizeContacts(rawValue.announcement.contacts);
 	const extras = normalizeExtras(rawValue.announcement.extras, profileType);
 
 	const normalizedDrafts = {
 		giocatore: {categorie_ricercate: [], descrizione_aggiuntiva: ""},
-		squadraCercaGiocatore: {ruoli_principali: [], ruoli_secondari: [], annate_ricercate: [], stagione: "", descrizione_aggiuntiva: ""},
-		squadraCercaStaff: {figura_ricercata: "", settore: "", compenso_mensile: "", requisiti: "", periodo_dal: "", periodo_al: "", descrizione_aggiuntiva: ""},
+		squadraCercaGiocatore: {ruoli_principali: [], ruoli_secondari: [], annata_da: "", annata_a: "", stagione: "", descrizione_aggiuntiva: ""},
+		squadraCercaStaff: {figure_ricercate: [], settore: "", compenso_mensile: "", requisiti: "", stagione: "", descrizione_aggiuntiva: ""},
 		squadraCercaPartita: {categorie_avversario: [], periodo_dal: "", periodo_al: "", orario_dalle: "", orario_alle: "", disponibilita_trasferta: "", descrizione_aggiuntiva: ""},
-		squadraCercaSponsor: {categoria_settore: "", supporto_cercato: "", offerta_fornita: "", descrizione_aggiuntiva: ""},
+		squadraCercaSponsor: {categoria_settore: "", offerta_fornita: "", descrizione_aggiuntiva: ""},
 		staffSportivo: {tipologie_sport: [], categorie_ricercate: [], disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
-		arbitro: {tipologie_sport: [], categorie_ricercate: [], automunito: "", disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
+		arbitro: {tipologie_sport: [], automunito: "", disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
 		torneoEvento: {nome_evento: "", tipologie_sport: [], modalita_iscrizione: "", annate_ammesse_da: "", annate_ammesse_a: "", numero_squadre: "", costo_partecipazione: "", tipo_partecipazione: "squadra", lista_premi_trofei: [], descrizione_aggiuntiva: ""},
-		campoImpianto: {tipologie_sport: [], orari: "", costo_partenza: "", servizi_inclusi: "", descrizione_aggiuntiva: ""},
+		campoImpianto: {tipologie_sport: [], orari: [], costo_partenza: "", servizi_inclusi: "", indirizzo: "", descrizione_aggiuntiva: ""},
 	} satisfies AnnouncementDetailsDrafts;
 	assignNormalizedAnnouncementDetail(normalizedDrafts, expectedAnnouncementType, detail);
 	const detailMessage = getAnnouncementValidationMessage(profileType, teamSubtype, normalizedDrafts, announcementLocations, contacts, extras);

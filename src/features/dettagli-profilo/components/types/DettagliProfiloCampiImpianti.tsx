@@ -5,9 +5,10 @@ import ProfileDetailsLayout from "../ProfileDetailsLayout";
 import type {ProfileDetailPresentation} from "../profile-detail-presentation";
 
 const PRESENTATION = {
+	announcementsLabel: "Campi disponibili",
 	facts: [
-		{label: "Tipologie sportive", icon: ShirtIcon},
-		{label: "Sede principale", icon: MapPinIcon},
+		{label: "Tipologia campo", icon: ShirtIcon},
+		{label: "Indirizzo", icon: MapPinIcon},
 		{label: "Costo di partenza", icon: EuroIcon},
 	],
 	narrativeFieldLabels: ["Orari", "Servizi inclusi", "Informazioni aggiuntive"],

@@ -33,6 +33,7 @@ type RegioniInteresseFieldProps = {
 	idPrefix?: string;
 	required?: boolean;
 	error?: ReactNode | null;
+	label?: string;
 };
 
 // --- Sub-componente estratto: prima era duplicato 3 volte nel file originale ---
@@ -116,14 +117,15 @@ function RegioneCittaCard({
 }
 
 export default function RegioniInteresseField({
-	                                              regioniInteressate,
-	                                              setRegioniInteressate,
-	                                              cittaComuniPerRegione,
-	                                              setCittaComuniPerRegione,
-	                                              idPrefix,
-	                                              required = true,
-	                                              error,
-                                              }: RegioniInteresseFieldProps) {
+	regioniInteressate,
+	setRegioniInteressate,
+	cittaComuniPerRegione,
+	setCittaComuniPerRegione,
+	idPrefix,
+	required = true,
+	error,
+	label = "Regioni interessate",
+}: RegioniInteresseFieldProps) {
 	const [bozzaCittaPerRegione, setBozzaCittaPerRegione] = useState<Record<string, string>>({});
 	const generatedId = useId();
 	const resolvedIdPrefix = idPrefix ?? `regioni-${generatedId}`;
@@ -198,7 +200,7 @@ export default function RegioniInteresseField({
 			<Field data-invalid={Boolean(resolvedError)} className="mt-4">
 				<div className="flex items-center justify-between gap-3">
 					<FieldLegend variant="label" className="field-legend-title mb-0">
-						Regioni interessate <FieldRequirementIndicator required={required} />
+						{label} <FieldRequirementIndicator required={required} />
 					</FieldLegend>
 					<Button
 						type="button"

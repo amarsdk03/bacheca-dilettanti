@@ -4,6 +4,7 @@ import {TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/pubbl
 type TipologiaCalcioMultiselectFieldProps = {
 	value: string[];
 	onValueChange: (value: string[]) => void;
+	label?: string;
 	required?: boolean;
 	error?: string;
 };
@@ -11,12 +12,13 @@ type TipologiaCalcioMultiselectFieldProps = {
 export default function TipologiaCalcioMultiselectField({
 	value,
 	onValueChange,
+	label = "Tipologia calcio",
 	required = false,
 	error,
 }: TipologiaCalcioMultiselectFieldProps) {
 	return (
 		<MultiselectField
-			label="Tipologia calcio"
+			label={label}
 			options={TIPOLOGIA_CALCIO_OPTIONS}
 			value={value}
 			onValueChange={onValueChange}

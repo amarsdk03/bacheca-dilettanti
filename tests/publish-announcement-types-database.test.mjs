@@ -51,12 +51,12 @@ test("all nine announcement types publish through the current free RPC", {
 			create table public.profilo_torneo_evento (uuid_profilo uuid, nascosto boolean, nome_organizzazione text, tipologie_sport text[]);
 			create table public.profilo_campi_impianti (uuid_profilo uuid, nascosto boolean, nome_organizzazione text, sede_principale text, tipologie_sport text[]);
 			create table public.localita_profilo (uuid_profilo uuid, sottoprofilo text, regione text);
-			insert into public.profilo_giocatore values ('33333333-3333-4333-8333-333333333331', false, 'Mario', array['Calcio a 11'], '{"principali":["Difensore"],"specifici":[]}'::jsonb);
-			insert into public.profilo_squadra values ('33333333-3333-4333-8333-333333333331', false, 'Società', array['Calcio a 11']);
+			insert into public.profilo_giocatore values ('33333333-3333-4333-8333-333333333331', false, 'Mario', array['Calcio 11'], '{"principali":["Difensore"],"specifici":[]}'::jsonb);
+			insert into public.profilo_squadra values ('33333333-3333-4333-8333-333333333331', false, 'Società', array['Calcio 11']);
 			insert into public.profilo_staff_sportivo values ('33333333-3333-4333-8333-333333333331', false, 'Luigi', array['Allenatore'], '[]'::jsonb, 'disponibile-subito');
 			insert into public.profilo_arbitro values ('33333333-3333-4333-8333-333333333331', false, 'Anna', '[]'::jsonb, 'disponibile-subito');
-			insert into public.profilo_torneo_evento values ('33333333-3333-4333-8333-333333333331', false, 'Ente', array['Calcio a 11']);
-			insert into public.profilo_campi_impianti values ('33333333-3333-4333-8333-333333333331', false, 'Impianto', 'Roma', array['Calcio a 11']);
+			insert into public.profilo_torneo_evento values ('33333333-3333-4333-8333-333333333331', false, 'Ente', array['Calcio 11']);
+			insert into public.profilo_campi_impianti values ('33333333-3333-4333-8333-333333333331', false, 'Impianto', 'Roma', array['Calcio 11']);
 			insert into public.localita_profilo
 			select '33333333-3333-4333-8333-333333333331', profile_type, 'Lazio'
 			from unnest(array['giocatore','squadra','staff-sportivo','arbitro','torneo-evento','campi-impianti-sportivi']) as profile_type;
@@ -124,10 +124,10 @@ test("all nine announcement types publish through the current free RPC", {
 			["squadra", "annuncio_squadra_cerca_staff", {figura_ricercata: "Allenatore", settore: null, compenso_mensile: 19.99, requisiti: "Esperienza.", periodo_dal: "2026-10-01", periodo_al: "2026-12-31", descrizione_aggiuntiva: null}],
 			["squadra", "annuncio_squadra_cerca_partita", {categorie_avversario: ["Under 17"], periodo_dal: "2026-10-01", periodo_al: "2026-12-31", orario_dalle: "18:30", orario_alle: "20:00", disponibilita_trasferta: null, descrizione_aggiuntiva: null}],
 			["squadra", "annuncio_squadra_cerca_sponsor", {categoria_settore: "Locale", supporto_cercato: "Supporto.", offerta_fornita: "Visibilità.", descrizione_aggiuntiva: null}],
-			["staff-sportivo", "annuncio_staff_sportivo", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: [], disponibilita_spostamento: null, descrizione_aggiuntiva: "Cerco incarico."}],
-			["arbitro", "annuncio_arbitro", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: [], automunito: null, disponibilita_spostamento: null, descrizione_aggiuntiva: "Disponibile."}],
-			["torneo-evento", "annuncio_torneo_evento", {nome_evento: "Torneo", tipologie_sport: ["Calcio a 11"], modalita_iscrizione: null, annate_ammesse_da: null, annate_ammesse_a: null, numero_squadre: null, costo_partecipazione: null, tipo_partecipazione: "squadra", lista_premi_trofei: [], descrizione_aggiuntiva: "Torneo locale."}],
-			["campi-impianti-sportivi", "annuncio_campo_impianto", {tipologie_sport: ["Calcio a 11"], orari: null, costo_partenza: 0.29, servizi_inclusi: null, descrizione_aggiuntiva: "Campo disponibile."}],
+			["staff-sportivo", "annuncio_staff_sportivo", {tipologie_sport: ["Calcio 11"], categorie_ricercate: [], disponibilita_spostamento: null, descrizione_aggiuntiva: "Cerco incarico."}],
+			["arbitro", "annuncio_arbitro", {tipologie_sport: ["Calcio 11"], automunito: null, disponibilita_spostamento: null, descrizione_aggiuntiva: "Disponibile."}],
+			["torneo-evento", "annuncio_torneo_evento", {nome_evento: "Torneo", tipologie_sport: ["Calcio 11"], modalita_iscrizione: null, annate_ammesse_da: null, annate_ammesse_a: null, numero_squadre: null, costo_partecipazione: null, tipo_partecipazione: "squadra", lista_premi_trofei: [], descrizione_aggiuntiva: "Torneo locale."}],
+			["campi-impianti-sportivi", "annuncio_campo_impianto", {tipologie_sport: ["Calcio 11"], orari: null, costo_partenza: 0.29, servizi_inclusi: null, descrizione_aggiuntiva: "Campo disponibile."}],
 		];
 		await db.exec("set role authenticated");
 		for (const [index, [profileType, announcementType, detail]] of cases.entries()) {
@@ -159,7 +159,7 @@ test("all nine announcement types publish through the current free RPC", {
 			profile_locations: [],
 			profile_update: {
 				profile_type: "giocatore",
-				draft: {tipologie_sport: ["Calcio a 5"], ruoli_sport: {principali: ["Portiere"], specifici: []}},
+				draft: {tipologie_sport: ["Calcio 5"], ruoli_sport: {principali: ["Portiere"], specifici: []}},
 				locations: [{regione: "Lazio", citta: "Roma"}],
 			},
 			detail: cases[0][2],
@@ -191,7 +191,8 @@ test("all nine announcement types publish through the current free RPC", {
 			/INVALID_PUBLISH_PAYLOAD/,
 		);
 		await db.exec("reset role");
-		assert.deepEqual((await db.query("select tipologie_sport, ruoli_principali from public.annuncio_giocatore where uuid_annuncio = $1::uuid", [updatedPlayerId])).rows, [{tipologie_sport: ["Calcio a 5"], ruoli_principali: ["Portiere"]}]);
+		assert.deepEqual((await db.query("select categorie_ricercate from public.annuncio_arbitro")).rows[0].categorie_ricercate, []);
+		assert.deepEqual((await db.query("select tipologie_sport, ruoli_principali from public.annuncio_giocatore where uuid_annuncio = $1::uuid", [updatedPlayerId])).rows, [{tipologie_sport: ["Calcio 5"], ruoli_principali: ["Portiere"]}]);
 		await db.exec(`
 			alter table public.utente alter column utente_uuid set default gen_random_uuid();
 			alter table public.profilo alter column uuid set default gen_random_uuid();
@@ -217,7 +218,7 @@ test("all nine announcement types publish through the current free RPC", {
 		const guestPayload = {
 			profile_type: "squadra",
 			announcement_type: "annuncio_squadra_cerca_staff",
-			profile_draft: {sport_principale: "Calcio", nome_societa: "Società ospite", tipologie_sport: ["Calcio a 11"], sede_principale: "Roma", presentazione: "Squadra ospite"},
+			profile_draft: {sport_principale: "Calcio", nome_societa: "Società ospite", tipologie_sport: ["Calcio 11"], sede_principale: "Roma", presentazione: "Squadra ospite"},
 			profile_locations: [{regione: "Lazio", citta: "Roma"}],
 			profile_update: null,
 			detail: cases[2][2],

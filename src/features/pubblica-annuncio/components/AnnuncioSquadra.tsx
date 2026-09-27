@@ -6,7 +6,7 @@ import {Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet,}
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText,} from "@/components/ui/input-group";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
 import AnnateMultiselectField from "@/features/pubblica-annuncio/components/InputFields/AnnateMultiselectField";
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";
@@ -28,7 +28,7 @@ import OrarioIndicativoFields from "@/features/pubblica-annuncio/components/Inpu
 import {
 	CATEGORIE_CALCIO_GROUPS,
 	DISPONIBILITA_TRASFERTA_OPTIONS,
-	FIGURA_PROFESSIONALE_OPTIONS,
+	FIGURA_PROFESSIONALE_GROUPS,
 	RUOLI_SPECIFICI_PER_RUOLO,
 	TIPOLOGIA_PRINCIPALE_SQUADRA_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
@@ -348,10 +348,11 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 								<SelectValue placeholder="Seleziona" />
 							</SelectTrigger>
 							<SelectContent>
-								{FIGURA_PROFESSIONALE_OPTIONS.map((opzione) => (
-									<SelectItem key={opzione} value={opzione}>
-										{opzione}
-									</SelectItem>
+								{FIGURA_PROFESSIONALE_GROUPS.map((group) => (
+									<SelectGroup key={group.gruppo}>
+										<SelectLabel>{group.gruppo}</SelectLabel>
+										{group.opzioni.map((opzione) => <SelectItem key={opzione} value={opzione}>{opzione}</SelectItem>)}
+									</SelectGroup>
 								))}
 							</SelectContent>
 						</Select>

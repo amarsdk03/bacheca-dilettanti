@@ -16,6 +16,9 @@ import type {Json} from "@/server/supabase";
 import {COOKIE_POLICY_VERSION, PRIVACY_VERSION, TERMS_VERSION} from "@/features/legal/legal-versions";
 import {INVITATION_CODE_PATTERN, normalizeInvitationCode} from "@/features/inviti/invitation-code";
 import {isLinkAnnuncioValid, MAX_LINK_ANNUNCIO_LENGTH,} from "@/features/pubblica-annuncio/types/announcementExtras";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
+import {CATEGORIE_CALCIO_GROUPS, categoryKey, normalizeCategories, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
+import {PLAYER_NATIONALITIES} from "@/features/profilo/player-nationalities";
 import {
 	normalizePlayerPrimaryRole,
 	normalizePlayerPrimaryRoles,
@@ -34,7 +37,8 @@ const MAX_LOCATIONS = 100;
 const REGIONS = new Set(REGIONI_ITALIANE.map(({nome}) => nome));
 const AVAILABILITIES = new Set(["non-specificare", "disponibile-subito", "sotto-contratto"]);
 const VEHICLE_AVAILABILITIES = new Set(["si", "no"]);
-const FEET = new Set(["", "Destro", "Sinistro", "Ambipiede"]);
+const FEET = new Set(["", "Destro", "Sinistro", "Ambidestro", "Ambipiede"]);
+const NATIONALITIES = new Set(PLAYER_NATIONALITIES.map(({code}) => code));
 const EXPERIENCE_STATES = new Set(["non-specificare", "in-corso", "conseguito"]);
 const WEEKDAYS = new Set(["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica"]);
 const MONTHS = new Set([
@@ -223,7 +227,7 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 		);
 		if (
 			invalidYear(periodoDa)
-			|| (periodoAIsToday && profileType !== "giocatore")
+			|| (periodoAIsToday && profileType !== "giocatore" && profileType !== "staff-sportivo")
 			|| (!periodoAIsToday && invalidYear(periodoA))
 		) {
 			fail("Uno dei periodi inseriti non è valido.", 3, profileType);
@@ -247,6 +251,15 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 			squadraProfiloId: squadraProfiloId?.toLocaleLowerCase("en-US") ?? null,
 		};
 	});
+}
+
+function historicalStaffExperiences(value: unknown, profileType: ProfileType): Json[] {
+	if (value === null || value === undefined) return [];
+	if (!Array.isArray(value) || value.length > MAX_EXPERIENCES) {
+		fail("Le qualifiche precedenti non sono valide.", 3, profileType);
+	}
+	// Preserve the original JSON: old entries were not required to use the current editor shape.
+	return value as Json[];
 }
 
 function sportsRoles(value: unknown, profileType: ProfileType): Json {
@@ -324,8 +337,13 @@ function normalizeDraft(
 	if (!isRecord(value)) fail("I dati del profilo non sono validi.", 3, type);
 
 	if (type === "giocatore") {
-		assertExactKeys(value, ["altezza", "anno_nascita", "categorie_ricercate", "cognome", "disponibilita", "giorno_nascita", "mese_nascita", "nome", "peso", "piede_principale", "presentazione", "richiede_caricamento_highlights", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport", "video_highlights"], type);
+		assertExactKeys(value, ["altezza", "anno_nascita", "categoria_attuale", "categorie_ricercate", "cognome", "disponibilita", "genere", "giorno_nascita", "mese_nascita", "nome", "nazionalita", "peso", "piede_principale", "presentazione", "richiede_caricamento_highlights", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport", "video_highlights"], type);
 		const normalizedBirthDate = birthDate(value, type);
+		const availability = value.disponibilita === "disponibile-subito" ? "svincolato" : enumText(value.disponibilita, new Set(["svincolato", "sotto-contratto"]), type);
+		const category = textValue(value.categoria_attuale, 120, type);
+		if (category && !CATEGORIE_CALCIO_GROUPS.some(({gruppo, opzioni}) => opzioni.some((item) => categoryKey(gruppo, item) === category))) fail("La categoria attuale non è valida.", 3, type);
+		const gender = enumText(value.genere, new Set(["Maschio", "Femmina"]), type);
+		const nationality = enumText(value.nazionalita, NATIONALITIES, type);
 		const highlightsUploadRequested = value.richiede_caricamento_highlights ?? false;
 		if (typeof highlightsUploadRequested !== "boolean") {
 			fail("La richiesta relativa agli highlights non è valida.", 3, type);
@@ -333,49 +351,63 @@ function normalizeDraft(
 		return {
 			altezza: textValue(value.altezza, MAX_SHORT_TEXT, type),
 			anno_nascita: normalizedBirthDate.year,
-			categorie_ricercate: stringList(value.categorie_ricercate, type),
+			categoria_attuale: availability === "svincolato" ? null : category,
+			categorie_ricercate: normalizeCategories(stringList(value.categorie_ricercate, type)),
 			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
-			disponibilita: enumText(value.disponibilita, AVAILABILITIES, type),
+			disponibilita: availability,
+			genere: gender,
 			giorno_nascita: normalizedBirthDate.day,
 			mese_nascita: normalizedBirthDate.month,
 			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
+			nazionalita: nationality,
 			peso: textValue(value.peso, MAX_SHORT_TEXT, type),
-			piede_principale: enumText(value.piede_principale, FEET, type),
+			piede_principale: value.piede_principale === "Ambipiede" ? "Ambidestro" : enumText(value.piede_principale, FEET, type),
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
 			ruoli_sport: sportsRoles(value.ruoli_sport, type),
 			sport_principale: baseSport(value.sport_principale, type),
 			storico_carriera: experiences(value.storico_carriera, type),
-			tipologie_sport: stringList(value.tipologie_sport, type),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
 			video_highlights: highlightsUploadRequested ? "" : profileVideoLink(value.video_highlights, type),
 			richiede_caricamento_highlights: highlightsUploadRequested,
 		};
 	}
 
 	if (type === "squadra") {
-		assertExactKeys(value, ["nome_societa", "presentazione", "sede_principale", "sport_principale", "tipologie_sport"], type);
+		assertExactKeys(value, ["categoria_attuale", "nome_societa", "presentazione", "sport_principale", "tipologie_sport"], type);
+		const sports = ordinaTipologieCalcio(stringList(value.tipologie_sport, type));
+		if (sports.length !== 1) fail("Seleziona una sola tipologia di calcio.", 3, type);
+		const category = textValue(value.categoria_attuale, 120, type);
+		if (category && !CATEGORIE_CALCIO_GROUPS.some(({gruppo, opzioni}) => opzioni.some((item) => categoryKey(gruppo, item) === category))) fail("La categoria attuale non è valida.", 3, type);
 		return {
+			categoria_attuale: category,
 			nome_societa: textValue(value.nome_societa, MAX_SHORT_TEXT, type),
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
-			sede_principale: textValue(value.sede_principale, MAX_SHORT_TEXT, type),
 			sport_principale: baseSport(value.sport_principale, type),
-			tipologie_sport: stringList(value.tipologie_sport, type),
+			tipologie_sport: sports,
 		};
 	}
 
 	if (type === "staff-sportivo") {
-		assertExactKeys(value, ["anno_nascita", "cognome", "disponibilita", "figure_professionali", "giorno_nascita", "mese_nascita", "nome", "presentazione", "sport_principale", "storico_esperienze"], type);
+		assertExactKeys(value, ["anno_nascita", "cognome", "disponibilita", "disponibile_remoto", "figure_professionali", "giorno_nascita", "lista_esperienze", "mese_nascita", "nome", "presentazione", "qualifiche_licenze", "sport_principale", "storico_esperienze"], type);
 		const normalizedBirthDate = birthDate(value, type);
+		if (typeof value.disponibile_remoto !== "boolean") fail("La disponibilità da remoto non è valida.", 3, type);
+		if (!Array.isArray(value.qualifiche_licenze) || value.qualifiche_licenze.some((entry) => !isRecord(entry) || (entry.stato !== "in-corso" && entry.stato !== "conseguito"))) {
+			fail("Seleziona lo stato di ogni qualifica o licenza.", 3, type);
+		}
 		return {
 			anno_nascita: normalizedBirthDate.year,
 			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
 			disponibilita: enumText(value.disponibilita, AVAILABILITIES, type),
-			figure_professionali: stringList(value.figure_professionali, type),
+			disponibile_remoto: value.disponibile_remoto,
+			figure_professionali: normalizeFigures(stringList(value.figure_professionali, type)),
 			giorno_nascita: normalizedBirthDate.day,
 			mese_nascita: normalizedBirthDate.month,
 			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
+			lista_esperienze: experiences(value.lista_esperienze, type),
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
+			qualifiche_licenze: experiences(value.qualifiche_licenze, type),
 			sport_principale: baseSport(value.sport_principale, type),
-			storico_esperienze: experiences(value.storico_esperienze, type),
+			storico_esperienze: historicalStaffExperiences(value.storico_esperienze, type),
 		};
 	}
 
@@ -402,7 +434,7 @@ function normalizeDraft(
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
 			sede_principale: textValue(value.sede_principale, MAX_SHORT_TEXT, type),
 			sport_principale: baseSport(value.sport_principale, type),
-			tipologie_sport: stringList(value.tipologie_sport, type),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
 		};
 	}
 
@@ -429,7 +461,7 @@ function normalizeDraft(
 			automunito: enumText(value.automunito, VEHICLE_AVAILABILITIES, type),
 			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
 			disponibilita: enumText(value.disponibilita, AVAILABILITIES, type),
-			figure_professionali: stringList(value.figure_professionali, type),
+			figure_professionali: normalizeFigures(stringList(value.figure_professionali, type)),
 			giorno_nascita: normalizedBirthDate.day,
 			mese_nascita: normalizedBirthDate.month,
 			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
@@ -438,7 +470,7 @@ function normalizeDraft(
 			specializzazioni: textValue(value.specializzazioni, MAX_LONG_TEXT, type),
 			sport_principale: baseSport(value.sport_principale, type),
 			storico_esperienze: experiences(value.storico_esperienze, type),
-			tipologie_sport: stringList(value.tipologie_sport, type),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
 		};
 	}
 
@@ -457,7 +489,7 @@ function normalizeDraft(
 		};
 	}
 
-	assertExactKeys(value, ["costo_partenza", "info_aggiuntive", "nome_organizzazione", "orari", "presentazione", "sede_principale", "servizi_inclusi", "sport_principale", "tipologie_sport"], type);
+	assertExactKeys(value, ["costo_partenza", "indirizzo", "info_aggiuntive", "nome_organizzazione", "orari", "presentazione", "sede_principale", "servizi_inclusi", "sport_principale", "tipologie_sport"], type);
 	const cost = value.costo_partenza;
 	const normalizedCost = parseOptionalMoney(cost);
 	if ((cost !== null && cost !== undefined && typeof cost !== "number") || normalizedCost === undefined) {
@@ -465,6 +497,7 @@ function normalizeDraft(
 	}
 	return {
 		costo_partenza: normalizedCost,
+		indirizzo: textValue(value.indirizzo, MAX_SHORT_TEXT, type),
 		info_aggiuntive: textValue(value.info_aggiuntive, MAX_LONG_TEXT, type),
 		nome_organizzazione: textValue(value.nome_organizzazione, MAX_SHORT_TEXT, type),
 		orari: openingHours(value.orari, type),
@@ -472,7 +505,7 @@ function normalizeDraft(
 		sede_principale: textValue(value.sede_principale, MAX_SHORT_TEXT, type),
 		servizi_inclusi: textValue(value.servizi_inclusi, MAX_LONG_TEXT, type),
 		sport_principale: baseSport(value.sport_principale, type),
-		tipologie_sport: stringList(value.tipologie_sport, type),
+		tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
 	};
 }
 

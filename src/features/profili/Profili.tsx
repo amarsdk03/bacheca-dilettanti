@@ -78,7 +78,7 @@ function ProfileSearch({query}: {query: ProfileDirectoryQuery}) {
 							id="profile-search"
 							name="q"
 							defaultValue={query.q}
-							placeholder="Cerca per nome, ruolo, località o specializzazione…"
+							placeholder="Cerca per parole chiave..."
 							maxLength={100}
 						/>
 						<InputGroupAddon align="inline-end">
@@ -206,7 +206,7 @@ function ProfileFiltersForm({query, type, idPrefix}: {
 						label="Disponibilità"
 						value={query.filters.disponibilita}
 						allLabel="Qualsiasi disponibilità"
-						options={[...PROFILE_FILTER_OPTIONS.disponibilita]}
+						options={PROFILE_FILTER_OPTIONS.disponibilita.filter(({value}) => type === "giocatore" ? value !== "disponibile-subito" : value !== "svincolato")}
 					/>
 				)}
 

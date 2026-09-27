@@ -11,13 +11,25 @@ import {createProfileSocialLinks, profileSocialLinksFromRows,} from "@/features/
 import type {PublishableProfileType, PublishProfileContext,} from "@/features/pubblica-annuncio/publish-model";
 import {isPublishableProfileType} from "@/features/pubblica-annuncio/publish-model";
 import {createClient} from "@/lib/supabase/server";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
+import {normalizeCategories, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
 
 function hydrateDraft<Shape extends object>(defaults: Shape, row: object | null): Shape {
 	if (!row) return defaults;
 	const source = row as Record<string, unknown>;
-	return Object.fromEntries(
+	const hydrated = Object.fromEntries(
 		Object.entries(defaults).map(([key, defaultValue]) => [key, source[key] ?? defaultValue]),
-	) as Shape;
+	) as Record<string, unknown>;
+	if (Array.isArray(hydrated.tipologie_sport)) {
+		hydrated.tipologie_sport = ordinaTipologieCalcio(hydrated.tipologie_sport.filter((value): value is string => typeof value === "string"));
+	}
+	if (Array.isArray(hydrated.categorie_ricercate)) {
+		hydrated.categorie_ricercate = normalizeCategories(hydrated.categorie_ricercate.filter((value): value is string => typeof value === "string"));
+	}
+	if (Array.isArray(hydrated.figure_professionali)) {
+		hydrated.figure_professionali = normalizeFigures(hydrated.figure_professionali.filter((value): value is string => typeof value === "string"));
+	}
+	return hydrated as Shape;
 }
 
 function queryFailed(error: {code?: string} | null, source: string) {

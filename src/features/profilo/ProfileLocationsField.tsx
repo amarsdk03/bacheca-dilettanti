@@ -1,7 +1,12 @@
 import {type Dispatch, type SetStateAction, useEffect, useRef} from "react";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
+import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {Input} from "@/components/ui/input";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import type {ProfileLocationDraft} from "@/features/profilo/profile-model";
+import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
+import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import RegioniInteresseField, {
 	type CittaComuniPerRegione,
 } from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
@@ -12,6 +17,8 @@ interface ProfileLocationsFieldProps {
 	onValueChange: (value: ProfileLocationDraft[]) => void;
 	required?: boolean;
 	error?: string | null;
+	mode?: "single" | "multiple";
+	label?: string;
 }
 
 function locationsToRegions(value: readonly ProfileLocationDraft[]) {
@@ -50,6 +57,8 @@ export default function ProfileLocationsField({
 	onValueChange,
 	required = false,
 	error,
+	mode = "multiple",
+	label = "Regioni interessate",
 }: ProfileLocationsFieldProps) {
 	const regions = locationsToRegions(value);
 	const citiesByRegion = locationsToCities(value);
@@ -59,6 +68,34 @@ export default function ProfileLocationsField({
 		currentSelection.current = {regions, citiesByRegion};
 	}, [citiesByRegion, regions]);
 
+	if (mode === "single") {
+		const first = value[0];
+		const region = first?.regione ?? "";
+		return (
+			<FieldSet>
+				<FieldLegend variant="label" className="field-legend-title">{label}</FieldLegend>
+				<FieldGroup className="grid gap-4 sm:grid-cols-2">
+					<Field data-invalid={Boolean(error)}>
+						<FieldLabel htmlFor={`${idPrefix}-regione`}>Regione <FieldRequirementIndicator required={required} /></FieldLabel>
+						<Select value={region || null} onValueChange={(selected) => onValueChange(selected ? [{regione: selected, citta: null}] : [])}>
+							<SelectTrigger id={`${idPrefix}-regione`} className="w-full" aria-required={required} aria-invalid={Boolean(error)}><SelectValue placeholder="Seleziona una regione" /></SelectTrigger>
+							<SelectContent>
+								<SelectGroup>
+									{REGIONI_ITALIANE.map(({nome}) => <SelectItem key={nome} value={nome}>{nome}</SelectItem>)}
+								</SelectGroup>
+							</SelectContent>
+						</Select>
+						{error && <FieldError>{error}</FieldError>}
+					</Field>
+					<Field>
+						<FieldLabel htmlFor={`${idPrefix}-citta`}>Città/comune <OptionalLabel /></FieldLabel>
+						<Input id={`${idPrefix}-citta`} value={first?.citta ?? ""} onChange={(event) => onValueChange([{regione: region, citta: event.target.value || null}])} disabled={!region} maxLength={120} placeholder="Es. Roma" />
+					</Field>
+				</FieldGroup>
+				{value.length > 1 && <FieldDescription>Altre {value.length - 1} località storiche restano visibili nel profilo. Modificando questa zona, saranno sostituite dalla nuova scelta.</FieldDescription>}
+			</FieldSet>
+		);
+	}
 	const setRegions: Dispatch<SetStateAction<string[]>> = (nextRegions) => {
 		const resolvedRegions = typeof nextRegions === "function"
 			? nextRegions(currentSelection.current.regions)
@@ -86,6 +123,7 @@ export default function ProfileLocationsField({
 	return (
 		<RegioniInteresseField
 			idPrefix={idPrefix}
+			label={label}
 			regioniInteressate={regions}
 			setRegioniInteressate={setRegions}
 			cittaComuniPerRegione={citiesByRegion}

@@ -2,6 +2,7 @@ import {DISPONIBILITA_PROFILO_OPTIONS} from "@/features/pubblica-annuncio/types/
 
 export function availabilityLabel(value: string | null | undefined) {
 	if (value === "non-specificare") return null;
+	if (value === "svincolato") return "Svincolato";
 	return DISPONIBILITA_PROFILO_OPTIONS.find((option) => option.valore === value)?.etichetta ?? null;
 }
 

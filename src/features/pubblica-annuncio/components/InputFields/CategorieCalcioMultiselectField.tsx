@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/combobox";
 import {Field, FieldError, FieldLabel} from "@/components/ui/field";
 import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
+import {categoryKey, categoryLabel} from "@/features/pubblica-annuncio/types/category-catalog";
 
 type CategorieCalcioMultiselectFieldProps = {
 	label: string;
@@ -27,6 +28,10 @@ type CategorieCalcioMultiselectFieldProps = {
 	required?: boolean;
 	error?: string;
 	className?: string;
+	optionValue?: (group: string, option: string) => string;
+	formatValue?: (value: string) => string;
+	placeholder?: string;
+	emptyText?: string;
 };
 
 export default function CategorieCalcioMultiselectField({
@@ -37,8 +42,16 @@ export default function CategorieCalcioMultiselectField({
 	required = false,
 	error,
 	className,
+	optionValue = categoryKey,
+	formatValue = categoryLabel,
+	placeholder = "Seleziona categorie...",
+	emptyText = "Nessuna categoria trovata.",
 }: CategorieCalcioMultiselectFieldProps) {
 	const anchor = useComboboxAnchor();
+	const groupedItems = items.map(({gruppo, opzioni}) => ({
+		gruppo,
+		opzioni: opzioni.map((option) => optionValue(gruppo, option)),
+	}));
 
 	return (
 		<Field className={className} data-invalid={Boolean(error)}>
@@ -46,15 +59,15 @@ export default function CategorieCalcioMultiselectField({
 			<Combobox
 				multiple
 				autoHighlight
-				items={items}
+				items={groupedItems}
 				value={value}
 				onValueChange={onValueChangeAction}
 			>
 				<ComboboxChips ref={anchor} className="w-full">
 					<ComboboxValue>
-						{value.map((item) => <ComboboxChip key={item}>{item}</ComboboxChip>)}
+						{value.map((item) => <ComboboxChip key={item}>{formatValue(item)}</ComboboxChip>)}
 						<ComboboxChipsInput
-							placeholder={value.length === 0 ? "Seleziona categorie..." : ""}
+							placeholder={value.length === 0 ? placeholder : ""}
 							aria-invalid={Boolean(error)}
 							aria-required={required}
 						/>
@@ -62,13 +75,13 @@ export default function CategorieCalcioMultiselectField({
 				</ComboboxChips>
 
 				<ComboboxContent anchor={anchor}>
-					<ComboboxEmpty>Nessuna categoria trovata.</ComboboxEmpty>
+					<ComboboxEmpty>{emptyText}</ComboboxEmpty>
 					<ComboboxList>
 						{(group, index) => (
 							<ComboboxGroup key={group.gruppo} items={group.opzioni}>
 								<ComboboxLabel>{group.gruppo}</ComboboxLabel>
 								<ComboboxCollection>
-									{(item) => <ComboboxItem key={item} value={item}>{item}</ComboboxItem>}
+									{(item) => <ComboboxItem key={item} value={item}>{formatValue(item).replace(`${group.gruppo} · `, "")}</ComboboxItem>}
 								</ComboboxCollection>
 								{index < items.length - 1 && <ComboboxSeparator />}
 							</ComboboxGroup>
