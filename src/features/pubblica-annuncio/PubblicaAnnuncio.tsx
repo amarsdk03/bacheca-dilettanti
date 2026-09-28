@@ -49,6 +49,7 @@ import {getAnnouncementImageError} from "@/features/pubblica-annuncio/types/anno
 interface PubblicaAnnuncioProps {
 	authenticated: boolean;
 	registered: boolean;
+	initialEmail: string;
 	profileContext: PublishProfileContext | null;
 }
 
@@ -70,6 +71,7 @@ function PublishStepTab({value, locked, reason, resetKey, children}: {
 export default function PubblicaAnnuncio({
 	authenticated,
 	registered,
+	initialEmail,
 	profileContext,
 }: PubblicaAnnuncioProps) {
 	const [step, setStep] = useState(1);
@@ -86,7 +88,7 @@ export default function PubblicaAnnuncio({
 	));
 	const [announcementDrafts, setAnnouncementDrafts] = useState(createAnnouncementDetailsDrafts);
 	const [announcementLocations, setAnnouncementLocations] = useState<ProfileLocationDraft[]>([]);
-	const [contacts, setContacts] = useState<AnnouncementContacts>({email: "", phone: ""});
+	const [contacts, setContacts] = useState<AnnouncementContacts>({email: registered ? initialEmail : "", phone: ""});
 	const [extras, setExtras] = useState<AnnouncementExtras>({genericLink: ""});
 	const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
 	const [announcementImagePreviewUrl, setAnnouncementImagePreviewUrl] = useState<string | null>(null);

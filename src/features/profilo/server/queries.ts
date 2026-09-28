@@ -16,7 +16,12 @@ import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import type {ManagedAnnouncement, ProfileDashboardData,} from "@/features/profilo/types";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
-import {categoryLabel, normalizeCategories, normalizeFigure, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
+import {
+	categoryLabel,
+	normalizeCategories,
+	normalizeFigure,
+	normalizeFigures
+} from "@/features/pubblica-annuncio/types/category-catalog";
 import {createClient} from "@/lib/supabase/server";
 import type {Database} from "@/server/supabase";
 import {getDashboardInteractions} from "@/features/interazioni/server/queries";
@@ -393,7 +398,7 @@ export async function getProfileDashboardData(
 		supabase.from("profilo_professionista_studente").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
-		admin.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["instagram", "facebook", "youtube", "linkedin"]),
+		admin.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
 		loadProfileImageUrlMap(admin, [baseProfile.uuid]),
 		loadAnnouncements(supabase, userId, baseProfile.uuid),
 		getDashboardInteractions(supabase, userId, baseProfile.uuid),

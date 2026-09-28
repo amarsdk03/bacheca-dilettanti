@@ -20,8 +20,6 @@ export default function DettagliProfiloGiocatore({profile, actions}: {profile: P
 				officialVerified={profile.officialVerified}
 				primary={profile.primary}
 				availabilityLabel={profile.availabilityLabel}
-				followerCount={profile.followerCount}
-				announcementCount={profile.announcementCount}
 				player={player}
 				actions={actions}
 			/>

@@ -67,6 +67,8 @@ export const CITTA_ESEMPIO_PER_REGIONE: Record<string, string[]> = {
 };
 
 import {TIPOLOGIA_CALCIO_OPTIONS} from "./tipologie-calcio";
+import {PLAYER_PRIMARY_ROLES, PLAYER_SPECIFIC_ROLES_BY_PRIMARY,} from "@/features/profilo/player-roles";
+
 export {TIPOLOGIA_CALCIO_OPTIONS, ordinaTipologieCalcio} from "./tipologie-calcio";
 export {CATEGORIE_CALCIO_GROUPS, FIGURA_PROFESSIONALE_GROUPS, FIGURA_PROFESSIONALE_OPTIONS} from "./category-catalog";
 
@@ -84,8 +86,6 @@ export const TIPOLOGIA_PRINCIPALE_SQUADRA_OPTIONS = TIPOLOGIA_CALCIO_OPTIONS.map
 	valore: tipologia,
 	etichetta: tipologia,
 }));
-
-import {PLAYER_PRIMARY_ROLES, PLAYER_SPECIFIC_ROLES_BY_PRIMARY,} from "@/features/profilo/player-roles";
 
 export const RUOLO_PRINCIPALE_OPTIONS = PLAYER_PRIMARY_ROLES;
 export const RUOLI_SPECIFICI_PER_RUOLO: Readonly<Record<string, readonly string[]>> = PLAYER_SPECIFIC_ROLES_BY_PRIMARY;

@@ -20,11 +20,21 @@ import {
 	type PublishVisibility,
 	type TeamAnnouncementSubtype,
 } from "@/features/pubblica-annuncio/publish-model";
-import {ANNATE_OPTIONS, EMAIL_PATTERN, FIGURA_PROFESSIONALE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {isValidIsoDate, isValidPhone, isValidTime, normalizeFacilityOpeningHours, parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
+import {
+	ANNATE_OPTIONS,
+	EMAIL_PATTERN,
+	FIGURA_PROFESSIONALE_OPTIONS
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {
+	isValidIsoDate,
+	isValidPhone,
+	isValidTime,
+	normalizeFacilityOpeningHours,
+	parseOptionalMoney
+} from "@/features/pubblica-annuncio/publish-field-validation";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {ordinaTipologieCalcio, TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/tipologie-calcio";
-import {normalizeCategories, normalizeFigure} from "@/features/pubblica-annuncio/types/category-catalog";
+import {ANY_CATEGORY, normalizeCategories, normalizeFigure} from "@/features/pubblica-annuncio/types/category-catalog";
 import {isStaffCategory} from "@/features/pubblica-annuncio/types/staff-category-catalog";
 import {parseProfileEditorPayload, RegistrationPayloadError,} from "@/features/registrati/server/registration";
 import type {Json} from "@/server/supabase";
@@ -230,7 +240,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		const from = textValue(value.annata_da, 4, 3);
 		const to = textValue(value.annata_a, 4, 3);
 		if ((from && !ANNATE_OPTIONS.includes(from)) || (to && !ANNATE_OPTIONS.includes(to)) || Boolean(from) !== Boolean(to) || (from && to && Number(to) < Number(from))) {
-			fail("L'intervallo delle annate non è valido.", 3);
+			fail("L'annata non può essere inferiore rispetto al campo precedente.", 3);
 		}
 		return {
 			ruoli_principali: roles.primary,
@@ -286,12 +296,13 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 	if (type === "annuncio_staff_sportivo") {
 		assertExactKeys(value, ["tipologie_sport", "categorie_ricercate", "disponibilita_spostamento", "descrizione_aggiuntiva"], 3);
 		const staffCategories = stringList(value.categorie_ricercate, 3);
-		if (staffCategories.some((category) => !isStaffCategory(category))) fail("Seleziona categorie valide dal catalogo Staff.", 3);
+		const normalizedStaffCategories = staffCategories.includes(ANY_CATEGORY) ? [ANY_CATEGORY] : staffCategories;
+		if (normalizedStaffCategories.some((category) => category !== ANY_CATEGORY && !isStaffCategory(category))) fail("Seleziona categorie valide dal catalogo Staff.", 3);
 		const staffTravel = textValue(value.disponibilita_spostamento, 40, 3);
 		if (staffTravel && !["Si", "No", "Da valutare"].includes(staffTravel)) fail("La disponibilità agli spostamenti non è valida.", 3);
 		return {
 			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, 3, true)),
-			categorie_ricercate: staffCategories,
+			categorie_ricercate: normalizedStaffCategories,
 			disponibilita_spostamento: staffTravel,
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
 		};
@@ -303,6 +314,13 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 			automunito: textValue(value.automunito, 40, 3),
 			disponibilita_spostamento: textValue(value.disponibilita_spostamento, 40, 3),
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
+		};
+	}
+	if (type === "annuncio_creators") {
+		assertExactKeys(value, ["titolo_post", "descrizione_post"], 3);
+		return {
+			titolo_post: textValue(value.titolo_post, MAX_SHORT_TEXT, 3, true),
+			descrizione_post: textValue(value.descrizione_post, MAX_LONG_TEXT, 3),
 		};
 	}
 	if (type === "annuncio_torneo_evento") {
@@ -373,6 +391,7 @@ function assignNormalizedAnnouncementDetail(
 		annuncio_squadra_cerca_sponsor: "squadraCercaSponsor",
 		annuncio_staff_sportivo: "staffSportivo",
 		annuncio_arbitro: "arbitro",
+		annuncio_creators: "creator",
 		annuncio_torneo_evento: "torneoEvento",
 		annuncio_campo_impianto: "campoImpianto",
 	}[type] as keyof AnnouncementDetailsDrafts;
@@ -481,6 +500,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		squadraCercaSponsor: {categoria_settore: "", offerta_fornita: "", descrizione_aggiuntiva: ""},
 		staffSportivo: {tipologie_sport: [], categorie_ricercate: [], disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
 		arbitro: {tipologie_sport: [], automunito: "", disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
+		creator: {titolo_post: "", descrizione_post: ""},
 		torneoEvento: {nome_evento: "", tipologie_sport: [], modalita_iscrizione: "", annate_ammesse_da: "", annate_ammesse_a: "", numero_squadre: "", costo_partecipazione: "", tipo_partecipazione: "squadra", lista_premi_trofei: [], descrizione_aggiuntiva: ""},
 		campoImpianto: {tipologie_sport: [], orari: [], costo_partenza: "", servizi_inclusi: "", indirizzo: "", descrizione_aggiuntiva: ""},
 	} satisfies AnnouncementDetailsDrafts;

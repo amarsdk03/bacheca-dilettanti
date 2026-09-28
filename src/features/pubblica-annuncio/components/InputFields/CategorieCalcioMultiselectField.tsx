@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/combobox";
 import {Field, FieldError, FieldLabel} from "@/components/ui/field";
 import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
-import {categoryKey, categoryLabel} from "@/features/pubblica-annuncio/types/category-catalog";
+import {ANY_CATEGORY, categoryKey, categoryLabel} from "@/features/pubblica-annuncio/types/category-catalog";
 
 type CategorieCalcioMultiselectFieldProps = {
 	label: string;
@@ -28,10 +28,11 @@ type CategorieCalcioMultiselectFieldProps = {
 	required?: boolean;
 	error?: string;
 	className?: string;
-	optionValue?: (group: string, option: string) => string;
-	formatValue?: (value: string) => string;
+	optionValueAction?: (group: string, option: string) => string;
+	formatValueAction?: (value: string) => string;
 	placeholder?: string;
 	emptyText?: string;
+	includeAny?: boolean;
 };
 
 export default function CategorieCalcioMultiselectField({
@@ -42,16 +43,25 @@ export default function CategorieCalcioMultiselectField({
 	required = false,
 	error,
 	className,
-	optionValue = categoryKey,
-	formatValue = categoryLabel,
+	optionValueAction = categoryKey,
+	formatValueAction = categoryLabel,
 	placeholder = "Seleziona categorie...",
 	emptyText = "Nessuna categoria trovata.",
+	includeAny = false,
 }: CategorieCalcioMultiselectFieldProps) {
 	const anchor = useComboboxAnchor();
-	const groupedItems = items.map(({gruppo, opzioni}) => ({
+	const groupedItems = [
+		...(includeAny ? [{gruppo: "Selezione generale", opzioni: [ANY_CATEGORY]}] : []),
+		...items.map(({gruppo, opzioni}) => ({
 		gruppo,
-		opzioni: opzioni.map((option) => optionValue(gruppo, option)),
-	}));
+		opzioni: opzioni.map((option) => optionValueAction(gruppo, option)),
+		})),
+	];
+	const updateValue = (nextValue: string[]) => {
+		if (!includeAny) return onValueChangeAction(nextValue);
+		if (nextValue.includes(ANY_CATEGORY) && !value.includes(ANY_CATEGORY)) return onValueChangeAction([ANY_CATEGORY]);
+		onValueChangeAction(nextValue.filter((item) => item !== ANY_CATEGORY));
+	};
 
 	return (
 		<Field className={className} data-invalid={Boolean(error)}>
@@ -61,11 +71,11 @@ export default function CategorieCalcioMultiselectField({
 				autoHighlight
 				items={groupedItems}
 				value={value}
-				onValueChange={onValueChangeAction}
+				onValueChange={updateValue}
 			>
 				<ComboboxChips ref={anchor} className="w-full">
 					<ComboboxValue>
-						{value.map((item) => <ComboboxChip key={item}>{formatValue(item)}</ComboboxChip>)}
+						{value.map((item) => <ComboboxChip key={item}>{formatValueAction(item)}</ComboboxChip>)}
 						<ComboboxChipsInput
 							placeholder={value.length === 0 ? placeholder : ""}
 							aria-invalid={Boolean(error)}
@@ -81,9 +91,9 @@ export default function CategorieCalcioMultiselectField({
 							<ComboboxGroup key={group.gruppo} items={group.opzioni}>
 								<ComboboxLabel>{group.gruppo}</ComboboxLabel>
 								<ComboboxCollection>
-									{(item) => <ComboboxItem key={item} value={item}>{formatValue(item).replace(`${group.gruppo} · `, "")}</ComboboxItem>}
+									{(item) => <ComboboxItem key={item} value={item}>{formatValueAction(item).replace(`${group.gruppo} · `, "")}</ComboboxItem>}
 								</ComboboxCollection>
-								{index < items.length - 1 && <ComboboxSeparator />}
+								{index < groupedItems.length - 1 && <ComboboxSeparator />}
 							</ComboboxGroup>
 						)}
 					</ComboboxList>

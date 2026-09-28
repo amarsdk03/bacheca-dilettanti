@@ -2,7 +2,7 @@
 
 Nel profilo Squadra la tipologia di calcio è singola e obbligatoria; la categoria attuale è singola e facoltativa. La località del profilo è il riferimento pubblico e non viene duplicata in un campo sede testuale.
 
-Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium sono salvati subito, ma diventano pubblici soltanto con un piano a pagamento. Per i contatti è obbligatorio compilare almeno uno tra email e telefono. Le località dell'annuncio sono indipendenti da quelle del profilo. Nei profili personali, la prima località storica appare nel selettore singolo; le altre restano salvate fino a una modifica esplicita della località.
+Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium sono salvati subito, ma diventano pubblici soltanto con un piano a pagamento. Per i contatti è obbligatorio compilare almeno uno tra email e telefono; per un utente registrato, l’email dell’account viene proposta come valore iniziale. Le località dell'annuncio sono indipendenti da quelle del profilo. Nei profili personali, la prima località storica appare nel selettore singolo; le altre restano salvate fino a una modifica esplicita della località. Tutti i profili possono inoltre indicare un sito web, mostrato per primo e a larghezza intera nell’editor dei collegamenti social.
 
 ## Giocatore
 
@@ -11,19 +11,19 @@ Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium s
 | Profilo | Nome | Testo | Sì |
 | Profilo | Cognome | Testo | No |
 | Profilo | Data di nascita | Anno obbligatorio; giorno e mese facoltativi | Sì, anno |
-| Profilo | Genere | Maschio o Femmina | Sì |
+| Profilo | Genere | Uomo o Donna | Sì |
 | Profilo | Nazionalità | Paese singolo ricercabile con bandiera SVG, se disponibile | No |
 | Profilo | Tipologie di calcio | Selezione multipla | Sì |
 | Profilo | Disponibilità | Svincolato o sotto contratto | Sì |
-| Profilo | Ruolo principale | Selezione multipla | Sì |
-| Profilo | Ruolo specifico | Selezione multipla raggruppata per ruolo principale | No |
+| Profilo | Ruoli principali | Selezione multipla | Sì |
+| Profilo | Ruoli specifici | Selezione multipla raggruppata per ruolo principale | No |
 | Profilo | Categoria attuale | Selezione singola raggruppata per macrocategoria, disabilitata se Svincolato | No |
 | Profilo | Altezza, peso, piede | Testi e selezione | No |
 | Profilo | Presentazione | Testo lungo | No |
 | Profilo | Storico carriera | Elenco di esperienze | No |
 | Profilo | Video highlights | URL del profilo Giocatore | No |
 | Profilo | In che zona vivi? | Regione singola obbligatoria; città/comune facoltativa | Sì, regione |
-| Annuncio | Categorie ricercate | Selezione multipla | No |
+| Annuncio | Categorie ricercate | Selezione multipla, incluso “Qualsiasi” come scelta esclusiva | No |
 | Annuncio | Descrizione | Testo lungo | Sì |
 | Annuncio | Link annuncio | URL HTTP/HTTPS Premium | No |
 | Annuncio | Immagine | PNG, JPEG o WebP, massimo 5 MB, Premium | No |
@@ -73,7 +73,7 @@ Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium s
 | Profilo | Qualifiche / Licenze precedenti | Voci storiche leggibili, senza stato attribuito automaticamente | No |
 | Profilo | In che zona vivi? | Regione singola obbligatoria; città/comune facoltativa | Sì, regione |
 | Annuncio | Tipologie di calcio | Selezione multipla | Sì |
-| Annuncio | Categorie ricercate | Selezione multipla dal Catalogo Staff, con macrocategoria distinta | No |
+| Annuncio | Categorie ricercate | Selezione multipla dal Catalogo Staff, con macrocategoria distinta e “Qualsiasi” come scelta esclusiva | No |
 | Annuncio | Disponibilità agli spostamenti | Sì, No o Da valutare | No |
 | Annuncio | Lista esperienze e Qualifiche / Licenze | Snapshot dei dati del profilo al momento della pubblicazione, senza editor separati | No |
 | Annuncio | Descrizione | Testo lungo | Sì |
@@ -94,7 +94,8 @@ Questa tipologia è attualmente **Coming soon** e non può ancora inviare annunc
 | Profilo | Presentazione e servizi | Testi lunghi | No |
 | Profilo | Tipologie di calcio | Selezione multipla | No |
 | Profilo | Disponibilità, spostamenti e automobile | Selezioni | No |
-| Profilo | Storico esperienze | Elenco di esperienze | No |
+| Profilo | Lista esperienze | Elenco di esperienze | No |
+| Profilo | Qualifiche / licenze | Elenco con ente / società / organizzazione testuale e stato | No, ma Stato sì se aggiunta una voce |
 | Profilo | In che zona vivi? | Regione singola obbligatoria; città/comune facoltativa | Sì nel form profilo, regione |
 
 ## Arbitro
@@ -103,8 +104,9 @@ Questa tipologia è attualmente **Coming soon** e non può ancora inviare annunc
 | --- | --- | --- | --- |
 | Profilo | Nome | Testo | Sì |
 | Profilo | Cognome e data di nascita | Testo e data (1900–anno corrente) | No |
-| Profilo | Disponibilità e presentazione | Selezione e testo lungo | No |
-| Profilo | Storico esperienze | Elenco di esperienze | No |
+| Profilo | Disponibilità e presentazione | Disponibile subito o non specificata; testo lungo | No |
+| Profilo | Lista esperienze | Elenco di esperienze | No |
+| Profilo | Qualifiche / licenze | Elenco con ente / società / organizzazione testuale e stato | No, ma Stato sì se aggiunta una voce |
 | Profilo | In che zona vivi? | Regione singola obbligatoria; città/comune facoltativa | Sì, regione |
 | Annuncio | Tipologie di calcio | Selezione multipla | Sì |
 | Annuncio | Automobile e spostamenti | Selezioni | No |
@@ -115,14 +117,18 @@ Questa tipologia è attualmente **Coming soon** e non può ancora inviare annunc
 
 ## Creators
 
-Questa tipologia è attualmente **Coming soon** e non può ancora inviare annunci.
+Questa tipologia può essere compilata e inviata da `/pubblica-annuncio`; al momento il nuovo annuncio è disponibile nella conferma e nella dashboard, ma non è incluso nei risultati e nei dettagli pubblici.
 
 | Sezione | Campo | Tipo / dato | Obbligatorio |
 | --- | --- | --- | --- |
 | Profilo | Nome creator | Testo | Sì nel form profilo |
 | Profilo | Tipologia di contenuti | Testo | No |
 | Profilo | Presentazione | Testo lungo | No |
-| Profilo | In che zona vivi? | Regione singola obbligatoria; città/comune facoltativa | Sì nel form profilo, regione |
+| Profilo | Di che zona/e ti occupi | Regioni e città multiple | Sì nel form profilo, almeno una regione |
+| Annuncio | Titolo dell’annuncio | Testo | Sì |
+| Annuncio | Descrizione dell’annuncio | Testo lungo raccomandato | No |
+| Annuncio | Contatti pubblici per questo annuncio | Email e/o telefono | Sì, almeno uno |
+| Annuncio | Zone di ricerca | Regioni e città multiple | Sì, almeno una regione |
 
 ## Torneo / Evento
 

@@ -132,7 +132,7 @@ export default function AnnuncioGiocatore() {
 				</div>
 
 				<MultiselectField
-					label="Ruolo specifico"
+					label="Ruoli specifici"
 					options={ruoliAvanzatiDisponibili}
 					groups={getPlayerSpecificRoleGroups(ruoliPrincipali)}
 					value={ruoliSpecifici}

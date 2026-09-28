@@ -1,12 +1,17 @@
 import type {
-  AnnouncementDetailField,
-  AnnouncementFact,
-  AnnouncementFactKind,
-  AnnouncementPlayerRoles,
+	AnnouncementDetailField,
+	AnnouncementFact,
+	AnnouncementFactKind,
+	AnnouncementPlayerRoles,
 } from "@/features/annunci/announcement-model";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles} from "@/features/profilo/player-roles";
 import {ANNATE_OPTIONS, ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {categoryLabel, normalizeCategories, normalizeFigure, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
+import {
+	categoryLabel,
+	normalizeCategories,
+	normalizeFigure,
+	normalizeFigures
+} from "@/features/pubblica-annuncio/types/category-catalog";
 import {normalizeStaffCategories, staffCategoryLabel} from "@/features/pubblica-annuncio/types/staff-category-catalog";
 
 export const ACTIVE_ANNOUNCEMENT_TYPES = [
@@ -272,14 +277,14 @@ export function announcementContent(
 		title = "Ricerca opportunità";
 		facts = [
 			contentFact("roles", "Ruoli principali", selection(primaryRoles, "selezionati")),
-			contentFact("roles", "Ruoli secondari", selection(secondaryRoles, "selezionati")),
+			contentFact("roles", "Ruoli specifici", selection(secondaryRoles, "selezionati")),
 			contentFact("types", "Tipologie", selection(types, "selezionate")),
 			contentFact("categories", "Categorie ricercate", selection(categories, "selezionate")),
 			contentFact("location", "Località", location),
 		];
 		fields = [
 			detailListField("Ruoli principali", primaryRoles, selection(primaryRoles, "selezionati")),
-			detailListField("Ruoli secondari", secondaryRoles, selection(secondaryRoles, "selezionati")),
+			detailListField("Ruoli specifici", secondaryRoles, selection(secondaryRoles, "selezionati")),
 			detailListField("Tipologie", types, selection(types, "selezionate")),
 			detailListField("Categorie ricercate", categories, selection(categories, "selezionate")),
 		];
@@ -317,7 +322,7 @@ export function announcementContent(
 		];
 		fields = [
 			detailListField("Ruolo/i cercati", primaryRoles, selection(primaryRoles, "selezionati")),
-			detailListField("Ruoli secondari", secondaryRoles, selection(secondaryRoles, "selezionati")),
+			detailListField("Ruoli specifici", secondaryRoles, selection(secondaryRoles, "selezionati")),
 			detailListField("Annate ricercate", hasRange ? [yearLabel] : legacyYears, yearLabel),
 			detailField("Stagione", season),
 			detailListField("Tipologie", types, selection(types, "selezionate")),
@@ -436,6 +441,8 @@ export function announcementContent(
 		const occupation = cleanText(detail.disponibilita_occupazione, 160);
 		const travel = cleanText(detail.disponibilita_spostamento, 40);
 		const car = cleanText(detail.automunito, 40);
+		const experienceLines = staffHistoryLines(detail.lista_esperienze);
+		const qualificationLines = staffHistoryLines(detail.qualifiche_licenze, true);
 		title = "Ricerca opportunità";
 		facts = [
 			...(categories.length > 0 ? [contentFact("categories", "Categorie", selection(categories, "selezionate"))] : []),
@@ -449,11 +456,13 @@ export function announcementContent(
 			detailField("Disponibilità", humanizeValue(occupation)),
 			detailField("Disponibilità agli spostamenti", travel),
 			detailField("Automunito", car),
+			detailListField("Lista esperienze", experienceLines, selection(experienceLines, "selezionate")),
+			detailListField("Qualifiche / Licenze", qualificationLines, selection(qualificationLines, "selezionate")),
 		];
 		filters.types = types;
 		filters.categories = categoryValues;
 		filters.car = car;
-		searchValues = [...types, ...categories, occupation ?? "", travel ?? "", car ?? ""];
+		searchValues = [...types, ...categories, occupation ?? "", travel ?? "", car ?? "", ...experienceLines, ...qualificationLines];
 	} else if (type === "annuncio_torneo_evento") {
 		const name = cleanText(detail.nome_evento, 160);
 		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));

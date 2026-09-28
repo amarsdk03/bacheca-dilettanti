@@ -4,7 +4,7 @@ import {ArrowUpRightIcon, CalendarDaysIcon, MapPinIcon, SparklesIcon} from "luci
 
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
-import {announcementOption, type AnnouncementDirectoryItem} from "@/features/annunci/announcement-model";
+import {type AnnouncementDirectoryItem, announcementOption} from "@/features/annunci/announcement-model";
 import {FACT_ICONS} from "@/features/annunci/components/details/announcement-detail-facts";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";

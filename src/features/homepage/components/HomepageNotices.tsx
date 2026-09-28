@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
 	AlarmClockPlusIcon,
 	ArrowRightIcon,
-	CalendarDaysIcon,
 	FlameIcon,
 	type LucideIcon,
 	MegaphoneIcon,

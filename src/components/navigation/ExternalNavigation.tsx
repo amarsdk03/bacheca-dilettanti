@@ -22,7 +22,7 @@ interface NavigationRequest {
 
 const ExternalNavigationContext = createContext<((request: NavigationRequest) => void) | null>(null);
 
-/** Scoped to public detail pages; links elsewhere retain their existing behaviour. */
+/** Scoped to public detail pages; links elsewhere retain their existing behavior. */
 export function ExternalNavigationProvider({children}: {children: ReactNode}) {
 	const [pending, setPending] = useState<NavigationRequest | null>(null);
 	const [open, setOpen] = useState(false);

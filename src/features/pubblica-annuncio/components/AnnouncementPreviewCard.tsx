@@ -9,7 +9,11 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Separator} from "@/components/ui/separator";
 import {announcementOption} from "@/features/annunci/announcement-model";
 import {FACT_ICONS} from "@/features/annunci/components/details/announcement-detail-facts";
-import {ANNOUNCEMENT_DETAIL_PRESENTATIONS, isSpecifiedAnnouncementValue, type AnnouncementDetailPresentation} from "@/features/annunci/components/details/announcement-detail-presentation";
+import {
+	ANNOUNCEMENT_DETAIL_PRESENTATIONS,
+	type AnnouncementDetailPresentation,
+	isSpecifiedAnnouncementValue
+} from "@/features/annunci/components/details/announcement-detail-presentation";
 import type {AnnouncementPreviewData} from "@/features/pubblica-annuncio/announcement-preview";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {groupPublicProfileLocations} from "@/features/profilo/public-profile-locations";
@@ -34,7 +38,7 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 	);
 	const fields = preview.fields.filter(field =>
 		(presentation.detailFieldLabels.includes(field.label) || field.wide ||
-			(preview.playerRoles && (field.label === "Ruoli principali" || field.label === "Ruoli secondari")))
+			(preview.playerRoles && (field.label === "Ruoli principali" || field.label === "Ruoli specifici")))
 		&& isSpecifiedAnnouncementValue(field.value)
 		&& field.value !== preview.description,
 	);
@@ -45,9 +49,7 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 	const hasContactLinks = preview.contacts.length > 0 || Boolean(preview.genericLink);
 	const locationLabel = preview.announcementType === "annuncio_campo_impianto"
 		? "Località del campo"
-		: preview.announcementType === "annuncio_torneo_evento"
-			? "Zona di svolgimento"
-			: "Zone di ricerca";
+		: "Zone di ricerca";
 	const style = {"--preview-accent": accent} as CSSProperties;
 
 	return (
@@ -78,7 +80,7 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 					{preview.imageUrl && (
 						// Preview URLs can be browser blobs or short-lived signed Storage URLs.
 						// eslint-disable-next-line @next/next/no-img-element
-						<img src={preview.imageUrl} alt={preview.imageLabel ?? "Immagine dell’annuncio"} className="mt-2 h-auto max-h-44 max-w-full rounded-lg border border-border bg-muted/30 object-contain" />
+						<img src={preview.imageUrl} alt={preview.imageLabel ?? "Immagine dell’annuncio"} className="mt-2 h-auto max-h-44 w-auto max-w-full self-center rounded-lg border border-border bg-muted/30 object-contain" />
 					)}
 				</section>
 				{fields.length > 0 && <section className="flex flex-col gap-1.5">

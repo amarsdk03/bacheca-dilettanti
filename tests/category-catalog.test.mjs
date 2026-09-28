@@ -33,6 +33,8 @@ test("category pairs keep homonymous labels separate in the catalogue, filters a
 	assert.equal(catalog.CATEGORY_FILTER_OPTIONS.length, 73);
 	assert.equal(new Set(catalog.CATEGORY_FILTER_OPTIONS.map(option => option.value)).size, 73);
 	assert.equal(catalog.FIGURA_PROFESSIONALE_OPTIONS.length, 22);
+	assert.ok(catalog.FIGURA_PROFESSIONALE_GROUPS.find(group => group.gruppo === "Direzione e organizzazione").opzioni.includes("Commerciale / Business"));
+	assert.ok(catalog.FIGURA_PROFESSIONALE_GROUPS.some(group => group.gruppo === "Staff medico"));
 	const male = catalog.categoryKey("Calcio 5 (Maschile)", "Serie A");
 	const female = catalog.categoryKey("Calcio 5 (Femminile)", "Serie A");
 	assert.notEqual(male, female);
@@ -43,6 +45,7 @@ test("category pairs keep homonymous labels separate in the catalogue, filters a
 	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: "Serie A"}).filters.categoria, "Serie A");
 	assert.equal(catalog.normalizeCategory("Serie C"), catalog.categoryKey("Calcio 11 (Maschile)", "Serie C"));
 	assert.equal(catalog.normalizeCategory("Under 15"), "Under 15");
+	assert.deepEqual(catalog.normalizeCategories([male, catalog.ANY_CATEGORY]), [catalog.ANY_CATEGORY]);
 	const content = announcementContent("annuncio_giocatore", {categorie_ricercate: [male, female, "Under 15"]}, [], true);
 	assert.deepEqual(content.filters.categories, [male, female, "Under 15"]);
 	assert.deepEqual(content.fields.find(field => field.label === "Categorie ricercate").items, [

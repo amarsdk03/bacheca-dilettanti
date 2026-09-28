@@ -1,7 +1,7 @@
 import {type Dispatch, type SetStateAction, useEffect, useRef} from "react";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
-import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import type {ProfileLocationDraft} from "@/features/profilo/profile-model";

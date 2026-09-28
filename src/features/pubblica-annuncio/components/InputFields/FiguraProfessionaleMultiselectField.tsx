@@ -1,4 +1,5 @@
-import CategorieCalcioMultiselectField from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
+import CategorieCalcioMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
 import {FIGURA_PROFESSIONALE_GROUPS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 const figureValue = (_group: string, option: string) => option;
@@ -25,8 +26,8 @@ export default function FiguraProfessionaleMultiselectField({
 			items={FIGURA_PROFESSIONALE_GROUPS}
 			value={value}
 			onValueChangeAction={onValueChange}
-			optionValue={figureValue}
-			formatValue={figureLabel}
+			optionValueAction={figureValue}
+			formatValueAction={figureLabel}
 			placeholder="Seleziona le figure..."
 			emptyText="Nessuna figura trovata."
 			required={required}

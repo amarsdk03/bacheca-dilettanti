@@ -1,6 +1,7 @@
 import {PROFILE_TYPES, type ProfileType,} from "@/features/profilo/profile-model";
 
 export const PROFILE_SOCIAL_PLATFORMS = [
+	"website",
 	"instagram",
 	"facebook",
 	"youtube",
@@ -14,6 +15,11 @@ export type ProfileSocialLinks = Record<ProfileSocialPlatform, string>;
 export type ProfileSocialLinksByType = Record<ProfileType, ProfileSocialLinks>;
 
 export const PROFILE_SOCIAL_LINK_OPTIONS = [
+	{
+		platform: "website",
+		label: "Sito web",
+		placeholder: "https://www.esempio.it",
+	},
 	{
 		platform: "instagram",
 		label: "Instagram",
@@ -48,7 +54,7 @@ export function createProfileSocialLinks(): ProfileSocialLinksByType {
 	return Object.fromEntries(
 		PROFILE_TYPES.map((type) => [
 			type,
-			{instagram: "", facebook: "", youtube: "", linkedin: ""},
+			{website: "", instagram: "", facebook: "", youtube: "", linkedin: ""},
 		]),
 	) as ProfileSocialLinksByType;
 }
@@ -57,6 +63,7 @@ export function profileSocialLinksFromRows(
 	rows: readonly {piattaforma: string | null; sublink: string}[],
 ): ProfileSocialLinks {
 	const links: ProfileSocialLinks = {
+		website: "",
 		instagram: "",
 		facebook: "",
 		youtube: "",

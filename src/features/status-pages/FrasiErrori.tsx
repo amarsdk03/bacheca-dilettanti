@@ -35,7 +35,10 @@ export default function FrasiErrori() {
 	const [frase, setFrase] = useState(frasiErrori[0]);
 
 	useEffect(() => {
-		setFrase(frasiErrori[Math.random() * frasiErrori.length | 0]);
+		const timer = window.setTimeout(() => {
+			setFrase(frasiErrori[Math.random() * frasiErrori.length | 0]);
+		}, 0);
+		return () => window.clearTimeout(timer);
 	}, []);
 
 	return (

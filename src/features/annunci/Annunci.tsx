@@ -4,18 +4,17 @@ import {ArrowLeftIcon, ArrowRightIcon, InfoIcon, SearchIcon, SlidersHorizontalIc
 
 import GradientBackground from "@/components/styling/GradientBackground";
 import {DirectoryResultsSkeleton} from "@/components/loading/PageSkeletons";
-import {DirectoryFilterSubmitButton, DirectoryGetForm, DirectorySearchButton} from "@/components/navigation/DirectoryGetForm";
+import {
+	DirectoryFilterSubmitButton,
+	DirectoryGetForm,
+	DirectorySearchButton
+} from "@/components/navigation/DirectoryGetForm";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
 import {Button, buttonVariants} from "@/components/ui/button";
 import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle,} from "@/components/ui/empty";
 import {Field, FieldGroup, FieldLabel} from "@/components/ui/field";
-import {
-	InputGroup,
-	InputGroupAddon,
-	InputGroupInput,
-	InputGroupText,
-} from "@/components/ui/input-group";
+import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText,} from "@/components/ui/input-group";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {Separator} from "@/components/ui/separator";
 import {Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger,} from "@/components/ui/sheet";

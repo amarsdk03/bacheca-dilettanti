@@ -27,7 +27,7 @@ export const ANNOUNCEMENT_DETAIL_PRESENTATIONS = {
 		emptyNarrative: "La squadra non ha aggiunto ulteriori dettagli alla ricerca.",
 		detailsTitle: "Requisiti del giocatore",
 		heroFactKinds: ["roles", "categories"],
-		detailFieldLabels: ["Ruoli secondari", "Tipologie", "Stagione"],
+		detailFieldLabels: ["Ruoli specifici", "Tipologie", "Stagione"],
 	},
 	annuncio_squadra_cerca_staff: {
 		intro: "Una squadra cerca figure per il proprio staff.",
@@ -103,11 +103,11 @@ export const ANNOUNCEMENT_DETAIL_PRESENTATIONS = {
 	},
 	annuncio_creators: {
 		intro: "Un creator digitale della community online.",
-		summary: "TODO",
-		narrativeTitle: "TODO",
-		emptyNarrative: "TODO",
-		detailsTitle: "TODO",
-		heroFactKinds: [],
+		summary: "Contenuti, collaborazioni e opportunità proposte da un creator.",
+		narrativeTitle: "Descrizione dell’annuncio",
+		emptyNarrative: "Il creator non ha aggiunto una descrizione all’annuncio.",
+		detailsTitle: "Informazioni",
+		heroFactKinds: ["location"],
 		detailFieldLabels: [],
 	}
 } as const satisfies Record<AnnouncementType, AnnouncementDetailPresentation>;

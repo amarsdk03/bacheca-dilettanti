@@ -22,7 +22,7 @@ export default function RecapAnnuncioGiocatore() {
 				<RecapField label="Disponibilità">
 					{getOptionLabel(DISPONIBILITA_PROFILO_OPTIONS, data.disponibilita) || "Non specificare"}
 				</RecapField>
-				<RecapField label="Ruolo principale">{data.ruoliPrincipali.join(", ") || "—"}</RecapField>
+				<RecapField label="Ruoli principali">{data.ruoliPrincipali.join(", ") || "—"}</RecapField>
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />
 				<RecapField label="Contatti pubblici per questo annuncio" wide>{formatContatti(data.contatti)}</RecapField>
 				<AnnouncementImageRecap image={data.immagineAnnuncio} />

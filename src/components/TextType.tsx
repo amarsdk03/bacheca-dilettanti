@@ -1,15 +1,15 @@
 'use client';
 
 import {
-  createElement,
-  type ElementType,
-  HTMLAttributes,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
+	createElement,
+	type ElementType,
+	HTMLAttributes,
+	ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
 } from 'react';
 import {gsap} from 'gsap';
 
@@ -61,7 +61,7 @@ const TextType = ({
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(!startOnVisible);
   const cursorRef = useRef<HTMLSpanElement>(null);
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLSpanElement>(null);
 
   const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
 
@@ -183,21 +183,22 @@ const TextType = ({
   return createElement(
     Component,
     {
-      ref: containerRef,
       className: `inline-block whitespace-pre-wrap tracking-tight ${className}`,
       ...props
     },
-    <span className="inline" style={{ color: getCurrentTextColor() || 'inherit' }}>
-      {displayedText}
-    </span>,
-    showCursor && (
-      <span
-        ref={cursorRef}
-        className={`ml-1 inline-block opacity-100 ${shouldHideCursor ? 'hidden' : ''} ${cursorClassName}`}
-      >
-        {cursorCharacter}
+    <span ref={containerRef} className="inline-block min-w-px">
+      <span className="inline" style={{ color: getCurrentTextColor() || 'inherit' }}>
+        {displayedText}
       </span>
-    )
+      {showCursor && (
+        <span
+          ref={cursorRef}
+          className={`ml-1 inline-block opacity-100 ${shouldHideCursor ? 'hidden' : ''} ${cursorClassName}`}
+        >
+          {cursorCharacter}
+        </span>
+      )}
+    </span>,
   );
 };
 

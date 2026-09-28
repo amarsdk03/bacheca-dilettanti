@@ -7,7 +7,7 @@ export default function AnnouncementPlayerCard({announcement}: {announcement: An
 			announcement={announcement}
 			summary="Disponibilità per nuove opportunità"
 			emptyDescription="Questo giocatore non ha aggiunto una descrizione all’annuncio."
-			facts={getAnnouncementFacts(announcement, ["Ruoli principali", "Ruoli secondari", "Tipologie", "Categorie ricercate", "Località"])}
+			facts={getAnnouncementFacts(announcement, ["Ruoli principali", "Ruoli specifici", "Tipologie", "Categorie ricercate", "Località"])}
 		/>
 	);
 }

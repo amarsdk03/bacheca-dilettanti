@@ -24,7 +24,7 @@ import {
 } from "@/features/profilo/profile-model";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
-import {isPublishableProfileType, type PublishableProfileType,} from "@/features/pubblica-annuncio/publish-model";
+import {isPublishableProfileType} from "@/features/pubblica-annuncio/publish-model";
 import {getTipologia, tipologieAnnuncio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 type SelezionaTipologiaAnnuncioProps = {
@@ -34,7 +34,7 @@ type SelezionaTipologiaAnnuncioProps = {
 	onSottotipologiaChangeAction: (value: string) => void;
 	onContinueAction: () => void;
 	registered: boolean;
-	enabledProfileTypes: readonly PublishableProfileType[];
+	enabledProfileTypes: readonly ProfileType[];
 };
 
 export default function SelezionaTipologiaAnnuncio({

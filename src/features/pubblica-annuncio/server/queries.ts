@@ -8,8 +8,7 @@ import {
 	type ProfileType,
 } from "@/features/profilo/profile-model";
 import {createProfileSocialLinks, profileSocialLinksFromRows,} from "@/features/profilo/profile-social-links";
-import type {PublishableProfileType, PublishProfileContext,} from "@/features/pubblica-annuncio/publish-model";
-import {isPublishableProfileType} from "@/features/pubblica-annuncio/publish-model";
+import type {PublishProfileContext,} from "@/features/pubblica-annuncio/publish-model";
 import {createClient} from "@/lib/supabase/server";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 import {normalizeCategories, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
@@ -49,7 +48,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 	queryFailed(baseProfileError, "profilo");
 	if (!baseProfile) return null;
 
-	const [player, playerMedia, team, staff, referee, tournament, facility, locationResult, socialLinksResult] = await Promise.all([
+	const [player, playerMedia, team, staff, referee, tournament, facility, professional, creator, locationResult, socialLinksResult] = await Promise.all([
 		supabase.from("profilo_giocatore").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("media_profilo").select("link_media").eq("uuid_profilo", baseProfile.uuid).eq("formato_media", "video_highlights").order("id", {ascending: false}).limit(1).maybeSingle(),
 		supabase.from("profilo_squadra").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
@@ -57,8 +56,10 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		supabase.from("profilo_arbitro").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_torneo_evento").select("id, nome_organizzazione, presentazione, sport_principale, tipologie_sport").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_campi_impianti").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_professionista_studente").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
-		supabase.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["instagram", "facebook", "youtube", "linkedin"]),
+		supabase.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
 	]);
 
 	queryFailed(player.error, "profilo_giocatore");
@@ -68,6 +69,8 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 	queryFailed(referee.error, "profilo_arbitro");
 	queryFailed(tournament.error, "profilo_torneo_evento");
 	queryFailed(facility.error, "profilo_campi_impianti");
+	queryFailed(professional.error, "profilo_professionista_studente");
+	queryFailed(creator.error, "profilo_creator");
 	queryFailed(locationResult.error, "localita_profilo");
 	queryFailed(socialLinksResult.error, "link_social_profilo");
 
@@ -79,6 +82,8 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 	drafts.arbitro = hydrateDraft(drafts.arbitro, referee.data);
 	drafts["torneo-evento"] = hydrateDraft(drafts["torneo-evento"], tournament.data);
 	drafts["campi-impianti-sportivi"] = hydrateDraft(drafts["campi-impianti-sportivi"], facility.data);
+	drafts["professionisti-studi"] = hydrateDraft(drafts["professionisti-studi"], professional.data);
+	drafts.creators = hydrateDraft(drafts.creators, creator.data);
 
 	const locations = createProfileLocations();
 	const socialLinks = createProfileSocialLinks();
@@ -100,9 +105,11 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		["arbitro", referee.data],
 		["torneo-evento", tournament.data],
 		["campi-impianti-sportivi", facility.data],
+		["professionisti-studi", professional.data],
+		["creators", creator.data],
 	];
-	const enabledProfileTypes = activeRows.flatMap<PublishableProfileType>(([type, row]) => (
-		row && isPublishableProfileType(type) ? [type] : []
+	const enabledProfileTypes = activeRows.flatMap<ProfileType>(([type, row]) => (
+		row ? [type] : []
 	));
 
 	return {profileId: baseProfile.uuid, enabledProfileTypes, drafts, locations, socialLinks};

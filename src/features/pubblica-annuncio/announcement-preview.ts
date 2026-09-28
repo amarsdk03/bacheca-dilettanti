@@ -1,8 +1,7 @@
 import {announcementContent} from "@/features/annunci/announcement-content";
 import {
-	announcementOption,
-	announcementDisplayLabel,
 	type AnnouncementDetailField,
+	announcementDisplayLabel,
 	type AnnouncementFact,
 	type AnnouncementPlayerRoles,
 	type AnnouncementType,
@@ -38,6 +37,7 @@ function profileTitle(payload: PublishAnnouncementPayload, drafts: ProfileDrafts
 	if (payload.profileType === "squadra") return drafts.squadra.nome_societa || "Squadra";
 	if (payload.profileType === "staff-sportivo") return [drafts["staff-sportivo"].nome, drafts["staff-sportivo"].cognome].filter(Boolean).join(" ") || "Staff sportivo";
 	if (payload.profileType === "arbitro") return [drafts.arbitro.nome, drafts.arbitro.cognome].filter(Boolean).join(" ") || "Arbitro";
+	if (payload.profileType === "creators") return drafts.creators.nome_creator || "Creator";
 	if (payload.profileType === "torneo-evento") return drafts["torneo-evento"].nome_organizzazione || "Organizzazione";
 	return drafts["campi-impianti-sportivi"].nome_organizzazione || "Campo o impianto";
 }
@@ -78,15 +78,41 @@ export function buildPublishPreview(
 		detail.qualifiche_licenze = [...(Array.isArray(drafts["staff-sportivo"].storico_esperienze) ? drafts["staff-sportivo"].storico_esperienze : []), ...(Array.isArray(drafts["staff-sportivo"].qualifiche_licenze) ? drafts["staff-sportivo"].qualifiche_licenze : [])];
 	} else if (type === "annuncio_arbitro") {
 		detail.disponibilita_occupazione = drafts.arbitro.disponibilita;
+		detail.lista_esperienze = drafts.arbitro.lista_esperienze;
+		detail.qualifiche_licenze = drafts.arbitro.qualifiche_licenze;
 	}
 
 	const locations = payload.announcement.locations.map(({regione, citta}) => ({region: regione, city: citta}));
+	if (type === "annuncio_creators") {
+		const title = typeof detail.titolo_post === "string" && detail.titolo_post.trim() ? detail.titolo_post.trim() : "Annuncio creator";
+		const description = typeof detail.descrizione_post === "string" && detail.descrizione_post.trim() ? detail.descrizione_post.trim() : null;
+		const location = locations.map(({city, region}) => [city, region].filter(Boolean).join(", ")).join(", ") || "Località non specificata";
+		return {
+			announcementType: type,
+			profileType: payload.profileType,
+			title,
+			typeLabel: announcementDisplayLabel(type),
+			author: profileTitle(payload, drafts),
+			description,
+			locations,
+			contacts: [payload.announcement.contacts.email, payload.announcement.contacts.phone].filter(Boolean),
+			facts: [{kind: "location", label: "Zone di ricerca", value: location}],
+			fields: [],
+			playerRoles: null,
+			genericLink: payload.announcement.extras.genericLink.trim() || null,
+			imageUrl,
+			imageLabel,
+			status: "In revisione dopo l’invio",
+			statusInfo: null,
+			linkedTeams: [],
+		};
+	}
 	const content = announcementContent(type, detail, locations, true);
 	const profileExperiences = type === "annuncio_giocatore"
 		? drafts.giocatore.storico_carriera
 		: type === "annuncio_staff_sportivo"
 			? drafts["staff-sportivo"].lista_esperienze
-			: type === "annuncio_arbitro" ? drafts.arbitro.storico_esperienze : [];
+			: type === "annuncio_arbitro" ? drafts.arbitro.lista_esperienze : [];
 
 	return {
 		announcementType: type,

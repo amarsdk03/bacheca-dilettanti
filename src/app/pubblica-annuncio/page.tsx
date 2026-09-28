@@ -27,6 +27,7 @@ export default async function Page() {
 			<PubblicaAnnuncio
 				authenticated={Boolean(account)}
 				registered={registered}
+				initialEmail={registered ? account?.viewer.email ?? "" : ""}
 				profileContext={profileContext}
 			/>
 			<Footer whiteBackground={true} />

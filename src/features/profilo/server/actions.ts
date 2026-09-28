@@ -335,7 +335,7 @@ export async function saveProfile(
 				: {data: null, error: null};
 			if (existingProfileError) throw existingProfileError;
 			if (!existingProfile) {
-				return {status: "error", message: "Questa tipologia sarÃ  disponibile prossimamente."};
+				return {status: "error", message: "Questa tipologia sarà disponibile prossimamente."};
 			}
 		}
 		const {error} = await admin.rpc("save_owned_subprofile_with_social_links_v1", {

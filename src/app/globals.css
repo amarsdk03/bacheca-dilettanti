@@ -523,6 +523,7 @@
 }
 
 .announcement-preview-card {
+    --preview-accent: var(--brand-indigo);
     --background: #ffffff;
     --foreground: #211f2a;
     --card: #ffffff;

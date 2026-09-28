@@ -10,7 +10,7 @@ import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Spinner} from "@/components/ui/spinner";
 import {DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
-import {INITIAL_EMAIL_LINK_STATE, type EmailLinkCredential} from "@/features/auth/email-link";
+import {type EmailLinkCredential, INITIAL_EMAIL_LINK_STATE} from "@/features/auth/email-link";
 import {completePasswordRecovery, completeSignupConfirmation} from "@/features/auth/server/email-link-actions";
 
 type EmailLinkKind = "recovery" | "signup";

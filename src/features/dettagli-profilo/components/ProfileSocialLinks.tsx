@@ -1,6 +1,6 @@
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import type {SVGProps} from "react";
-import {ArrowUpRightIcon, LinkIcon} from "lucide-react";
+import {ArrowUpRightIcon, GlobeIcon, LinkIcon} from "lucide-react";
 import {SiFacebook, SiInstagram, SiYoutube} from "@icons-pack/react-simple-icons";
 
 import {buttonVariants} from "@/components/ui/button";
@@ -14,11 +14,11 @@ function LinkedInBrandIcon(props: SVGProps<SVGSVGElement>) {
 	</svg>;
 }
 
-const SOCIAL_ICONS = {instagram: SiInstagram, facebook: SiFacebook, youtube: SiYoutube, linkedin: LinkedInBrandIcon};
+const SOCIAL_ICONS = {website: GlobeIcon, instagram: SiInstagram, facebook: SiFacebook, youtube: SiYoutube, linkedin: LinkedInBrandIcon};
 
 export default function ProfileSocialLinksCard({socialLinks, presentation = "default"}: {socialLinks: ProfileSocialLinks; presentation?: "default" | "profile"}) {
 	const links = PROFILE_SOCIAL_LINK_OPTIONS.flatMap(({platform, label}) => {
-		const href = socialLinks[platform].trim();
+		const href = socialLinks[platform]?.trim() ?? "";
 		return href ? [{platform, label, href}] : [];
 	});
 

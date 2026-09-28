@@ -13,11 +13,11 @@ function staffCategoryKeys() {
 	const cache = new Map();
 	function load(url) {
 		if (cache.has(url.href)) return cache.get(url.href).exports;
-		const module = {exports: {}};
-		cache.set(url.href, module);
+		const loadedModule = {exports: {}};
+		cache.set(url.href, loadedModule);
 		const {outputText} = ts.transpileModule(readFileSync(url, "utf8"), {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022}});
-		new Function("require", "module", "exports", outputText)((specifier) => specifier.startsWith(".") ? load(new URL(`${specifier}.ts`, url)) : require(specifier), module, module.exports);
-		return module.exports;
+		new Function("require", "module", "exports", outputText)((specifier) => specifier.startsWith(".") ? load(new URL(`${specifier}.ts`, url)) : require(specifier), loadedModule, loadedModule.exports);
+		return loadedModule.exports;
 	}
 	return load(new URL("../src/features/pubblica-annuncio/types/staff-category-catalog.ts", import.meta.url)).STAFF_CATEGORY_FILTER_OPTIONS.map(({value}) => value);
 }

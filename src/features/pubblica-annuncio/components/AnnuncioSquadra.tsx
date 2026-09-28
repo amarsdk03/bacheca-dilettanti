@@ -6,7 +6,15 @@ import {Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet,}
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText,} from "@/components/ui/input-group";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
 import AnnateMultiselectField from "@/features/pubblica-annuncio/components/InputFields/AnnateMultiselectField";
 import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/InputFields/ContattiAnnuncio";

@@ -124,6 +124,7 @@ export type Database = {
           disponibilita_spostamento: string | null
           info_mostrate: Json | null
           lista_esperienze: Json | null
+          qualifiche_licenze: Json
           tipologie_sport: string[] | null
           uuid_annuncio: string
         }
@@ -135,6 +136,7 @@ export type Database = {
           disponibilita_spostamento?: string | null
           info_mostrate?: Json | null
           lista_esperienze?: Json | null
+          qualifiche_licenze?: Json
           tipologie_sport?: string[] | null
           uuid_annuncio: string
         }
@@ -146,6 +148,7 @@ export type Database = {
           disponibilita_spostamento?: string | null
           info_mostrate?: Json | null
           lista_esperienze?: Json | null
+          qualifiche_licenze?: Json
           tipologie_sport?: string[] | null
           uuid_annuncio?: string
         }
@@ -306,6 +309,7 @@ export type Database = {
           figura_professionale: string[] | null
           info_mostrate: Json | null
           lista_esperienze: Json | null
+          qualifiche_licenze: Json
           presentazione_servizi: string | null
           specializzazione: string | null
           tipologie_sport: Json | null
@@ -317,6 +321,7 @@ export type Database = {
           figura_professionale?: string[] | null
           info_mostrate?: Json | null
           lista_esperienze?: Json | null
+          qualifiche_licenze?: Json
           presentazione_servizi?: string | null
           specializzazione?: string | null
           tipologie_sport?: Json | null
@@ -328,6 +333,7 @@ export type Database = {
           figura_professionale?: string[] | null
           info_mostrate?: Json | null
           lista_esperienze?: Json | null
+          qualifiche_licenze?: Json
           presentazione_servizi?: string | null
           specializzazione?: string | null
           tipologie_sport?: Json | null
@@ -995,10 +1001,12 @@ export type Database = {
           disponibilita: string | null
           giorno_nascita: string | null
           id: number
+          lista_esperienze: Json
           mese_nascita: string | null
           nascosto: boolean
           nome: string | null
           presentazione: string | null
+          qualifiche_licenze: Json
           sport_principale: string | null
           storico_esperienze: Json | null
           uuid_profilo: string
@@ -1009,10 +1017,12 @@ export type Database = {
           disponibilita?: string | null
           giorno_nascita?: string | null
           id?: number
+          lista_esperienze?: Json
           mese_nascita?: string | null
           nascosto?: boolean
           nome?: string | null
           presentazione?: string | null
+          qualifiche_licenze?: Json
           sport_principale?: string | null
           storico_esperienze?: Json | null
           uuid_profilo: string
@@ -1023,10 +1033,12 @@ export type Database = {
           disponibilita?: string | null
           giorno_nascita?: string | null
           id?: number
+          lista_esperienze?: Json
           mese_nascita?: string | null
           nascosto?: boolean
           nome?: string | null
           presentazione?: string | null
+          qualifiche_licenze?: Json
           sport_principale?: string | null
           storico_esperienze?: Json | null
           uuid_profilo?: string
@@ -1288,11 +1300,13 @@ export type Database = {
           figure_professionali: string[] | null
           giorno_nascita: string | null
           id: number
+          lista_esperienze: Json
           mese_nascita: string | null
           nascosto: boolean
           nome: string | null
           presentazione: string | null
           presentazione_servizi: string | null
+          qualifiche_licenze: Json
           specializzazioni: string | null
           sport_principale: string | null
           storico_esperienze: Json | null
@@ -1307,11 +1321,13 @@ export type Database = {
           figure_professionali?: string[] | null
           giorno_nascita?: string | null
           id?: number
+          lista_esperienze?: Json
           mese_nascita?: string | null
           nascosto?: boolean
           nome?: string | null
           presentazione?: string | null
           presentazione_servizi?: string | null
+          qualifiche_licenze?: Json
           specializzazioni?: string | null
           sport_principale?: string | null
           storico_esperienze?: Json | null
@@ -1326,11 +1342,13 @@ export type Database = {
           figure_professionali?: string[] | null
           giorno_nascita?: string | null
           id?: number
+          lista_esperienze?: Json
           mese_nascita?: string | null
           nascosto?: boolean
           nome?: string | null
           presentazione?: string | null
           presentazione_servizi?: string | null
+          qualifiche_licenze?: Json
           specializzazioni?: string | null
           sport_principale?: string | null
           storico_esperienze?: Json | null

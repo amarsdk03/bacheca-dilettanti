@@ -70,7 +70,7 @@ const player = {
 	tipologie_sport: ["Calcio a 5", "Calcio a 11", "Calcio storico"],
 	ruoli_sport: {principali: ["Difensore"], specifici: ["Terzino destro"]},
 	categoria_attuale: "Calcio 11 (Maschile)::Eccellenza", categorie_ricercate: ["Eccellenza"],
-	genere: "Maschio", nazionalita: "IT", piede_principale: "Destro",
+	genere: "Uomo", nazionalita: "IT", piede_principale: "Destro",
 	altezza: "180", peso: "75", presentazione: " Presentazione ",
 	storico_carriera: [{titolo: "Prima squadra", ente: "Società", periodoDa: "2024/25", stato: "in-corso"}],
 };
@@ -107,7 +107,7 @@ test("public projection contains only approved properties and safe highlights", 
 	assert.deepEqual(result.sportTypes, ["Calcio 11", "Calcio 5", "Calcio storico"]);
 	assert.equal(result.presentation, "Presentazione");
 	assert.equal(result.currentCategory, "Calcio 11 (Maschile) · Eccellenza");
-	assert.equal(result.gender, "Maschio");
+	assert.equal(result.gender, "Uomo");
 	assert.equal(result.nationality, "Italia");
 	assert.equal(result.nationalityCode, "IT");
 	assert.doesNotMatch(JSON.stringify(result), /nascita|private@example|2000/);
@@ -316,9 +316,9 @@ test("player header renders the ordered public facts", () => {
 	assert.ok(roleBadge >= 0 && roleBadge < nationalityFlag && nationalityFlag < profileBadge);
 	const factLabels = [...html.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>/g)]
 		.map(match => match[1].replace(/<[^>]+>/g, ""));
-	assert.deepEqual(factLabels, ["Età", "Altezza", "Peso", "Piede", "Genere", "Nazionalità", "Disponibilità", "Tipologie di calcio", "Follower", "Num. annunci"]);
+	assert.deepEqual(factLabels, ["Età", "Genere", "Altezza", "Piede", "Nazionalità", "Disponibilità"]);
 	assert.doesNotMatch(html, /Principale:/);
-	for (const value of ["26 anni", "180 cm", "75 kg", "Destro", "Maschio", "Italia", "Disponibile subito", "Calcio 11", "42", "7", "Difensore", "Condividi"]) assert.ok(html.includes(value), value);
+	for (const value of ["26 anni", "180 cm", "Destro", "Uomo", "Italia", "Disponibile subito", "Difensore", "Condividi"]) assert.ok(html.includes(value), value);
 	assert.match(html, /<header[^>]*>[\s\S]*public-profile-hero[\s\S]*<dl[\s\S]*<\/header>/);
 	assert.match(html, /Italia[\s\S]*<svg/);
 	assert.doesNotMatch(html, /nascita|>2000<|Una presentazione/);
@@ -332,7 +332,7 @@ test("player results card shows only the requested four facts", () => {
 		imageUrl: null, emailConfirmed: true, officialVerified: false, roles: [],
 		facts: [
 			{kind: "age", label: "Età", value: "26 anni"},
-			{kind: "gender", label: "Genere", value: "Maschio"},
+			{kind: "gender", label: "Genere", value: "Uomo"},
 			{kind: "availability", label: "Disponibilità", value: "Disponibile subito"},
 			{kind: "category", label: "Categoria attuale", value: "Eccellenza"},
 			{kind: "roles", label: "Ruoli", value: "Difensore"},
@@ -447,9 +447,9 @@ test("player overview omits absent media and socials and supports non-YouTube hi
 	assert.doesNotMatch(external, /<iframe/);
 });
 
-test("all populated player social links use their brand icon, including LinkedIn", () => {
+test("all populated player social links use their brand icon, including website and LinkedIn", () => {
 	const SocialLinks = load("src/features/dettagli-profilo/components/ProfileSocialLinks.tsx").default;
-	const socialLinks = {instagram: "https://instagram.com/player", facebook: "https://facebook.com/player", youtube: "https://youtube.com/@player", linkedin: "https://linkedin.com/in/player"};
+	const socialLinks = {website: "https://player.example.com", instagram: "https://instagram.com/player", facebook: "https://facebook.com/player", youtube: "https://youtube.com/@player", linkedin: "https://linkedin.com/in/player"};
 	const html = renderToStaticMarkup(React.createElement(SocialLinks, {socialLinks, presentation: "profile"}));
 	for (const [platform, href] of Object.entries(socialLinks)) {
 		assert.ok(html.includes(`data-social-brand="${platform}"`));
@@ -724,7 +724,7 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 		{kind: "category", label: "Categoria attuale", value: "Calcio 11 (Maschile) · Eccellenza"},
 		{kind: "content", label: "Contenuti", value: "Video"},
 		{kind: "figures", label: "Figure", value: "Allenatore"},
-		{kind: "gender", label: "Genere", value: "Maschio"},
+		{kind: "gender", label: "Genere", value: "Uomo"},
 		{kind: "headquarters", label: "Sede", value: "Roma"},
 		{kind: "location", label: "Località", value: "Città dimostrativa"},
 		{kind: "price", label: "Costo", value: "Da 30 €"},

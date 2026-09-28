@@ -1,10 +1,22 @@
 import type {ProfileDraft, ProfileDrafts, ProfileLocationDraft, ProfileType,} from "@/features/profilo/profile-model";
 import type {ProfileSocialLinks, ProfileSocialLinksByType,} from "@/features/profilo/profile-social-links";
 import {getProfileRequiredFieldErrors, type ProfileValidationErrors,} from "@/features/profilo/profile-required-fields";
-import {isValidIsoDate, isValidPhone, isValidTime, normalizeFacilityOpeningHours, parseOptionalMoney, type FacilityOpeningHour} from "@/features/pubblica-annuncio/publish-field-validation";
-import {ANNATE_OPTIONS, EMAIL_PATTERN, FIGURA_PROFESSIONALE_OPTIONS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {
+	type FacilityOpeningHour,
+	isValidIsoDate,
+	isValidPhone,
+	isValidTime,
+	normalizeFacilityOpeningHours,
+	parseOptionalMoney
+} from "@/features/pubblica-annuncio/publish-field-validation";
+import {
+	ANNATE_OPTIONS,
+	EMAIL_PATTERN,
+	FIGURA_PROFESSIONALE_OPTIONS
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {isStaffCategory} from "@/features/pubblica-annuncio/types/staff-category-catalog";
+import {ANY_CATEGORY} from "@/features/pubblica-annuncio/types/category-catalog";
 import {TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 
 export const PUBLISH_PAYLOAD_VERSION = 3 as const;
@@ -16,6 +28,7 @@ export const PUBLISHABLE_PROFILE_TYPES = [
 	"arbitro",
 	"torneo-evento",
 	"campi-impianti-sportivi",
+	"creators",
 ] as const satisfies readonly ProfileType[];
 
 export type PublishableProfileType = typeof PUBLISHABLE_PROFILE_TYPES[number];
@@ -37,6 +50,7 @@ export type DatabaseAnnouncementType =
 	| "annuncio_squadra_cerca_sponsor"
 	| "annuncio_staff_sportivo"
 	| "annuncio_arbitro"
+	| "annuncio_creators"
 	| "annuncio_torneo_evento"
 	| "annuncio_campo_impianto";
 
@@ -97,6 +111,10 @@ export interface AnnouncementDetailsDrafts {
 		automunito: string;
 		disponibilita_spostamento: string;
 		descrizione_aggiuntiva: string;
+	};
+	creator: {
+		titolo_post: string;
+		descrizione_post: string;
 	};
 	torneoEvento: {
 		nome_evento: string;
@@ -196,6 +214,7 @@ export type AnnouncementValidationField =
 	| "phone"
 	| "locations"
 	| "description"
+	| "title"
 	| "mainRoles"
 	| "yearFrom"
 	| "yearTo"
@@ -228,7 +247,7 @@ export type AnnouncementValidationErrors = Partial<Record<AnnouncementValidation
 
 export interface PublishProfileContext {
 	profileId: string;
-	enabledProfileTypes: PublishableProfileType[];
+	enabledProfileTypes: ProfileType[];
 	drafts: ProfileDrafts;
 	locations: Record<ProfileType, ProfileLocationDraft[]>;
 	socialLinks: ProfileSocialLinksByType;
@@ -267,6 +286,7 @@ export function getDatabaseAnnouncementType(
 	if (profileType === "giocatore") return "annuncio_giocatore";
 	if (profileType === "staff-sportivo") return "annuncio_staff_sportivo";
 	if (profileType === "arbitro") return "annuncio_arbitro";
+	if (profileType === "creators") return "annuncio_creators";
 	if (profileType === "torneo-evento") return "annuncio_torneo_evento";
 	if (profileType === "campi-impianti-sportivi") return "annuncio_campo_impianto";
 	if (teamSubtype === "cerca-giocatore") return "annuncio_squadra_cerca_giocatore";
@@ -321,6 +341,10 @@ export function createAnnouncementDetailsDrafts(): AnnouncementDetailsDrafts {
 			disponibilita_spostamento: "",
 			descrizione_aggiuntiva: "",
 		},
+		creator: {
+			titolo_post: "",
+			descrizione_post: "",
+		},
 		torneoEvento: {
 			nome_evento: "",
 			tipologie_sport: [],
@@ -372,6 +396,7 @@ export function getAnnouncementDetail(
 	if (type === "giocatore") return drafts.giocatore;
 	if (type === "staff-sportivo") return drafts.staffSportivo;
 	if (type === "arbitro") return drafts.arbitro;
+	if (type === "creators") return drafts.creator;
 	if (type === "torneo-evento") return drafts.torneoEvento;
 	if (type === "campi-impianti-sportivi") return drafts.campoImpianto;
 	if (teamSubtype === "cerca-giocatore") return drafts.squadraCercaGiocatore;
@@ -450,7 +475,7 @@ export function getAnnouncementValidationErrors(
 	if (type === "staff-sportivo") {
 		const draft = drafts.staffSportivo;
 		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
-		if (draft.categorie_ricercate.length > 32 || draft.categorie_ricercate.some((category) => !isStaffCategory(category))) errors.staffCategories = "Seleziona categorie valide dal catalogo Staff.";
+		if (draft.categorie_ricercate.length > 32 || draft.categorie_ricercate.some((category) => category !== ANY_CATEGORY && !isStaffCategory(category))) errors.staffCategories = "Seleziona categorie valide dal catalogo Staff.";
 		if (draft.disponibilita_spostamento && !["Si", "No", "Da valutare"].includes(draft.disponibilita_spostamento)) errors.staffTravel = "Seleziona una disponibilità agli spostamenti valida.";
 		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’annuncio.";
 	}
@@ -458,6 +483,9 @@ export function getAnnouncementValidationErrors(
 		const draft = drafts.arbitro;
 		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
 		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’annuncio.";
+	}
+	if (type === "creators") {
+		if (!nonEmpty(drafts.creator.titolo_post)) errors.title = "Inserisci il titolo dell’annuncio.";
 	}
 	if (type === "torneo-evento") {
 		const draft = drafts.torneoEvento;

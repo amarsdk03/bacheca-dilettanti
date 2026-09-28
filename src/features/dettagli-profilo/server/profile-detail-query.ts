@@ -11,7 +11,10 @@ import type {
 	PublicProfileExperience,
 } from "@/features/dettagli-profilo/profile-detail-model";
 import {loadPublicProfileAnnouncements} from "@/features/annunci/server/queries";
-import {DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {
+	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
+	ordinaTipologieCalcio,
+} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {categoryLabel, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
 import {parseLegacyStaffQualifications, parsePlayerCareer, toPublicPlayerData} from "./player-profile-data";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
@@ -26,7 +29,6 @@ import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-prof
 import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
-import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {loadRecentSimilarProfiles} from "@/features/profili/server/queries";
 
 const NOT_SPECIFIED = "Non specificato";
@@ -276,7 +278,7 @@ async function loadProfileContent(
 	if (type === "professionisti-studi") {
 		const {data, error} = await supabase
 			.from("profilo_professionista_studente")
-			.select("id, nome, cognome, sport_principale, tipologie_sport, figure_professionali, disponibilita, automunito, specializzazioni, presentazione, presentazione_servizi, storico_esperienze")
+			.select("id, nome, cognome, sport_principale, tipologie_sport, figure_professionali, disponibilita, automunito, specializzazioni, presentazione, presentazione_servizi, storico_esperienze, lista_esperienze, qualifiche_licenze")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -297,7 +299,8 @@ async function loadProfileContent(
 					detailField("Presentazione", data.presentazione, true),
 					detailField("Servizi offerti", data.presentazione_servizi, true),
 				],
-				experiences: parsePlayerCareer(data.storico_esperienze),
+				experiences: parsePlayerCareer(data.lista_esperienze),
+				qualifications: parsePlayerCareer(data.qualifiche_licenze),
 			},
 		};
 	}
@@ -305,7 +308,7 @@ async function loadProfileContent(
 	if (type === "arbitro") {
 		const {data, error} = await supabase
 			.from("profilo_arbitro")
-			.select("id, nome, cognome, sport_principale, disponibilita, presentazione, storico_esperienze")
+			.select("id, nome, cognome, sport_principale, disponibilita, presentazione, storico_esperienze, lista_esperienze, qualifiche_licenze")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -321,7 +324,8 @@ async function loadProfileContent(
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Presentazione", data.presentazione, true),
 				],
-				experiences: parsePlayerCareer(data.storico_esperienze),
+				experiences: parsePlayerCareer(data.lista_esperienze),
+				qualifications: parsePlayerCareer(data.qualifiche_licenze),
 			},
 		};
 	}

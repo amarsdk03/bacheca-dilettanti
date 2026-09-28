@@ -21,7 +21,12 @@ import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database, Json} from "@/server/supabase";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {categoryLabel, normalizeCategories, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
+import {
+	categoryLabel,
+	categoryShortLabel,
+	normalizeCategories,
+	normalizeFigures
+} from "@/features/pubblica-annuncio/types/category-catalog";
 import {publicPlayerAge} from "@/features/dettagli-profilo/server/player-profile-data";
 
 const PROFILE_DIRECTORY_BATCH_SIZE = 500;
@@ -311,7 +316,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 			filterData: {tipologie: sportTypes, ruoli: primaryRoles},
 		factData: {
 			age: publicPlayerAge({day: player.giorno_nascita, month: player.mese_nascita, year: player.anno_nascita}),
-			category: currentCategory ? categoryLabel(currentCategory) : null,
+			category: currentCategory ? categoryShortLabel(currentCategory) : null,
 			gender: cleanText(player.genere),
 		},
 		}, profileImages));

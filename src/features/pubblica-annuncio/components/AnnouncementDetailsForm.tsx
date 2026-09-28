@@ -23,7 +23,8 @@ import type {ProfileLocationDraft} from "@/features/profilo/profile-model";
 import {OpeningHoursField} from "@/features/profilo/ProfileDetailsForm";
 import CategorieCalcioMultiselectField
 	from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
-import FiguraProfessionaleMultiselectField from "@/features/pubblica-annuncio/components/InputFields/FiguraProfessionaleMultiselectField";
+import FiguraProfessionaleMultiselectField
+	from "@/features/pubblica-annuncio/components/InputFields/FiguraProfessionaleMultiselectField";
 import FieldRequirementIndicator, {
 	RequiredMark
 } from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
@@ -77,6 +78,7 @@ function DescriptionField({
 	value,
 	onChange,
 	required = false,
+	recommended = false,
 	placeholder,
 	error,
 }: {
@@ -85,13 +87,18 @@ function DescriptionField({
 	value: string;
 	onChange: (value: string) => void;
 	required?: boolean;
+	recommended?: boolean;
 	placeholder: string;
 	error?: string;
 }) {
 	return (
 		<Field data-invalid={Boolean(error)}>
 			<div className="flex items-center justify-between gap-3">
-				<FieldLabel htmlFor={id}>{label} <FieldRequirementIndicator required={required} /></FieldLabel>
+				<FieldLabel htmlFor={id}>
+					{label} {recommended && !required
+						? <OptionalLabel value="consigliato" />
+						: <FieldRequirementIndicator required={required} />}
+				</FieldLabel>
 				<span className="text-xs text-muted-foreground">{value.length}/5000</span>
 			</div>
 			<Textarea
@@ -209,13 +216,17 @@ export default function AnnouncementDetailsForm({
 
 				{profileType === "giocatore" && (
 					<FieldGroup>
-						<CategorieCalcioMultiselectField
-							label="Categorie ricercate"
-							items={CATEGORIE_CALCIO_GROUPS}
-							value={drafts.giocatore.categorie_ricercate}
-							onValueChangeAction={(value) => updateDraft("giocatore", "categorie_ricercate", value)}
-						/>
-						<FieldDescription>Se non trovi la tua categoria specifica, scrivila nella descrizione dell’annuncio.</FieldDescription>
+						<div>
+							<CategorieCalcioMultiselectField
+								label="Categorie ricercate"
+								items={CATEGORIE_CALCIO_GROUPS}
+								value={drafts.giocatore.categorie_ricercate}
+								onValueChangeAction={(value) => updateDraft("giocatore", "categorie_ricercate", value)}
+								includeAny
+								className={"pb-2"}
+							/>
+							<FieldDescription>Se non trovi la tua categoria specifica, scrivila nella descrizione dell’annuncio.</FieldDescription>
+						</div>
 						<DescriptionField
 							id="announcement-player-description"
 							label="Descrizione"
@@ -251,7 +262,7 @@ export default function AnnouncementDetailsForm({
 						/>
 						<div className="grid gap-4 sm:grid-cols-2">
 							<Field data-invalid={Boolean(errors.yearFrom)}>
-								<FieldLabel htmlFor="team-player-year-from">Dal <OptionalLabel /></FieldLabel>
+								<FieldLabel htmlFor="team-player-year-from">Annate dal <OptionalLabel /></FieldLabel>
 								<Select value={drafts.squadraCercaGiocatore.annata_da || null} onValueChange={(value) => onDraftsChange((previous) => {
 									const from = value ?? "";
 									const to = previous.squadraCercaGiocatore.annata_a;
@@ -263,7 +274,7 @@ export default function AnnouncementDetailsForm({
 								{errors.yearFrom && <FieldError>{errors.yearFrom}</FieldError>}
 							</Field>
 							<Field data-invalid={Boolean(errors.yearTo)} data-disabled={!drafts.squadraCercaGiocatore.annata_da}>
-								<FieldLabel htmlFor="team-player-year-to">Al {drafts.squadraCercaGiocatore.annata_da ? <RequiredMark /> : <OptionalLabel />}</FieldLabel>
+								<FieldLabel htmlFor="team-player-year-to">Annate al {drafts.squadraCercaGiocatore.annata_da ? <RequiredMark /> : <OptionalLabel />}</FieldLabel>
 								<Select value={drafts.squadraCercaGiocatore.annata_a || null} onValueChange={(value) => updateDraft("squadraCercaGiocatore", "annata_a", value ?? "")}>
 									<SelectTrigger id="team-player-year-to" className="w-full" disabled={!drafts.squadraCercaGiocatore.annata_da} aria-required={Boolean(drafts.squadraCercaGiocatore.annata_da)} aria-invalid={Boolean(errors.yearTo)}><SelectValue placeholder="Seleziona l'annata finale" /></SelectTrigger>
 									<SelectContent><SelectItem value={null}>Seleziona</SelectItem>{ANNATE_OPTIONS.filter((year) => Number(year) >= Number(drafts.squadraCercaGiocatore.annata_da)).map((year) => <SelectItem key={year} value={year}>{year}</SelectItem>)}</SelectContent>
@@ -320,7 +331,7 @@ export default function AnnouncementDetailsForm({
 				{profileType === "staff-sportivo" && (
 					<FieldGroup>
 						<TipologiaCalcioMultiselectField value={drafts.staffSportivo.tipologie_sport} onValueChange={(value) => updateDraft("staffSportivo", "tipologie_sport", value)} required error={errors.sports} />
-						<CategorieCalcioMultiselectField label="Categorie ricercate" items={STAFF_CATEGORY_GROUPS} formatValue={staffCategoryLabel} value={drafts.staffSportivo.categorie_ricercate} onValueChangeAction={(value) => updateDraft("staffSportivo", "categorie_ricercate", value)} error={errors.staffCategories} />
+						<CategorieCalcioMultiselectField label="Categorie ricercate" items={STAFF_CATEGORY_GROUPS} formatValueAction={staffCategoryLabel} value={drafts.staffSportivo.categorie_ricercate} onValueChangeAction={(value) => updateDraft("staffSportivo", "categorie_ricercate", value)} includeAny error={errors.staffCategories} />
 						<Field data-invalid={Boolean(errors.staffTravel)}>
 							<FieldLabel htmlFor="staff-travel">Disponibilità agli spostamenti <OptionalLabel /></FieldLabel>
 							<Select value={drafts.staffSportivo.disponibilita_spostamento || null} onValueChange={(value) => updateDraft("staffSportivo", "disponibilita_spostamento", value ?? "")}>
@@ -353,6 +364,28 @@ export default function AnnouncementDetailsForm({
 							</Field>
 						</div>
 						<DescriptionField id="referee-description" label="Descrizione" value={drafts.arbitro.descrizione_aggiuntiva} onChange={(value) => updateDraft("arbitro", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Descrivi disponibilità e tipo di incarichi cercati..." />
+					</FieldGroup>
+				)}
+
+				{profileType === "creators" && (
+					<FieldGroup>
+						<TextField
+							id="creator-announcement-title"
+							label="Titolo dell’annuncio"
+							value={drafts.creator.titolo_post}
+							onChange={(value) => updateDraft("creator", "titolo_post", value)}
+							required
+							error={errors.title}
+							placeholder="Inserisci un titolo chiaro e sintetico"
+						/>
+						<DescriptionField
+							id="creator-announcement-description"
+							label="Descrizione dell’annuncio"
+							value={drafts.creator.descrizione_post}
+							onChange={(value) => updateDraft("creator", "descrizione_post", value)}
+							recommended
+							placeholder="Descrivi il contenuto, la collaborazione o l’opportunità proposta..."
+						/>
 					</FieldGroup>
 				)}
 
@@ -493,7 +526,7 @@ export default function AnnouncementDetailsForm({
 			</FieldSet>
 
 			{!(profileType === "squadra" && teamSubtype === "cerca-sponsor") && (
-				<ProfileLocationsField idPrefix="announcement-locations" value={locations} onValueChange={onLocationsChange} label="Zone di ricerca" required error={errors.locations ?? null} />
+				<ProfileLocationsField idPrefix="announcement-locations" value={locations} onValueChange={onLocationsChange} label={profileType === "creators" ? "Di che zona/e ti occupi" : "Zone di ricerca"} required error={errors.locations ?? null} />
 			)}
 		</FieldGroup>
 	);

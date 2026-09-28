@@ -67,7 +67,7 @@ export function DetailPageSkeleton({kind}: {kind: "annuncio" | "profilo"}) {
 export function DashboardPageSkeleton() {
 	return <><NavbarSkeleton /><div className="min-h-screen bg-muted/20"><div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
 		<LoadingRegion label="Caricamento del tuo profilo in corso" className="flex flex-col gap-6 sm:gap-8">
-			<div aria-hidden="true" className="rounded-xl border border-t-2 border-t-primary bg-card p-5 shadow-sm sm:p-6">
+			<div aria-hidden="true" className="rounded-xl border border-t-2 bg-card p-5 shadow-sm sm:p-6">
 				<div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
 					<div className="flex min-w-0 items-center gap-4 sm:gap-5">
 						<Block className="size-16 shrink-0 rounded-full sm:size-20" />

@@ -10,11 +10,13 @@ export const CATEGORIE_CALCIO_GROUPS = [
 
 export const FIGURA_PROFESSIONALE_GROUPS = [
 	{gruppo: "Area tecnica", opzioni: ["Allenatore", "Allenatore in seconda", "Preparatore atletico", "Preparatore portieri", "Collaboratore tecnico", "Preparatore calci piazzati", "Match Analyst"]},
-	{gruppo: "Direzione e organizzazione", opzioni: ["Direttore Sportivo", "Osservatore", "Capo-Osservatore", "Segretario", "Dirigente Accompagnatore", "Magazziniere", "Autista"]},
-	{gruppo: "Salute e servizi", opzioni: ["Fisioterapia / Medicina sportiva", "Psicologo", "Commerciale / Business"]},
+	{gruppo: "Direzione e organizzazione", opzioni: ["Direttore Sportivo", "Osservatore", "Capo-Osservatore", "Segretario", "Dirigente Accompagnatore", "Magazziniere", "Autista", "Commerciale / Business"]},
+	{gruppo: "Staff medico", opzioni: ["Fisioterapia / Medicina sportiva", "Psicologo"]},
 	{gruppo: "Comunicazione", opzioni: ["Social Media Manager", "Addetto Stampa / Comunicazione", "Grafico"]},
 	{gruppo: "Altre figure", opzioni: ["Tuttofare", "Altro"]},
 ] as const;
+
+export const ANY_CATEGORY = "Qualsiasi";
 
 export const FIGURA_PROFESSIONALE_OPTIONS = FIGURA_PROFESSIONALE_GROUPS.flatMap(({opzioni}) => [...opzioni]);
 
@@ -52,12 +54,20 @@ export function normalizeCategory(value: string): string {
 }
 
 export function normalizeCategories(values: readonly string[]): string[] {
+	if (values.includes(ANY_CATEGORY)) return [ANY_CATEGORY];
 	return [...new Set(values.map(normalizeCategory))];
 }
 
 export function categoryLabel(value: string): string {
 	const pair = categoryByKey.get(normalizeCategory(value));
 	return pair ? `${pair.group} · ${pair.category}` : value;
+}
+
+export function categoryShortLabel(value: string): string {
+	const pair = categoryByKey.get(normalizeCategory(value));
+	if (pair) return pair.category;
+	const group = CATEGORIE_CALCIO_GROUPS.find(({gruppo}) => value.startsWith(`${gruppo} · `));
+	return group ? value.slice(group.gruppo.length + 3) : value;
 }
 
 const FIGURE_ALIASES: Record<string, string> = {

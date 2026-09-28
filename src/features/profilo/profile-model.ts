@@ -16,18 +16,17 @@ export const PROFILE_TYPES = [
 	"giocatore",
 	"squadra",
 	"staff-sportivo",
-	"professionisti-studi",
 	"arbitro",
-	"creators",
 	"torneo-evento",
 	"campi-impianti-sportivi",
+	"professionisti-studi",
+	"creators",
 ] as const;
 
 export type ProfileType = typeof PROFILE_TYPES[number];
 
 export const COMING_SOON_PROFILE_TYPES = [
 	"professionisti-studi",
-	"creators",
 ] as const satisfies readonly ProfileType[];
 
 export type ComingSoonProfileType = typeof COMING_SOON_PROFILE_TYPES[number];
@@ -59,8 +58,14 @@ export type ProfileDrafts = {
 	};
 	squadra: Omit<EditableProfileDraft<"profilo_squadra">, "sede_principale">;
 	"staff-sportivo": EditableProfileDraft<"profilo_staff_sportivo">;
-	"professionisti-studi": EditableProfileDraft<"profilo_professionista_studente">;
-	arbitro: EditableProfileDraft<"profilo_arbitro">;
+	"professionisti-studi": EditableProfileDraft<"profilo_professionista_studente"> & {
+		lista_esperienze: TablesInsert<"profilo_professionista_studente">["storico_esperienze"];
+		qualifiche_licenze: TablesInsert<"profilo_professionista_studente">["storico_esperienze"];
+	};
+	arbitro: EditableProfileDraft<"profilo_arbitro"> & {
+		lista_esperienze: TablesInsert<"profilo_arbitro">["storico_esperienze"];
+		qualifiche_licenze: TablesInsert<"profilo_arbitro">["storico_esperienze"];
+	};
 	creators: EditableProfileDraft<"profilo_creator">;
 	"torneo-evento": Omit<EditableProfileDraft<"profilo_torneo_evento">, "sede_principale">;
 	"campi-impianti-sportivi": EditableProfileDraft<"profilo_campi_impianti">;
@@ -95,11 +100,7 @@ export const PROFILE_DIRECTORY_UNLOCK_PROFILE_COUNT = 20;
 export const PROFILI_LIMITATI = true;
 
 export const LIMITED_PROFILE_TYPES = [
-	"arbitro",
-	"torneo-evento",
-	"campi-impianti-sportivi",
 	"professionisti-studi",
-	"creators",
 ] as const satisfies readonly ProfileType[];
 
 export type LimitedProfileType = typeof LIMITED_PROFILE_TYPES[number];
@@ -234,6 +235,8 @@ export function createProfileDrafts(): ProfileDrafts {
 			specializzazioni: "",
 			sport_principale: "Calcio",
 			storico_esperienze: [],
+			lista_esperienze: [],
+			qualifiche_licenze: [],
 			tipologie_sport: [],
 		},
 		arbitro: {
@@ -246,6 +249,8 @@ export function createProfileDrafts(): ProfileDrafts {
 			presentazione: "",
 			sport_principale: "Calcio",
 			storico_esperienze: [],
+			lista_esperienze: [],
+			qualifiche_licenze: [],
 		},
 		creators: {
 			nome_creator: "",

@@ -11,6 +11,7 @@ type DisponibilitaProfiloSelectProps = {
 	value: DisponibilitaProfilo;
 	onValueChange: (value: DisponibilitaProfilo) => void;
 	player?: boolean;
+	hideContract?: boolean;
 	required?: boolean;
 	error?: string;
 };
@@ -29,10 +30,11 @@ export default function DisponibilitaProfiloSelect({
 	value,
 	onValueChange,
 	player = false,
+	hideContract = false,
 	required = false,
 	error,
 }: DisponibilitaProfiloSelectProps) {
-	const items = player ? playerItems : defaultItems;
+	const items = (player ? playerItems : defaultItems).filter((item) => !hideContract || item.value !== "sotto-contratto");
 	return (
 		<Field data-invalid={Boolean(error)}>
 			<FieldLabel htmlFor={id}>Disponibilità {required ? <span className="text-destructive" aria-hidden="true">*</span> : <OptionalLabel />}</FieldLabel>

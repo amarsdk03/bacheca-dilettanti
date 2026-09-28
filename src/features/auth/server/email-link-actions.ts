@@ -5,7 +5,7 @@ import "server-only";
 import {revalidatePath} from "next/cache";
 import {redirect} from "next/navigation";
 
-import {isEmailLinkCredentialValue, type EmailLinkState} from "@/features/auth/email-link";
+import {type EmailLinkState, isEmailLinkCredentialValue} from "@/features/auth/email-link";
 import {createClient} from "@/lib/supabase/server";
 
 const INVALID_LINK_MESSAGE = "Il link non è valido oppure è scaduto. Richiedine uno nuovo.";

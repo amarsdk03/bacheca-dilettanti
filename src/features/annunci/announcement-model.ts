@@ -24,8 +24,17 @@ import type {ProfileType} from "@/features/profilo/profile-model";
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 import type {TeamProfileReference} from "@/features/profilo/team-profile";
 import {normalizeTipologiaCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
-import {CATEGORY_FILTER_OPTIONS, normalizeCategory, normalizeFigure, UNRESOLVED_LEGACY_CATEGORY_FILTERS} from "@/features/pubblica-annuncio/types/category-catalog";
-import {normalizeStaffCategory, STAFF_CATEGORY_FILTER_OPTIONS, STAFF_CATEGORY_GROUPS} from "@/features/pubblica-annuncio/types/staff-category-catalog";
+import {
+	CATEGORY_FILTER_OPTIONS,
+	normalizeCategory,
+	normalizeFigure,
+	UNRESOLVED_LEGACY_CATEGORY_FILTERS
+} from "@/features/pubblica-annuncio/types/category-catalog";
+import {
+	normalizeStaffCategory,
+	STAFF_CATEGORY_FILTER_OPTIONS,
+	STAFF_CATEGORY_GROUPS
+} from "@/features/pubblica-annuncio/types/staff-category-catalog";
 
 export const ANNOUNCEMENTS_PER_PAGE = 12;
 
@@ -156,6 +165,13 @@ export const ANNOUNCEMENT_OPTIONS: readonly AnnouncementOption[] = [
 		description: "Campi e impianti disponibili per attività ed eventi",
 		profileType: "campi-impianti-sportivi",
 		icon: MapPinIcon,
+	},
+	{
+		value: "annuncio_creators",
+		label: "Creators",
+		description: "Contenuti e collaborazioni proposti dai creator",
+		profileType: "creators",
+		icon: SparklesIcon,
 	},
 ];
 

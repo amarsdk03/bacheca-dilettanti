@@ -25,6 +25,9 @@ export default function AnnouncementDetailsLayout({
 	playerRoles?: AnnouncementPlayerRoles;
 }) {
 	const notice = announcementPreviewNotice(announcement.moderationStatus);
+	const facilityAddress = announcement.type === "annuncio_campo_impianto"
+		? announcement.fields.find(field => field.label === "Indirizzo del campo")?.value
+		: null;
 	return (
 		<div className="public-profile-detail flex min-w-0 flex-col gap-6 font-home-body" style={{
 			"--profile-accent": getProfileAccent(announcement.profileType),
@@ -45,9 +48,9 @@ export default function AnnouncementDetailsLayout({
 					<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
 						<AnnouncementDetailsOverview announcement={announcement} presentation={presentation} />
 						<aside aria-label="Informazioni sportive e contatti" className="flex min-w-0 flex-col gap-5">
-							{playerRoles && <AnnouncementPlayerRolePitch primaryRoles={playerRoles.primaryRoles} secondaryRoles={playerRoles.secondaryRoles} />}
+							{playerRoles && <AnnouncementPlayerRolePitch primaryRoles={playerRoles.primaryRoles} secondaryRoles={playerRoles.secondaryRoles} textOnly={announcement.type === "annuncio_squadra_cerca_giocatore"} />}
 							<AnnouncementDetailsContacts contacts={announcement.contacts} unavailable={announcement.contactsUnavailable} />
-							<AnnouncementLocationCard locations={announcement.locations} />
+							<AnnouncementLocationCard locations={announcement.locations} announcementType={announcement.type} address={facilityAddress} />
 							<DetailIdentifier id={announcement.id} entity="annuncio" />
 						</aside>
 					</div>

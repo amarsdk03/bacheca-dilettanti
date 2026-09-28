@@ -3,12 +3,11 @@ import "server-only";
 import {isAnnouncementListed} from "@/features/annunci/announcement-visibility";
 import {
 	ACTIVE_ANNOUNCEMENT_TYPES,
+	type ActiveAnnouncementType,
 	announcementContent,
-	finiteNumber,
-	isActiveAnnouncementType,
 	type AnnouncementFilterData,
 	type AnnouncementLocation,
-	type ActiveAnnouncementType,
+	isActiveAnnouncementType,
 } from "@/features/annunci/announcement-content";
 
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
@@ -21,8 +20,8 @@ import {
 	type AnnouncementDirectoryItem,
 	type AnnouncementDirectoryQuery,
 	type AnnouncementDirectoryResult,
-	announcementOption,
 	announcementDisplayLabel,
+	announcementOption,
 	type AnnouncementPlayerRoles,
 	ANNOUNCEMENTS_PER_PAGE,
 	type AnnouncementType,
@@ -33,6 +32,7 @@ import {
 	normalizeAnnouncementSearchText,
 } from "@/features/annunci/announcement-model";
 import type {ProfileType} from "@/features/profilo/profile-model";
+import {ANY_CATEGORY} from "@/features/pubblica-annuncio/types/category-catalog";
 import {
 	experienceTeamReferences,
 	type PublicTeamProfile,
@@ -105,7 +105,7 @@ function announcementContentQuery(
 			annuncio_squadra_cerca_partita(categorie_avversario, disponibilita_trasferta, periodo_dal, periodo_al, orario_dalle, orario_alle, descrizione_aggiuntiva),
 			annuncio_squadra_cerca_sponsor(categoria_settore, supporto_cercato, offerta_fornita, descrizione_aggiuntiva),
 			annuncio_staff_sportivo(figure_professionali, tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, disponibile_remoto, descrizione_aggiuntiva, lista_esperienze, qualifiche_licenze),
-			annuncio_arbitro(tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, automunito, descrizione_aggiuntiva, lista_esperienze),
+			annuncio_arbitro(tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, automunito, descrizione_aggiuntiva, lista_esperienze, qualifiche_licenze),
 			annuncio_torneo_evento(nome_evento, modalita_iscrizione, annate_ammesse_da, annate_ammesse_a, numero_squadre, costo_partecipazione, tipo_partecipazione, lista_premi_trofei, descrizione_aggiuntiva, tipologie_sport),
 			annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva, indirizzo),
 			localita_annuncio(regione, citta)
@@ -196,15 +196,6 @@ function validExternalAnnouncementLink(value: unknown) {
 	} catch {
 		return null;
 	}
-}
-
-function cleanStringArray(value: unknown) {
-	if (!Array.isArray(value)) return [];
-	return [...new Set(
-		value
-			.map((item) => cleanText(item, 160))
-			.filter((item): item is string => Boolean(item)),
-	)];
 }
 
 function announcementLocations(row: AnnouncementQueryRow) {
@@ -314,7 +305,7 @@ function matchesDirectoryQuery(
 	if (filters.ruolo && !normalizedIncludes(data.roles, filters.ruolo)) return false;
 	if (filters.annata && !normalizedIncludes(data.years, filters.annata)) return false;
 	if (filters.figura && !normalizedIncludes(data.figures, filters.figura)) return false;
-	if (filters.categoria && !normalizedIncludes(data.categories, filters.categoria)) return false;
+	if (filters.categoria && !data.categories.includes(ANY_CATEGORY) && !normalizedIncludes(data.categories, filters.categoria)) return false;
 	if (filters.automunito && normalizeAnnouncementSearchText(data.car ?? "") !== normalizeAnnouncementSearchText(filters.automunito)) return false;
 	if (filters.costoMax !== null && (data.cost === null || data.cost > filters.costoMax)) return false;
 	if (filters.compensoMin !== null && (data.compensation === null || data.compensation < filters.compensoMin)) return false;

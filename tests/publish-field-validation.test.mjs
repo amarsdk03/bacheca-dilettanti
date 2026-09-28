@@ -25,7 +25,9 @@ vm.runInNewContext(modelJavaScript, {
 		if (specifier.endsWith("pubblicaAnnuncio")) return {EMAIL_PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, ANNATE_OPTIONS: Array.from({length: new Date().getFullYear() - 1900 + 1}, (_, index) => String(new Date().getFullYear() - index)), FIGURA_PROFESSIONALE_OPTIONS: ["Allenatore", "Preparatore atletico"]};
 		if (specifier.endsWith("announcementExtras")) return {isLinkAnnuncioValid: (value) => value === "" || /^https?:\/\//.test(value)};
 		if (specifier.endsWith("staff-category-catalog")) return {isStaffCategory: (value) => value === "Calcio 11 (Maschile)::Serie C"};
+		if (specifier.endsWith("category-catalog")) return {ANY_CATEGORY: "Qualsiasi"};
 		if (specifier.endsWith("tipologie-calcio")) return {TIPOLOGIA_CALCIO_OPTIONS: ["Calcio 11", "Calcio 8", "Calcio 7", "Calcio 5"]};
+		if (specifier.endsWith("player-nationalities")) return {isPlayerNationalityCode: (value) => value === "IT"};
 		throw new Error(`Unexpected import: ${specifier}`);
 	},
 	Date,
@@ -43,6 +45,7 @@ vm.runInNewContext(profileJavaScript, {
 	exports: profileModule.exports,
 	require(specifier) {
 		if (specifier.endsWith("publish-field-validation")) return fieldValidators;
+		if (specifier.endsWith("player-nationalities")) return {isPlayerNationalityCode: (value) => value === "IT"};
 		throw new Error(`Unexpected import: ${specifier}`);
 	},
 });
@@ -53,7 +56,17 @@ test("player requires gender, birth year and availability while current category
 	const location = [{regione: "Lazio", citta: null}];
 	const missing = getProfileRequiredFieldErrors("giocatore", draft, location);
 	assert.ok(missing.gender && missing.birthYear && missing.availability);
-	assert.deepEqual(Object.keys(getProfileRequiredFieldErrors("giocatore", {...draft, genere: "Maschio", anno_nascita: "2000", disponibilita: "svincolato"}, location)), []);
+	assert.deepEqual(Object.keys(getProfileRequiredFieldErrors("giocatore", {...draft, genere: "Uomo", anno_nascita: "2000", disponibilita: "svincolato"}, location)), []);
+});
+
+test("creator requires a name in the profile and a title in the announcement", () => {
+	const location = [{regione: "Lazio", citta: null}];
+	assert.ok(getProfileRequiredFieldErrors("creators", {nome_creator: ""}, location).name);
+	assert.equal(getProfileRequiredFieldErrors("creators", {nome_creator: "Creator Lazio"}, location).name, undefined);
+	const drafts = createAnnouncementDetailsDrafts();
+	assert.ok(getAnnouncementValidationErrors("creators", null, drafts, location, {email: "creator@example.com", phone: ""}).title);
+	drafts.creator.titolo_post = "Collaborazione video";
+	assert.equal(getAnnouncementValidationErrors("creators", null, drafts, location, {email: "creator@example.com", phone: ""}).title, undefined);
 });
 
 test("publication dates reject impossible calendar days and year zero", () => {
@@ -91,7 +104,7 @@ test("facility opening hours normalize missing minutes and reject invalid hours"
 	assert.equal(normalizeFacilityOpeningHours(schedule.map((entry, index) => index === 0 ? {...entry, alle: "20:77"} : entry)), undefined);
 });
 
-test("all nine announcement types pass client validation with complete details", () => {
+test("all ten announcement types pass client validation with complete details", () => {
 	const drafts = createAnnouncementDetailsDrafts();
 	drafts.giocatore.descrizione_aggiuntiva = "Cerco una squadra.";
 	drafts.squadraCercaGiocatore = {...drafts.squadraCercaGiocatore, ruoli_principali: ["Difensore"], descrizione_aggiuntiva: "Cerchiamo un giocatore."};
@@ -100,6 +113,7 @@ test("all nine announcement types pass client validation with complete details",
 	drafts.squadraCercaSponsor = {...drafts.squadraCercaSponsor, categoria_settore: "Locale", offerta_fornita: "Visibilità"};
 	drafts.staffSportivo = {...drafts.staffSportivo, tipologie_sport: ["Calcio 11"], descrizione_aggiuntiva: "Cerco incarico."};
 	drafts.arbitro = {...drafts.arbitro, tipologie_sport: ["Calcio 11"], descrizione_aggiuntiva: "Disponibile."};
+	drafts.creator = {...drafts.creator, titolo_post: "Collaborazione video", descrizione_post: "Proposta editoriale."};
 	drafts.torneoEvento = {...drafts.torneoEvento, nome_evento: "Torneo", tipologie_sport: ["Calcio 11"], descrizione_aggiuntiva: "Torneo locale."};
 	drafts.campoImpianto = {...drafts.campoImpianto, tipologie_sport: ["Calcio 11"], indirizzo: "Via Roma 1", descrizione_aggiuntiva: "Campo disponibile.", costo_partenza: "0.29"};
 	const locations = [{regione: "Lazio", citta: "Roma"}];
@@ -112,6 +126,7 @@ test("all nine announcement types pass client validation with complete details",
 		["squadra", "cerca-sponsor"],
 		["staff-sportivo", null],
 		["arbitro", null],
+		["creators", null],
 		["torneo-evento", null],
 		["campi-impianti-sportivi", null],
 	];

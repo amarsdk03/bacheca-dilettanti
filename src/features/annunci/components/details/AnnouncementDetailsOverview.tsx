@@ -15,7 +15,7 @@ export default function AnnouncementDetailsOverview({announcement, presentation}
 		(presentation.detailFieldLabels.includes(field.label) || field.wide)
 		&& isSpecifiedAnnouncementValue(field.value)
 		&& field.value !== announcement.description
-		&& !(announcement.playerRoles && field.label === "Ruoli secondari"),
+		&& !(announcement.playerRoles && field.label === "Ruoli specifici"),
 	);
 	return (
 		<section aria-label="Informazioni dell’annuncio" className="flex min-w-0 flex-col gap-5">

@@ -1,6 +1,6 @@
 "use client";
 
-import {createContext, useContext, useTransition, type ComponentProps} from "react";
+import {type ComponentProps, createContext, useContext, useTransition} from "react";
 import {useRouter} from "next/navigation";
 import {SearchIcon} from "lucide-react";
 

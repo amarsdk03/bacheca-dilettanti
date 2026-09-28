@@ -125,7 +125,8 @@ export function getProfileCompletion(
 			hasText(draft.specializzazioni),
 			hasText(draft.presentazione),
 			hasText(draft.presentazione_servizi),
-			hasExperiences(draft.storico_esperienze),
+			hasExperiences(draft.lista_esperienze),
+			hasExperiences(draft.qualifiche_licenze),
 			hasLocations,
 		]);
 	}
@@ -138,7 +139,8 @@ export function getProfileCompletion(
 			hasBirthDate(draft),
 			hasText(draft.disponibilita) && draft.disponibilita !== "non-specificare",
 			hasText(draft.presentazione),
-			hasExperiences(draft.storico_esperienze),
+			hasExperiences(draft.lista_esperienze),
+			hasExperiences(draft.qualifiche_licenze),
 			hasLocations,
 		]);
 	}

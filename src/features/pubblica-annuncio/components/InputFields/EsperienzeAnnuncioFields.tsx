@@ -45,6 +45,7 @@ type EsperienzeAnnuncioFieldsProps = {
 	idPrefix: string;
 	titolo?: string;
 	requireState?: boolean;
+	freeTextOrganization?: boolean;
 	error?: string;
 };
 
@@ -54,6 +55,7 @@ export default function EsperienzeAnnuncioFields({
 	                                                 idPrefix,
 	                                                 titolo = "Qualifiche / Patentini",
 	                                                 requireState = false,
+	                                                 freeTextOrganization = false,
 	                                                 error,
                                                  }: EsperienzeAnnuncioFieldsProps) {
 	const addEsperienza = () => {
@@ -131,7 +133,15 @@ export default function EsperienzeAnnuncioFields({
 									<FieldLabel htmlFor={`${idPrefix}-ente-${esperienza.id}`}>
 										Ente / società / organizzazione <OptionalLabel />
 									</FieldLabel>
-									<TeamProfileComboboxField
+									{freeTextOrganization ? <Input
+										id={`${idPrefix}-ente-${esperienza.id}`}
+										value={esperienza.ente}
+										onChange={(event) => setEsperienze((previous) => previous.map((item) => item.id === esperienza.id
+											? {...item, ente: event.target.value, squadraProfiloId: null}
+											: item))}
+										placeholder="Inserisci il nome dell’ente"
+										maxLength={160}
+									/> : <TeamProfileComboboxField
 										id={`${idPrefix}-ente-${esperienza.id}`}
 										value={esperienza.ente}
 										profileId={esperienza.squadraProfiloId}
@@ -141,7 +151,7 @@ export default function EsperienzeAnnuncioFields({
 												: item));
 										}}
 										placeholder="Cerca una società o inserisci un ente"
-									/>
+									/>}
 								</Field>
 							</div>
 

@@ -47,7 +47,7 @@ const {getAnnouncementFacts} = load("src/features/annunci/components/cards/annou
 
 const FACTS = [
 	{kind: "roles", label: "Ruoli principali", value: "Difensore"},
-	{kind: "roles", label: "Ruoli secondari", value: "Terzino destro"},
+	{kind: "roles", label: "Ruoli specifici", value: "Terzino destro"},
 	{kind: "types", label: "Tipologie", value: "Calcio 11"},
 	{kind: "categories", label: "Categorie ricercate", value: "Eccellenza"},
 	{kind: "location", label: "Località", value: "Roma, Lazio"},
@@ -162,22 +162,22 @@ test("recent profile announcements show the same saved title and meaningful fact
 test("unspecified announcement facts are filtered without reintroducing them into compact cards", () => {
 	const facts = [
 		{kind: "roles", label: "Ruoli principali", value: " Non specificato "},
-		{kind: "roles", label: "Ruoli secondari", value: "Terzino destro"},
+		{kind: "roles", label: "Ruoli specifici", value: "Terzino destro"},
 		{kind: "types", label: "Tipologie", value: ""},
 		{kind: "categories", label: "Categorie ricercate", value: "Non specificato"},
 		{kind: "location", label: "Località", value: "Roma, Lazio"},
 	];
 	assert.deepEqual(
-		getAnnouncementFacts({facts}, ["Ruoli principali", "Ruoli secondari", "Tipologie", "Categorie ricercate", "Località"])
+		getAnnouncementFacts({facts}, ["Ruoli principali", "Ruoli specifici", "Tipologie", "Categorie ricercate", "Località"])
 			.map(({label}) => label),
-		["Ruoli secondari", "Località"],
+		["Ruoli specifici", "Località"],
 	);
 
 	const html = renderAnnouncement("annuncio_giocatore", facts);
 	assert.equal(factLabelIndex(html, "Ruoli principali"), -1);
 	assert.equal(factLabelIndex(html, "Tipologie"), -1);
 	assert.equal(factLabelIndex(html, "Categorie ricercate"), -1);
-	assert.equal(factLabelIndex(html, "Ruoli secondari"), -1);
+	assert.equal(factLabelIndex(html, "Ruoli specifici"), -1);
 	assert.equal(factLabelIndex(html, "Località"), -1);
 	assert.doesNotMatch(html, /Non specificato/);
 });

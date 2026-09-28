@@ -10,7 +10,7 @@ type RuoloPrincipaleMultiselectFieldProps = {
 };
 
 export default function RuoloPrincipaleMultiselectField({
-	label = "Ruolo principale",
+	label = "Ruoli principali",
 	value,
 	onValueChange,
 	required = false,

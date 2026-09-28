@@ -46,7 +46,7 @@ export function getProfileRequiredFieldErrors(
 
 	if (type === "giocatore") {
 		if (!nonEmpty(values.nome)) errors.name = "Inserisci il nome del giocatore.";
-		if (values.genere !== "Maschio" && values.genere !== "Femmina") errors.gender = "Seleziona il genere.";
+		if (values.genere !== "Uomo" && values.genere !== "Donna") errors.gender = "Seleziona il genere.";
 		if (!nonEmpty(values.anno_nascita)) errors.birthYear = "Seleziona l'anno di nascita.";
 		if (values.disponibilita !== "svincolato" && values.disponibilita !== "sotto-contratto") errors.availability = "Seleziona la disponibilità.";
 		if (!hasItems(values.tipologie_sport)) errors.sports = "Seleziona almeno una tipologia di calcio.";
@@ -62,9 +62,11 @@ export function getProfileRequiredFieldErrors(
 		if (!hasItems(values.figure_professionali)) errors.professionalRole = "Seleziona almeno una figura professionale.";
 		if (Array.isArray(values.qualifiche_licenze) && values.qualifiche_licenze.some((item) => !isRecord(item) || (item.stato !== "in-corso" && item.stato !== "conseguito"))) errors.qualificationState = "Seleziona lo stato di ogni qualifica o licenza.";
 	}
-	if (type === "arbitro" && !nonEmpty(values.nome)) {
-		errors.name = "Inserisci il nome dell’arbitro.";
+	if (type === "professionisti-studi" || type === "arbitro") {
+		if (type === "arbitro" && !nonEmpty(values.nome)) errors.name = "Inserisci il nome dell’arbitro.";
+		if (Array.isArray(values.qualifiche_licenze) && values.qualifiche_licenze.some((item) => !isRecord(item) || (item.stato !== "in-corso" && item.stato !== "conseguito"))) errors.qualificationState = "Seleziona lo stato di ogni qualifica o licenza.";
 	}
+	if (type === "creators" && !nonEmpty(values.nome_creator)) errors.name = "Inserisci il nome del creator o del progetto.";
 	if (type === "torneo-evento") {
 		if (!nonEmpty(values.nome_organizzazione)) errors.name = "Inserisci il nome dell’organizzazione.";
 		if (!hasItems(values.tipologie_sport)) errors.sports = "Seleziona almeno una tipologia di calcio.";

@@ -61,7 +61,7 @@ function validPlayerPayload() {
 	const {createRegistrationPayload} = load("src/features/registrati/registration-payload.ts");
 	const drafts = createProfileDrafts();
 	const locations = createProfileLocations();
-	Object.assign(drafts.giocatore, {nome: "Mario", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"], specifici: []}, genere: "Maschio", anno_nascita: "2000", disponibilita: "sotto-contratto", categoria_attuale: "Calcio 11 (Maschile)::Eccellenza", nazionalita: "IT", piede_principale: "Ambipiede", categorie_ricercate: ["Eccellenza"]});
+	Object.assign(drafts.giocatore, {nome: "Mario", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"], specifici: []}, genere: "Uomo", anno_nascita: "2000", disponibilita: "sotto-contratto", categoria_attuale: "Calcio 11 (Maschile)::Eccellenza", nazionalita: "IT", piede_principale: "Ambipiede", categorie_ricercate: ["Eccellenza"]});
 	locations.giocatore = [{regione: "Lazio", citta: null}];
 	return createRegistrationPayload(["giocatore"], "giocatore", drafts, locations, createProfileSocialLinks(), true, false);
 }

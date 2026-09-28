@@ -50,7 +50,7 @@ test("server normalizes a valid interval for the SQL writer and rejects incomple
 	assert.equal(normalizedAnyYear.detail.annata_a, null);
 	const missingEnd = payload();
 	missingEnd.announcement.detail.annata_a = "";
-	assert.throws(() => parsePublishPayload(missingEnd, true), /intervallo|finale/i);
+	assert.throws(() => parsePublishPayload(missingEnd, true), /intervallo|finale|campo precedente/i);
 	const oldShape = payload();
 	delete oldShape.announcement.detail.annata_da;
 	delete oldShape.announcement.detail.annata_a;

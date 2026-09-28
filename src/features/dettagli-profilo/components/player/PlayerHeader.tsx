@@ -5,12 +5,9 @@ import {
 	CircleCheckBigIcon,
 	FlagIcon,
 	FootprintsIcon,
-	MegaphoneIcon,
 	RulerIcon,
-	ScaleIcon,
 	ShirtIcon,
 	StarIcon,
-	UserRoundPlusIcon,
 } from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
@@ -23,19 +20,18 @@ import ProfileFactsGrid, {type ProfileFact} from "../ProfileFactsGrid";
 import PlayerRolePitch from "./PlayerRolePitch";
 import {getPlayerRolePitchMarkers} from "@/features/profilo/player-roles";
 
-type PlayerHeaderProps = Pick<PlayerProfileDetail, "title" | "imageUrl" | "emailConfirmed" | "officialVerified" | "primary" | "availabilityLabel" | "player" | "followerCount" | "announcementCount"> & {
+type PlayerHeaderProps = Pick<PlayerProfileDetail, "title" | "imageUrl" | "emailConfirmed" | "officialVerified" | "primary" | "availabilityLabel" | "player"> & {
 	actions?: ReactNode;
 };
 
-export default function PlayerHeader({title, imageUrl, emailConfirmed, officialVerified, primary, availabilityLabel, player, followerCount, announcementCount, actions}: PlayerHeaderProps) {
-	const {age, primaryRoles, specificRoles, gender, nationality, nationalityCode, sportTypes, preferredFoot, height, weight} = player;
+export default function PlayerHeader({title, imageUrl, emailConfirmed, officialVerified, primary, availabilityLabel, player, actions}: PlayerHeaderProps) {
+	const {age, primaryRoles, specificRoles, gender, nationality, nationalityCode, preferredFoot, height} = player;
 	const hasRolePitch = getPlayerRolePitchMarkers(primaryRoles, specificRoles).length > 0;
 	const facts: ProfileFact[] = [
 		{label: "Età", icon: CalendarDaysIcon, value: age !== null ? `${age} anni` : null},
-		{label: "Altezza", icon: RulerIcon, value: height ? `${height} cm` : null},
-		{label: "Peso", icon: ScaleIcon, value: weight ? `${weight} kg` : null},
-		{label: "Piede", icon: FootprintsIcon, value: preferredFoot},
 		{label: "Genere", icon: ShirtIcon, value: gender},
+		{label: "Altezza", icon: RulerIcon, value: height ? `${height} cm` : null},
+		{label: "Piede", icon: FootprintsIcon, value: preferredFoot},
 		{
 			label: "Nazionalità",
 			icon: FlagIcon,
@@ -43,9 +39,6 @@ export default function PlayerHeader({title, imageUrl, emailConfirmed, officialV
 			content: nationality ? <span className="inline-flex items-center gap-2">{nationality}{nationalityCode && <DynamicReactFlag code={nationalityCode} className="h-4 w-6 rounded-xs ring-1 ring-border" />}</span> : null,
 		},
 		{label: "Disponibilità", icon: CircleCheckBigIcon, value: availabilityLabel},
-		{label: "Tipologie di calcio", icon: ShirtIcon, value: sportTypes},
-		{label: "Follower", icon: UserRoundPlusIcon, value: followerCount?.toLocaleString("it-IT") ?? null},
-		{label: "Num. annunci", icon: MegaphoneIcon, value: announcementCount?.toLocaleString("it-IT") ?? null},
 	];
 
 	return (
