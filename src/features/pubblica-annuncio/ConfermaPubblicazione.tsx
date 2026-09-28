@@ -63,7 +63,7 @@ export default function ConfermaPubblicazione({result}: {result: PublishConfirma
 						</section>
 
 						<div className="mx-auto mt-12 flex max-w-4xl justify-center overflow-hidden rounded-xl border border-black/8 bg-white p-2">
-							<Image src="/banner-pubblicita/placeholder.png" width={384} height={108} alt="Spazio pubblicitario per sponsor" className="h-auto w-full object-contain" />
+							<Image src="/banner-pubblicita/placeholder.png" width={384} height={108} alt="Spazio pubblicitario per sponsor" className="h-auto w-full object-contain" loading={"eager"} />
 						</div>
 
 						{result.suggestions.length > 0 && (

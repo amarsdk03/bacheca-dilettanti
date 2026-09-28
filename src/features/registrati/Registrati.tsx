@@ -774,7 +774,7 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 
 													return (
 														<div key={value} className="relative">
-															<FieldLabel htmlFor={`registration-type-${value}`}>
+															<FieldLabel htmlFor={`registration-type-${value}`} className={"h-full"}>
 																<Field orientation="horizontal" data-disabled={disabled} aria-disabled={disabled}>
 																	<Icon aria-hidden="true" />
 																	<FieldContent>

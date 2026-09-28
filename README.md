@@ -27,7 +27,7 @@ Sviluppato da Amar Sidkir, per Gabriele Zaniboni, a partire dal 15 luglio 2026.
 ### Database
 
 - Supabase (Postgres, Auth, Storage e RPC)
-- Resend (per SMTP)
+- SMTP per le email transazionali, configurato in Supabase (il provider effettivo va verificato nell'ambiente)
 
 ### Deployment
 
@@ -59,6 +59,9 @@ Sviluppato da Amar Sidkir, per Gabriele Zaniboni, a partire dal 15 luglio 2026.
 | `/registrati` | Registrazione account |
 | `/password-dimenticata` | Richiesta di recupero password |
 | `/reimposta-password` | Scelta della nuova password |
+| `/auth/confirm` | Conferma dell'indirizzo email dopo la registrazione |
+| `/auth/callback` | Verifica del link di recupero password |
+| `/auth/link-non-valido` | Esito per link email non valido o non verificabile |
 | `/contatti` | Contatti e assistenza |
 | `/partner` | Sezione partner |
 | `/sitemap.xml` | Sitemap dei contenuti pubblici indicizzabili |
@@ -85,7 +88,7 @@ Crea `.env.local` nella root del progetto. Il file è ignorato da Git e non deve
 
 ```dotenv
 # Applicazione
-# Deve corrispondere all'origine pubblica dell'ambiente: viene usata per canonical, sitemap e URL condivisi.
+# Deve corrispondere all'origine dell'ambiente: viene usata per canonical, sitemap, URL condivisi e link email Supabase.
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_MAINTENANCE_MODE=false
 
@@ -104,6 +107,8 @@ STRIPE_SECRET_KEY=<stripe-secret-key>
 STRIPE_WEBHOOK_SECRET=<stripe-webhook-secret>
 STRIPE_ANNUNCIO_PRIORITARIO_PRICE_ID=<price-id>
 ```
+
+In Supabase, configura `Site URL` e `Redirect URLs` di Auth per l'origine e i percorsi dell'ambiente. In produzione usa l'origine pubblica canonica del sito; i link di registrazione puntano a `/auth/confirm`, quelli di recupero password a `/auth/callback`. `NEXT_PUBLIC_SITE_URL` deve corrispondere a tale origine; in locale usa `http://localhost:3000`.
 
 Avvia quindi il server di sviluppo:
 
@@ -124,7 +129,7 @@ La piattaforma genera metadati completi per le pagine pubbliche: titolo, descriz
 - Le varianti con ricerca, filtri o paginazione di `/annunci` e `/profili` hanno una preview descrittiva, canonical verso la directory principale e `noindex,follow` per evitare contenuti duplicati.
 - Dashboard, autenticazione, recupero password, conferme e pagamenti non vengono indicizzati.
 
-`/sitemap.xml` include le pagine pubbliche, gli articoli, i sottoprofili visibili e gli annunci effettivamente pubblicati; viene rigenerata con una cache di un’ora. `/robots.txt` espone la sitemap e blocca i flussi riservati ai crawler.
+`/sitemap.xml` include le pagine pubbliche, gli articoli, i sottoprofili visibili e gli annunci effettivamente pubblicati; viene rigenerata con una cache di un'ora. Se una query Supabase fallisce, le voci dinamiche possono risultare parziali pur con una risposta valida: la completezza della sitemap va quindi monitorata. `/robots.txt` espone la sitemap e blocca i flussi riservati ai crawler.
 
 Le immagini degli annunci sono conservate nel bucket privato Supabase `immagini_annunci`. L’endpoint `/api/metadata/annuncio-immagine?id=…` legge soltanto l’immagine collegata all’annuncio richiesto e la serve ai crawler social senza esporre il percorso Storage: gli annunci pubblicati ricevono cache CDN, le anteprime non pubblicate usano `no-store`.
 
@@ -133,8 +138,8 @@ Le immagini degli annunci sono conservate nel bucket privato Supabase `immagini_
 Esegui i controlli principali dalla root del progetto:
 
 ```bash
-npx tsc --noEmit
-npx eslint src/app src/server/metadata.ts src/server/structured-data.ts src/server/sitemap-data.ts src/components/seo/JsonLd.tsx src/features/annunci/announcement-model.ts src/features/annunci/server/queries.ts
+npx tsc --noEmit --incremental false --pretty false
+npm run lint
 ```
 
 In PowerShell, per eseguire tutti i test Node:
@@ -151,9 +156,7 @@ node --test $testFiles
 Push effettuato il: ??/??/2026
 
 - Dashboard amministrativa di gestione utenti, profili, annunci e moderazione
-- Miglioramento UI per le card risultati dei profili e annunci
-- Rilascio al pubblico delle altre categorie di sottoprofili
-- Personalizzazione aumentata per i vari sottoprofili
+- Personalizzazione aumentata e miglioramento UI per le pagine dei profili e annunci
 - Completamento del flusso operativo di pagamento e rimborso degli annunci prioritari.
 - Analitiche visualizzazione per aggiornamenti, profili e annunci
 - Aggiunta di sponsor/partner nelle varie sezioni dedicate
@@ -190,8 +193,8 @@ Push effettuato il: 17/09/2026
     - Arbitro
     - Torneo / evento
     - Campi e impianti
-    - Professionisti e studi (al momento limitati)
-    - Creators (al momento limitati)
+    - Professionisti e studi (inizialmente limitati)
+    - Creators (inizialmente limitati)
 - Possibilità di cercare e filtrare i profili creati sulla piattaforma
 - Possibilità di visualizzare maggiori info su un profilo specifico
 - Possibilità di segnalare un annuncio con eventuale messaggio di info aggiuntivo

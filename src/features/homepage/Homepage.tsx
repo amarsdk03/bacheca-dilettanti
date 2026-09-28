@@ -29,7 +29,6 @@ interface HomepageCategory {
 	type: ProfileType;
 	label: string;
 	description: string;
-	comingSoon: boolean;
 }
 
 const HOMEPAGE_CATEGORIES = [
@@ -37,49 +36,41 @@ const HOMEPAGE_CATEGORIES = [
 		type: "giocatore",
 		label: "Giocatori",
 		description: "Sfoglia i profili e trova i giocatori per la tua squadra.",
-		comingSoon: false,
 	},
 	{
 		type: "squadra",
 		label: "Squadre",
 		description: "Scopri le squadre e trova nuove opportunità.",
-		comingSoon: false,
 	},
 	{
 		type: "staff-sportivo",
 		label: "Staff sportivi",
 		description: "Sfoglia i profili e trova le figure giuste per il tuo staff.",
-		comingSoon: false,
 	},
 	{
 		type: "arbitro",
 		label: "Arbitri",
-		description: "Presto in arrivo...",
-		comingSoon: true,
+		description: "Sfoglia i profili disponibili per le tue partite ed eventi.",
 	},
 	{
 		type: "torneo-evento",
 		label: "Tornei / Eventi",
-		description: "Presto in arrivo...",
-		comingSoon: true,
+		description: "Scopri gli eventi e le manifestazioni sportive vicino a te.",
 	},
 	{
 		type: "campi-impianti-sportivi",
 		label: "Campi / Strutture",
-		description: "Presto in arrivo...",
-		comingSoon: true,
-	},
-	{
-		type: "professionisti-studi",
-		label: "Professionisti",
-		description: "Presto in arrivo...",
-		comingSoon: true,
+		description: "Trova le infrastrutture ideali in base alle tue necessità.",
 	},
 	{
 		type: "creators",
 		label: "Creators",
-		description: "Presto in arrivo...",
-		comingSoon: true,
+		description: "Sfoglia i content creators in collaborazione con noi",
+	},
+	{
+		type: "professionisti-studi",
+		label: "Professionisti e studi",
+		description: "Sfoglia i profili e trova le figure professionali giuste per te.",
 	},
 ] as const satisfies readonly HomepageCategory[];
 
