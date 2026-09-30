@@ -62,7 +62,7 @@ export function getProfileRequiredFieldErrors(
 		if (!hasItems(values.figure_professionali)) errors.professionalRole = "Seleziona almeno una figura professionale.";
 		if (Array.isArray(values.qualifiche_licenze) && values.qualifiche_licenze.some((item) => !isRecord(item) || (item.stato !== "in-corso" && item.stato !== "conseguito"))) errors.qualificationState = "Seleziona lo stato di ogni qualifica o licenza.";
 	}
-	if (type === "professionisti-studi" || type === "arbitro") {
+	if (type === "servizi-consulenze" || type === "arbitro") {
 		if (type === "arbitro" && !nonEmpty(values.nome)) errors.name = "Inserisci il nome dell’arbitro.";
 		if (Array.isArray(values.qualifiche_licenze) && values.qualifiche_licenze.some((item) => !isRecord(item) || (item.stato !== "in-corso" && item.stato !== "conseguito"))) errors.qualificationState = "Seleziona lo stato di ogni qualifica o licenza.";
 	}

@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-import {BriefcaseBusinessIcon, CircleCheckBigIcon, WifiIcon} from "lucide-react";
+import {BriefcaseBusinessIcon, CarFrontIcon, CircleCheckBigIcon, ShirtIcon} from "lucide-react";
 import type {GenericProfileDetail} from "../../profile-detail-model";
 import ProfileDetailsLayout from "../ProfileDetailsLayout";
 import type {ProfileDetailPresentation} from "../profile-detail-presentation";
@@ -8,13 +8,14 @@ import {getProfileDetailFieldValue} from "../profile-detail-presentation";
 const PRESENTATION = {
 	facts: [
 		{label: "Mansioni", fieldLabel: "Figure professionali", icon: BriefcaseBusinessIcon, getValue: profile => getProfileDetailFieldValue(profile, "Figure professionali")},
+		{label: "Tipologia calcio", fieldLabel: "Tipologie sportive", icon: ShirtIcon, getValue: profile => getProfileDetailFieldValue(profile, "Tipologie sportive")},
 		{label: "Disponibilità", icon: CircleCheckBigIcon, getValue: profile => profile.availabilityLabel},
-		{label: "Disponibile da remoto", fieldLabel: "Disponibile anche da remoto", icon: WifiIcon, getValue: profile => getProfileDetailFieldValue(profile, "Disponibile anche da remoto")},
+		{label: "Automunito", icon: CarFrontIcon},
 	],
-	narrativeFieldLabels: [],
+	narrativeFieldLabels: ["Specializzazioni", "Servizi offerti"],
 	hasExperiences: true,
 } satisfies ProfileDetailPresentation;
 
-export default function DettagliProfiloStaffSportivo({profile, actions, authenticated, returnTo}: {profile: GenericProfileDetail<"staff-sportivo">; actions?: ReactNode; authenticated: boolean; returnTo: string}) {
+export default function DettagliProfiloServiziConsulenze({profile, actions, authenticated, returnTo}: {profile: GenericProfileDetail<"servizi-consulenze">; actions?: ReactNode; authenticated: boolean; returnTo: string}) {
 	return <ProfileDetailsLayout profile={profile} presentation={PRESENTATION} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
 }

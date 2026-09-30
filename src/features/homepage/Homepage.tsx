@@ -68,9 +68,9 @@ const HOMEPAGE_CATEGORIES = [
 		description: "Sfoglia i content creators in collaborazione con noi",
 	},
 	{
-		type: "professionisti-studi",
-		label: "Professionisti e studi",
-		description: "Sfoglia i profili e trova le figure professionali giuste per te.",
+		type: "servizi-consulenze",
+		label: "Servizi e consulenze",
+		description: "Scopri servizi e consulenze pensati per il mondo del calcio.",
 	},
 ] as const satisfies readonly HomepageCategory[];
 
@@ -78,7 +78,7 @@ const PROFILE_LABELS: Record<ProfileType, string> = {
 	giocatore: "Giocatori",
 	squadra: "Squadre",
 	"staff-sportivo": "Staff",
-	"professionisti-studi": "Professionisti",
+	"servizi-consulenze": "Servizi e consulenze",
 	arbitro: "Arbitri",
 	creators: "Creators",
 	"torneo-evento": "Tornei / Eventi",
@@ -118,10 +118,10 @@ const PROMOTIONS = [
 		accent: "#8e72ff",
 	},
 	{
-		eyebrow: "Professionisti",
-		title: "Trova il professionista giusto",
-		description: "Scopri professionisti dello sport e trova quello più adatto alle tue esigenze.",
-		href: "/profili?type=professionisti-studi",
+		eyebrow: "Servizi e consulenze",
+		title: "Trova il servizio giusto",
+		description: "Scopri servizi e consulenze per le tue esigenze nel mondo del calcio.",
+		href: "/profili?type=servizi-consulenze",
 		cta: "Scopri di più",
 		icon: BriefcaseBusinessIcon,
 		accent: "#D4B21F",

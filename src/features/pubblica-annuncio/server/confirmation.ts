@@ -97,6 +97,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			.from("annuncio")
 			.select(`
 				uuid,
+				titolo_annuncio,
 				autore_annuncio,
 				tipologia_annuncio,
 				stato_annuncio,
@@ -136,13 +137,13 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			return [{region, city: cleanText(location.citta)}];
 		});
 		const content = type === "annuncio_creators" ? {
-			title: cleanText(detail.titolo_post) ?? "Annuncio creator",
+			title: cleanText(row.titolo_annuncio) ?? cleanText(detail.titolo_post) ?? "Annuncio creator",
 			description: cleanText(detail.descrizione_post),
 			locations,
 			facts: [{kind: "location" as const, label: "Zone di ricerca", value: locations.map(({city, region}) => [city, region].filter(Boolean).join(", ")).join(", ") || "Località non specificata"}],
 			fields: [],
 			playerRoles: null,
-		} : announcementContent(type, detail, locations, true);
+		} : announcementContent(type, detail, locations, true, typeof row.titolo_annuncio === "string" ? row.titolo_annuncio : null);
 		const contacts = records(row.contatto_annuncio).flatMap((contact) => cleanText(contact.valore) ?? []);
 		const links = records(row.link_social_annuncio);
 		const genericLink = cleanText(links.find(({piattaforma}) => piattaforma === "link_annuncio")?.sublink);

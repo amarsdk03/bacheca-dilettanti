@@ -56,7 +56,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		supabase.from("profilo_arbitro").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_torneo_evento").select("id, nome_organizzazione, presentazione, sport_principale, tipologie_sport").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_campi_impianti").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
-		supabase.from("profilo_professionista_studente").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_servizi_consulenze").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
 		supabase.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
@@ -69,7 +69,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 	queryFailed(referee.error, "profilo_arbitro");
 	queryFailed(tournament.error, "profilo_torneo_evento");
 	queryFailed(facility.error, "profilo_campi_impianti");
-	queryFailed(professional.error, "profilo_professionista_studente");
+	queryFailed(professional.error, "profilo_servizi_consulenze");
 	queryFailed(creator.error, "profilo_creator");
 	queryFailed(locationResult.error, "localita_profilo");
 	queryFailed(socialLinksResult.error, "link_social_profilo");
@@ -82,7 +82,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 	drafts.arbitro = hydrateDraft(drafts.arbitro, referee.data);
 	drafts["torneo-evento"] = hydrateDraft(drafts["torneo-evento"], tournament.data);
 	drafts["campi-impianti-sportivi"] = hydrateDraft(drafts["campi-impianti-sportivi"], facility.data);
-	drafts["professionisti-studi"] = hydrateDraft(drafts["professionisti-studi"], professional.data);
+	drafts["servizi-consulenze"] = hydrateDraft(drafts["servizi-consulenze"], professional.data);
 	drafts.creators = hydrateDraft(drafts.creators, creator.data);
 
 	const locations = createProfileLocations();
@@ -105,7 +105,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		["arbitro", referee.data],
 		["torneo-evento", tournament.data],
 		["campi-impianti-sportivi", facility.data],
-		["professionisti-studi", professional.data],
+		["servizi-consulenze", professional.data],
 		["creators", creator.data],
 	];
 	const enabledProfileTypes = activeRows.flatMap<ProfileType>(([type, row]) => (

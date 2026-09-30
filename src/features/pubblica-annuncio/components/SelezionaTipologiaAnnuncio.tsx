@@ -87,6 +87,7 @@ export default function SelezionaTipologiaAnnuncio({
 								const enabledForAccount = supported && enabledProfileTypes.includes(profileType);
 								const disabled = !supported || (registered && !enabledForAccount);
 								const accent = getProfileAccent(profileType);
+
 								return (
 								<ToggleGroupItem
 									key={opzione.valore}

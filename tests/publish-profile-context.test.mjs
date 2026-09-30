@@ -67,13 +67,13 @@ async function getEnabledProfileTypes(rowsByTable) {
 	return context?.enabledProfileTypes;
 }
 
-test("enabledProfileTypes include active Creators and Professionisti e studi profiles", async () => {
+test("enabledProfileTypes include active Creators and Servizi e consulenze profiles", async () => {
 	const enabled = await getEnabledProfileTypes({
 		profilo_creator: [{id: 1, uuid_profilo: "profile-1", nascosto: false}],
-		profilo_professionista_studente: [{id: 2, uuid_profilo: "profile-1", nascosto: false}],
+		profilo_servizi_consulenze: [{id: 2, uuid_profilo: "profile-1", nascosto: false}],
 	});
 
-	assert.deepEqual(enabled, ["professionisti-studi", "creators"]);
+	assert.deepEqual(enabled, ["servizi-consulenze", "creators"]);
 });
 
 test("enabledProfileTypes omit absent or hidden profiles and keep existing active types", async () => {

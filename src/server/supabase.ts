@@ -52,6 +52,7 @@ export type Database = {
           priorita_inizio_il: string | null
           privato: boolean | null
           stato_annuncio: string | null
+          titolo_annuncio: string | null
           tipologia_annuncio: string
           ultima_modifica_da: string | null
           ultima_modifica_il: string | null
@@ -69,6 +70,7 @@ export type Database = {
           priorita_inizio_il?: string | null
           privato?: boolean | null
           stato_annuncio?: string | null
+          titolo_annuncio?: string | null
           tipologia_annuncio: string
           ultima_modifica_da?: string | null
           ultima_modifica_il?: string | null
@@ -86,6 +88,7 @@ export type Database = {
           priorita_inizio_il?: string | null
           privato?: boolean | null
           stato_annuncio?: string | null
+          titolo_annuncio?: string | null
           tipologia_annuncio?: string
           ultima_modifica_da?: string | null
           ultima_modifica_il?: string | null
@@ -302,7 +305,7 @@ export type Database = {
           },
         ]
       }
-      annuncio_professionista_studente: {
+      annuncio_servizi_consulenze: {
         Row: {
           automunito: string | null
           descrizione_aggiuntiva: string | null
@@ -341,7 +344,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "annuncio_professionista_studente_uuid_annuncio_fkey"
+            foreignKeyName: "annuncio_servizi_consulenze_uuid_annuncio_fkey"
             columns: ["uuid_annuncio"]
             isOneToOne: true
             referencedRelation: "annuncio"
@@ -1291,7 +1294,7 @@ export type Database = {
           },
         ]
       }
-      profilo_professionista_studente: {
+      profilo_servizi_consulenze: {
         Row: {
           anno_nascita: string | null
           automunito: string | null
@@ -1357,14 +1360,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "profilo_professionisti_studenti_sport_principale_fkey"
+            foreignKeyName: "profilo_servizi_consulenze_sport_principale_fkey"
             columns: ["sport_principale"]
             isOneToOne: false
             referencedRelation: "sport"
             referencedColumns: ["nome"]
           },
           {
-            foreignKeyName: "profilo_professionisti_studenti_uuid_profilo_fkey"
+            foreignKeyName: "profilo_servizi_consulenze_uuid_profilo_fkey"
             columns: ["uuid_profilo"]
             isOneToOne: false
             referencedRelation: "profilo"

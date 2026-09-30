@@ -193,7 +193,7 @@ Push effettuato il: 17/09/2026
     - Arbitro
     - Torneo / evento
     - Campi e impianti
-    - Professionisti e studi (inizialmente limitati)
+    - Servizi e consulenze (inizialmente limitati)
     - Creators (inizialmente limitati)
 - Possibilità di cercare e filtrare i profili creati sulla piattaforma
 - Possibilità di visualizzare maggiori info su un profilo specifico

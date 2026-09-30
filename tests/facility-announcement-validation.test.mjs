@@ -31,7 +31,7 @@ const schedule = () => weekdays.map((giorno, index) => ({
 	giorno, attivo: index === 0, dalle: index === 0 ? "20:--" : "", alle: index === 0 ? "22:00" : "",
 }));
 const payload = () => ({
-	version: 3,
+	version: 4,
 	submissionId: "11111111-1111-4111-8111-111111111111",
 	visibility: "gratuito",
 	profileType: "campi-impianti-sportivi",
@@ -40,6 +40,7 @@ const payload = () => ({
 	profileUpdate: null,
 	announcement: {
 		type: "annuncio_campo_impianto",
+		title: "",
 		detail: {tipologie_sport: ["Calcio 11"], orari: schedule(), costo_partenza: "20.00", servizi_inclusi: "Spogliatoi", indirizzo: "Via Roma 1", descrizione_aggiuntiva: ""},
 		locations: [{regione: "Lazio", citta: "Roma"}],
 		contacts: {email: "campo@example.com", phone: ""},
@@ -72,4 +73,18 @@ test("facility announcement server rejects missing address, missing city, multip
 	const invalidHours = payload();
 	invalidHours.announcement.detail.orari[0].dalle = "25:--";
 	assert.throws(() => parsePublishPayload(invalidHours, true), /orari/i);
+});
+
+test("announcement title is optional, trimmed and limited to 50 characters on the server", () => {
+	const shortTitle = payload();
+	shortTitle.announcement.title = `  ${"x".repeat(50)}  `;
+	assert.equal(parsePublishPayload(shortTitle, true).announcementTitle, "x".repeat(50));
+
+	const tooLong = payload();
+	tooLong.announcement.title = "x".repeat(51);
+	assert.throws(() => parsePublishPayload(tooLong, true), /50 caratteri/i);
+
+	const blank = payload();
+	blank.announcement.title = "   ";
+	assert.equal(parsePublishPayload(blank, true).announcementTitle, "");
 });

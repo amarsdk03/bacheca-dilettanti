@@ -4,7 +4,9 @@
 
 Raccogliere una fotografia tecnica verificabile della piattaforma: sicurezza, qualità del codice, performance, SEO, dati sensibili, consistenza del database e gap funzionali. Questo master coordina i sotto-report e le azioni consigliate; l'implementazione delle correzioni sarà una fase separata.
 
-**Piano approvato:** 2026-09-25. **Fase 0:** completata. **Prossimo punto:** 10 — Accessibilità e animazioni.
+**Piano approvato:** 2026-09-25. **Fase 0:** completata. **Piano di audit:** completato il 2026-09-29; non restano punti numerati da eseguire.
+
+**Piano di applicazione approvato:** 2026-09-29. **Pacchetto attuale:** R00 — piano pronto, in attesa di approvazione all'esecuzione. Profilo consigliato: GPT-6 Sol · medium · Default.
 
 ## Metodologia
 
@@ -30,11 +32,41 @@ La numerazione sostituisce quella della proposta iniziale. Priorità e complessi
 | 7 | Confini server/client, React e TypeScript | Alta | Alta | GPT-6 Sol · high | Default | Completato | [07-qualita-react-typescript.md](07-qualita-react-typescript.md) | 2026-09-29 |
 | 8 | Performance applicativa e accesso ai dati | Alta | Alta | GPT-6 Sol · medium | Default | Completato | [08-performance.md](08-performance.md) | 2026-09-29 |
 | 9 | SEO, indicizzazione e condivisione | Alta | Media | GPT-6 Sol · medium | Default | Completato | [09-seo-indicizzazione.md](09-seo-indicizzazione.md) | 2026-09-29 |
-| 10 | Accessibilità e animazioni | Media | Media | GPT-6 Sol · medium | Default | Da fare | `10-accessibilita.md` | — |
-| 11 | Gap funzionali, integrazioni e roadmap | Media | Media | GPT-6 Sol · medium | Default | Da fare | `11-gap-roadmap.md` | — |
-| 12 | Pulizia, dipendenze e strumenti di verifica | Media | Media | GPT-6 Luna · medium | Default | Da fare | `12-pulizia-tooling.md` | — |
+| 10 | Accessibilità e animazioni | Media | Media | GPT-6 Sol · medium | Default | Completato | [10-accessibilita.md](10-accessibilita.md) | 2026-09-29 |
+| 11 | Gap funzionali, integrazioni e roadmap | Media | Media | GPT-6 Sol · medium | Default | Completato | [11-gap-roadmap.md](11-gap-roadmap.md) | 2026-09-29 |
+| 12 | Pulizia, dipendenze e strumenti di verifica | Media | Media | GPT-6 Luna · medium | Default | Completato | [12-pulizia-tooling.md](12-pulizia-tooling.md) | 2026-09-29 |
 
 La scelta segue le indicazioni OpenAI: Astra per il lavoro più complesso, Sol per un equilibrio tra capacità e costo, Luna per attività mirate ed efficienti. `medium` è adeguato alle verifiche circoscritte; `high` è riservato ai punti critici o con molte interazioni. L'effort guida il livello di ragionamento e resta distinto dalla modalità Default/Plan. Fonti: [modelli GPT-6](https://developers.openai.com/api/docs/models), [reasoning effort](https://developers.openai.com/api/docs/guides/reasoning), [Plan mode in Codex](https://developers.openai.com/blog/mastering-codex-remote-for-engineering).
+
+## Piano di applicazione degli audit
+
+Questa sezione coordina la **fase di correzione**, separata dagli audit conclusi sopra. Tutti i 52 finding dei Punti 1–12 hanno un pacchetto di destinazione, inclusi quelli facoltativi e le decisioni manuali. Le checklist dei sotto-report restano evidenze e proposte: lo stato operativo è registrato qui e nel documento di ciascun pacchetto. Un finding può concludersi con correzione, verifica documentata o rinvio motivato; la severità dell'audit non equivale a conferma di un problema sul servizio remoto.
+
+| Pacchetto | Azioni e finding di riferimento | Stato | Piano e resoconto | Approvazione | Checkpoint |
+|---|---|---|---|---|---|
+| R00 | Confrontare storico migrazioni e metadati RLS; confermare ambienti Stripe, moderazione e SMTP. 01-F01, 03-F02, 11-F03–F04 | In attesa approvazione | [R00-stato-ambienti.md](remediation/R00-stato-ambienti.md) | Non ricevuta | 2026-09-29: piano pronto; nessuna query remota eseguita; commit `5f76766d21ac7e4ea7e8f71ab39fbfbabb14901d` |
+| R01 | Validare percorsi media; uniformare risposte auth e quote, proteggere segnalazioni/pubblicazione, riesaminare redirect e CSRF. 02-F01–F06, 03-F01 | Da pianificare | — | — | — |
+| R02 | Correggere consenso newsletter ed EXIF; definire purge/export, storico consensi, log, documenti privacy e integrazione newsletter. 06-F01–F07, 11-F05 | Da pianificare | — | — | — |
+| R03 | Riconciliare webhook/rimborsi e parziali, controllare gate e URL checkout, sostituire il riferimento Stripe assente. 05-F01–F04, 12-F03 | Da pianificare | — | — | — |
+| R04 | Ripristinare validazione Staff, rendere coerenti foto e metadati, misurare l'indice inviti. 04-F01–F03 | Da pianificare | — | — | — |
+| R05 | Completare o sospendere Creator, definire sblocco Professionisti e sostituire il contatore articoli fittizio. 11-F01–F02, 12-F01 | Da pianificare | — | — | — |
+| R06 | Paginare/filtrare lato dati, ridurre round trip, definire cache e varianti immagini; misurare bundle e placeholder. 08-F01–F06 | Da pianificare | — | — | — |
+| R07 | Migliorare contrasto, movimento ridotto, errori/focus dei form e skip link. 10-F01–F04 | Da pianificare | — | — | — |
+| R08 | Gestire URL obsoleti, sitemap parziale, crawl dei filtri, dati strutturati e metadati editoriali. 09-F01–F05 | Da pianificare | — | — | — |
+| R09 | Introdurre controlli segreti, boundary/errori, pulire warning e componenti legacy, verificare hydration e aggiornare documentazione. 01-F02, 07-F01–F04, 12-F02, 12-F04 | Da pianificare | — | — | — |
+
+### Regole di avanzamento
+
+1. Un solo pacchetto per sessione. Leggere prima questo master e il documento del pacchetto. Riprendere un pacchetto `In pianificazione`, `In corso` o `In verifica` dal checkpoint; non avanzare automaticamente al successivo.
+2. Stati: `Da pianificare` → `In pianificazione` → `In attesa approvazione` → `Approvato` → `In corso` → `In verifica` → `Completato`. `Rinviato` richiede motivo e data. Registrare nel master il checkpoint iniziale e aggiornarlo durante ogni fase.
+3. Nella pianificazione creare `docs/audit/remediation/RNN-nome.md` con finding e azioni, dipendenze, decisioni manuali, modifiche previste, eventuali API/migrazioni, test, criteri di accettazione e piano di rilascio/ripristino. **Fermarsi** quando il piano è `In attesa approvazione`.
+4. L'esecuzione locale richiede una conferma esplicita dell'utente per il singolo piano. Registrare data e ambito approvato prima di cambiare lo stato in `Approvato`; modifiche sostanziali al piano richiedono nuova conferma. In un'esecuzione autorizzata segnare `In corso` prima di modificare il codice.
+5. Il documento del pacchetto registra per ogni finding l'esito (`Corretto`, `Verificato`, `Rinviato` o `In attesa verifica`), file modificati, controlli, limiti e migrazioni create. `In verifica` indica che mancano controlli manuali o remoti; `Completato` richiede i controlli definiti nel piano. Dichiarare sempre le migrazioni da applicare manualmente e il prossimo pacchetto consigliato.
+6. Rilascio, modifiche ai servizi esterni e applicazione di migrazioni al progetto hosted richiedono una conferma separata e finale, dopo preparazione e verifica locale. Non applicare in blocco le 48 migrazioni storiche. Se R00 rileva pagamenti/rimborsi attivi da riconciliare, pianificare R03 prima di R02; altrimenti seguire l'ordine della tabella.
+
+### Registro di applicazione
+
+- **2026-09-29 — Piano di applicazione materializzato:** pacchetti R00–R09 assegnati a tutti i 52 finding. Creato il piano [R00-stato-ambienti.md](remediation/R00-stato-ambienti.md); R00 in attesa di approvazione, nessuna query remota eseguita e nessuna correzione avviata. Gli audit 0–12 restano completati. Modifiche locali preesistenti al piano: questo master modificato, `10-accessibilita.md`, `11-gap-roadmap.md` e `12-pulizia-tooling.md` non tracciati. Migrazioni create/applicate: 0.
 
 ## Decisioni e riferimenti della Fase 0
 
@@ -127,6 +159,12 @@ Il Punto 0 sostituisce la sezione findings con la mappa e le evidenze di riferim
 - Fermarsi con un riepilogo di 3–5 righe sui risultati e sul punto successivo. Nessuna correzione del codice e nessun avanzamento automatico ad altri punti.
 
 ## Note di sessione
+
+- **2026-09-29 — Punto 12 completato:** Default; profilo consigliato GPT-6 Luna · medium (impostazioni effettive non verificabili). Commit iniziale/finale `5f76766d21ac7e4ea7e8f71ab39fbfbabb14901d`; preesistenti `10-accessibilita.md` e `11-gap-roadmap.md` preservati. Creato [12-pulizia-tooling.md](12-pulizia-tooling.md): un finding medio (contatore articoli fittizio), tre bassi (entry point legacy non referenziati, riferimento Stripe inesistente, changelog da confermare) e miglioramenti facoltativi per script/CI/log. Ricerca mirata senza backup, log o dump; 38 test individuati; `npm ls --depth=0` pulito. Nessuna suite eseguita in questo punto, nessuna modifica applicativa. Migrazioni create/applicate: 0, nessuna nuova da applicare; allineamento remoto delle preesistenti non controllato. Il piano di audit è completo; prossima fase da decidere: remediation dei findings.
+
+- **2026-09-29 — Punto 11 completato:** Default; profilo consigliato GPT-6 Sol · medium (impostazioni effettive non verificabili). Commit iniziale/finale `5f76766d21ac7e4ea7e8f71ab39fbfbabb14901d`. Creato [11-gap-roadmap.md](11-gap-roadmap.md): 1 finding alto (annunci Creator pubblicabili ma esclusi dalle viste pubbliche), 3 medi (soglia Professionisti e studi non attiva, processo moderazione da confermare, SMTP hosted non verificato), 1 basso (newsletter senza invio applicativo individuato); decisioni manuali per Ente sportivo/Società e condivisione. Test annunci 37/37 pass; nessun accesso hosted. Nessuna modifica applicativa; `10-accessibilita.md` preesistente preservato. Migrazioni create/applicate: 0, nessuna nuova da applicare; verificare lo stato della migrazione Creator preesistente. Prossimo: Punto 12, GPT-6 Luna · medium · Default.
+
+- **2026-09-29 — Punto 10 completato:** Default; profilo consigliato GPT-6 Sol · medium (impostazioni effettive non verificabili). Commit iniziale/finale `5f76766d21ac7e4ea7e8f71ab39fbfbabb14901d`. Creato [10-accessibilita.md](10-accessibilita.md): 3 findings medi (contrasto dei link legali 3,50:1 su bianco; titolo GSAP/lampeggio senza riduzione movimento; errori non associati ai campi e focus non guidato), 1 basso (assenza di salto alla navigazione ripetuta). Guida Next e criteri W3C consultati; verifica statica, nessun test browser o lettore di schermo. Nessuna modifica applicativa; migrazioni create/applicate: 0, nessuna nuova da applicare, stato delle preesistenti da verificare. Prossimo: Punto 11, GPT-6 Sol · medium · Default.
 
 - **2026-09-29 — Punto 9 completato:** Default; profilo consigliato GPT-6 Sol · medium (impostazioni effettive non verificabili). Commit iniziale/finale `9fc87c7ddc41bb77bb8620bcef70bc87a245b58b`. Creato [09-seo-indicizzazione.md](09-seo-indicizzazione.md): 2 findings medi (vecchia `/accesso` ancora nel campione dell'indice pubblico; sitemap dinamica parziale su errore), 2 bassi (spazio di crawl delle faccette da misurare; autori organizzazione dichiarati `Person`) e 1 miglioramento. Test metadata 4/4 pass; `robots.txt` live coerente e asset social verificati. Search Console e validazione live completa non disponibili; connessione HTTP intermittente. Nessuna modifica applicativa; modifiche preesistenti preservate. Migrazioni create/applicate: 0; nessuna nuova da applicare, stato delle preesistenti invariato. Prossimo: Punto 10, GPT-6 Sol · medium · Default.
 

@@ -59,6 +59,8 @@ import {getPlayerSpecificRoleGroups} from "@/features/profilo/player-roles";
 interface AnnouncementDetailsFormProps {
 	profileType: PublishableProfileType;
 	teamSubtype: TeamAnnouncementSubtype | null;
+	announcementTitle: string;
+	onAnnouncementTitleChange: (value: string) => void;
 	drafts: AnnouncementDetailsDrafts;
 	onDraftsChange: Dispatch<SetStateAction<AnnouncementDetailsDrafts>>;
 	locations: ProfileLocationDraft[];
@@ -169,6 +171,8 @@ function TextField({
 export default function AnnouncementDetailsForm({
 	profileType,
 	teamSubtype,
+	announcementTitle,
+	onAnnouncementTitleChange,
 	drafts,
 	onDraftsChange,
 	locations,
@@ -213,6 +217,23 @@ export default function AnnouncementDetailsForm({
 						<FieldError>{errors.type}</FieldError>
 					</Field>
 				)}
+				<FieldGroup>
+					<Field data-invalid={Boolean(errors.title)}>
+						<div className="flex items-center justify-between gap-3">
+							<FieldLabel htmlFor="announcement-title">Titolo annuncio <OptionalLabel /></FieldLabel>
+							<span className="text-xs text-muted-foreground">{announcementTitle.length}/50</span>
+						</div>
+						<Input
+							id="announcement-title"
+							value={announcementTitle}
+							onChange={(event) => onAnnouncementTitleChange(event.target.value.slice(0, 50))}
+							maxLength={50}
+							placeholder="Lascia vuoto per usare il titolo predefinito"
+							aria-invalid={Boolean(errors.title)}
+						/>
+						{errors.title && <FieldError>{errors.title}</FieldError>}
+					</Field>
+				</FieldGroup>
 
 				{profileType === "giocatore" && (
 					<FieldGroup>
@@ -369,15 +390,6 @@ export default function AnnouncementDetailsForm({
 
 				{profileType === "creators" && (
 					<FieldGroup>
-						<TextField
-							id="creator-announcement-title"
-							label="Titolo dell’annuncio"
-							value={drafts.creator.titolo_post}
-							onChange={(value) => updateDraft("creator", "titolo_post", value)}
-							required
-							error={errors.title}
-							placeholder="Inserisci un titolo chiaro e sintetico"
-						/>
 						<DescriptionField
 							id="creator-announcement-description"
 							label="Descrizione dell’annuncio"

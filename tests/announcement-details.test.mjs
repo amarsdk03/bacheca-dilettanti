@@ -34,9 +34,9 @@ function sourceLoader(overrides = {}) {
 const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const authorId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const otherId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
-const profile = {uuid: authorId, confermato_il: "2026-09-01T10:00:00Z", verificato_il: null, profilo_giocatore: [{id: 7, nascosto: false, nome: "Mario", cognome: "Rossi"}]};
+const profile = {uuid: authorId, confermato_il: "2026-09-01T10:00:00Z", verificato_il: null, profilo_giocatore: [{id: 7, nascosto: false, nome: "Mario", cognome: "Rossi", anno_nascita: "2005"}]};
 const row = (type = "annuncio_giocatore", child = {}) => ({
-	uuid: id, autore_annuncio: authorId, tipologia_annuncio: type, creato_il: "2026-09-22", livello_annuncio: null,
+	uuid: id, autore_annuncio: authorId, tipologia_annuncio: type, titolo_annuncio: null, creato_il: "2026-09-22", livello_annuncio: null,
 	stato_annuncio: "pubblicato", nascosto: false, privato: false,
 	[type]: {tipologie_sport: ["Calcio a 5", "Calcio a 11"], ruoli_principali: ["Difensore"], ruoli_secondari: ["Terzino destro", "Difensore centrale"], categorie_ricercate: ["Eccellenza", "Promozione"], descrizione_aggiuntiva: "Descrizione completa", ...child},
 	localita_annuncio: [{regione: "Lazio", citta: "Roma"}],
@@ -101,46 +101,48 @@ test("detail exposes aggregate counts and complete comma-separated selections; d
 	assert.equal(card.facts.find(f => f.kind === "types").value, "2 selezionate");
 });
 
-test("category directory filters distinguish the same label in different groups", async () => {
-	const male = "Calcio 5 (Maschile)::Serie A";
-	const female = "Calcio 5 (Femminile)::Serie A";
-	const {queries, load} = fixture({current: row("annuncio_giocatore", {categorie_ricercate: [male]})});
+test("player directory filters by the author's birth year", async () => {
+	const {queries, load} = fixture();
 	const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
-	assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: male}))).total, 1);
-	assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: female}))).total, 0);
+	assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", annoNascita: "2005"}))).total, 1);
+	assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", annoNascita: "2006"}))).total, 0);
 });
 
-test("Staff directory filters keep equal category names separate and detail reads profile snapshot", async () => {
+test("Staff announcement details preserve category and profile snapshots", async () => {
 	const male = "Calcio 5 (Maschile)::Serie A";
-	const female = "Calcio 5 (Femminile)::Serie A";
 	const current = fixture({current: row("annuncio_staff_sportivo", {
 		categorie_ricercate: [male], disponibilita_spostamento: "Da valutare", disponibile_remoto: true,
 		lista_esperienze: [{id: "work", titolo: "Società Alfa", ente: "Dirigenza"}],
 		qualifiche_licenze: [{id: "license", titolo: "Licenza", stato: "conseguito"}, "voce storica libera"],
 	})});
-	const {parseAnnouncementDirectoryQuery} = current.load("src/features/annunci/announcement-model.ts");
-	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: male}))).total, 1);
-	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: female}))).total, 0);
 	const detail = await current.queries.loadPublicAnnouncementDetail(id);
 	assert.equal(detail.announcement.fields.find(({label}) => label === "Disponibilità agli spostamenti").value, "Da valutare");
 	assert.ok(detail.announcement.fields.find(({label}) => label === "Lista esperienze").items.some((item) => item.includes("Dirigenza")));
 	assert.ok(detail.announcement.fields.find(({label}) => label === "Qualifiche / Licenze").items.some((item) => item.includes("voce storica libera")));
 });
 
-test("team year filter includes a saved interval without filling gaps in legacy selections", async () => {
-	const params = (annata) => ({type: "annuncio_squadra", ricercaSquadra: "giocatore", annata});
+test("team directory filters by the author's current category", async () => {
+	const male = "Calcio 5 (Maschile)::Serie A";
+	const current = fixture({
+		current: row("annuncio_squadra_cerca_staff"),
+		authors: [{...profile, profilo_giocatore: [], profilo_squadra: [{nascosto: false, nome_societa: "A.S.D. Alfa", categoria_attuale: male}]}],
+	});
+	const {parseAnnouncementDirectoryQuery} = current.load("src/features/annunci/announcement-model.ts");
+	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "staff", categoriaAttuale: male}))).total, 1);
+	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "staff", categoriaAttuale: "Calcio 5 (Femminile)::Serie A"}))).total, 0);
+});
+
+test("team search announcements keep saved age ranges in details without exposing them as directory filters", async () => {
 	const legacy = fixture({current: row("annuncio_squadra_cerca_giocatore", {annate_ricercate: ["2004", "2007"], annata_da: null, annata_a: null})});
 	const {parseAnnouncementDirectoryQuery} = legacy.load("src/features/annunci/announcement-model.ts");
 	const oldDetail = await legacy.queries.loadPublicAnnouncementDetail(id);
 	assert.deepEqual(oldDetail.announcement.fields.find(({label}) => label === "Annate ricercate").items, ["2004", "2007"]);
-	assert.equal((await legacy.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery(params("2005")))).total, 0);
-	assert.equal((await legacy.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery(params("2007")))).total, 1);
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "giocatore", annata: "2005"}).filters.annoNascita, "");
 
 	const current = fixture({current: row("annuncio_squadra_cerca_giocatore", {annate_ricercate: [], annata_da: 2004, annata_a: 2007})});
 	const newDetail = await current.queries.loadPublicAnnouncementDetail(id);
 	assert.equal(newDetail.announcement.fields.find(({label}) => label === "Annate ricercate").value, "Dal 2004 al 2007");
-	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery(params("2005")))).total, 1);
-	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery(params("2008")))).total, 0);
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "giocatore", annata: "2005"}).filters.annoNascita, "");
 });
 
 test("team staff search reads multiple saved figures and keeps historical free text and dates", async () => {
@@ -175,6 +177,14 @@ test("announcement card titles use public names and fall back when profile data 
 	assert.equal(anonymous.title, "Ricerca opportunità");
 });
 
+test("custom announcement title takes precedence in result cards and detail headers", async () => {
+	const current = fixture({current: {...row(), titolo_annuncio: "Difensore in prova"}});
+	const [card] = await current.queries.loadPublicAnnouncementsByIds([id]);
+	const detail = await current.queries.loadPublicAnnouncementDetail(id);
+	assert.equal(card.title, "Difensore in prova");
+	assert.equal(detail.announcement.title, "Difensore in prova");
+});
+
 test("Staff, Arbitro and Impianto share the public profile title across cards, latest and details", async () => {
 	const cases = [
 		["annuncio_staff_sportivo", "profilo_staff_sportivo", {nome: "Anna", cognome: "Verdi"}, "Anna Verdi"],
@@ -198,6 +208,7 @@ test("Staff, Arbitro and Impianto share the public profile title across cards, l
 
 test("team search titles count effective roles and keep sponsor sector separate", () => {
 	const content = sourceLoader()("src/features/annunci/announcement-content.ts").announcementContent;
+	assert.equal(content("annuncio_squadra_cerca_giocatore", {}, [], false, "Ricerca personalizzata").title, "Ricerca personalizzata");
 	assert.equal(content("annuncio_squadra_cerca_giocatore", {}, []).title, "Ricerca giocatori");
 	assert.equal(content("annuncio_squadra_cerca_giocatore", {ruoli_principali: ["Portiere"]}, []).title, "Ricerca Portiere");
 	assert.equal(content("annuncio_squadra_cerca_giocatore", {ruoli_principali: ["Difensore"], ruoli_secondari: ["Difensore centrale"]}, []).title, "Ricerca Difensore centrale");
@@ -501,6 +512,19 @@ test("publish preview shows the persisted facts and supporting fields for all te
 		if (type !== "annuncio_squadra_cerca_sponsor") assert.match(html, /Roma/);
 		assert.match(html, /info@example\.test/);
 	}
+
+	const titled = buildPublishPreview({
+		profileType: "torneo-evento",
+		announcement: {
+			type: "annuncio_torneo_evento",
+			title: "Coppa Primavera",
+			detail: {nome_evento: "Torneo Lazio", tipologie_sport: ["Calcio a 11"], descrizione_aggiuntiva: "Evento"},
+			locations: [{regione: "Lazio", citta: "Roma"}],
+			contacts: {email: "info@example.test", phone: ""},
+			extras: {genericLink: ""},
+		},
+	}, drafts, null, null);
+	assert.equal(titled.title, "Coppa Primavera");
 });
 
 test("count and similar failures are isolated, including rejected promises; zero remains a known count", async t => {

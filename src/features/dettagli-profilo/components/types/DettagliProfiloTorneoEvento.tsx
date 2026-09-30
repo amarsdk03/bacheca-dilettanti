@@ -1,16 +1,19 @@
 import type {ReactNode} from "react";
-import {ShirtIcon} from "lucide-react";
+import {MegaphoneIcon, ShirtIcon, UserRoundPlusIcon} from "lucide-react";
 import type {GenericProfileDetail} from "../../profile-detail-model";
 import ProfileDetailsLayout from "../ProfileDetailsLayout";
 import type {ProfileDetailPresentation} from "../profile-detail-presentation";
+import {formatProfileFactCount, getProfileDetailFieldValue} from "../profile-detail-presentation";
 
 const PRESENTATION = {
 	facts: [
-		{label: "Tipologie sportive", icon: ShirtIcon},
+		{label: "Tipologia calcio", icon: ShirtIcon, getValue: profile => getProfileDetailFieldValue(profile, "Tipologie sportive")},
+		{label: "Follower", icon: UserRoundPlusIcon, getValue: profile => formatProfileFactCount(profile.followerCount)},
+		{label: "Annunci pubblicati", icon: MegaphoneIcon, getValue: profile => formatProfileFactCount(profile.announcementCount)},
 	],
 	narrativeFieldLabels: [],
 } satisfies ProfileDetailPresentation;
 
-export default function DettagliProfiloTorneoEvento({profile, actions}: {profile: GenericProfileDetail<"torneo-evento">; actions?: ReactNode}) {
-	return <ProfileDetailsLayout profile={profile} presentation={PRESENTATION} actions={actions} />;
+export default function DettagliProfiloTorneoEvento({profile, actions, authenticated, returnTo}: {profile: GenericProfileDetail<"torneo-evento">; actions?: ReactNode; authenticated: boolean; returnTo: string}) {
+	return <ProfileDetailsLayout profile={profile} presentation={PRESENTATION} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
 }

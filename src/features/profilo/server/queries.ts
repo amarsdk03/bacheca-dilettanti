@@ -110,9 +110,9 @@ const DETAIL_DEFINITIONS = [
 		descriptionFields: ["descrizione_aggiuntiva", "servizi_inclusi"],
 	},
 	{
-		key: "annuncio_professionista_studente",
-		profileType: "professionisti-studi",
-		subtype: "Professionista / studente",
+		key: "annuncio_servizi_consulenze",
+		profileType: "servizi-consulenze",
+		subtype: "Servizi e consulenze",
 		fallbackTitle: "Servizio professionale",
 		titleFields: ["specializzazione", "figura_professionale"],
 		descriptionFields: ["presentazione_servizi", "descrizione_aggiuntiva"],
@@ -132,6 +132,7 @@ function announcementQuery(supabase: SupabaseClient<Database>) {
 		.from("annuncio")
 		.select(`
 			uuid,
+			titolo_annuncio,
 			tipologia_annuncio,
 			creato_il,
 			livello_annuncio,
@@ -149,7 +150,7 @@ function announcementQuery(supabase: SupabaseClient<Database>) {
 			annuncio_arbitro(categorie_ricercate, descrizione_aggiuntiva),
 			annuncio_torneo_evento(nome_evento, descrizione_aggiuntiva),
 			annuncio_campo_impianto(tipologie_sport, servizi_inclusi, descrizione_aggiuntiva),
-			annuncio_professionista_studente(figura_professionale, specializzazione, presentazione_servizi, descrizione_aggiuntiva),
+			annuncio_servizi_consulenze(figura_professionale, specializzazione, presentazione_servizi, descrizione_aggiuntiva),
 			annuncio_creator(titolo_post, descrizione_post, contenuto_post, descrizione_aggiuntiva),
 			localita_annuncio(regione, citta)
 		`);
@@ -231,9 +232,9 @@ function toManagedAnnouncement(row: AnnouncementQueryRow): ManagedAnnouncement {
 		: null;
 	const option = announcementType ? announcementOption(announcementType) : null;
 	const detail = definition ? firstRelation(source[definition.key]) : null;
-	const title = detail && definition
+	const title = firstText(source.titolo_annuncio) ?? (detail && definition
 		? firstDetailText(detail, definition.titleFields) ?? definition.fallbackTitle
-		: humanizeAnnouncementType(row.tipologia_annuncio);
+		: humanizeAnnouncementType(row.tipologia_annuncio));
 	const description = detail && definition
 		? firstDetailText(detail, definition.descriptionFields)
 		: null;
@@ -395,7 +396,7 @@ export async function getProfileDashboardData(
 		supabase.from("profilo_arbitro").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_torneo_evento").select("id, nome_organizzazione, presentazione, sport_principale, tipologie_sport").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_campi_impianti").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
-		supabase.from("profilo_professionista_studente").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_servizi_consulenze").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
 		admin.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
@@ -411,7 +412,7 @@ export async function getProfileDashboardData(
 	queryFailed(refereeResult.error, "profilo_arbitro");
 	queryFailed(tournamentResult.error, "profilo_torneo_evento");
 	queryFailed(facilityResult.error, "profilo_campi_impianti");
-	queryFailed(professionalResult.error, "profilo_professionista_studente");
+	queryFailed(professionalResult.error, "profilo_servizi_consulenze");
 	queryFailed(creatorResult.error, "profilo_creator");
 	queryFailed(locationResult.error, "localita_profilo");
 	queryFailed(socialLinksResult.error, "link_social_profilo");
@@ -426,7 +427,7 @@ export async function getProfileDashboardData(
 	drafts.arbitro = hydrateDraft(drafts.arbitro, refereeResult.data);
 	drafts["torneo-evento"] = hydrateDraft(drafts["torneo-evento"], tournamentResult.data);
 	drafts["campi-impianti-sportivi"] = hydrateDraft(drafts["campi-impianti-sportivi"], facilityResult.data);
-	drafts["professionisti-studi"] = hydrateDraft(drafts["professionisti-studi"], professionalResult.data);
+	drafts["servizi-consulenze"] = hydrateDraft(drafts["servizi-consulenze"], professionalResult.data);
 	drafts.creators = hydrateDraft(drafts.creators, creatorResult.data);
 
 	for (const location of locationResult.data ?? []) {
@@ -450,7 +451,7 @@ export async function getProfileDashboardData(
 	if (refereeResult.data) activeRows.set("arbitro", refereeResult.data);
 	if (tournamentResult.data) activeRows.set("torneo-evento", tournamentResult.data);
 	if (facilityResult.data) activeRows.set("campi-impianti-sportivi", facilityResult.data);
-	if (professionalResult.data) activeRows.set("professionisti-studi", professionalResult.data);
+	if (professionalResult.data) activeRows.set("servizi-consulenze", professionalResult.data);
 	if (creatorResult.data) activeRows.set("creators", creatorResult.data);
 	const mainImageUrl = firstText(baseProfile.link_foto_profilo);
 

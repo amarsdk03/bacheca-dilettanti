@@ -36,7 +36,7 @@ const PROFILE_TABLE_BY_TYPE = {
 	giocatore: "profilo_giocatore",
 	squadra: "profilo_squadra",
 	"staff-sportivo": "profilo_staff_sportivo",
-	"professionisti-studi": "profilo_professionista_studente",
+	"servizi-consulenze": "profilo_servizi_consulenze",
 	arbitro: "profilo_arbitro",
 	creators: "profilo_creator",
 	"torneo-evento": "profilo_torneo_evento",
@@ -60,7 +60,7 @@ function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: numbe
 			profilo_giocatore(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categoria_attuale, categorie_ricercate, genere, nazionalita),
 			profilo_squadra(id, nascosto, nome_societa, presentazione, sport_principale, tipologie_sport, categoria_attuale),
 			profilo_staff_sportivo(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, sport_principale),
-			profilo_professionista_studente(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, presentazione_servizi, specializzazioni, sport_principale, tipologie_sport, automunito),
+			profilo_servizi_consulenze(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, presentazione_servizi, specializzazioni, sport_principale, tipologie_sport, automunito),
 			profilo_arbitro(id, nascosto, nome, cognome, disponibilita, presentazione, sport_principale),
 			profilo_creator(id, nascosto, nome_creator, presentazione, sport_principale, tipologia_contenuti),
 			profilo_torneo_evento(id, nascosto, nome_organizzazione, presentazione, sport_principale, tipologie_sport),
@@ -190,7 +190,7 @@ function buildProfileFacts(
 			profileFact("availability", "Disponibilità", availability),
 		];
 	}
-	if (type === "professionisti-studi") {
+	if (type === "servizi-consulenze") {
 		return [
 			profileFact("figures", "Figure", figures),
 			profileFact("specializations", "Specializzazioni", factData?.specializations ?? null),
@@ -349,11 +349,11 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		}, profileImages));
 	}
 
-	for (const professional of row.profilo_professionista_studente ?? []) {
+	for (const professional of row.profilo_servizi_consulenze ?? []) {
 		if (professional.nascosto !== false) continue;
 		const figures = normalizeFigures(cleanStringArray(professional.figure_professionali));
 		const sportTypes = ordinaTipologieCalcio(cleanStringArray(professional.tipologie_sport));
-		profiles.push(createDirectoryProfile(row, "professionisti-studi", professional.id, {
+		profiles.push(createDirectoryProfile(row, "servizi-consulenze", professional.id, {
 			title: fullName(professional.nome, professional.cognome),
 			presentation: professional.presentazione,
 			sport: cleanText(professional.sport_principale) ?? sportTypes[0],

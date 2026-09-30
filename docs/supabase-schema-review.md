@@ -11,7 +11,7 @@ Fonti confrontate:
 
 ## Esito
 
-Il nuovo flusso raccoglie soltanto dati che hanno una destinazione esplicita nello schema. La sezione di visibilità e i dati premium/pagamento sono stati rimossi. `Professionisti e studi` e `Creators` sono mostrati, ma non selezionabili e non vengono gestiti dalla RPC di pubblicazione.
+Il nuovo flusso raccoglie soltanto dati che hanno una destinazione esplicita nello schema. La sezione di visibilità e i dati premium/pagamento sono stati rimossi. `Servizi e consulenze` e `Creators` sono mostrati, ma non selezionabili e non vengono gestiti dalla RPC di pubblicazione.
 
 ## Mappatura dei tipi
 

@@ -19,7 +19,7 @@ import {isStaffCategory} from "@/features/pubblica-annuncio/types/staff-category
 import {ANY_CATEGORY} from "@/features/pubblica-annuncio/types/category-catalog";
 import {TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 
-export const PUBLISH_PAYLOAD_VERSION = 3 as const;
+export const PUBLISH_PAYLOAD_VERSION = 4 as const;
 
 export const PUBLISHABLE_PROFILE_TYPES = [
 	"giocatore",
@@ -170,6 +170,7 @@ export interface PublishAnnouncementPayload {
 	profileUpdate: RegisteredProfileUpdatePayload | null;
 	announcement: {
 		type: DatabaseAnnouncementType;
+		title: string;
 		detail: AnnouncementDetailDraft;
 		locations: ProfileLocationDraft[];
 		contacts: AnnouncementContacts;
@@ -413,8 +414,9 @@ export function getAnnouncementValidationMessage(
 	locations: ProfileLocationDraft[],
 	contacts: AnnouncementContacts,
 	extras: AnnouncementExtras = {genericLink: ""},
+	title = "",
 ): string | null {
-	return Object.values(getAnnouncementValidationErrors(type, teamSubtype, drafts, locations, contacts, extras))[0] ?? null;
+	return Object.values(getAnnouncementValidationErrors(type, teamSubtype, drafts, locations, contacts, extras, title))[0] ?? null;
 }
 
 export function getAnnouncementValidationErrors(
@@ -424,8 +426,10 @@ export function getAnnouncementValidationErrors(
 	locations: ProfileLocationDraft[],
 	contacts: AnnouncementContacts,
 	extras: AnnouncementExtras = {genericLink: ""},
+	title = "",
 ): AnnouncementValidationErrors {
 	const errors: AnnouncementValidationErrors = {};
+	if (title.trim().length > 50) errors.title = "Il titolo può contenere al massimo 50 caratteri.";
 	const email = contacts.email.trim();
 	const phone = contacts.phone.trim();
 	if (!email && !phone) errors.contacts = "Inserisci almeno un contatto tra email e telefono.";
@@ -483,9 +487,6 @@ export function getAnnouncementValidationErrors(
 		const draft = drafts.arbitro;
 		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
 		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’annuncio.";
-	}
-	if (type === "creators") {
-		if (!nonEmpty(drafts.creator.titolo_post)) errors.title = "Inserisci il titolo dell’annuncio.";
 	}
 	if (type === "torneo-evento") {
 		const draft = drafts.torneoEvento;

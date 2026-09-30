@@ -87,6 +87,7 @@ export default function PubblicaAnnuncio({
 		registered && profileContext ? cloneProfileSocialLinks(profileContext.socialLinks) : createProfileSocialLinks()
 	));
 	const [announcementDrafts, setAnnouncementDrafts] = useState(createAnnouncementDetailsDrafts);
+	const [announcementTitle, setAnnouncementTitle] = useState("");
 	const [announcementLocations, setAnnouncementLocations] = useState<ProfileLocationDraft[]>([]);
 	const [contacts, setContacts] = useState<AnnouncementContacts>({email: registered ? initialEmail : "", phone: ""});
 	const [extras, setExtras] = useState<AnnouncementExtras>({genericLink: ""});
@@ -125,10 +126,10 @@ export default function PubblicaAnnuncio({
 		? Object.values(profileValidationErrors).find(Boolean) ?? null
 		: "Seleziona una tipologia di profilo.";
 	const announcementValidationErrors = profileType
-		? getAnnouncementValidationErrors(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras)
+		? getAnnouncementValidationErrors(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras, announcementTitle)
 		: {};
 	const announcementValidationMessage = profileType
-		? getAnnouncementValidationMessage(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras)
+		? getAnnouncementValidationMessage(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras, announcementTitle)
 		: "Seleziona una tipologia di profilo.";
 	const step1Valid = profileType !== "" && (profileType !== "squadra" || teamSubtype !== null);
 	const step2Valid = step1Valid && profileValidationMessage === null;
@@ -138,7 +139,10 @@ export default function PubblicaAnnuncio({
 	const payload = useMemo<PublishAnnouncementPayload | null>(() => {
 		if (!profileType) return null;
 		const announcementType = getDatabaseAnnouncementType(profileType, teamSubtype);
-		const detail = getAnnouncementDetail(profileType, teamSubtype, announcementDrafts);
+		const draftDetail = getAnnouncementDetail(profileType, teamSubtype, announcementDrafts);
+		const detail = draftDetail && profileType === "creators"
+			? {...draftDetail, titolo_post: announcementTitle.trim() || "Annuncio creator"}
+			: draftDetail;
 		if (!announcementType || !detail) return null;
 		return {
 			version: PUBLISH_PAYLOAD_VERSION,
@@ -160,6 +164,7 @@ export default function PubblicaAnnuncio({
 			} : null,
 			announcement: {
 				type: announcementType,
+				title: announcementTitle,
 				detail,
 				locations: profileType === "squadra" && teamSubtype === "cerca-sponsor" ? [] : announcementLocations,
 				contacts,
@@ -167,7 +172,7 @@ export default function PubblicaAnnuncio({
 			},
 			consents: {dataConfirmed: false, termsAccepted: false, privacyAccepted: false},
 		};
-	}, [announcementDrafts, announcementLocations, contacts, extras, profileDirty, profileDrafts, profileLocations, profileSocialLinks, profileType, profileUnlocked, registered, submissionId, teamSubtype]);
+	}, [announcementDrafts, announcementLocations, announcementTitle, contacts, extras, profileDirty, profileDrafts, profileLocations, profileSocialLinks, profileType, profileUnlocked, registered, submissionId, teamSubtype]);
 
 	const scrollToTop = () => window.scrollTo({top: 0, behavior: "smooth"});
 	const updateAnnouncementImage = (image: File | null) => {
@@ -385,6 +390,8 @@ export default function PubblicaAnnuncio({
 									<AnnouncementDetailsForm
 										profileType={profileType}
 										teamSubtype={teamSubtype}
+										announcementTitle={announcementTitle}
+										onAnnouncementTitleChange={setAnnouncementTitle}
 										drafts={announcementDrafts}
 										onDraftsChange={setAnnouncementDrafts}
 										locations={announcementLocations}

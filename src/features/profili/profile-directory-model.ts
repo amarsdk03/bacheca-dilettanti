@@ -1,7 +1,7 @@
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import {
 	DISPONIBILITA_PROFILO_OPTIONS,
-	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
+	DISPONIBILITA_SPOSTAMENTI_OPTIONS,
 	FIGURA_PROFESSIONALE_OPTIONS,
 	RUOLO_PRINCIPALE_OPTIONS,
 	TIPOLOGIA_CALCIO_OPTIONS,
@@ -28,7 +28,7 @@ export const PROFILE_FILTERS_BY_TYPE = {
 	giocatore: ["regione", "tipologia", "ruolo", "disponibilita"],
 	squadra: ["regione", "tipologia"],
 	"staff-sportivo": ["regione", "figura", "disponibilita"],
-	"professionisti-studi": ["regione", "tipologia", "figura", "disponibilita", "automunito"],
+	"servizi-consulenze": ["regione", "tipologia", "figura", "disponibilita", "automunito"],
 	arbitro: ["regione", "disponibilita"],
 	creators: ["regione"],
 	"torneo-evento": ["regione", "tipologia"],
@@ -43,7 +43,7 @@ export const PROFILE_FILTER_OPTIONS = {
 	disponibilita: DISPONIBILITA_PROFILO_OPTIONS
 		.filter(({valore}) => valore !== "non-specificare")
 		.map(({valore, etichetta}) => ({value: valore, label: etichetta})).concat([{value: "svincolato", label: "Svincolato"}]),
-	automunito: DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS
+	automunito: DISPONIBILITA_SPOSTAMENTI_OPTIONS
 		.map(({valore, etichetta}) => ({value: valore, label: etichetta})),
 } as const;
 

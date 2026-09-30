@@ -232,7 +232,7 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 		);
 		if (
 			invalidYear(periodoDa)
-			|| (periodoAIsToday && !["giocatore", "staff-sportivo", "arbitro", "professionisti-studi"].includes(profileType))
+			|| (periodoAIsToday && !["giocatore", "staff-sportivo", "arbitro", "servizi-consulenze"].includes(profileType))
 			|| (!periodoAIsToday && invalidYear(periodoA))
 		) {
 			fail("Uno dei periodi inseriti non è valido.", 3, profileType);
@@ -447,7 +447,7 @@ function normalizeDraft(
 		};
 	}
 
-	if (type === "professionisti-studi") {
+	if (type === "servizi-consulenze") {
 		assertExactKeys(value, [
 			"anno_nascita",
 			"automunito",

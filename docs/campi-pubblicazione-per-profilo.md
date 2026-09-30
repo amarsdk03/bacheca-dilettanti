@@ -81,7 +81,7 @@ Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium s
 | Annuncio | Contatti pubblici per questo annuncio | Email e/o telefono | Sì, almeno uno |
 | Annuncio | Zone di ricerca | Regione obbligatoria; città/comune facoltativa | Sì, regione |
 
-## Professionisti e studi
+## Servizi e consulenze
 
 Questa tipologia è attualmente **Coming soon** e non può ancora inviare annunci.
 

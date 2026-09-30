@@ -79,6 +79,7 @@ export interface NormalizedPublishPayload {
 		locations: ProfileLocationDraft[];
 	} | null;
 	detail: Record<string, Json>;
+	announcementTitle: string;
 	announcementLocations: ProfileLocationDraft[];
 	contacts: AnnouncementContacts;
 	extras: AnnouncementExtras;
@@ -105,6 +106,14 @@ function textValue(value: unknown, maxLength: number, step: 1 | 2 | 3 | 4, requi
 	const normalized = value.trim();
 	if (required && !normalized) fail("Completa tutti i campi obbligatori.", step);
 	return normalized || null;
+}
+
+function announcementTitleValue(value: unknown): string {
+	if (value === null || value === undefined) return "";
+	if (typeof value !== "string") fail("Il titolo dell’annuncio non è valido.", 3);
+	const normalized = value.trim();
+	if (normalized.length > 50) fail("Il titolo può contenere al massimo 50 caratteri.", 3);
+	return normalized;
 }
 
 function stringList(value: unknown, step: 1 | 2 | 3 | 4, required = false) {
@@ -426,8 +435,9 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 
 	const expectedAnnouncementType = getDatabaseAnnouncementType(profileType, teamSubtype);
 	if (!expectedAnnouncementType || !isRecord(rawValue.announcement)) fail("La tipologia di annuncio non è valida.", 1);
-	assertExactKeys(rawValue.announcement, ["type", "detail", "locations", "contacts", "extras"], 3);
+	assertExactKeys(rawValue.announcement, ["type", "title", "detail", "locations", "contacts", "extras"], 3);
 	if (rawValue.announcement.type !== expectedAnnouncementType) fail("I dati non corrispondono alla tipologia selezionata.", 3);
+	const announcementTitle = announcementTitleValue(rawValue.announcement.title);
 
 	let profileDraft: Record<string, Json> | null = null;
 	let profileLocations: ProfileLocationDraft[] = [];
@@ -505,7 +515,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		campoImpianto: {tipologie_sport: [], orari: [], costo_partenza: "", servizi_inclusi: "", indirizzo: "", descrizione_aggiuntiva: ""},
 	} satisfies AnnouncementDetailsDrafts;
 	assignNormalizedAnnouncementDetail(normalizedDrafts, expectedAnnouncementType, detail);
-	const detailMessage = getAnnouncementValidationMessage(profileType, teamSubtype, normalizedDrafts, announcementLocations, contacts, extras);
+	const detailMessage = getAnnouncementValidationMessage(profileType, teamSubtype, normalizedDrafts, announcementLocations, contacts, extras, announcementTitle);
 	if (detailMessage) fail(detailMessage, 3);
 
 	if (!isRecord(rawValue.consents)) fail("Conferma i consensi richiesti.", 4);
@@ -525,6 +535,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		profileSocialLinks,
 		profileUpdate,
 		detail,
+		announcementTitle,
 		announcementLocations,
 		contacts,
 		extras,

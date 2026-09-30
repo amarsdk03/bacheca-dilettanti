@@ -12,6 +12,7 @@ import {loadPublicAnnouncementDetail} from "@/features/annunci/server/queries";
 import {announcementPreviewNotice} from "@/features/annunci/announcement-visibility";
 import {dynamicMetadata, metadataDescription} from "@/server/metadata";
 import {announcementMetadataDescription, announcementStructuredData} from "@/server/structured-data";
+import {getCurrentViewer} from "@/features/auth/server/queries";
 
 interface DettagliAnnuncioPageProps {
 	searchParams: Promise<RawAnnouncementSearchParams>;
@@ -75,12 +76,13 @@ export default async function DettagliAnnuncioPage({
 	const result = await loadDetail(id);
 	if (result.status === "not-found") notFound();
 	const path = `/dettagli-annuncio?${new URLSearchParams({id}).toString()}`;
+	const authenticated = Boolean(await getCurrentViewer());
 
 	return (
 		<ExternalNavigationProvider key={id}>
 			{result.status === "success" && <JsonLd data={announcementStructuredData(result.announcement, path)} />}
 			<Navbar />
-			<DettagliAnnuncioPubblico result={result} />
+			<DettagliAnnuncioPubblico result={result} authenticated={authenticated} returnTo={path} />
 			<Footer />
 		</ExternalNavigationProvider>
 	);

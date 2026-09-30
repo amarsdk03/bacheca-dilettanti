@@ -15,7 +15,6 @@ import {
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import {
 	ANNATE_OPTIONS,
-	DISPONIBILITA_SPOSTAMENTO_OPTIONS,
 	FIGURA_PROFESSIONALE_OPTIONS,
 	RUOLO_PRINCIPALE_OPTIONS,
 	TIPOLOGIA_CALCIO_OPTIONS,
@@ -30,11 +29,6 @@ import {
 	normalizeFigure,
 	UNRESOLVED_LEGACY_CATEGORY_FILTERS
 } from "@/features/pubblica-annuncio/types/category-catalog";
-import {
-	normalizeStaffCategory,
-	STAFF_CATEGORY_FILTER_OPTIONS,
-	STAFF_CATEGORY_GROUPS
-} from "@/features/pubblica-annuncio/types/staff-category-catalog";
 
 export const ANNOUNCEMENTS_PER_PAGE = 12;
 
@@ -48,7 +42,7 @@ export const ANNOUNCEMENT_TYPES = [
 	"annuncio_arbitro",
 	"annuncio_torneo_evento",
 	"annuncio_campo_impianto",
-	"annuncio_professionisti_studi",
+	"annuncio_servizi_consulenze",
 	"annuncio_creators",
 ] as const;
 
@@ -88,7 +82,7 @@ export const ANNOUNCEMENT_DIRECTORY_TYPES = [
 	"annuncio_arbitro",
 	"annuncio_torneo_evento",
 	"annuncio_campo_impianto",
-	"annuncio_professionisti_studi",
+	"annuncio_servizi_consulenze",
 	"annuncio_creators"
 ] as const;
 
@@ -167,6 +161,13 @@ export const ANNOUNCEMENT_OPTIONS: readonly AnnouncementOption[] = [
 		icon: MapPinIcon,
 	},
 	{
+		value: "annuncio_servizi_consulenze",
+		label: "Servizi e consulenze",
+		description: "Pubblica un servizio o una promozione pensata appositamente per la community di Bacheca",
+		profileType: "servizi-consulenze",
+		icon: BriefcaseBusinessIcon,
+	},
+	{
 		value: "annuncio_creators",
 		label: "Creators",
 		description: "Contenuti e collaborazioni proposti dai creator",
@@ -227,10 +228,10 @@ export const ANNOUNCEMENT_DIRECTORY_OPTIONS: readonly AnnouncementDirectoryOptio
 		icon: MapPinIcon,
 	},
 	{
-		value: "annuncio_professionisti_studi",
-		profileType: "professionisti-studi",
-		label: "Professionisti e studi",
-		description: "Offri i tuoi servizi professionali a squadre, atleti e società sportive",
+		value: "annuncio_servizi_consulenze",
+		profileType: "servizi-consulenze",
+		label: "Servizi e consulenze",
+		description: "Pubblica un servizio o una promozione pensata appositamente per la community di Bacheca",
 		icon: BriefcaseBusinessIcon,
 	},
 	{
@@ -254,27 +255,24 @@ export const ANNOUNCEMENT_FILTER_PARAM_KEYS = [
 	"regione",
 	"tipologia",
 	"ruolo",
-	"annata",
+	"annoNascita",
 	"figura",
-	"categoria",
-	"automunito",
-	"costoMax",
-	"compensoMin",
+	"categoriaAttuale",
 ] as const;
 
 export type AnnouncementFilterParam = typeof ANNOUNCEMENT_FILTER_PARAM_KEYS[number];
 
 export const ANNOUNCEMENT_FILTERS_BY_TYPE = {
-	annuncio_giocatore: ["regione", "tipologia", "ruolo", "categoria"],
-	annuncio_squadra_cerca_giocatore: ["regione", "tipologia", "ruolo", "annata"],
-	annuncio_squadra_cerca_staff: ["regione", "figura", "compensoMin"],
-	annuncio_squadra_cerca_partita: ["regione", "categoria"],
-	annuncio_squadra_cerca_sponsor: ["regione"],
-	annuncio_staff_sportivo: ["regione", "tipologia", "figura", "categoria"],
-	annuncio_arbitro: ["regione", "tipologia", "automunito"],
-	annuncio_torneo_evento: ["regione", "tipologia", "costoMax"],
-	annuncio_campo_impianto: ["regione", "tipologia", "costoMax"],
-	annuncio_professionisti_studi: ["regione"],
+	annuncio_giocatore: ["annoNascita", "regione", "ruolo", "tipologia"],
+	annuncio_squadra_cerca_giocatore: ["regione", "categoriaAttuale"],
+	annuncio_squadra_cerca_staff: ["regione", "categoriaAttuale"],
+	annuncio_squadra_cerca_partita: ["regione", "categoriaAttuale"],
+	annuncio_squadra_cerca_sponsor: ["regione", "categoriaAttuale"],
+	annuncio_staff_sportivo: ["figura", "regione", "tipologia"],
+	annuncio_arbitro: ["regione", "tipologia"],
+	annuncio_torneo_evento: ["regione", "tipologia"],
+	annuncio_campo_impianto: ["regione", "tipologia"],
+	annuncio_servizi_consulenze: ["regione"],
 	annuncio_creators: ["regione"],
 } as const satisfies Record<AnnouncementType, readonly AnnouncementFilterParam[]>;
 
@@ -285,10 +283,6 @@ export const ANNOUNCEMENT_FILTER_OPTIONS = {
 	annate: [...ANNATE_OPTIONS],
 	figure: [...FIGURA_PROFESSIONALE_OPTIONS],
 	categorie: CATEGORY_FILTER_OPTIONS,
-	staffCategorie: STAFF_CATEGORY_FILTER_OPTIONS,
-	automunito: DISPONIBILITA_SPOSTAMENTO_OPTIONS
-		.filter((value) => value !== "Non specificare")
-		.map((value) => ({value, label: value === "Si" ? "Sì" : value})),
 } as const;
 
 export interface AnnouncementDirectoryFilters {
@@ -296,12 +290,9 @@ export interface AnnouncementDirectoryFilters {
 	regione: string;
 	tipologia: string;
 	ruolo: string;
-	annata: string;
+	annoNascita: string;
 	figura: string;
-	categoria: string;
-	automunito: string;
-	costoMax: number | null;
-	compensoMin: number | null;
+	categoriaAttuale: string;
 }
 
 export interface AnnouncementDirectoryQuery {
@@ -452,13 +443,6 @@ const CATEGORY_SET = new Set<string>([
 	...ANNOUNCEMENT_FILTER_OPTIONS.categorie.map(({value}) => value),
 	...UNRESOLVED_LEGACY_CATEGORY_FILTERS,
 ]);
-const STAFF_CATEGORY_SET = new Set<string>([
-	...STAFF_CATEGORY_FILTER_OPTIONS.map(({value}) => value),
-	...CATEGORY_FILTER_OPTIONS.map(({value}) => value),
-	...UNRESOLVED_LEGACY_CATEGORY_FILTERS,
-	...STAFF_CATEGORY_GROUPS.flatMap(({opzioni}) => opzioni),
-]);
-const CAR_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.automunito.map(({value}) => value));
 const TEAM_SEARCH_SET = new Set<string>(ANNOUNCEMENT_TEAM_SEARCHES);
 const UUID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 
@@ -491,12 +475,9 @@ export function createEmptyAnnouncementFilters(): AnnouncementDirectoryFilters {
 		regione: "",
 		tipologia: "",
 		ruolo: "",
-		annata: "",
+		annoNascita: "",
 		figura: "",
-		categoria: "",
-		automunito: "",
-		costoMax: null,
-		compensoMin: null,
+		categoriaAttuale: "",
 	};
 }
 
@@ -513,23 +494,12 @@ function allowedValue(value: string, allowed: Set<string>) {
 	return allowed.has(value) ? value : "";
 }
 
-function parseAmount(value: string) {
-	if (!value.trim()) return null;
-	const parsed = Number(value.replace(",", "."));
-	if (!Number.isFinite(parsed) || parsed < 0 || parsed > 1_000_000) return null;
-	return Math.round(parsed * 100) / 100;
-}
-
 export function getAnnouncementFiltersForDirectoryType(
 	type: AnnouncementDirectoryType,
-	teamSearch: AnnouncementTeamSearch | "",
+	_teamSearch: AnnouncementTeamSearch | "",
 ): readonly AnnouncementFilterParam[] {
 	if (type === "annuncio_squadra") {
-		if (!teamSearch) return ["ricercaSquadra", "regione"];
-		return [
-			"ricercaSquadra",
-			...ANNOUNCEMENT_FILTERS_BY_TYPE[TEAM_ANNOUNCEMENT_TYPE_BY_SEARCH[teamSearch]],
-		];
+		return ["ricercaSquadra", "regione", "categoriaAttuale"];
 	}
 
 	return ANNOUNCEMENT_FILTERS_BY_TYPE[type];
@@ -581,25 +551,14 @@ export function parseAnnouncementDirectoryQuery(
 		if (supportsFilter(selectedType, filters.ricercaSquadra, "ruolo")) {
 			filters.ruolo = allowedValue(firstValue(params.ruolo), ROLE_SET);
 		}
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "annata")) {
-			filters.annata = allowedValue(firstValue(params.annata), YEAR_SET);
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "annoNascita")) {
+			filters.annoNascita = allowedValue(firstValue(params.annoNascita), YEAR_SET);
 		}
 		if (supportsFilter(selectedType, filters.ricercaSquadra, "figura")) {
 			filters.figura = allowedValue(normalizeFigure(firstValue(params.figura)), FIGURE_SET);
 		}
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "categoria")) {
-			filters.categoria = selectedType === "annuncio_staff_sportivo"
-				? allowedValue(normalizeStaffCategory(firstValue(params.categoria)), STAFF_CATEGORY_SET)
-				: allowedValue(normalizeCategory(firstValue(params.categoria)), CATEGORY_SET);
-		}
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "automunito")) {
-			filters.automunito = allowedValue(firstValue(params.automunito), CAR_SET);
-		}
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "costoMax")) {
-			filters.costoMax = parseAmount(firstValue(params.costoMax));
-		}
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "compensoMin")) {
-			filters.compensoMin = parseAmount(firstValue(params.compensoMin));
+		if (supportsFilter(selectedType, filters.ricercaSquadra, "categoriaAttuale")) {
+			filters.categoriaAttuale = allowedValue(normalizeCategory(firstValue(params.categoriaAttuale)), CATEGORY_SET);
 		}
 	}
 
@@ -624,12 +583,9 @@ export function getAnnouncementFilterEntries(
 	if (filters.regione) entries.push(["regione", filters.regione]);
 	if (filters.tipologia) entries.push(["tipologia", filters.tipologia]);
 	if (filters.ruolo) entries.push(["ruolo", filters.ruolo]);
-	if (filters.annata) entries.push(["annata", filters.annata]);
+	if (filters.annoNascita) entries.push(["annoNascita", filters.annoNascita]);
 	if (filters.figura) entries.push(["figura", filters.figura]);
-	if (filters.categoria) entries.push(["categoria", filters.categoria]);
-	if (filters.automunito) entries.push(["automunito", filters.automunito]);
-	if (filters.costoMax !== null) entries.push(["costoMax", String(filters.costoMax)]);
-	if (filters.compensoMin !== null) entries.push(["compensoMin", String(filters.compensoMin)]);
+	if (filters.categoriaAttuale) entries.push(["categoriaAttuale", filters.categoriaAttuale]);
 	return entries;
 }
 

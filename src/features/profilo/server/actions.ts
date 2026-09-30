@@ -31,7 +31,7 @@ const PROFILE_TABLE_BY_TYPE = {
 	giocatore: "profilo_giocatore",
 	squadra: "profilo_squadra",
 	"staff-sportivo": "profilo_staff_sportivo",
-	"professionisti-studi": "profilo_professionista_studente",
+	"servizi-consulenze": "profilo_servizi_consulenze",
 	arbitro: "profilo_arbitro",
 	creators: "profilo_creator",
 	"torneo-evento": "profilo_torneo_evento",

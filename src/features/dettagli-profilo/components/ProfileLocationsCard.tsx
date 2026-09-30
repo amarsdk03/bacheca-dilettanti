@@ -12,14 +12,13 @@ export default function ProfileLocationsCard({locations, title = "Località"}: {
 			</CardHeader>
 			<CardContent>
 				{groups.length === 0 ? <p className="text-sm text-muted-foreground">Nessuna località indicata</p> : (
-					<ul className="flex flex-col gap-4">
+					<ul className={`flex flex-col gap-2 ${groups.length > 1 ? "list-disc pl-5" : ""}`}>
 						{groups.map(({region, cities, hasWholeRegion}) => (
-							<li key={region} className="flex min-w-0 flex-col gap-2 border-b border-border pb-4 last:border-0 last:pb-0">
-								<h3 className="font-semibold wrap-anywhere">{region}</h3>
-								{hasWholeRegion && <p className="text-sm text-muted-foreground">Tutta la regione</p>}
-								{cities.length > 0 && <ul className="flex flex-wrap gap-2" aria-label={`Città in ${region}`}>
-									{cities.map(city => <li key={city} className="max-w-full rounded-md bg-accent px-2.5 py-1 text-sm text-accent-foreground wrap-anywhere">{city}</li>)}
-								</ul>}
+							<li key={region} className="min-w-0 wrap-anywhere">
+								<span className="font-semibold">{region}</span>
+								{!hasWholeRegion && cities.length > 0 && (
+									<span className="font-normal">: {cities.join(", ")}</span>
+								)}
 							</li>
 						))}
 					</ul>

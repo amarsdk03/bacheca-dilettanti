@@ -2,6 +2,6 @@ import type {AnnouncementDetail} from "@/features/annunci/announcement-model";
 import AnnouncementDetailsLayout from "./AnnouncementDetailsLayout";
 import {ANNOUNCEMENT_DETAIL_PRESENTATIONS} from "./announcement-detail-presentation";
 
-export default function DettagliAnnuncioTorneoEvento({announcement}: {announcement: AnnouncementDetail}) {
-	return <AnnouncementDetailsLayout announcement={announcement} presentation={ANNOUNCEMENT_DETAIL_PRESENTATIONS.annuncio_torneo_evento} />;
+export default function DettagliAnnuncioTorneoEvento({announcement, authenticated, returnTo}: {announcement: AnnouncementDetail; authenticated: boolean; returnTo: string}) {
+	return <AnnouncementDetailsLayout announcement={announcement} presentation={ANNOUNCEMENT_DETAIL_PRESENTATIONS.annuncio_torneo_evento} authenticated={authenticated} returnTo={returnTo} />;
 }

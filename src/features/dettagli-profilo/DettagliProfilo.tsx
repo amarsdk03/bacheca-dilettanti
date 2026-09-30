@@ -9,26 +9,26 @@ import ProfileHistoryBackButton from "./components/ProfileHistoryBackButton";
 import DettagliProfiloGiocatore from "./components/types/DettagliProfiloGiocatore";
 import DettagliProfiloSquadra from "./components/types/DettagliProfiloSquadra";
 import DettagliProfiloStaffSportivo from "./components/types/DettagliProfiloStaffSportivo";
-import DettagliProfiloProfessionistiStudi from "./components/types/DettagliProfiloProfessionistiStudi";
+import DettagliProfiloServiziConsulenze from "./components/types/DettagliProfiloServiziConsulenze";
 import DettagliProfiloArbitro from "./components/types/DettagliProfiloArbitro";
 import DettagliProfiloCreator from "./components/types/DettagliProfiloCreator";
 import DettagliProfiloTorneoEvento from "./components/types/DettagliProfiloTorneoEvento";
 import DettagliProfiloCampiImpianti from "./components/types/DettagliProfiloCampiImpianti";
 
-function ProfileContent({profile, actions}: {profile: ProfileDetail; actions: ReactNode}) {
+function ProfileContent({profile, actions, authenticated, returnTo}: {profile: ProfileDetail; actions: ReactNode; authenticated: boolean; returnTo: string}) {
 	switch (profile.type) {
-		case "giocatore": return <DettagliProfiloGiocatore profile={profile} actions={actions} />;
-		case "squadra": return <DettagliProfiloSquadra profile={profile} actions={actions} />;
-		case "staff-sportivo": return <DettagliProfiloStaffSportivo profile={profile} actions={actions} />;
-		case "professionisti-studi": return <DettagliProfiloProfessionistiStudi profile={profile} actions={actions} />;
-		case "arbitro": return <DettagliProfiloArbitro profile={profile} actions={actions} />;
-		case "creators": return <DettagliProfiloCreator profile={profile} actions={actions} />;
-		case "torneo-evento": return <DettagliProfiloTorneoEvento profile={profile} actions={actions} />;
-		case "campi-impianti-sportivi": return <DettagliProfiloCampiImpianti profile={profile} actions={actions} />;
+		case "giocatore": return <DettagliProfiloGiocatore profile={profile} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
+		case "squadra": return <DettagliProfiloSquadra profile={profile} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
+		case "staff-sportivo": return <DettagliProfiloStaffSportivo profile={profile} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
+		case "servizi-consulenze": return <DettagliProfiloServiziConsulenze profile={profile} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
+		case "arbitro": return <DettagliProfiloArbitro profile={profile} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
+		case "creators": return <DettagliProfiloCreator profile={profile} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
+		case "torneo-evento": return <DettagliProfiloTorneoEvento profile={profile} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
+		case "campi-impianti-sportivi": return <DettagliProfiloCampiImpianti profile={profile} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
 	}
 }
 
-export default function DettagliProfilo({result}: {result: Exclude<ProfileDetailResult, {status: "not-found"}>}) {
+export default function DettagliProfilo({result, authenticated, returnTo}: {result: Exclude<ProfileDetailResult, {status: "not-found"}>; authenticated: boolean; returnTo: string}) {
 	const hasProfile = result.status === "ok";
 	const actions = result.status === "ok" ? (
 		<DetailActions
@@ -48,7 +48,7 @@ export default function DettagliProfilo({result}: {result: Exclude<ProfileDetail
 					<AlertTitle>Profilo temporaneamente non disponibile</AlertTitle>
 					<AlertDescription>Riprova tra poco oppure torna alla pagina precedente.</AlertDescription>
 				</Alert>
-			) : <ProfileContent profile={result.profile} actions={actions} />}
+			) : <ProfileContent profile={result.profile} actions={actions} authenticated={authenticated} returnTo={returnTo} />}
 			<div className="flex justify-center pt-2">
 				<ProfileHistoryBackButton label="Torna indietro" variant="outline" size="lg" />
 			</div>

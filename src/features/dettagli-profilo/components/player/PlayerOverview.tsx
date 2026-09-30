@@ -8,7 +8,7 @@ import ProfileSocialLinksCard from "../ProfileSocialLinks";
 import ProfileIdentifier from "../ProfileIdentifier";
 import PlayerRolesCard from "./PlayerRolesCard";
 
-type PlayerOverviewProps = Pick<PlayerProfileData, "presentation" | "highlightsUrl" | "sportTypes" | "primaryRoles" | "specificRoles" | "currentCategory" | "preferredCategories"> & Pick<PlayerProfileDetail, "locations" | "socialLinks"> & {profileId: string};
+type PlayerOverviewProps = Pick<PlayerProfileData, "presentation" | "highlightsUrl" | "sportTypes" | "primaryRoles" | "specificRoles" | "currentCategory" | "preferredCategories"> & Pick<PlayerProfileDetail, "locations" | "socialLinks"> & {profileId: string; authenticated: boolean; returnTo: string};
 
 function youtubeEmbedUrl(value: string) {
 	try {
@@ -35,7 +35,7 @@ function youtubeEmbedUrl(value: string) {
 	}
 }
 
-export default function PlayerOverview({presentation, highlightsUrl, locations, socialLinks, sportTypes, primaryRoles, specificRoles, currentCategory, preferredCategories, profileId}: PlayerOverviewProps) {
+export default function PlayerOverview({presentation, highlightsUrl, locations, socialLinks, sportTypes, primaryRoles, specificRoles, currentCategory, preferredCategories, profileId, authenticated, returnTo}: PlayerOverviewProps) {
 	const embedUrl = highlightsUrl ? youtubeEmbedUrl(highlightsUrl) : null;
 
 	return (
@@ -75,7 +75,7 @@ export default function PlayerOverview({presentation, highlightsUrl, locations, 
 			<aside aria-label="Informazioni sportive e contatti" className="flex min-w-0 flex-col gap-5">
 				<PlayerRolesCard sportTypes={sportTypes} primaryRoles={primaryRoles} specificRoles={specificRoles} currentCategory={currentCategory} preferredCategories={preferredCategories} />
 				<ProfileLocationsCard locations={locations} />
-				<ProfileSocialLinksCard socialLinks={socialLinks} presentation="profile" />
+				<ProfileSocialLinksCard socialLinks={socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />
 				<ProfileIdentifier profileId={profileId} />
 			</aside>
 		</div>

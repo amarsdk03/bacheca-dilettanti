@@ -29,7 +29,7 @@ const source = relative => load(path.join(root, relative));
 test("category pairs keep homonymous labels separate in the catalogue, filters and public details", () => {
 	const catalog = source("src/features/pubblica-annuncio/types/category-catalog.ts");
 	const {announcementContent} = source("src/features/annunci/announcement-content.ts");
-	const {parseAnnouncementDirectoryQuery} = source("src/features/annunci/announcement-model.ts");
+	const {parseAnnouncementDirectoryQuery, getAnnouncementFiltersForDirectoryType} = source("src/features/annunci/announcement-model.ts");
 	assert.equal(catalog.CATEGORY_FILTER_OPTIONS.length, 73);
 	assert.equal(new Set(catalog.CATEGORY_FILTER_OPTIONS.map(option => option.value)).size, 73);
 	assert.equal(catalog.FIGURA_PROFESSIONALE_OPTIONS.length, 22);
@@ -40,9 +40,13 @@ test("category pairs keep homonymous labels separate in the catalogue, filters a
 	assert.notEqual(male, female);
 	assert.ok(catalog.CATEGORY_FILTER_OPTIONS.some(option => option.value === male));
 	assert.ok(catalog.CATEGORY_FILTER_OPTIONS.some(option => option.value === female));
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: female}).filters.categoria, female);
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: male}).filters.categoria, male);
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: "Serie A"}).filters.categoria, "Serie A");
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: male}).filters.categoriaAttuale, "");
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", categoriaAttuale: female}).filters.categoriaAttuale, female);
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", categoriaAttuale: male}).filters.categoriaAttuale, male);
+	assert.deepEqual(getAnnouncementFiltersForDirectoryType("annuncio_giocatore", ""), ["annoNascita", "regione", "ruolo", "tipologia"]);
+	assert.deepEqual(getAnnouncementFiltersForDirectoryType("annuncio_staff_sportivo", ""), ["figura", "regione", "tipologia"]);
+	assert.deepEqual(getAnnouncementFiltersForDirectoryType("annuncio_squadra", "partita"), ["ricercaSquadra", "regione", "categoriaAttuale"]);
+	assert.deepEqual(getAnnouncementFiltersForDirectoryType("annuncio_arbitro", ""), ["regione", "tipologia"]);
 	assert.equal(catalog.normalizeCategory("Serie C"), catalog.categoryKey("Calcio 11 (Maschile)", "Serie C"));
 	assert.equal(catalog.normalizeCategory("Under 15"), "Under 15");
 	assert.deepEqual(catalog.normalizeCategories([male, catalog.ANY_CATEGORY]), [catalog.ANY_CATEGORY]);

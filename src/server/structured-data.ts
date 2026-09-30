@@ -33,20 +33,22 @@ export function profileMetadataDescription(profile: ProfileDetail) {
 }
 
 function profileSchemaType(type: ProfileType) {
-	if (["giocatore", "staff-sportivo", "professionisti-studi", "arbitro"].includes(type)) return "Person";
+	if (["giocatore", "staff-sportivo", "servizi-consulenze", "arbitro"].includes(type)) return "Person";
 	if (type === "squadra") return "SportsTeam";
 	if (type === "campi-impianti-sportivi") return "SportsActivityLocation";
 	return "Organization";
 }
 
-export function profileStructuredData(profile: ProfileDetail, path: string) {
+export function profileStructuredData(profile: ProfileDetail, path: string, includeSocialLinks: boolean) {
 	const locations = profile.locations.map(({city, region}) => ({
 		"@type": "PostalAddress",
 		addressLocality: city || undefined,
 		addressRegion: region,
 		addressCountry: "IT",
 	}));
-	const sameAs = Object.values(profile.socialLinks).flatMap((value) => publicUrl(value) ?? []);
+	const sameAs = includeSocialLinks
+		? Object.values(profile.socialLinks).flatMap((value) => publicUrl(value) ?? [])
+		: [];
 	return {
 		"@context": "https://schema.org",
 		"@type": "ProfilePage",

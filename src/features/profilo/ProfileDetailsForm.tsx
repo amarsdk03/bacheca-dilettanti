@@ -58,7 +58,7 @@ import TipologiaCalcioMultiselectField
 import type {ProfileValidationErrors} from "@/features/profilo/profile-required-fields";
 import {
 	CATEGORIE_CALCIO_GROUPS,
-	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
+	DISPONIBILITA_SPOSTAMENTI_OPTIONS,
 	type DisponibilitaProfilo,
 	RUOLI_SPECIFICI_PER_RUOLO,
 	TIPOLOGIA_CALCIO_OPTIONS,
@@ -937,8 +937,8 @@ function ProfileFields({
 		);
 	}
 
-	if (type === "professionisti-studi") {
-		const draft = drafts["professionisti-studi"];
+	if (type === "servizi-consulenze") {
+		const draft = drafts["servizi-consulenze"];
 		return (
 			<>
 				<PersonalDataFields
@@ -958,7 +958,7 @@ function ProfileFields({
 					<FiguraProfessionaleMultiselectField value={draft.figure_professionali ?? []} onValueChange={(value) => onChange(type, "figure_professionali", value)} />
 					<TipologiaCalcioMultiselectField value={draft.tipologie_sport ?? []} onValueChange={(value) => onChange(type, "tipologie_sport", value)} />
 					<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)} onValueChange={(value) => onChange(type, "disponibilita", value)} />
-					<ProfileSelectField id={`${prefix}-automunito`} label="Automunito" value={draft.automunito} onChange={(value) => onChange(type, "automunito", value)} options={DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS.map((option) => ({value: option.valore, label: option.etichetta}))} />
+					<ProfileSelectField id={`${prefix}-automunito`} label="Automunito" value={draft.automunito} onChange={(value) => onChange(type, "automunito", value)} options={DISPONIBILITA_SPOSTAMENTI_OPTIONS.map((option) => ({value: option.valore, label: option.etichetta}))} />
 				</FieldGroup>
 				<ProfileTextField id={`${prefix}-specializzazioni`} label="Specializzazioni" value={draft.specializzazioni} onChange={(value) => onChange(type, "specializzazioni", value)} placeholder="Ambiti, discipline e competenze" />
 				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange(type, "presentazione", value)} placeholder="Racconta il tuo percorso professionale..." />

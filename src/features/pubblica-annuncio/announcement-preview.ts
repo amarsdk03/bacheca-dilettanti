@@ -84,7 +84,8 @@ export function buildPublishPreview(
 
 	const locations = payload.announcement.locations.map(({regione, citta}) => ({region: regione, city: citta}));
 	if (type === "annuncio_creators") {
-		const title = typeof detail.titolo_post === "string" && detail.titolo_post.trim() ? detail.titolo_post.trim() : "Annuncio creator";
+		const title = (typeof payload.announcement.title === "string" ? payload.announcement.title.trim() : "")
+			|| (typeof detail.titolo_post === "string" && detail.titolo_post.trim() ? detail.titolo_post.trim() : "Annuncio creator");
 		const description = typeof detail.descrizione_post === "string" && detail.descrizione_post.trim() ? detail.descrizione_post.trim() : null;
 		const location = locations.map(({city, region}) => [city, region].filter(Boolean).join(", ")).join(", ") || "Località non specificata";
 		return {
@@ -107,7 +108,7 @@ export function buildPublishPreview(
 			linkedTeams: [],
 		};
 	}
-	const content = announcementContent(type, detail, locations, true);
+	const content = announcementContent(type, detail, locations, true, payload.announcement.title);
 	const profileExperiences = type === "annuncio_giocatore"
 		? drafts.giocatore.storico_carriera
 		: type === "annuncio_staff_sportivo"

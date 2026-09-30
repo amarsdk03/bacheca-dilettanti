@@ -165,7 +165,7 @@ const FAQ_GROUPS = [
 			{
 				value: "announcement-visibility",
 				question: "Cosa succede quando nascondo un annuncio?",
-				answer: "L’annuncio resta nella tua area personale e viene escluso dalla bacheca e dalle ricerche. Chiunque abbia il link può ancora consultarlo, inclusi i contatti. Puoi mostrarlo nuovamente in qualsiasi momento.",
+				answer: "L’annuncio resta nella tua area personale e viene escluso dalla bacheca e dalle ricerche. Il link resta consultabile, ma i recapiti sono visibili solo agli utenti autenticati. Puoi mostrarlo nuovamente in qualsiasi momento.",
 			},
 		],
 	},

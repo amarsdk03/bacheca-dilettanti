@@ -19,14 +19,14 @@ export const PROFILE_TYPES = [
 	"arbitro",
 	"torneo-evento",
 	"campi-impianti-sportivi",
-	"professionisti-studi",
+	"servizi-consulenze",
 	"creators",
 ] as const;
 
 export type ProfileType = typeof PROFILE_TYPES[number];
 
 export const COMING_SOON_PROFILE_TYPES = [
-	"professionisti-studi",
+	"servizi-consulenze",
 ] as const satisfies readonly ProfileType[];
 
 export type ComingSoonProfileType = typeof COMING_SOON_PROFILE_TYPES[number];
@@ -42,7 +42,7 @@ type ProfileTable =
 	| "profilo_campi_impianti"
 	| "profilo_creator"
 	| "profilo_giocatore"
-	| "profilo_professionista_studente"
+	| "profilo_servizi_consulenze"
 	| "profilo_squadra"
 	| "profilo_staff_sportivo"
 	| "profilo_torneo_evento";
@@ -58,9 +58,9 @@ export type ProfileDrafts = {
 	};
 	squadra: Omit<EditableProfileDraft<"profilo_squadra">, "sede_principale">;
 	"staff-sportivo": EditableProfileDraft<"profilo_staff_sportivo">;
-	"professionisti-studi": EditableProfileDraft<"profilo_professionista_studente"> & {
-		lista_esperienze: TablesInsert<"profilo_professionista_studente">["storico_esperienze"];
-		qualifiche_licenze: TablesInsert<"profilo_professionista_studente">["storico_esperienze"];
+	"servizi-consulenze": EditableProfileDraft<"profilo_servizi_consulenze"> & {
+		lista_esperienze: TablesInsert<"profilo_servizi_consulenze">["storico_esperienze"];
+		qualifiche_licenze: TablesInsert<"profilo_servizi_consulenze">["storico_esperienze"];
 	};
 	arbitro: EditableProfileDraft<"profilo_arbitro"> & {
 		lista_esperienze: TablesInsert<"profilo_arbitro">["storico_esperienze"];
@@ -100,7 +100,7 @@ export const PROFILE_DIRECTORY_UNLOCK_PROFILE_COUNT = 20;
 export const PROFILI_LIMITATI = true;
 
 export const LIMITED_PROFILE_TYPES = [
-	"professionisti-studi",
+	"servizi-consulenze",
 ] as const satisfies readonly ProfileType[];
 
 export type LimitedProfileType = typeof LIMITED_PROFILE_TYPES[number];
@@ -130,7 +130,7 @@ export const PROFILE_OPTIONS: readonly ProfileOption[] = [
 	{
 		value: "staff-sportivo",
 		label: "Staff sportivo",
-		description: "Trova posto nello Staff del Club",
+		description: "Valorizza il tuo ruolo, esplora i profili e trova nuove opportunità nel calcio",
 		icon: SearchIcon,
 		colore: "#F28A2E",
 	},
@@ -156,9 +156,9 @@ export const PROFILE_OPTIONS: readonly ProfileOption[] = [
 		colore: "#5B8F63",
 	},
 	{
-		value: "professionisti-studi",
-		label: "Professionisti e studi",
-		description: "Offri i tuoi servizi professionali a squadre, atleti e società sportive",
+		value: "servizi-consulenze",
+		label: "Servizi e consulenze",
+		description: "Servizi e consulenze per ogni esigenza del mondo del calcio, offerti da professionisti, studi e aziende specializzati nel settore",
 		icon: BriefcaseBusinessIcon,
 		colore: "#D4B21F",
 	},
@@ -221,7 +221,7 @@ export function createProfileDrafts(): ProfileDrafts {
 			lista_esperienze: [],
 			qualifiche_licenze: [],
 		},
-		"professionisti-studi": {
+		"servizi-consulenze": {
 			anno_nascita: "",
 			automunito: "",
 			cognome: "",
@@ -284,7 +284,7 @@ export function createProfileLocations(): ProfileLocations {
 		giocatore: [],
 		squadra: [],
 		"staff-sportivo": [],
-		"professionisti-studi": [],
+		"servizi-consulenze": [],
 		arbitro: [],
 		creators: [],
 		"torneo-evento": [],

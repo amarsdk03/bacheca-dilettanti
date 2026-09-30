@@ -12,11 +12,11 @@ import type {
 } from "@/features/dettagli-profilo/profile-detail-model";
 import {loadPublicProfileAnnouncements} from "@/features/annunci/server/queries";
 import {
-	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
+	DISPONIBILITA_SPOSTAMENTI_OPTIONS,
 	ordinaTipologieCalcio,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {categoryLabel, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
-import {parseLegacyStaffQualifications, parsePlayerCareer, toPublicPlayerData} from "./player-profile-data";
+import {parseLegacyStaffQualifications, parsePlayerCareer, publicPlayerAge, toPublicPlayerData} from "./player-profile-data";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
 import {
 	PROFILE_SOCIAL_PLATFORMS,
@@ -37,8 +37,8 @@ const PRIMARY_FIELD_LABELS = {
 	giocatore: ["Ruoli principali", "Tipologie sportive", "Disponibilità"],
 	squadra: ["Tipologia calcio", "Categoria attuale"],
 	"staff-sportivo": ["Figure professionali", "Disponibilità"],
-	"professionisti-studi": ["Figure professionali", "Specializzazioni", "Disponibilità"],
-	arbitro: ["Disponibilità"],
+	"servizi-consulenze": ["Figure professionali", "Specializzazioni", "Disponibilità"],
+	arbitro: ["Età", "Disponibilità"],
 	creators: ["Tipologia di contenuti"],
 	"torneo-evento": ["Tipologie sportive"],
 	"campi-impianti-sportivi": ["Tipologia campi disponibili", "Indirizzo del campo"],
@@ -138,7 +138,7 @@ function formatCurrency(value: number | null) {
 function formatVehicleAvailability(value: string | null) {
 	const normalized = cleanText(value);
 	if (!normalized) return NOT_SPECIFIED;
-	return DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS
+	return DISPONIBILITA_SPOSTAMENTI_OPTIONS
 		.find((option) => option.valore === normalized)?.etichetta ?? normalized;
 }
 
@@ -275,9 +275,9 @@ async function loadProfileContent(
 		};
 	}
 
-	if (type === "professionisti-studi") {
+	if (type === "servizi-consulenze") {
 		const {data, error} = await supabase
-			.from("profilo_professionista_studente")
+			.from("profilo_servizi_consulenze")
 			.select("id, nome, cognome, sport_principale, tipologie_sport, figure_professionali, disponibilita, automunito, specializzazioni, presentazione, presentazione_servizi, storico_esperienze, lista_esperienze, qualifiche_licenze")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
@@ -308,7 +308,7 @@ async function loadProfileContent(
 	if (type === "arbitro") {
 		const {data, error} = await supabase
 			.from("profilo_arbitro")
-			.select("id, nome, cognome, sport_principale, disponibilita, presentazione, storico_esperienze, lista_esperienze, qualifiche_licenze")
+			.select("id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, sport_principale, disponibilita, presentazione, storico_esperienze, lista_esperienze, qualifiche_licenze")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -321,6 +321,10 @@ async function loadProfileContent(
 				title: fullName(data.nome, data.cognome),
 				availability: data.disponibilita,
 				fields: [
+					detailField("Età", (() => {
+						const age = publicPlayerAge({day: data.giorno_nascita, month: data.mese_nascita, year: data.anno_nascita});
+						return age === null ? null : `${age} ${age === 1 ? "anno" : "anni"}`;
+					})()),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Presentazione", data.presentazione, true),
 				],
@@ -436,8 +440,8 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 	try {
 		const supabase = createAdminClient();
 		// This client bypasses owner-only RLS. Every select below is an explicit
-		// public allowlist. Player birth-date parts are read only to compute age
-		// in toPublicPlayerData; never return those parts, private identity, contacts or notes.
+		// public allowlist. Player and referee birth-date parts are read only to
+		// compute age; never return those parts, private identity, contacts or notes.
 		const baseProfilePromise = supabase
 			.from("profilo")
 			.select("uuid, link_foto_profilo, confermato_il, verificato_il, tipologia_principale")

@@ -67,9 +67,11 @@ export function ProfileDetailsHeader({profile, presentation, actions}: {
 	);
 }
 
-export default function ProfileDetailsOverview({profile, presentation}: {
+export default function ProfileDetailsOverview({profile, presentation, authenticated, returnTo}: {
 	profile: PublicProfile;
 	presentation: ProfileDetailPresentation;
+	authenticated: boolean;
+	returnTo: string;
 }) {
 	const fields = getProfileDetailFields(profile);
 	const description = fields.find(field => field.label === "Presentazione");
@@ -77,7 +79,11 @@ export default function ProfileDetailsOverview({profile, presentation}: {
 		const field = fields.find(candidate => candidate.label === label);
 		return field ? [field] : [];
 	});
-	const usedLabels = new Set(["Presentazione", ...presentation.narrativeFieldLabels, ...presentation.facts.map(({label}) => label)]);
+	const usedLabels = new Set([
+		"Presentazione",
+		...presentation.narrativeFieldLabels,
+		...presentation.facts.flatMap(({label, fieldLabel, sourceFieldLabels = []}) => [label, fieldLabel, ...sourceFieldLabels].filter((value): value is string => Boolean(value))),
+	]);
 	const supportingFields = fields.filter(({label}) => !usedLabels.has(label));
 
 	return (
@@ -105,7 +111,7 @@ export default function ProfileDetailsOverview({profile, presentation}: {
 					</dl></CardContent>
 				</Card>}
 				<ProfileLocationsCard locations={profile.locations} />
-				<ProfileSocialLinksCard socialLinks={profile.socialLinks} presentation="profile" />
+				<ProfileSocialLinksCard socialLinks={profile.socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />
 				<ProfileIdentifier profileId={profile.id} />
 			</aside>
 		</div>

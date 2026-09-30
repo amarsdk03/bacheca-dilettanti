@@ -417,6 +417,7 @@ export async function publishAnnouncement(
 				draft: payload.profileUpdate.draft,
 				locations: payload.profileUpdate.locations,
 			} : null,
+			announcement_title: payload.announcementTitle,
 			detail: payload.detail,
 			announcement_locations: payload.announcementLocations,
 			contacts: payload.contacts,

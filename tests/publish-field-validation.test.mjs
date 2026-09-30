@@ -59,14 +59,14 @@ test("player requires gender, birth year and availability while current category
 	assert.deepEqual(Object.keys(getProfileRequiredFieldErrors("giocatore", {...draft, genere: "Uomo", anno_nascita: "2000", disponibilita: "svincolato"}, location)), []);
 });
 
-test("creator requires a name in the profile and a title in the announcement", () => {
+test("creator requires a name in the profile while the shared announcement title is optional", () => {
 	const location = [{regione: "Lazio", citta: null}];
 	assert.ok(getProfileRequiredFieldErrors("creators", {nome_creator: ""}, location).name);
 	assert.equal(getProfileRequiredFieldErrors("creators", {nome_creator: "Creator Lazio"}, location).name, undefined);
 	const drafts = createAnnouncementDetailsDrafts();
-	assert.ok(getAnnouncementValidationErrors("creators", null, drafts, location, {email: "creator@example.com", phone: ""}).title);
-	drafts.creator.titolo_post = "Collaborazione video";
 	assert.equal(getAnnouncementValidationErrors("creators", null, drafts, location, {email: "creator@example.com", phone: ""}).title, undefined);
+	assert.equal(getAnnouncementValidationErrors("creators", null, drafts, location, {email: "creator@example.com", phone: ""}, {genericLink: ""}, "x".repeat(50)).title, undefined);
+	assert.ok(getAnnouncementValidationErrors("creators", null, drafts, location, {email: "creator@example.com", phone: ""}, {genericLink: ""}, "x".repeat(51)).title);
 });
 
 test("publication dates reject impossible calendar days and year zero", () => {

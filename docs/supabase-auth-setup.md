@@ -24,7 +24,7 @@ La Server Action di `/registrati` valida l’intero wizard e prepara un intento 
 - una riga nella tabella del sottoprofilo per ogni tipologia attivabile selezionata;
 - le località corrispondenti in `public.localita_profilo`.
 
-`Professionisti e studi` e `Creators` restano tipologie a disponibilità limitata: partecipano al limite di cinque scelte, ma non vengono attivate automaticamente. Deve essere selezionata almeno una delle altre sei tipologie.
+`Servizi e consulenze` e `Creators` restano tipologie a disponibilità limitata: partecipano al limite di cinque scelte, ma non vengono attivate automaticamente. Deve essere selezionata almeno una delle altre sei tipologie.
 
 Le migrazioni necessarie si trovano in `supabase/migrations`. La chiave segreta è usata soltanto dal runtime server per invocare le RPC di registrazione e gestione dei sottoprofili; password e credenziali Auth non vengono salvate nella tabella di staging.
 

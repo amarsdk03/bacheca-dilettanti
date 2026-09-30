@@ -112,8 +112,8 @@ export function getProfileCompletion(
 		]);
 	}
 
-	if (type === "professionisti-studi") {
-		const draft = drafts["professionisti-studi"];
+	if (type === "servizi-consulenze") {
+		const draft = drafts["servizi-consulenze"];
 		return completion([
 			hasText(draft.nome),
 			hasText(draft.cognome),

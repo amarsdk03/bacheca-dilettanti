@@ -18,10 +18,14 @@ import {announcementPreviewNotice} from "@/features/annunci/announcement-visibil
 export default function AnnouncementDetailsLayout({
 	announcement,
 	presentation,
+	authenticated,
+	returnTo,
 	playerRoles = announcement.playerRoles,
 }: {
 	announcement: AnnouncementDetail;
 	presentation: AnnouncementDetailPresentation;
+	authenticated: boolean;
+	returnTo: string;
 	playerRoles?: AnnouncementPlayerRoles;
 }) {
 	const notice = announcementPreviewNotice(announcement.moderationStatus);
@@ -36,7 +40,7 @@ export default function AnnouncementDetailsLayout({
 			{!announcement.isListed && <Alert>
 				<InfoIcon aria-hidden="true" />
 				<AlertTitle>{notice.title}</AlertTitle>
-				<AlertDescription>{notice.description} Non compare nelle ricerche o negli elenchi pubblici. Chiunque abbia il link può consultare questa anteprima e i contatti dell’annuncio.</AlertDescription>
+				<AlertDescription>{notice.description} Non compare nelle ricerche o negli elenchi pubblici. Chiunque abbia il link può consultare questa anteprima. I contatti sono visibili solo agli utenti autenticati.</AlertDescription>
 			</Alert>}
 			<AnnouncementDetailsHeader
 				announcement={announcement}
@@ -49,7 +53,7 @@ export default function AnnouncementDetailsLayout({
 						<AnnouncementDetailsOverview announcement={announcement} presentation={presentation} />
 						<aside aria-label="Informazioni sportive e contatti" className="flex min-w-0 flex-col gap-5">
 							{playerRoles && <AnnouncementPlayerRolePitch primaryRoles={playerRoles.primaryRoles} secondaryRoles={playerRoles.secondaryRoles} textOnly={announcement.type === "annuncio_squadra_cerca_giocatore"} />}
-							<AnnouncementDetailsContacts contacts={announcement.contacts} unavailable={announcement.contactsUnavailable} />
+							<AnnouncementDetailsContacts contacts={announcement.contacts} unavailable={announcement.contactsUnavailable} authenticated={authenticated} returnTo={returnTo} />
 							<AnnouncementLocationCard locations={announcement.locations} announcementType={announcement.type} address={facilityAddress} />
 							<DetailIdentifier id={announcement.id} entity="annuncio" />
 						</aside>

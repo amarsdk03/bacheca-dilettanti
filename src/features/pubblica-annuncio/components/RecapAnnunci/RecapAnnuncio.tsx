@@ -6,8 +6,8 @@ import RecapAnnuncioCampoImpianto
 	from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioCampoImpianto";
 import RecapAnnuncioGiocatore from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioGiocatore";
 import RecapAnnuncioAziendeEnti from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioAziendeEnti";
-import RecapAnnuncioProfessionistiStudi
-	from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioProfessionistiStudi";
+import RecapAnnuncioServiziConsulenze
+	from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioServiziConsulenze";
 import RecapAnnuncioTorneoEvento from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioTorneoEvento";
 import RecapAnnuncioSquadra from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioSquadra";
 import RecapAnnuncioStaff from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapAnnuncioStaff";
@@ -37,8 +37,8 @@ export default function RecapAnnuncio({tipologia, sottotipologia, onEditStep}: R
 				return <RecapAnnuncioStaff />;
 			case "aziende-enti":
 				return <RecapAnnuncioAziendeEnti />;
-			case "professionisti-studi":
-				return <RecapAnnuncioProfessionistiStudi />;
+			case "servizi-consulenze":
+				return <RecapAnnuncioServiziConsulenze />;
 			case "torneo-evento":
 				return <RecapAnnuncioTorneoEvento />;
 			case "campi-impianti-sportivi":

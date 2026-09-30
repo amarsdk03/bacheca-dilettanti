@@ -8,10 +8,10 @@ import {
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
 import {
-	useAnnuncioProfessionistiStudiStore
-} from "@/features/pubblica-annuncio/state/AnnuncioProfessionistiStudi.store";
+	useAnnuncioServiziConsulenzeStore
+} from "@/features/pubblica-annuncio/state/AnnuncioServiziConsulenze.store";
 import {
-	DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS,
+	DISPONIBILITA_SPOSTAMENTI_OPTIONS,
 	getOptionLabel,
 	MODALITA_SERVIZIO_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
@@ -21,19 +21,19 @@ function OptionalRecapField({label, value}: {label: string; value: string}) {
 	return <RecapField label={label} wide>{value}</RecapField>;
 }
 
-export default function RecapAnnuncioProfessionistiStudi() {
-	const data = useAnnuncioProfessionistiStudiStore();
+export default function RecapAnnuncioServiziConsulenze() {
+	const data = useAnnuncioServiziConsulenzeStore();
 
 	return (
 		<div>
-			<p className="mb-1 text-muted-foreground">Dettagli professionista / studio</p>
+			<p className="mb-1 text-muted-foreground">Dettagli servizi e consulenze</p>
 			<dl className="grid gap-1 sm:grid-cols-2">
 				<RecapField label="Nome">{data.nome || "—"}</RecapField>
 				<RecapField label="Cognome">{data.cognome || "—"}</RecapField>
 				<RecapField label="Figura professionale">{data.figuraProfessionale || "—"}</RecapField>
 				<RecapField label="Specializzazione">{data.specializzazione || "—"}</RecapField>
 				<RecapField label="Modalità del servizio">{getOptionLabel(MODALITA_SERVIZIO_OPTIONS, data.modalitaServizio) || "Non specificata"}</RecapField>
-				<RecapField label="Disponibilità agli spostamenti">{getOptionLabel(DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS, data.disponibilitaSpostamenti) || "Non specificata"}</RecapField>
+				<RecapField label="Disponibilità agli spostamenti">{getOptionLabel(DISPONIBILITA_SPOSTAMENTI_OPTIONS, data.disponibilitaSpostamenti) || "Non specificata"}</RecapField>
 				<RecapField label="Contatti" wide>{formatContatti(data.contatti)}</RecapField>
 				<OptionalRecapField label="Servizi offerti" value={data.serviziOfferti} />
 				<RegioniRecap regioni={data.regioniInteressate} cittaComuniPerRegione={data.cittaComuniPerRegione} />

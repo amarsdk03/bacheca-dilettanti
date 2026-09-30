@@ -159,6 +159,8 @@ test("unspecified availability stays hidden and URL validation stays strict", ()
 	assert.equal(availabilityLabel("svincolato"), "Svincolato");
 	assert.equal(parseProfileDetailParams({id: "invalid", type: "giocatore"}), null);
 	assert.equal(parseProfileDetailParams({id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "unknown"}), null);
+	assert.equal(parseProfileDetailParams({id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "professionisti-studi"}), null);
+	assert.deepEqual(parseProfileDetailParams({id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "servizi-consulenze"}), {id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "servizi-consulenze"});
 	assert.deepEqual(parseProfileDetailParams({id: "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA", type: "giocatore"}), {id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "giocatore"});
 });
 
@@ -244,9 +246,11 @@ test("player role catalog exposes only the canonical taxonomy and normalizes leg
 
 test("legacy football type filters resolve to the current label", () => {
 	const {parseProfileDirectoryQuery} = load("src/features/profili/profile-directory-model.ts");
-	const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
+	const {parseAnnouncementDirectoryQuery, announcementOption, isAnnouncementType} = load("src/features/annunci/announcement-model.ts");
 	assert.equal(parseProfileDirectoryQuery({type: "giocatore", tipologia: "Calcio a 11"}).filters.tipologia, "Calcio 11");
 	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", tipologia: "Calcio a 11"}).filters.tipologia, "Calcio 11");
+	assert.equal(isAnnouncementType("annuncio_professionisti_studi"), false);
+	assert.equal(announcementOption("annuncio_servizi_consulenze").profileType, "servizi-consulenze");
 });
 
 test("single-location profile editor shows only the first saved location", () => {
@@ -416,8 +420,8 @@ test("player overview shows grouped locations, visible social URLs and highlight
 	assert.match(html, /youtube-nocookie\.com\/embed\/abcdefghijk/);
 	assert.ok(html.indexOf("Descrizione del giocatore") < html.indexOf(">Highlights<"));
 	assert.ok(html.indexOf(">Lazio<") < html.indexOf(">Toscana<"));
-	assert.equal((html.match(/>Roma</g) ?? []).length, 1);
-	assert.match(html, /Tutta la regione/);
+	assert.match(html, /: Roma, Viterbo/);
+	assert.doesNotMatch(html, /Tutta la regione/);
 	assert.ok(html.includes(`href="${href}"`));
 	assert.match(html, />instagram\.com\/mario\.rossi\?ref=profilo</);
 	assert.match(html, /target="_blank" rel="noopener noreferrer"/);
@@ -508,6 +512,27 @@ test("detail query preserves visibility filters and exposes age without birth pa
 	}
 });
 
+test("referee detail query exposes calculated age without returning birth date parts", async () => {
+	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+	const client = fixtureClient({
+		profilo: {data: {uuid: id, tipologia_principale: "arbitro"}, error: null},
+		profilo_arbitro: call => call.operations.some(([method]) => method === "maybeSingle")
+			? {data: {id: 19, nome: "Anna", cognome: "Bianchi", giorno_nascita: "14", mese_nascita: "Settembre", anno_nascita: "2000", disponibilita: "disponibile-subito", presentazione: "Profilo", storico_esperienze: [], lista_esperienze: [], qualifiche_licenze: []}, error: null}
+			: {data: [], error: null},
+		media_profilo: {data: null, error: null},
+		annuncio: {data: [], count: 0, error: null},
+		profilo_follow: {data: null, count: 0, error: null},
+	});
+	const queryLoad = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}});
+	const {getProfileDetail} = queryLoad("src/features/dettagli-profilo/server/profile-detail-query.ts");
+	const result = await getProfileDetail(id, "arbitro");
+	assert.equal(result.status, "ok");
+	assert.ok(result.profile.primaryFields.some(field => field.label === "Età" && /^\d+ anni$/.test(field.value)));
+	assert.doesNotMatch(JSON.stringify(result.profile), /giorno_nascita|mese_nascita|anno_nascita|Settembre|2000/);
+	const refereeQuery = client.calls.find(call => call.table === "profilo_arbitro" && call.operations.some(([method]) => method === "maybeSingle"));
+	assert.match(refereeQuery.operations.find(([method]) => method === "select")[1], /giorno_nascita.*mese_nascita.*anno_nascita/);
+});
+
 test("missing or hidden profiles keep returning not-found", async () => {
 	const client = fixtureClient({profilo: {data: null, error: null}, profilo_giocatore: {data: null, error: null}, media_profilo: {data: null, error: null}});
 	const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("src/features/dettagli-profilo/server/profile-detail-query.ts");
@@ -583,13 +608,13 @@ test("an announcement failure leaves player details available", async (t) => {
 });
 
 const nonPlayerCases = [
-	["squadra", "Squadra", ["Tipologia calcio", "Categoria attuale"]],
-	["staff-sportivo", "StaffSportivo", ["Figure professionali", "Disponibilità"]],
-	["professionisti-studi", "ProfessionistiStudi", ["Figure professionali", "Tipologie sportive", "Disponibilità", "Automunito"]],
-	["arbitro", "Arbitro", ["Disponibilità", "Esperienze"]],
-	["creators", "Creator", ["Tipologia di contenuti", "Canali social"]],
-	["torneo-evento", "TorneoEvento", ["Tipologie sportive"]],
-	["campi-impianti-sportivi", "CampiImpianti", ["Tipologia campi disponibili", "Indirizzo del campo", "Costo di partenza"]],
+	["squadra", "Squadra", ["Tipologia calcio", "Categoria attuale", "Follower", "Annunci pubblicati"]],
+	["staff-sportivo", "StaffSportivo", ["Mansioni", "Disponibilità", "Disponibile da remoto"]],
+	["servizi-consulenze", "ServiziConsulenze", ["Mansioni", "Tipologia calcio", "Disponibilità", "Automunito"]],
+	["arbitro", "Arbitro", ["Età", "Disponibilità", "Zona di residenza"]],
+	["creators", "Creator", ["Tipologia contenuti", "Numero annunci pubblicati"]],
+	["torneo-evento", "TorneoEvento", ["Tipologia calcio", "Follower", "Annunci pubblicati"]],
+	["campi-impianti-sportivi", "CampiImpianti", ["Tipologia campi disponibili", "Numero Follower", "Sede dell’impianto / struttura", "Numero campi pubblicati"]],
 ];
 
 function genericProfile(type, overrides = {}) {
@@ -614,17 +639,28 @@ function renderedFacts(html) {
 
 test("all seven non-player profiles show ordered facts, integrated actions and sidebar contacts", () => {
 	const values = {
-		"Tipologie sportive": "Calcio 11, Calcio 5",
-		"Tipologia campi disponibili": "Calcio 11, Calcio 5", "Indirizzo del campo": "Via Roma 1",
-		"Tipologia calcio": "Calcio 11, Calcio 5", "Categoria attuale": "Calcio 11 (Maschile) · Eccellenza",
-		"Figure professionali": "Allenatore, Preparatore", "Disponibilità": "Disponibile subito",
-		"Automunito": "Sì", "Tipologia di contenuti": "Video, podcast", "Costo di partenza": "30 € / 1h",
+		"Tipologie sportive": ["Calcio 11", "Calcio 5", "Calcio 8"],
+		"Tipologia campi disponibili": ["Calcio 11", "Calcio 5", "Calcio 8"], "Indirizzo del campo": "Via Roma 1",
+		"Tipologia calcio": ["Calcio 11", "Calcio 5"], "Categoria attuale": "Calcio 11 (Maschile) · Eccellenza",
+		"Figure professionali": ["Allenatore", "Preparatore atletico", "Match analyst"], "Disponibilità": "Disponibile subito",
+		"Disponibile anche da remoto": "No", "Automunito": "Sì", "Tipologia di contenuti": ["Video", "Podcast"], "Età": "35 anni",
 	};
 	for (const [type, name, labels] of nonPlayerCases) {
 		const Component = load(`src/features/dettagli-profilo/components/types/DettagliProfilo${name}.tsx`).default;
-		const profile = genericProfile(type, {primaryFields: labels.filter(label => label in values).map(label => ({label, value: values[label]}))});
+		const fieldLabels = new Set(["Tipologie sportive", "Tipologia campi disponibili", "Tipologia calcio", "Figure professionali", "Tipologia di contenuti"]);
+		const primaryFields = Object.entries(values).map(([label, value]) => ({label, value: Array.isArray(value) ? value.join(", ") : value, ...(fieldLabels.has(label) ? {items: value} : {})}));
+		const profile = genericProfile(type, {primaryFields});
 		const html = renderToStaticMarkup(React.createElement(Component, {profile, actions: React.createElement("button", null, "Condividi") }));
-		assert.deepEqual(renderedFacts(html), [...labels.map(label => [label, values[label] ?? (label === "Esperienze" ? "1" : "2")]), ["Follower", (1234).toLocaleString("it-IT")], ["Num. annunci", "7"]], type);
+		const expectedValues = {
+			squadra: ["Calcio 11, Calcio 5", "Calcio 11 (Maschile) · Eccellenza", (1234).toLocaleString("it-IT"), "7"],
+			"staff-sportivo": ["Allenatore, Preparatore atletico +1", "Disponibile subito", "No"],
+			"servizi-consulenze": ["Allenatore, Preparatore atletico +1", "Calcio 11, Calcio 5 +1", "Disponibile subito", "Sì"],
+			arbitro: ["35 anni", "Disponibile subito", "Lazio"],
+			creators: ["Video, Podcast", "7"],
+			"torneo-evento": ["Calcio 11, Calcio 5 +1", (1234).toLocaleString("it-IT"), "7"],
+			"campi-impianti-sportivi": ["Calcio 11, Calcio 5 +1", (1234).toLocaleString("it-IT"), "Via Roma 1, Roma, Lazio, Viterbo, Lazio", "7"],
+		}[type];
+		assert.deepEqual(renderedFacts(html), labels.map((label, index) => [label, expectedValues[index]]), type);
 		assert.match(html, /<header\b[\s\S]*Condividi[\s\S]*<\/header>/);
 		assert.match(html, /public-profile-hero/);
 		assert.match(html, /Utente registrato/);
@@ -637,8 +673,15 @@ test("all seven non-player profiles show ordered facts, integrated actions and s
 		const sidebar = html.match(/<aside\b[\s\S]*?<\/aside>/)?.[0] ?? "";
 		for (const content of ["Lazio", "Roma", "Viterbo", "instagram.com/profilo", "youtube.com/@profilo", "Copia UUID del profilo"]) assert.ok(sidebar.includes(content), `${type}: ${content}`);
 		const overview = html.slice(html.indexOf("</header>"));
-		for (const label of labels.filter(label => label !== "Esperienze")) assert.ok(!overview.includes(`>${label}<`), `${type}: duplicated ${label}`);
-		const hasExperiences = ["staff-sportivo", "professionisti-studi", "arbitro"].includes(type);
+		for (const label of labels) assert.ok(!overview.includes(`>${label}<`), `${type}: duplicated ${label}`);
+		const sourceLabels = {
+			"staff-sportivo": ["Figure professionali", "Disponibile anche da remoto"],
+			"servizi-consulenze": ["Figure professionali", "Tipologie sportive"],
+			creators: ["Tipologia di contenuti"],
+			"campi-impianti-sportivi": ["Indirizzo del campo"],
+		}[type] ?? [];
+		for (const label of sourceLabels) assert.ok(!overview.includes(`>${label}<`), `${type}: duplicated source ${label}`);
+		const hasExperiences = ["staff-sportivo", "servizi-consulenze", "arbitro"].includes(type);
 		assert.equal(/role="tab"[^>]*>[\s\S]*?<span>Esperienze<\/span>/.test(html), hasExperiences, type);
 		assert.doesNotMatch(html, /Esperienza dimostrativa|campo\.png|undefined|null/);
 	}
@@ -654,10 +697,8 @@ test("non-player facts retain expected cells with missing data and distinguish u
 		});
 		const html = renderToStaticMarkup(React.createElement(Component, {profile}));
 		const facts = renderedFacts(html);
-		assert.equal(facts.length, labels.length + 2, type);
-		assert.deepEqual(facts.slice(-2), [["Follower", "0"], ["Num. annunci", "Non specificato"]]);
-		if (type === "arbitro") assert.deepEqual(facts[1], ["Esperienze", "0"]);
-		if (type === "creators") assert.deepEqual(facts[1], ["Canali social", "0"]);
+		assert.equal(facts.length, labels.length, type);
+		assert.deepEqual(facts, labels.map((label, index) => [label, ["Follower", "Numero Follower"].includes(label) ? "0" : "Non specificato"]));
 		assert.match(html, /Descrizione non disponibile/);
 		assert.match(html, /Nessuna località indicata/);
 		assert.doesNotMatch(html, /undefined|null|data-social-brand/);
@@ -682,7 +723,7 @@ test("the detail page places one profile action group inside every non-player he
 
 test("long-form primary fields remain in dedicated overview cards without duplication", () => {
 	for (const [type, name, narrativeFields] of [
-		["professionisti-studi", "ProfessionistiStudi", [
+		["servizi-consulenze", "ServiziConsulenze", [
 			{label: "Specializzazioni", value: "Riabilitazione sportiva"},
 			{label: "Servizi offerti", value: "Valutazioni e trattamenti"},
 		]],
@@ -737,7 +778,7 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 		giocatore: ["Età", "Genere", "Disponibilità", "Categoria attuale"],
 		squadra: ["Tipologie", "Sede", "Località"],
 		"staff-sportivo": ["Figure", "Disponibilità", "Località"],
-		"professionisti-studi": ["Figure", "Specializzazioni", "Disponibilità", "Località"],
+		"servizi-consulenze": ["Figure", "Specializzazioni", "Disponibilità", "Località"],
 		arbitro: ["Disponibilità", "Località"],
 		creators: ["Contenuti", "Località"],
 		"torneo-evento": ["Tipologie", "Località"],

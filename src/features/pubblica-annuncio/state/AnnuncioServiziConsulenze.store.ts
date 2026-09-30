@@ -7,7 +7,7 @@ import type {CittaComuniPerRegione} from "@/features/pubblica-annuncio/component
 import {createAnnuncioStore} from "@/features/pubblica-annuncio/state/createAnnuncioStore";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 
-export type AnnuncioProfessionistiStudiData = {
+export type AnnuncioServiziConsulenzeData = {
 	nome: string;
 	cognome: string;
 	figuraProfessionale: string;
@@ -26,7 +26,7 @@ export type AnnuncioProfessionistiStudiData = {
 	linkAnnuncio: string;
 };
 
-const createInitialState = (): AnnuncioProfessionistiStudiData => ({
+const createInitialState = (): AnnuncioServiziConsulenzeData => ({
 	nome: "",
 	cognome: "",
 	figuraProfessionale: "",
@@ -45,7 +45,7 @@ const createInitialState = (): AnnuncioProfessionistiStudiData => ({
 	linkAnnuncio: "",
 });
 
-export const useAnnuncioProfessionistiStudiStore = createAnnuncioStore(createInitialState);
+export const useAnnuncioServiziConsulenzeStore = createAnnuncioStore(createInitialState);
 
 const TESTI_MAX = [
 	"serviziOfferti",
@@ -55,7 +55,7 @@ const TESTI_MAX = [
 	"infoAggiuntive",
 ] as const;
 
-export function isAnnuncioProfessionistiStudiValid(data: AnnuncioProfessionistiStudiData) {
+export function isAnnuncioServiziConsulenzeValid(data: AnnuncioServiziConsulenzeData) {
 	return (
 		data.nome.trim() !== "" &&
 		data.cognome.trim() !== "" &&

@@ -126,7 +126,7 @@ export const MODALITA_SERVIZIO_OPTIONS = [
 	{valore: "online", etichetta: "Online"},
 	{valore: "entrambe", etichetta: "Entrambe"},
 ] as const;
-export const DISPONIBILITA_SPOSTAMENTI_PROFESSIONISTA_OPTIONS = [
+export const DISPONIBILITA_SPOSTAMENTI_OPTIONS = [
 	{valore: "si", etichetta: "Sì"},
 	{valore: "no", etichetta: "No"},
 ] as const;
@@ -167,7 +167,7 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		nome: "Squadra",
 		valore: "squadra",
 		icona: "Award",
-		descrizione: "Cerca giocatori, membri dello staff, o altre figure per la tua squadra.",
+		descrizione: "Cerca amichevoli, giocatori, membri dello staff o sponsor.",
 		sottotipologie: [
 			{valore: "cerca-giocatore", nome: "Ricerca giocatori", icona: "UserSearch"},
 			{valore: "cerca-staff", nome: "Ricerca staff sportivo", icona: "UsersRound"},
@@ -179,7 +179,7 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		nome: "Staff sportivo",
 		valore: "staff-sportivo",
 		icona: "Search",
-		descrizione: "Cerchi una squadra o una nuova collaborazione? Pubblica il tuo annuncio.",
+		descrizione: "Cerchi squadra o una nuova opportunità? Pubblica il tuo annuncio.",
 	},
 	{
 		nome: "Arbitro",
@@ -197,13 +197,13 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		nome: "Campi e impianti",
 		valore: "campi-impianti-sportivi",
 		icona: "TrafficCone",
-		descrizione: "Promuovi il tuo impianto e le disponibilità dei tuoi spazi.",
+		descrizione: "Pubblicizza un campo / impianto della tua struttura.",
 	},
 	{
-		nome: "Professionisti e studi",
-		valore: "professionisti-studi",
+		nome: "Servizi e consulenze",
+		valore: "servizi-consulenze",
 		icona: "BriefcaseBusiness",
-		descrizione: "Promuovi servizi e opportunità dedicate ai giocatori, staff e società.",
+		descrizione: "Pubblica un servizio o una promozione pensata appositamente per la community di Bacheca",
 	},
 	{
 		nome: "Creators",

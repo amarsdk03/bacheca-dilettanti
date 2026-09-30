@@ -92,8 +92,8 @@ export const ANNOUNCEMENT_DETAIL_PRESENTATIONS = {
 		heroFactKinds: ["types", "price"],
 		detailFieldLabels: ["Orari"],
 	},
-	annuncio_professionisti_studi: {
-		intro: "Un libero professionista o studente che offre servizi.",
+	annuncio_servizi_consulenze: {
+		intro: "Un servizio o una consulenza dedicati al mondo del calcio.",
 		summary: "TODO",
 		narrativeTitle: "TODO",
 		emptyNarrative: "TODO",

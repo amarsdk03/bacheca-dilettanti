@@ -8,7 +8,7 @@ import PlayerOverview from "../player/PlayerOverview";
 import PlayerTabs from "../player/PlayerTabs";
 import SimilarProfiles from "../SimilarProfiles";
 
-export default function DettagliProfiloGiocatore({profile, actions}: {profile: PlayerProfileDetail; actions?: ReactNode}) {
+export default function DettagliProfiloGiocatore({profile, actions, authenticated, returnTo}: {profile: PlayerProfileDetail; actions?: ReactNode; authenticated: boolean; returnTo: string}) {
 	const {player} = profile;
 
 	return (
@@ -24,7 +24,7 @@ export default function DettagliProfiloGiocatore({profile, actions}: {profile: P
 				actions={actions}
 			/>
 			<PlayerTabs
-				overview={<PlayerOverview presentation={player.presentation} highlightsUrl={player.highlightsUrl} locations={profile.locations} socialLinks={profile.socialLinks} sportTypes={player.sportTypes} primaryRoles={player.primaryRoles} specificRoles={player.specificRoles} currentCategory={player.currentCategory} preferredCategories={player.preferredCategories} profileId={profile.id} />}
+				overview={<PlayerOverview presentation={player.presentation} highlightsUrl={player.highlightsUrl} locations={profile.locations} socialLinks={profile.socialLinks} sportTypes={player.sportTypes} primaryRoles={player.primaryRoles} specificRoles={player.specificRoles} currentCategory={player.currentCategory} preferredCategories={player.preferredCategories} profileId={profile.id} authenticated={authenticated} returnTo={returnTo} />}
 				career={<PlayerCareer entries={player.career} />}
 				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} />}
 				similarProfiles={<SimilarProfiles profiles={profile.similarProfiles} unavailable={profile.similarProfilesUnavailable} />}

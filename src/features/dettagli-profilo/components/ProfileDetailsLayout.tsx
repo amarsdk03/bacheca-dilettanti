@@ -12,10 +12,14 @@ export default function ProfileDetailsLayout<Type extends NonPlayerProfileType>(
 	profile,
 	presentation,
 	actions,
+	authenticated,
+	returnTo,
 }: {
 	profile: GenericProfileDetail<Type>;
 	presentation: ProfileDetailPresentation;
 	actions?: ReactNode;
+	authenticated: boolean;
+	returnTo: string;
 }) {
 	return (
 		<div className="public-profile-detail flex min-w-0 flex-col gap-6 font-home-body" style={{
@@ -27,7 +31,7 @@ export default function ProfileDetailsLayout<Type extends NonPlayerProfileType>(
 			<ProfileTabs
 				label="Informazioni del profilo"
 				presentation="profile"
-				overview={<ProfileDetailsOverview profile={profile} presentation={presentation} />}
+				overview={<ProfileDetailsOverview profile={profile} presentation={presentation} authenticated={authenticated} returnTo={returnTo} />}
 				career={presentation.hasExperiences ? profile.qualifications ? <div className="grid gap-6"><ProfileExperienceHistory title="Lista esperienze" experiences={profile.experiences} /><ProfileExperienceHistory title="Qualifiche / patentini / licenze" concludedLabel="Conseguito" experiences={profile.qualifications} /></div> : <ProfileExperienceHistory experiences={profile.experiences} /> : undefined}
 				careerLabel="Esperienze"
 				announcementsLabel={presentation.announcementsLabel}

@@ -14,6 +14,7 @@ import {
 import {getProfileDetail} from "@/features/dettagli-profilo/server/profile-detail-query";
 import {dynamicMetadata} from "@/server/metadata";
 import {profileMetadataDescription, profileStructuredData, profileTypeLabel,} from "@/server/structured-data";
+import {getCurrentViewer} from "@/features/auth/server/queries";
 
 interface DettagliProfiloPageProps {
 	searchParams: Promise<RawProfileDetailSearchParams>;
@@ -48,7 +49,7 @@ export async function generateMetadata(
 	});
 
 	const {profile} = result;
-	const personProfile = ["giocatore", "staff-sportivo", "professionisti-studi", "arbitro"]
+	const personProfile = ["giocatore", "staff-sportivo", "servizi-consulenze", "arbitro"]
 		.includes(profile.type);
 	return dynamicMetadata({
 		title: `${profile.title} · ${profileTypeLabel(profile.type)}`,
@@ -74,12 +75,13 @@ export default async function DettagliProfiloPage({searchParams}: DettagliProfil
 	const result = await loadProfileDetail(params.id, params.type);
 	if (result.status === "not-found") notFound();
 	const path = profilePath(params.id, params.type);
+	const authenticated = Boolean(await getCurrentViewer());
 
 	return (
 		<ExternalNavigationProvider key={`${params.id}:${params.type}`}>
-			{result.status === "ok" && <JsonLd data={profileStructuredData(result.profile, path)} />}
+			{result.status === "ok" && <JsonLd data={profileStructuredData(result.profile, path, authenticated)} />}
 			<Navbar />
-			<DettagliProfilo result={result} />
+			<DettagliProfilo result={result} authenticated={authenticated} returnTo={path} />
 			<Footer />
 		</ExternalNavigationProvider>
 	);

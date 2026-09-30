@@ -1,5 +1,6 @@
 import type {CSSProperties} from "react";
 import Link from "next/link";
+import {ExternalLinkIcon} from "lucide-react";
 
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
@@ -100,6 +101,7 @@ export default function AnnouncementAuthorHoverCard({
 						variant="outline"
 						className="h-auto min-h-10 w-full whitespace-normal"
 					>
+						<ExternalLinkIcon data-icon="inline-start" aria-hidden="true" />
 						Informazioni complete
 					</Button>
 				</div>

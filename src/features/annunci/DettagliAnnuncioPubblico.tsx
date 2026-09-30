@@ -20,19 +20,21 @@ import type {AnnouncementDetail, AnnouncementDetailResult,} from "@/features/ann
 
 interface DettagliAnnuncioPubblicoProps {
 	result: Exclude<AnnouncementDetailResult, {status: "not-found"}>;
+	authenticated: boolean;
+	returnTo: string;
 }
 
-function AnnouncementContent({announcement}: {announcement: AnnouncementDetail}) {
+function AnnouncementContent({announcement, authenticated, returnTo}: {announcement: AnnouncementDetail; authenticated: boolean; returnTo: string}) {
 	switch (announcement.type) {
-		case "annuncio_giocatore": return <DettagliAnnuncioGiocatore announcement={announcement} />;
-		case "annuncio_squadra_cerca_giocatore": return <DettagliAnnuncioSquadraCercaGiocatore announcement={announcement} />;
-		case "annuncio_squadra_cerca_staff": return <DettagliAnnuncioSquadraCercaStaff announcement={announcement} />;
-		case "annuncio_squadra_cerca_partita": return <DettagliAnnuncioSquadraCercaPartita announcement={announcement} />;
-		case "annuncio_squadra_cerca_sponsor": return <DettagliAnnuncioSquadraCercaSponsor announcement={announcement} />;
-		case "annuncio_staff_sportivo": return <DettagliAnnuncioStaffSportivo announcement={announcement} />;
-		case "annuncio_arbitro": return <DettagliAnnuncioArbitro announcement={announcement} />;
-		case "annuncio_torneo_evento": return <DettagliAnnuncioTorneoEvento announcement={announcement} />;
-		case "annuncio_campo_impianto": return <DettagliAnnuncioCampoImpianto announcement={announcement} />;
+		case "annuncio_giocatore": return <DettagliAnnuncioGiocatore announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
+		case "annuncio_squadra_cerca_giocatore": return <DettagliAnnuncioSquadraCercaGiocatore announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
+		case "annuncio_squadra_cerca_staff": return <DettagliAnnuncioSquadraCercaStaff announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
+		case "annuncio_squadra_cerca_partita": return <DettagliAnnuncioSquadraCercaPartita announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
+		case "annuncio_squadra_cerca_sponsor": return <DettagliAnnuncioSquadraCercaSponsor announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
+		case "annuncio_staff_sportivo": return <DettagliAnnuncioStaffSportivo announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
+		case "annuncio_arbitro": return <DettagliAnnuncioArbitro announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
+		case "annuncio_torneo_evento": return <DettagliAnnuncioTorneoEvento announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
+		case "annuncio_campo_impianto": return <DettagliAnnuncioCampoImpianto announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
 	}
 }
 
@@ -50,6 +52,8 @@ function AnnouncementError() {
 
 export default function DettagliAnnuncioPubblico({
 	result,
+	authenticated,
+	returnTo,
 }: DettagliAnnuncioPubblicoProps) {
 	return (
 		<div className="public-profile-page min-h-[calc(100vh-4rem)]" style={{"--profile-accent": result.status === "success" ? getProfileAccent(result.announcement.profileType) : "var(--brand-indigo)"} as CSSProperties}>
@@ -57,7 +61,7 @@ export default function DettagliAnnuncioPubblico({
 				<div className="flex items-center justify-between gap-3">
 					<AnnouncementHistoryBackButton />
 				</div>
-				{result.status === "error" ? <AnnouncementError /> : <AnnouncementContent announcement={result.announcement} />}
+				{result.status === "error" ? <AnnouncementError /> : <AnnouncementContent announcement={result.announcement} authenticated={authenticated} returnTo={returnTo} />}
 				<div className="flex justify-center pt-2">
 					<AnnouncementHistoryBackButton label="Torna indietro" variant="outline" size="lg" />
 				</div>

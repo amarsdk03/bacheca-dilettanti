@@ -5,6 +5,7 @@ import {SiFacebook, SiInstagram, SiYoutube} from "@icons-pack/react-simple-icons
 
 import {buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import ContactAccessPrompt from "@/components/data-info/ContactAccessPrompt";
 import {PROFILE_SOCIAL_LINK_OPTIONS, type ProfileSocialLinks,} from "@/features/profilo/profile-social-links";
 
 // LinkedIn is not included in the installed Simple Icons package.
@@ -16,13 +17,14 @@ function LinkedInBrandIcon(props: SVGProps<SVGSVGElement>) {
 
 const SOCIAL_ICONS = {website: GlobeIcon, instagram: SiInstagram, facebook: SiFacebook, youtube: SiYoutube, linkedin: LinkedInBrandIcon};
 
-export default function ProfileSocialLinksCard({socialLinks, presentation = "default"}: {socialLinks: ProfileSocialLinks; presentation?: "default" | "profile"}) {
+export default function ProfileSocialLinksCard({socialLinks, presentation = "default", authenticated = true, returnTo = "/"}: {socialLinks: ProfileSocialLinks; presentation?: "default" | "profile"; authenticated?: boolean; returnTo?: string}) {
 	const links = PROFILE_SOCIAL_LINK_OPTIONS.flatMap(({platform, label}) => {
 		const href = socialLinks[platform]?.trim() ?? "";
 		return href ? [{platform, label, href}] : [];
 	});
 
 	if (links.length === 0) return null;
+	if (presentation === "profile" && !authenticated) return <ContactAccessPrompt returnTo={returnTo} />;
 
 	if (presentation === "profile") return (
 		<Card className="min-w-0">

@@ -14,7 +14,7 @@ import {Badge} from "@/components/ui/badge";
 import {Button, buttonVariants} from "@/components/ui/button";
 import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle,} from "@/components/ui/empty";
 import {Field, FieldGroup, FieldLabel} from "@/components/ui/field";
-import {InputGroup, InputGroupAddon, InputGroupInput, InputGroupText,} from "@/components/ui/input-group";
+import {InputGroup, InputGroupAddon, InputGroupInput,} from "@/components/ui/input-group";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {Separator} from "@/components/ui/separator";
 import {Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger,} from "@/components/ui/sheet";
@@ -165,14 +165,25 @@ function AnnouncementFiltersForm({
 				includeQuery
 			/>
 			<FieldGroup className="gap-4">
-				{hasFilter(availableFilters, "ricercaSquadra") && (
+				{hasFilter(availableFilters, "annoNascita") && (
 					<FilterSelect
-						id={`${idPrefix}-ricerca-squadra`}
-						name="ricercaSquadra"
-						label="Tipo di ricerca"
-						value={query.filters.ricercaSquadra}
-						allLabel="Tutte le ricerche"
-						options={ANNOUNCEMENT_TEAM_SEARCH_OPTIONS.map(({value, label}) => ({value, label}))}
+						id={`${idPrefix}-anno-nascita`}
+						name="annoNascita"
+						label="Anno"
+						value={query.filters.annoNascita}
+						allLabel="Qualsiasi anno"
+						options={ANNOUNCEMENT_FILTER_OPTIONS.annate.map((value) => ({value, label: value}))}
+					/>
+				)}
+
+				{hasFilter(availableFilters, "figura") && (
+					<FilterSelect
+						id={`${idPrefix}-figura`}
+						name="figura"
+						label="Mansione"
+						value={query.filters.figura}
+						allLabel="Tutte le figure"
+						options={ANNOUNCEMENT_FILTER_OPTIONS.figure.map((value) => ({value, label: value}))}
 					/>
 				)}
 
@@ -187,17 +198,6 @@ function AnnouncementFiltersForm({
 					/>
 				)}
 
-				{hasFilter(availableFilters, "tipologia") && (
-					<FilterSelect
-						id={`${idPrefix}-tipologia`}
-						name="tipologia"
-						label="Tipologia di calcio"
-						value={query.filters.tipologia}
-						allLabel="Tutte le tipologie"
-						options={ANNOUNCEMENT_FILTER_OPTIONS.tipologie.map((value) => ({value, label: value}))}
-					/>
-				)}
-
 				{hasFilter(availableFilters, "ruolo") && (
 					<FilterSelect
 						id={`${idPrefix}-ruolo`}
@@ -209,67 +209,39 @@ function AnnouncementFiltersForm({
 					/>
 				)}
 
-				{hasFilter(availableFilters, "annata") && (
+				{hasFilter(availableFilters, "tipologia") && (
 					<FilterSelect
-						id={`${idPrefix}-annata`}
-						name="annata"
-						label="Annata cercata"
-						value={query.filters.annata}
-						allLabel="Qualsiasi annata"
-						options={ANNOUNCEMENT_FILTER_OPTIONS.annate.map((value) => ({value, label: value}))}
+						id={`${idPrefix}-tipologia`}
+						name="tipologia"
+						label="Tipologia di calcio"
+						value={query.filters.tipologia}
+						allLabel="Tutte le tipologie"
+						options={ANNOUNCEMENT_FILTER_OPTIONS.tipologie.map((value) => ({value, label: value}))}
 					/>
 				)}
 
-				{hasFilter(availableFilters, "figura") && (
+				{hasFilter(availableFilters, "categoriaAttuale") && (
 					<FilterSelect
-						id={`${idPrefix}-figura`}
-						name="figura"
-						label="Figura professionale"
-						value={query.filters.figura}
-						allLabel="Tutte le figure"
-						options={ANNOUNCEMENT_FILTER_OPTIONS.figure.map((value) => ({value, label: value}))}
+						id={`${idPrefix}-categoria-attuale`}
+						name="categoriaAttuale"
+						label="Categoria attuale"
+						value={query.filters.categoriaAttuale}
+						allLabel="Tutte le categorie"
+						options={ANNOUNCEMENT_FILTER_OPTIONS.categorie.map(({value, label}) => ({value, label}))}
 					/>
 				)}
 
-				{hasFilter(availableFilters, "categoria") && (
+				{hasFilter(availableFilters, "ricercaSquadra") && (
 					<FilterSelect
-						id={`${idPrefix}-categoria`}
-						name="categoria"
-						label={query.filters.ricercaSquadra === "partita" ? "Livello avversario" : "Categoria"}
-						value={query.filters.categoria}
-						allLabel={query.filters.ricercaSquadra === "partita" ? "Tutti i livelli" : "Tutte le categorie"}
-						options={type === "annuncio_staff_sportivo" ? ANNOUNCEMENT_FILTER_OPTIONS.staffCategorie : ANNOUNCEMENT_FILTER_OPTIONS.categorie}
+						id={`${idPrefix}-ricerca-squadra`}
+						name="ricercaSquadra"
+						label="Tipo di ricerca"
+						value={query.filters.ricercaSquadra}
+						allLabel="Tutte le ricerche"
+						options={ANNOUNCEMENT_TEAM_SEARCH_OPTIONS.map(({value, label}) => ({value, label}))}
 					/>
 				)}
 
-				{hasFilter(availableFilters, "automunito") && (
-					<FilterSelect
-						id={`${idPrefix}-automunito`}
-						name="automunito"
-						label="Automunito"
-						value={query.filters.automunito}
-						allLabel="Qualsiasi opzione"
-						options={[...ANNOUNCEMENT_FILTER_OPTIONS.automunito]}
-					/>
-				)}
-
-				{hasFilter(availableFilters, "costoMax") && (
-					<FilterNumber
-						id={`${idPrefix}-costo-massimo`}
-						name="costoMax"
-						label="Costo massimo (all'ora)"
-						value={query.filters.costoMax}
-					/>
-				)}
-
-				{hasFilter(availableFilters, "compensoMin") && (
-					<FilterNumber
-						id={`${idPrefix}-compenso-minimo`}
-						name="compensoMin"
-						label="Compenso minimo mensile"
-						value={query.filters.compensoMin}
-					/>
-				)}
 			</FieldGroup>
 
 			<div className="flex gap-2">
@@ -277,40 +249,6 @@ function AnnouncementFiltersForm({
 				<AnnouncementFiltersResetButton href={resetHref} />
 			</div>
 		</DirectoryGetForm>
-	);
-}
-
-function FilterNumber({
-	id,
-	name,
-	label,
-	value,
-}: {
-	id: string;
-	name: "costoMax" | "compensoMin";
-	label: string;
-	value: number | null;
-}) {
-	return (
-		<Field>
-			<FieldLabel htmlFor={id}>{label}</FieldLabel>
-			<InputGroup>
-				<InputGroupInput
-					key={value ?? "no-limit"}
-					id={id}
-					name={name}
-					type="number"
-					min={0}
-					max={1_000_000}
-					step="0.01"
-					defaultValue={value ?? ""}
-					placeholder={name === "compensoMin" ? "Nessun minimo" : "Nessun limite"}
-				/>
-				<InputGroupAddon align="inline-end">
-					<InputGroupText>€</InputGroupText>
-				</InputGroupAddon>
-			</InputGroup>
-		</Field>
 	);
 }
 

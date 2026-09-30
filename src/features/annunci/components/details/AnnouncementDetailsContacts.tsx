@@ -3,21 +3,26 @@ import {InfoIcon, MailIcon, PhoneIcon, TriangleAlertIcon} from "lucide-react";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import ContactAccessPrompt from "@/components/data-info/ContactAccessPrompt";
 import type {AnnouncementContact} from "@/features/annunci/announcement-model";
 
 export default function AnnouncementDetailsContacts({
 	contacts,
 	unavailable,
+	authenticated,
+	returnTo,
 }: {
 	contacts: AnnouncementContact[];
 	unavailable: boolean;
+	authenticated: boolean;
+	returnTo: string;
 }) {
 	return (
 		<section aria-labelledby="announcement-contacts-title" className="min-w-0">
 			<Card>
 				<CardHeader>
 					<CardTitle><h2 id="announcement-contacts-title" className="font-home-display text-2xl uppercase">Contatta l’autore</h2></CardTitle>
-					<CardDescription>Usa uno dei recapiti pubblicati insieme all’annuncio.</CardDescription>
+					<CardDescription>{authenticated ? "Usa uno dei recapiti pubblicati per questo annuncio." : "Accedi per visualizzare i recapiti pubblicati per questo annuncio."}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					{unavailable ? (
@@ -32,6 +37,8 @@ export default function AnnouncementDetailsContacts({
 							<AlertTitle>Contatti non disponibili</AlertTitle>
 							<AlertDescription>L’autore non ha indicato metodi di contatto pubblici per questo annuncio.</AlertDescription>
 						</Alert>
+					) : !authenticated && contacts.length > 0 ? (
+						<ContactAccessPrompt returnTo={returnTo} />
 					) : (
 						<ul className="flex flex-col gap-2">
 							{contacts.map((contact, index) => {

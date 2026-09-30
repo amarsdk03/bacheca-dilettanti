@@ -16,7 +16,7 @@ export default function AnnouncementLocationCard({locations, announcementType, a
 
 	const title = announcementType === "annuncio_arbitro"
 		? "Zone di disponibilità"
-		: announcementType === "annuncio_torneo_evento" || announcementType === "annuncio_professionisti_studi" || announcementType === "annuncio_creators" || !announcementType
+		: announcementType === "annuncio_torneo_evento" || announcementType === "annuncio_servizi_consulenze" || announcementType === "annuncio_creators" || !announcementType
 			? "Località"
 			: "Zone di ricerca";
 	return <ProfileLocationsCard locations={locations} title={title} />;

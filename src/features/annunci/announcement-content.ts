@@ -38,11 +38,13 @@ export interface AnnouncementLocation {
 }
 
 export interface AnnouncementFilterData {
-  regions: string[];
-  types: string[];
-  roles: string[];
-  years: string[];
-  figures: string[];
+	regions: string[];
+	types: string[];
+	roles: string[];
+	years: string[];
+	birthYear: string | null;
+	currentCategory: string | null;
+	figures: string[];
   categories: string[];
   car: string | null;
   cost: number | null;
@@ -203,6 +205,8 @@ function emptyFilterData(locations: AnnouncementLocation[]): AnnouncementFilterD
 		types: [],
 		roles: [],
 		years: [],
+		birthYear: null,
+		currentCategory: null,
 		figures: [],
 		categories: [],
 		car: null,
@@ -254,6 +258,7 @@ export function announcementContent(
 	detail: Record<string, unknown>,
 	locations: AnnouncementLocation[],
 	detailed = false,
+	customTitle?: string | null,
 ) {
 	const selection = (values: string[], plural: "selezionati" | "selezionate") => formatSelection(values, plural, !detailed);
 	const contentFact = (kind: AnnouncementFactKind, label: string, value: string | null) => fact(kind, label, value, !detailed);
@@ -518,6 +523,5 @@ export function announcementContent(
 		searchValues = [...types, address ?? "", services ?? "", hours];
 	}
 
-	return {title, description, location, locations, facts, fields, playerRoles, filters, searchValues};
+	return {title: cleanText(customTitle, 50) ?? title, description, location, locations, facts, fields, playerRoles, filters, searchValues};
 }
-

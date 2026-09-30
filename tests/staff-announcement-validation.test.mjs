@@ -28,14 +28,14 @@ function load(file) {
 const {categoryKey} = load(path.join(root, "src/features/pubblica-annuncio/types/category-catalog.ts"));
 const catalog = load(path.join(root, "src/features/pubblica-annuncio/types/staff-category-catalog.ts"));
 const {announcementContent} = load(path.join(root, "src/features/annunci/announcement-content.ts"));
-const {parseAnnouncementDirectoryQuery, ANNOUNCEMENT_FILTER_OPTIONS} = load(path.join(root, "src/features/annunci/announcement-model.ts"));
+const {parseAnnouncementDirectoryQuery} = load(path.join(root, "src/features/annunci/announcement-model.ts"));
 const {parsePublishPayload} = load(path.join(root, "src/features/pubblica-annuncio/server/validation.ts"));
 const {createAnnouncementDetailsDrafts, getAnnouncementValidationErrors} = load(path.join(root, "src/features/pubblica-annuncio/publish-model.ts"));
 
 const male = categoryKey("Calcio 5 (Maschile)", "Serie A");
 const female = categoryKey("Calcio 5 (Femminile)", "Serie A");
 const payload = () => ({
-	version: 3, submissionId: "11111111-1111-4111-8111-111111111111", visibility: "gratuito",
+	version: 4, submissionId: "11111111-1111-4111-8111-111111111111", visibility: "gratuito",
 	profileType: "staff-sportivo", teamSubtype: null, anonymousProfile: null, profileUpdate: null,
 	announcement: {
 		type: "annuncio_staff_sportivo",
@@ -51,11 +51,8 @@ test("Staff catalogue keeps homonymous categories distinct from the Player catal
 	assert.notEqual(male, female);
 	assert.equal(catalog.staffCategoryLabel(male), "Calcio 5 (Maschile) · Serie A");
 	assert.equal(catalog.staffCategoryLabel(female), "Calcio 5 (Femminile) · Serie A");
-	assert.ok(ANNOUNCEMENT_FILTER_OPTIONS.staffCategorie.some(({value}) => value === male));
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: male}).filters.categoria, male);
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: female}).filters.categoria, female);
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", categoria: categoryKey("Calcio 11 (Maschile)", "Settore Giovanile")}).filters.categoria, "");
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: "Serie A"}).filters.categoria, "Serie A");
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: male}).filters.categoriaAttuale, "");
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", categoriaAttuale: female}).filters.categoriaAttuale, female);
 	const content = announcementContent("annuncio_staff_sportivo", {categorie_ricercate: [male, female], disponibilita_spostamento: "Da valutare"}, [], true);
 	assert.deepEqual(content.filters.categories, [male, female]);
 	assert.deepEqual(content.fields.find(({label}) => label === "Categorie ricercate").items, ["Calcio 5 (Maschile) · Serie A", "Calcio 5 (Femminile) · Serie A"]);
