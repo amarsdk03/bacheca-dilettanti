@@ -1,6 +1,7 @@
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import {ArrowUpRightIcon, VideoIcon} from "lucide-react";
 import {buttonVariants} from "@/components/ui/button";
+import DynamicReactFlag from "@/components/dynamic/DynamicReactFlag";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import type {PlayerProfileData, PlayerProfileDetail} from "../../profile-detail-model";
 import ProfileLocationsCard from "../ProfileLocationsCard";
@@ -8,7 +9,7 @@ import ProfileSocialLinksCard from "../ProfileSocialLinks";
 import ProfileIdentifier from "../ProfileIdentifier";
 import PlayerRolesCard from "./PlayerRolesCard";
 
-type PlayerOverviewProps = Pick<PlayerProfileData, "presentation" | "highlightsUrl" | "sportTypes" | "primaryRoles" | "specificRoles" | "currentCategory" | "preferredCategories"> & Pick<PlayerProfileDetail, "locations" | "socialLinks"> & {profileId: string; authenticated: boolean; returnTo: string};
+type PlayerOverviewProps = Pick<PlayerProfileData, "presentation" | "highlightsUrl" | "sportTypes" | "primaryRoles" | "specificRoles" | "preferredCategories" | "height" | "weight" | "nationality" | "nationalityCode"> & Pick<PlayerProfileDetail, "locations" | "socialLinks"> & {profileId: string; authenticated: boolean; returnTo: string};
 
 function youtubeEmbedUrl(value: string) {
 	try {
@@ -35,12 +36,31 @@ function youtubeEmbedUrl(value: string) {
 	}
 }
 
-export default function PlayerOverview({presentation, highlightsUrl, locations, socialLinks, sportTypes, primaryRoles, specificRoles, currentCategory, preferredCategories, profileId, authenticated, returnTo}: PlayerOverviewProps) {
+export default function PlayerOverview({presentation, highlightsUrl, locations, socialLinks, sportTypes, primaryRoles, specificRoles, preferredCategories, height, weight, nationality, nationalityCode, profileId, authenticated, returnTo}: PlayerOverviewProps) {
 	const embedUrl = highlightsUrl ? youtubeEmbedUrl(highlightsUrl) : null;
+	const information = [
+		{label: "Altezza", value: height ? `${height} cm` : null},
+		{label: "Peso", value: weight ? `${weight} kg` : null},
+		{label: "Nazionalità", value: nationality},
+		{label: "Ruoli specifici", value: specificRoles.length ? specificRoles.join(", ") : null},
+	];
 
 	return (
 		<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-			<div className="flex min-w-0 flex-col gap-5">
+			<aside aria-label="Informazioni sportive" className="order-1 flex min-w-0 flex-col gap-5 lg:order-2 lg:col-start-2 lg:row-start-1">
+				<PlayerRolesCard sportTypes={sportTypes} primaryRoles={primaryRoles} preferredCategories={preferredCategories} />
+				<ProfileLocationsCard locations={locations} />
+			</aside>
+			<div className="order-2 flex min-w-0 flex-col gap-5 lg:order-1 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+				<Card>
+					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Informazioni</h2></CardTitle></CardHeader>
+					<CardContent><dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+						{information.map(({label, value}) => <div key={label} className="flex min-w-0 flex-col gap-2">
+							<dt className="text-sm font-semibold">{label}</dt>
+							<dd className="text-sm leading-6 wrap-anywhere">{label === "Nazionalità" && value ? <span className="inline-flex items-center gap-2">{value}{nationalityCode && <DynamicReactFlag code={nationalityCode} className="h-4 w-6 rounded-xs ring-1 ring-border" />}</span> : value ?? "Non specificato"}</dd>
+						</div>)}
+					</dl></CardContent>
+				</Card>
 				<Card>
 					<CardHeader>
 						<CardTitle><h2 className="font-home-display text-2xl uppercase">Descrizione</h2></CardTitle>
@@ -72,9 +92,7 @@ export default function PlayerOverview({presentation, highlightsUrl, locations, 
 					</CardContent>
 				</Card>}
 			</div>
-			<aside aria-label="Informazioni sportive e contatti" className="flex min-w-0 flex-col gap-5">
-				<PlayerRolesCard sportTypes={sportTypes} primaryRoles={primaryRoles} specificRoles={specificRoles} currentCategory={currentCategory} preferredCategories={preferredCategories} />
-				<ProfileLocationsCard locations={locations} />
+			<aside aria-label="Contatti e identificativo" className="order-3 flex min-w-0 flex-col gap-5 lg:col-start-2 lg:row-start-2">
 				<ProfileSocialLinksCard socialLinks={socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />
 				<ProfileIdentifier profileId={profileId} />
 			</aside>

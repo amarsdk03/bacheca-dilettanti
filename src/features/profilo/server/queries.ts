@@ -363,6 +363,7 @@ export async function getProfileDashboardData(
 			mainImageUrl: null,
 			hasMainImage: false,
 			profiles: [],
+			restrictedProfileAccess: [],
 			drafts,
 			locations,
 			socialLinks,
@@ -383,6 +384,7 @@ export async function getProfileDashboardData(
 		facilityResult,
 		professionalResult,
 		creatorResult,
+		restrictedAccessResult,
 		locationResult,
 		socialLinksResult,
 		profileImages,
@@ -398,6 +400,7 @@ export async function getProfileDashboardData(
 		supabase.from("profilo_campi_impianti").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_servizi_consulenze").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		admin.from("restricted_profile_access").select("profile_type").eq("profile_id", baseProfile.uuid),
 		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
 		admin.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
 		loadProfileImageUrlMap(admin, [baseProfile.uuid]),
@@ -414,6 +417,7 @@ export async function getProfileDashboardData(
 	queryFailed(facilityResult.error, "profilo_campi_impianti");
 	queryFailed(professionalResult.error, "profilo_servizi_consulenze");
 	queryFailed(creatorResult.error, "profilo_creator");
+	queryFailed(restrictedAccessResult.error, "restricted_profile_access");
 	queryFailed(locationResult.error, "localita_profilo");
 	queryFailed(socialLinksResult.error, "link_social_profilo");
 
@@ -475,6 +479,7 @@ export async function getProfileDashboardData(
 		mainImageUrl,
 		hasMainImage: Boolean(mainImageUrl),
 		profiles,
+		restrictedProfileAccess: (restrictedAccessResult.data ?? []).flatMap(({profile_type}) => profile_type === "servizi-consulenze" || profile_type === "creators" ? [profile_type] : []),
 		drafts,
 		locations,
 		socialLinks,

@@ -100,8 +100,10 @@ export function toPublicPlayerData(data: PlayerRow, highlights: unknown, now = n
 	const url = cleanText(highlights);
 	const category = cleanText(data.categoria_attuale);
 	const nationality = nationalityLabel(data.nazionalita);
+	const age = publicPlayerAge({day: data.giorno_nascita, month: data.mese_nascita, year: data.anno_nascita}, now);
 	return {
-		age: publicPlayerAge({day: data.giorno_nascita, month: data.mese_nascita, year: data.anno_nascita}, now),
+		age,
+		birthYear: age === null ? null : cleanText(data.anno_nascita),
 		sportTypes: ordinaTipologieCalcio(strings(data.tipologie_sport)),
 		primaryRoles: normalizePlayerPrimaryRoles(strings(roles?.principali)),
 		specificRoles: normalizePlayerSpecificRoles(strings(roles?.specifici)),

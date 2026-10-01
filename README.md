@@ -185,7 +185,7 @@ Push effettuato il: 17/09/2026
 ### Profili
 
 - Registrazione e accesso tramite email verificata.
-- Gestione di più sottoprofili per account, con un massimo di cinque tipologie abilitate.
+- Gestione di cinque sottoprofili ordinari per account, con la possibilità di aggiungere fino a due profili riservati.
 - Otto modelli di profilo supportati:
     - Giocatore
     - Squadra
@@ -193,12 +193,13 @@ Push effettuato il: 17/09/2026
     - Arbitro
     - Torneo / evento
     - Campi e impianti
-    - Servizi e consulenze (inizialmente limitati)
-    - Creators (inizialmente limitati)
+    - Servizi e consulenze (disponibile solo con abilitazione admin)
+    - Creators (disponibile solo con abilitazione admin)
+- Eliminazione dei profili riservati con revoca dell'abilitazione; gli annunci pubblicati restano disponibili.
 - Possibilità di cercare e filtrare i profili creati sulla piattaforma
 - Possibilità di visualizzare maggiori info su un profilo specifico
 - Possibilità di segnalare un annuncio con eventuale messaggio di info aggiuntivo
-- Disponibilità delle singole tipologie controllata dal feature flag `PROFILI_LIMITATI`.
+- Disponibilità delle tipologie nella directory controllata dal feature flag `PROFILI_LIMITATI`.
 
 ### Annunci
 
@@ -209,6 +210,7 @@ Push effettuato il: 17/09/2026
     - Pubblicazione gratuita degli annunci; i pagamenti prioritari restano disponibili solo per le bozze preesistenti.
     - Verifica tramite codice OTP per utenti anonimi (rate limiting)
     - Limite giornaliero e protezione dai retry duplicati per il flusso anonimo.
+- Pubblicazioni illimitate per **Servizi e consulenze** e **Creators**, disponibili solo per account registrati abilitati dall'admin.
 - Possibilità di visualizzare, nascondere o eliminare annunci dal proprio profilo
 - Possibilità di cercare e filtrare gli annunci pubblicati sulla piattaforma
 - Possibilità di visualizzare maggiori info su un annuncio specifico
@@ -220,3 +222,4 @@ Push effettuato il: 17/09/2026
 - Visualizzazione riepilogo e statistiche piattaforma
 - Gestione profili e annunci
 - Approvazione o rifiuto pubblicazione annunci
+- La futura dashboard separata abilita o revoca **Servizi e consulenze** e **Creators** tramite `admin_set_restricted_profile_access_v1(p_profile_id, p_profile_type, p_enabled)` con un client server `service_role`. `p_profile_id` è l'UUID della riga `profilo`. La revoca rimuove il sottoprofilo attivo e conserva gli annunci già pubblicati. I dati dei profili possono essere modificati dalla dashboard con le credenziali amministrative.

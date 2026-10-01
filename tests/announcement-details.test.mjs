@@ -34,7 +34,7 @@ function sourceLoader(overrides = {}) {
 const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const authorId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const otherId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
-const profile = {uuid: authorId, confermato_il: "2026-09-01T10:00:00Z", verificato_il: null, profilo_giocatore: [{id: 7, nascosto: false, nome: "Mario", cognome: "Rossi", anno_nascita: "2005"}]};
+const profile = {uuid: authorId, confermato_il: "2026-09-01T10:00:00Z", verificato_il: null, profilo_giocatore: [{id: 7, nascosto: false, nome: "Mario", cognome: "Rossi", anno_nascita: "2005", genere: "Uomo"}]};
 const row = (type = "annuncio_giocatore", child = {}) => ({
 	uuid: id, autore_annuncio: authorId, tipologia_annuncio: type, titolo_annuncio: null, creato_il: "2026-09-22", livello_annuncio: null,
 	stato_annuncio: "pubblicato", nascosto: false, privato: false,
@@ -42,13 +42,13 @@ const row = (type = "annuncio_giocatore", child = {}) => ({
 	localita_annuncio: [{regione: "Lazio", citta: "Roma"}],
 });
 
-function fixture({current = row(), authors = [profile], similar = [], contacts = [], media = [], errors = {}, counts = {annuncio_salvato: 3, profilo_follow: 8}} = {}) {
+function fixture({current = row(), authors = [profile], anonymousProfile = null, profileLocations = [], similar = [], contacts = [], media = [], errors = {}, counts = {annuncio_salvato: 3, profilo_follow: 8}} = {}) {
 	const calls = [];
 	const client = {from(table) {
 		const call = {table, operations: []};
 		calls.push(call);
 		const query = {};
-		for (const method of ["select", "eq", "neq", "in", "not", "like", "order", "limit", "range", "maybeSingle"]) {
+		for (const method of ["select", "eq", "neq", "in", "not", "is", "like", "order", "limit", "range", "maybeSingle"]) {
 			query[method] = (...args) => {call.operations.push([method, ...args]); return query;};
 		}
 		query.then = (resolve, reject) => {
@@ -67,7 +67,13 @@ function fixture({current = row(), authors = [profile], similar = [], contacts =
 				}));
 				count = rows.length;
 				data = single ? rows[0] ?? null : rows;
-			} else data = table === "profilo" ? authors : table === "contatto_annuncio" ? contacts : table === "media_annuncio" ? media : [];
+		} else if (table === "profilo") {
+			const rows = call.operations.some(([method, key]) => method === "is" && key === "uuid_utente")
+				? anonymousProfile ? [anonymousProfile] : []
+				: call.operations.some(([method, key]) => method === "not" && key === "uuid_utente")
+					? authors : [...authors, ...(anonymousProfile ? [anonymousProfile] : [])];
+			data = single ? rows[0] ?? null : rows;
+		} else data = table === "localita_profilo" ? profileLocations : table === "contatto_annuncio" ? contacts : table === "media_annuncio" ? media : [];
 			return Promise.resolve({data, error: error ? {code: "TEST_FAILURE"} : null, count}).then(resolve, reject);
 		};
 		return query;
@@ -108,6 +114,94 @@ test("player directory filters by the author's birth year", async () => {
 	assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", annoNascita: "2006"}))).total, 0);
 });
 
+test("player filters use an inclusive year range, gender and requested categories", async () => {
+	const {queries, load} = fixture();
+	const {parseAnnouncementDirectoryQuery, getAnnouncementFilterEntries} = load("src/features/annunci/announcement-model.ts");
+	const query = values => parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", ...values});
+	assert.equal((await queries.loadPublicAnnouncementDirectory(query({annoDa: "2004", annoA: "2005", genere: "Uomo", categorieRicercate: "Eccellenza"}))).total, 1);
+	assert.equal((await queries.loadPublicAnnouncementDirectory(query({annoDa: "2006", annoA: "2026"}))).total, 0);
+	assert.equal((await queries.loadPublicAnnouncementDirectory(query({genere: "Donna"}))).total, 0);
+	assert.equal((await queries.loadPublicAnnouncementDirectory(query({categorieRicercate: "Promozione"}))).total, 1);
+	assert.deepEqual([query({annoDa: "2004"}).filters.annoDa, query({annoDa: "2004"}).filters.annoA], ["2004", String(new Date().getFullYear())]);
+	assert.deepEqual([query({annoDa: "2004", annoA: "2003"}).filters.annoDa, query({annoDa: "2004", annoA: "2003"}).filters.annoA], ["2004", String(new Date().getFullYear())]);
+	assert.equal(getAnnouncementFilterEntries(query({annoA: "2005"}).filters).length, 0);
+	assert.deepEqual([query({annoNascita: "2005"}).filters.annoDa, query({annoNascita: "2005"}).filters.annoA], ["2005", "2005"]);
+});
+
+test("anonymous player facets remain filterable and essential author info stays scoped", async () => {
+	const anonymousProfile = {uuid: authorId, profilo_giocatore: [{nascosto: false, nome: "Luca", cognome: "Bianchi", anno_nascita: "2005", genere: "Uomo", presentazione: "Cerco una squadra"}]};
+	const {queries, load, calls} = fixture({authors: [], anonymousProfile, profileLocations: [{regione: "Lazio", citta: "Roma"}]});
+	const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
+	const result = await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", genere: "Uomo"}));
+	assert.equal(result.total, 1);
+	const detail = await queries.loadPublicAnnouncementDetail(id);
+	assert.equal(detail.announcement.author.kind, "anonymous");
+	assert.deepEqual(detail.announcement.anonymousAuthorInfo, {name: "Luca Bianchi", location: "Roma, Lazio", presentation: "Cerco una squadra"});
+	assert.ok(calls.some(call => call.table === "profilo" && call.operations.some(([method, key, value]) => method === "is" && key === "uuid_utente" && value === null)));
+	assert.doesNotMatch(JSON.stringify(detail.announcement.anonymousAuthorInfo), /uuid_utente|indirizzo_email/);
+});
+
+test("service and creator announcements are discoverable and have public details", async () => {
+	const cases = [
+		["annuncio_servizi_consulenze", "annuncio_servizi_consulenze", {figura_professionale: ["Preparatore atletico"], specializzazione: "Recupero", presentazione_servizi: "Consulenza sportiva", descrizione_aggiuntiva: "Allenamenti personalizzati"}],
+		["annuncio_creators", "annuncio_creator", {titolo_post: "Video tattici", descrizione_post: "Analisi partita", contenuto_post: "Approfondimento tecnico"}],
+	];
+	for (const [type, relation, child] of cases) {
+		const current = {...row(type), [type]: undefined, [relation]: child};
+		const {queries, load} = fixture({current, authors: []});
+		const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
+		assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type}))).total, 1, type);
+		const detail = await queries.loadPublicAnnouncementDetail(id);
+		assert.equal(detail.status, "success", type);
+		assert.equal(detail.announcement.type, type);
+		assert.ok(detail.announcement.description);
+	}
+});
+
+test("long fact lists are stacked and expanded before the description", async () => {
+	const current = row("annuncio_giocatore", {
+		categorie_ricercate: ["Eccellenza", "Promozione", "Prima Categoria", "Seconda Categoria"],
+	});
+	const {queries, load} = fixture({current});
+	const {announcement} = await queries.loadPublicAnnouncementDetail(id);
+	const Header = load("src/features/annunci/components/details/AnnouncementDetailsHeader.tsx").default;
+	const Overview = load("src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
+	const presentation = load("src/features/annunci/components/details/announcement-detail-presentation.ts").ANNOUNCEMENT_DETAIL_PRESENTATIONS.annuncio_giocatore;
+	const header = renderToStaticMarkup(React.createElement(Header, {announcement, presentation}));
+	const overview = renderToStaticMarkup(React.createElement(Overview, {announcement, presentation}));
+	const fact = header.match(/<dt[^>]*>[^<]*(?:<[^>]+>)*Categorie ricercate<\/dt><dd[^>]*>([\s\S]*?)<\/dd>/)?.[1] ?? header;
+	assert.match(fact, /Eccellenza/);
+	assert.match(fact, /Promozione/);
+	assert.match(fact, /\+2/);
+	assert.ok(overview.indexOf("Seconda Categoria") < overview.indexOf(">Descrizione</h2>"));
+});
+
+test("author card links registered profiles and shows only essential anonymous data", async () => {
+	const {load} = fixture();
+	const AuthorCard = load("src/features/annunci/components/details/AnnouncementAuthorCard.tsx").default;
+	const registered = renderToStaticMarkup(React.createElement(AuthorCard, {announcement: {author: {kind: "registered", profileId: authorId, profileType: "giocatore", title: "Mario Rossi"}, anonymousAuthorInfo: null}}));
+	assert.match(registered, /Apri profilo/);
+	assert.match(registered, /dettagli-profilo\?id=/);
+	const anonymous = renderToStaticMarkup(React.createElement(AuthorCard, {announcement: {author: {kind: "anonymous", profileType: "giocatore", label: "Giocatore anonimo"}, anonymousAuthorInfo: {name: "Luca Bianchi", location: "Roma, Lazio", presentation: "Cerco una squadra"}}}));
+	for (const value of ["Info autore", "Luca Bianchi", "Roma, Lazio", "Cerco una squadra"]) assert.match(anonymous, new RegExp(value));
+	assert.doesNotMatch(anonymous, /dettagli-profilo|mailto:/);
+});
+
+test("tournament cost includes its unit and facility details omit hours and services", async () => {
+	const {load} = fixture();
+	const {announcementContent} = load("src/features/annunci/announcement-content.ts");
+	const tournament = announcementContent("annuncio_torneo_evento", {nome_evento: "Coppa", costo_partecipazione: 50, tipo_partecipazione: "giocatore"}, [], true);
+	assert.match(tournament.facts.find(fact => fact.label === "Costo").value, /50,00[^/]*\/ giocatore/);
+	assert.ok(!tournament.fields.some(field => field.label === "Tipo di partecipazione"));
+	const missingCost = announcementContent("annuncio_torneo_evento", {nome_evento: "Coppa", tipo_partecipazione: "squadra"}, [], true);
+	assert.equal(missingCost.facts.find(fact => fact.label === "Costo").value, "Non specificato");
+	const facility = announcementContent("annuncio_campo_impianto", {orari: "Lun-Ven 18-22", servizi_inclusi: "Spogliatoi", descrizione_aggiuntiva: "Campo disponibile"}, [], true);
+	const Overview = load("src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
+	const presentation = load("src/features/annunci/components/details/announcement-detail-presentation.ts").ANNOUNCEMENT_DETAIL_PRESENTATIONS.annuncio_campo_impianto;
+	const html = renderToStaticMarkup(React.createElement(Overview, {announcement: {...facility, linkedTeams: [], announcementLink: null, shareImageUrl: null, type: "annuncio_campo_impianto"}, presentation}));
+	assert.doesNotMatch(html, /Lun-Ven 18-22|Spogliatoi|Altre informazioni/);
+});
+
 test("Staff announcement details preserve category and profile snapshots", async () => {
 	const male = "Calcio 5 (Maschile)::Serie A";
 	const current = fixture({current: row("annuncio_staff_sportivo", {
@@ -121,7 +215,7 @@ test("Staff announcement details preserve category and profile snapshots", async
 	assert.ok(detail.announcement.fields.find(({label}) => label === "Qualifiche / Licenze").items.some((item) => item.includes("voce storica libera")));
 });
 
-test("team directory filters by the author's current category", async () => {
+test("team directory ignores removed current-category parameters", async () => {
 	const male = "Calcio 5 (Maschile)::Serie A";
 	const current = fixture({
 		current: row("annuncio_squadra_cerca_staff"),
@@ -129,7 +223,8 @@ test("team directory filters by the author's current category", async () => {
 	});
 	const {parseAnnouncementDirectoryQuery} = current.load("src/features/annunci/announcement-model.ts");
 	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "staff", categoriaAttuale: male}))).total, 1);
-	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "staff", categoriaAttuale: "Calcio 5 (Femminile)::Serie A"}))).total, 0);
+	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "staff", categoriaAttuale: "Calcio 5 (Femminile)::Serie A"}))).total, 1);
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", categoriaAttuale: male}).filters.categoriaAttuale, undefined);
 });
 
 test("team search announcements keep saved age ranges in details without exposing them as directory filters", async () => {
@@ -137,12 +232,12 @@ test("team search announcements keep saved age ranges in details without exposin
 	const {parseAnnouncementDirectoryQuery} = legacy.load("src/features/annunci/announcement-model.ts");
 	const oldDetail = await legacy.queries.loadPublicAnnouncementDetail(id);
 	assert.deepEqual(oldDetail.announcement.fields.find(({label}) => label === "Annate ricercate").items, ["2004", "2007"]);
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "giocatore", annata: "2005"}).filters.annoNascita, "");
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "giocatore", annata: "2005"}).filters.annoDa, "");
 
 	const current = fixture({current: row("annuncio_squadra_cerca_giocatore", {annate_ricercate: [], annata_da: 2004, annata_a: 2007})});
 	const newDetail = await current.queries.loadPublicAnnouncementDetail(id);
 	assert.equal(newDetail.announcement.fields.find(({label}) => label === "Annate ricercate").value, "Dal 2004 al 2007");
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "giocatore", annata: "2005"}).filters.annoNascita, "");
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "giocatore", annata: "2005"}).filters.annoDa, "");
 });
 
 test("team staff search reads multiple saved figures and keeps historical free text and dates", async () => {
@@ -552,10 +647,10 @@ test("all nine supported types render balanced fact grids and preserve supportin
 		annuncio_squadra_cerca_staff: ["Figure ricercate", "Compenso mensile", "Num. salvataggi", "Follower autore"],
 		annuncio_squadra_cerca_partita: ["Livelli cercati", "Periodo", "Num. salvataggi", "Follower autore"],
 		annuncio_squadra_cerca_sponsor: ["Settore", "Num. salvataggi", "Follower autore"],
-		annuncio_staff_sportivo: ["Figure", "Categorie", "Num. salvataggi", "Follower autore"],
+		annuncio_staff_sportivo: ["Figure", "Categorie ricercate", "Num. salvataggi", "Follower autore"],
 		annuncio_arbitro: ["Categorie", "Disponibilità", "Num. salvataggi", "Follower autore"],
 		annuncio_torneo_evento: ["Iscrizione", "Costo", "Num. salvataggi", "Follower autore"],
-		annuncio_campo_impianto: ["Tipologia campo da pubblicizzare", "Prezzo orario", "Num. salvataggi", "Follower autore"],
+		annuncio_campo_impianto: ["Tipologia campo da pubblicizzare", "Costo orario", "Num. salvataggi", "Follower autore"],
 	};
 	const supportingValues = {
 		annuncio_squadra_cerca_giocatore: "2026/27",
@@ -563,7 +658,6 @@ test("all nine supported types render balanced fact grids and preserve supportin
 		annuncio_squadra_cerca_partita: "Trasferta regionale",
 		annuncio_staff_sportivo: "Spostamenti regionali",
 		annuncio_arbitro: "Auto propria",
-		annuncio_torneo_evento: "Squadre",
 	};
 	const longText = "Informazioni complete senza troncamento. ".repeat(20).trim();
 	const load = sourceLoader();
@@ -591,7 +685,8 @@ test("all nine supported types render balanced fact grids and preserve supportin
 		const overview = renderToStaticMarkup(React.createElement(Overview, props));
 		assert.match(overview, /Descrizione completa/);
 		if (supportingValues[type]) assert.ok(overview.includes(supportingValues[type]), `${type}: ${supportingValues[type]}`);
-		if (["annuncio_squadra_cerca_staff", "annuncio_squadra_cerca_sponsor", "annuncio_campo_impianto"].includes(type)) assert.ok(overview.includes(longText));
+		if (["annuncio_squadra_cerca_staff", "annuncio_squadra_cerca_sponsor"].includes(type)) assert.ok(overview.includes(longText));
+		if (type === "annuncio_campo_impianto") assert.ok(!overview.includes(longText));
 		if (["annuncio_giocatore", "annuncio_squadra_cerca_giocatore"].includes(type)) assert.deepEqual(announcement.playerRoles.secondaryRoles, ["Terzino destro", "Difensore centrale"]);
 	}
 });

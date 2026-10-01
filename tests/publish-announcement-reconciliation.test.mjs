@@ -6,6 +6,7 @@ const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules
 const originalUrl = new URL("../supabase/migrations/20260824195350_publish_announcement_workflow.sql", import.meta.url);
 const wrapperUrl = new URL("../supabase/migrations/20260923222553_enforce_required_subprofile_fields.sql", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260924122000_reconcile_publish_dates_and_profile_snapshots.sql", import.meta.url);
+const repairUrl = new URL("../supabase/migrations/20261001143300_repair_publish_date_casts.sql", import.meta.url);
 
 function functionSql(source, name) {
 	const start = source.indexOf(`create or replace function ${name}(`);
@@ -51,6 +52,7 @@ test("publication reconciliation casts typed fields and refreshes updated profil
 		const wrapper = functionSql(readFileSync(wrapperUrl, "utf8"), "public.publish_announcement_v1");
 		await db.exec(wrapper);
 		await db.exec(readFileSync(migrationUrl, "utf8"));
+		await db.exec(readFileSync(repairUrl, "utf8"));
 
 		const coreDefinition = (await db.query("select pg_get_functiondef('public.publish_announcement_core_v1(uuid,jsonb,text,text)'::regprocedure) as sql")).rows[0].sql;
 		assert.equal((coreDefinition.match(/::date,/g) ?? []).length, 4);
@@ -120,9 +122,38 @@ test("publication migration preserves text match-time columns", {
 			.replaceAll("2026-08-24", "2026-09-23"));
 		await db.exec(functionSql(readFileSync(wrapperUrl, "utf8"), "public.publish_announcement_v1"));
 		await db.exec(readFileSync(migrationUrl, "utf8"));
+		await db.exec(readFileSync(repairUrl, "utf8"));
 		const definition = (await db.query("select pg_get_functiondef('public.publish_announcement_core_v1(uuid,jsonb,text,text)'::regprocedure) as sql")).rows[0].sql;
 		assert.equal((definition.match(/::date,/g) ?? []).length, 4);
 		assert.equal((definition.match(/::time,/g) ?? []).length, 0);
+	} finally {
+		await db.close();
+	}
+});
+
+test("publication date repair works when the previous reconciliation was not deployed", {
+	skip: !existsSync(engineUrl) && "PGlite runner unavailable",
+}, async () => {
+	const {PGlite} = await import(engineUrl.href);
+	const db = await PGlite.create();
+	try {
+		await db.exec(`
+			create role anon;
+			create role authenticated;
+			create role service_role;
+			create schema private;
+			create table private.announcement_submission (submission_id uuid);
+			create table public.annuncio_squadra_cerca_staff (periodo_dal date, periodo_al date);
+			create table public.annuncio_squadra_cerca_partita (periodo_dal date, periodo_al date, orario_dalle time, orario_alle time);
+		`);
+		const original = readFileSync(originalUrl, "utf8");
+		await db.exec(functionSql(original, "public.publish_announcement_v1")
+			.replace("function public.publish_announcement_v1(", "function public.publish_announcement_core_v1(")
+			.replaceAll("2026-08-24", "2026-09-23"));
+		await db.exec(readFileSync(repairUrl, "utf8"));
+		const definition = (await db.query("select pg_get_functiondef('public.publish_announcement_core_v1(uuid,jsonb,text,text)'::regprocedure) as sql")).rows[0].sql;
+		assert.equal((definition.match(/::date,/g) ?? []).length, 4);
+		assert.equal((definition.match(/::time,/g) ?? []).length, 2);
 	} finally {
 		await db.close();
 	}

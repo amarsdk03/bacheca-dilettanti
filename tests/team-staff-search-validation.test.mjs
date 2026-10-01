@@ -34,7 +34,7 @@ const payload = () => ({
 		detail: {figure_ricercate: ["Allenatore", "Preparatore atletico"], settore: "Juniores", compenso_mensile: "1200", requisiti: "Esperienza.", stagione: "2026/27", descrizione_aggiuntiva: ""},
 		locations: [{regione: "Lazio", citta: "Roma"}], contacts: {email: "info@example.com", phone: ""}, extras: {genericLink: ""},
 	},
-	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
+	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true, newsletterSubscribed: false},
 });
 
 test("staff search normalizes selected figures for the database and rejects old client fields", () => {

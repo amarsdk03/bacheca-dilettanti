@@ -28,6 +28,7 @@ export const PUBLISHABLE_PROFILE_TYPES = [
 	"arbitro",
 	"torneo-evento",
 	"campi-impianti-sportivi",
+	"servizi-consulenze",
 	"creators",
 ] as const satisfies readonly ProfileType[];
 
@@ -50,6 +51,7 @@ export type DatabaseAnnouncementType =
 	| "annuncio_squadra_cerca_sponsor"
 	| "annuncio_staff_sportivo"
 	| "annuncio_arbitro"
+	| "annuncio_servizi_consulenze"
 	| "annuncio_creators"
 	| "annuncio_torneo_evento"
 	| "annuncio_campo_impianto";
@@ -116,6 +118,13 @@ export interface AnnouncementDetailsDrafts {
 		titolo_post: string;
 		descrizione_post: string;
 	};
+	serviziConsulenze: {
+		figura_professionale: string[];
+		specializzazione: string;
+		presentazione_servizi: string;
+		tipologie_sport: string[];
+		descrizione_aggiuntiva: string;
+	};
 	torneoEvento: {
 		nome_evento: string;
 		tipologie_sport: string[];
@@ -180,6 +189,7 @@ export interface PublishAnnouncementPayload {
 		dataConfirmed: boolean;
 		termsAccepted: boolean;
 		privacyAccepted: boolean;
+		newsletterSubscribed: boolean;
 	};
 }
 
@@ -220,6 +230,7 @@ export type AnnouncementValidationField =
 	| "yearFrom"
 	| "yearTo"
 	| "professionalRole"
+	| "servicePresentation"
 	| "requirements"
 	| "matchCategories"
 	| "matchTimes"
@@ -249,6 +260,7 @@ export type AnnouncementValidationErrors = Partial<Record<AnnouncementValidation
 export interface PublishProfileContext {
 	profileId: string;
 	enabledProfileTypes: ProfileType[];
+	authorizedRestrictedProfileTypes: Array<"servizi-consulenze" | "creators">;
 	drafts: ProfileDrafts;
 	locations: Record<ProfileType, ProfileLocationDraft[]>;
 	socialLinks: ProfileSocialLinksByType;
@@ -288,6 +300,7 @@ export function getDatabaseAnnouncementType(
 	if (profileType === "staff-sportivo") return "annuncio_staff_sportivo";
 	if (profileType === "arbitro") return "annuncio_arbitro";
 	if (profileType === "creators") return "annuncio_creators";
+	if (profileType === "servizi-consulenze") return "annuncio_servizi_consulenze";
 	if (profileType === "torneo-evento") return "annuncio_torneo_evento";
 	if (profileType === "campi-impianti-sportivi") return "annuncio_campo_impianto";
 	if (teamSubtype === "cerca-giocatore") return "annuncio_squadra_cerca_giocatore";
@@ -346,6 +359,13 @@ export function createAnnouncementDetailsDrafts(): AnnouncementDetailsDrafts {
 			titolo_post: "",
 			descrizione_post: "",
 		},
+		serviziConsulenze: {
+			figura_professionale: [],
+			specializzazione: "",
+			presentazione_servizi: "",
+			tipologie_sport: [],
+			descrizione_aggiuntiva: "",
+		},
 		torneoEvento: {
 			nome_evento: "",
 			tipologie_sport: [],
@@ -398,8 +418,12 @@ export function getAnnouncementDetail(
 	if (type === "staff-sportivo") return drafts.staffSportivo;
 	if (type === "arbitro") return drafts.arbitro;
 	if (type === "creators") return drafts.creator;
+	if (type === "servizi-consulenze") return drafts.serviziConsulenze;
 	if (type === "torneo-evento") return drafts.torneoEvento;
-	if (type === "campi-impianti-sportivi") return drafts.campoImpianto;
+	if (type === "campi-impianti-sportivi") return {
+		...drafts.campoImpianto,
+		orari: normalizeFacilityOpeningHours(drafts.campoImpianto.orari) ?? drafts.campoImpianto.orari,
+	};
 	if (teamSubtype === "cerca-giocatore") return drafts.squadraCercaGiocatore;
 	if (teamSubtype === "cerca-staff") return drafts.squadraCercaStaff;
 	if (teamSubtype === "cerca-partite-amichevoli") return drafts.squadraCercaPartita;
@@ -443,6 +467,10 @@ export function getAnnouncementValidationErrors(
 
 	if (type === "giocatore" && !nonEmpty(drafts.giocatore.descrizione_aggiuntiva)) {
 		errors.description = "Inserisci una descrizione dell’annuncio.";
+	}
+	if (type === "servizi-consulenze") {
+		if (drafts.serviziConsulenze.figura_professionale.length === 0) errors.professionalRole = "Seleziona almeno una figura professionale.";
+		if (!nonEmpty(drafts.serviziConsulenze.presentazione_servizi)) errors.servicePresentation = "Descrivi il servizio offerto.";
 	}
 	if (type === "squadra" && teamSubtype === "cerca-giocatore") {
 		const draft = drafts.squadraCercaGiocatore;

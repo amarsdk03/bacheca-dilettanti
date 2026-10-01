@@ -58,6 +58,7 @@ export type PublicProfileExperience = PlayerCareerEntry;
 
 export interface PlayerProfileData {
 	age: number | null;
+	birthYear: string | null;
 	sportTypes: string[];
 	primaryRoles: string[];
 	specificRoles: string[];

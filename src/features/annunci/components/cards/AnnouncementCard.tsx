@@ -8,6 +8,8 @@ import AnnouncementTeamMatchSearchCard from "./AnnouncementTeamMatchSearchCard";
 import AnnouncementTeamPlayerSearchCard from "./AnnouncementTeamPlayerSearchCard";
 import AnnouncementTeamSponsorSearchCard from "./AnnouncementTeamSponsorSearchCard";
 import AnnouncementTeamStaffSearchCard from "./AnnouncementTeamStaffSearchCard";
+import AnnouncementCardShell from "./AnnouncementCardShell";
+import {getAnnouncementFacts} from "./announcement-card-model";
 
 export default function AnnouncementCard({announcement}: {announcement: AnnouncementDirectoryItem}) {
 	switch (announcement.type) {
@@ -29,5 +31,9 @@ export default function AnnouncementCard({announcement}: {announcement: Announce
 			return <AnnouncementEventCard announcement={{...announcement, type: "annuncio_torneo_evento"}} />;
 		case "annuncio_campo_impianto":
 			return <AnnouncementFacilityCard announcement={{...announcement, type: "annuncio_campo_impianto"}} />;
+		case "annuncio_servizi_consulenze":
+			return <AnnouncementCardShell announcement={{...announcement, type: "annuncio_servizi_consulenze"}} summary="Servizi e consulenze" emptyDescription="Scopri il servizio offerto." facts={getAnnouncementFacts(announcement, ["Figure professionali", "Specializzazione", "Località"])} />;
+		case "annuncio_creators":
+			return <AnnouncementCardShell announcement={{...announcement, type: "annuncio_creators"}} summary="Contenuto creator" emptyDescription="Scopri il contenuto pubblicato." facts={getAnnouncementFacts(announcement, ["Contenuto", "Località"])} />;
 	}
 }

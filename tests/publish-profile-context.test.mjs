@@ -61,26 +61,29 @@ function createSupabaseMock(rowsByTable) {
 
 async function getEnabledProfileTypes(rowsByTable) {
 	const client = createSupabaseMock({profilo: [{uuid: "profile-1", uuid_utente: "user-1", nascosto: false}], ...rowsByTable});
-	const load = sourceLoader({"@/lib/supabase/server": {createClient: async () => client}});
+	const load = sourceLoader({"@/lib/supabase/server": {createClient: async () => client}, "@/lib/supabase/admin": {createAdminClient: () => client}});
 	const {getPublishProfileContext} = load("src/features/pubblica-annuncio/server/queries.ts");
 	const context = await getPublishProfileContext("user-1");
-	return context?.enabledProfileTypes;
+	return context;
 }
 
 test("enabledProfileTypes include active Creators and Servizi e consulenze profiles", async () => {
-	const enabled = await getEnabledProfileTypes({
+	const context = await getEnabledProfileTypes({
 		profilo_creator: [{id: 1, uuid_profilo: "profile-1", nascosto: false}],
 		profilo_servizi_consulenze: [{id: 2, uuid_profilo: "profile-1", nascosto: false}],
+		restricted_profile_access: [{profile_id: "profile-1", profile_type: "creators"}, {profile_id: "profile-1", profile_type: "servizi-consulenze"}],
 	});
 
-	assert.deepEqual(enabled, ["servizi-consulenze", "creators"]);
+	assert.deepEqual(context.enabledProfileTypes, ["servizi-consulenze", "creators"]);
+	assert.deepEqual(context.authorizedRestrictedProfileTypes, ["creators", "servizi-consulenze"]);
 });
 
 test("enabledProfileTypes omit absent or hidden profiles and keep existing active types", async () => {
-	const enabled = await getEnabledProfileTypes({
+	const context = await getEnabledProfileTypes({
 		profilo_giocatore: [{id: 3, uuid_profilo: "profile-1", nascosto: false}],
 		profilo_creator: [{id: 4, uuid_profilo: "profile-1", nascosto: true}],
 	});
 
-	assert.deepEqual(enabled, ["giocatore"]);
+	assert.deepEqual(context.enabledProfileTypes, ["giocatore"]);
+	assert.deepEqual(context.authorizedRestrictedProfileTypes, []);
 });

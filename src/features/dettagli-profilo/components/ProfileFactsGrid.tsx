@@ -27,10 +27,10 @@ export default function ProfileFactsGrid({facts, layout = "default"}: {
 				)}>
 					<dt className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="size-4 shrink-0" aria-hidden="true" />{label}</dt>
 					<dd className="text-sm leading-6 font-semibold wrap-anywhere sm:text-base">
-						{content ?? (typeof value === "string"
-							? value
-							: value?.length
-								? value.join(", ")
+						{content ?? (Array.isArray(value) && value.length > 0
+							? <span className="flex flex-col">{value.map((item, itemIndex) => <span key={`${item}-${itemIndex}`}>{item}</span>)}</span>
+							: typeof value === "string"
+								? value
 								: <span className="text-sm font-normal text-muted-foreground">Non specificato</span>)}
 					</dd>
 				</div>

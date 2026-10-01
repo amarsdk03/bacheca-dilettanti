@@ -16,6 +16,6 @@ const PRESENTATION = {
 	hasExperiences: true,
 } satisfies ProfileDetailPresentation;
 
-export default function DettagliProfiloServiziConsulenze({profile, actions, authenticated, returnTo}: {profile: GenericProfileDetail<"servizi-consulenze">; actions?: ReactNode; authenticated: boolean; returnTo: string}) {
-	return <ProfileDetailsLayout profile={profile} presentation={PRESENTATION} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
+export default function DettagliProfiloServiziConsulenze({profile, actions, authenticated, isOwner, returnTo}: {profile: GenericProfileDetail<"servizi-consulenze">; actions?: ReactNode; authenticated: boolean; isOwner?: boolean; returnTo: string}) {
+	return <ProfileDetailsLayout profile={profile} presentation={PRESENTATION} actions={actions} authenticated={authenticated} isOwner={isOwner} returnTo={returnTo} />;
 }

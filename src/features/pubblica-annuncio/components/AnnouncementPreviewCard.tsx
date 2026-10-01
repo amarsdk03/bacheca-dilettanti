@@ -100,7 +100,7 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 				</section>}
 				{preview.linkedTeams.length > 0 && <section className="flex flex-col gap-1.5">
 					<h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Squadre collegate</h3>
-					<TeamProfileLinks teams={preview.linkedTeams} />
+					<TeamProfileLinks teams={preview.linkedTeams} newTab />
 				</section>}
 				{preview.announcementType !== "annuncio_squadra_cerca_sponsor" && <section aria-label={locationLabel} className="flex flex-col items-start gap-2">
 					<h3 className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />{locationLabel}</h3>

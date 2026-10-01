@@ -34,6 +34,7 @@ import {
 	getAnnouncementFiltersForDirectoryType,
 } from "@/features/annunci/announcement-model";
 import AnnouncementTypeSelector from "@/features/annunci/AnnouncementTypeSelector";
+import AnnouncementYearRangeFilter from "@/features/annunci/AnnouncementYearRangeFilter";
 import Image from "next/image";
 
 interface AnnunciProps {
@@ -152,7 +153,7 @@ function AnnouncementFiltersForm({
 	type: AnnouncementDirectoryType;
 	idPrefix: string;
 }) {
-	const availableFilters = getAnnouncementFiltersForDirectoryType(type, query.filters.ricercaSquadra);
+	const availableFilters = getAnnouncementFiltersForDirectoryType(type);
 	const resetHref = buildAnnouncementsHref(query, {
 		page: 1,
 		filters: createEmptyAnnouncementFilters(),
@@ -165,16 +166,9 @@ function AnnouncementFiltersForm({
 				includeQuery
 			/>
 			<FieldGroup className="gap-4">
-				{hasFilter(availableFilters, "annoNascita") && (
-					<FilterSelect
-						id={`${idPrefix}-anno-nascita`}
-						name="annoNascita"
-						label="Anno"
-						value={query.filters.annoNascita}
-						allLabel="Qualsiasi anno"
-						options={ANNOUNCEMENT_FILTER_OPTIONS.annate.map((value) => ({value, label: value}))}
-					/>
-				)}
+				{hasFilter(availableFilters, "annoDa") && <AnnouncementYearRangeFilter from={query.filters.annoDa} to={query.filters.annoA} idPrefix={idPrefix} />}
+				{hasFilter(availableFilters, "genere") && <FilterSelect id={`${idPrefix}-genere`} name="genere" label="Genere" value={query.filters.genere} allLabel="Qualsiasi" options={ANNOUNCEMENT_FILTER_OPTIONS.generi.map(value => ({value, label: value}))} />}
+				{hasFilter(availableFilters, "categorieRicercate") && <FilterSelect id={`${idPrefix}-categorie-ricercate`} name="categorieRicercate" label="Categorie ricercate" value={query.filters.categorieRicercate} allLabel="Qualsiasi" options={ANNOUNCEMENT_FILTER_OPTIONS.categorie.map(({value, label}) => ({value, label}))} />}
 
 				{hasFilter(availableFilters, "figura") && (
 					<FilterSelect
@@ -220,16 +214,6 @@ function AnnouncementFiltersForm({
 					/>
 				)}
 
-				{hasFilter(availableFilters, "categoriaAttuale") && (
-					<FilterSelect
-						id={`${idPrefix}-categoria-attuale`}
-						name="categoriaAttuale"
-						label="Categoria attuale"
-						value={query.filters.categoriaAttuale}
-						allLabel="Tutte le categorie"
-						options={ANNOUNCEMENT_FILTER_OPTIONS.categorie.map(({value, label}) => ({value, label}))}
-					/>
-				)}
 
 				{hasFilter(availableFilters, "ricercaSquadra") && (
 					<FilterSelect

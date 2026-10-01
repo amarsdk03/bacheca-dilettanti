@@ -4,6 +4,8 @@ import {
 	type ProfileDrafts,
 	type ProfileLocations,
 	type ProfileType,
+	isRestrictedProfileType,
+	RESTRICTED_PROFILE_TYPES,
 } from "@/features/profilo/profile-model";
 import type {ProfileSocialLinks, ProfileSocialLinksByType,} from "@/features/profilo/profile-social-links";
 import {COOKIE_POLICY_VERSION, PRIVACY_VERSION, TERMS_VERSION} from "@/features/legal/legal-versions";
@@ -11,7 +13,7 @@ import {normalizeInvitationCode} from "@/features/inviti/invitation-code";
 
 export const REGISTRATION_PAYLOAD_VERSION = 1 as const;
 
-export type RegistrableProfileType = Exclude<ProfileType, ComingSoonProfileType>;
+export type RegistrableProfileType = Exclude<ProfileType, ComingSoonProfileType | typeof RESTRICTED_PROFILE_TYPES[number]>;
 
 export interface RegistrationProfilePayload {
 	type: RegistrableProfileType;
@@ -38,7 +40,7 @@ export interface RegistrationPayload {
 export function isRegistrableProfileType(
 	type: ProfileType,
 ): type is RegistrableProfileType {
-	return !isComingSoonProfileType(type);
+	return !isComingSoonProfileType(type) && !isRestrictedProfileType(type);
 }
 
 export function createRegistrationPayload(

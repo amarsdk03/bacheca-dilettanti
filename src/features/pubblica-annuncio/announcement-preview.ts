@@ -37,6 +37,7 @@ function profileTitle(payload: PublishAnnouncementPayload, drafts: ProfileDrafts
 	if (payload.profileType === "squadra") return drafts.squadra.nome_societa || "Squadra";
 	if (payload.profileType === "staff-sportivo") return [drafts["staff-sportivo"].nome, drafts["staff-sportivo"].cognome].filter(Boolean).join(" ") || "Staff sportivo";
 	if (payload.profileType === "arbitro") return [drafts.arbitro.nome, drafts.arbitro.cognome].filter(Boolean).join(" ") || "Arbitro";
+	if (payload.profileType === "servizi-consulenze") return [drafts["servizi-consulenze"].nome, drafts["servizi-consulenze"].cognome].filter(Boolean).join(" ") || "Servizi e consulenze";
 	if (payload.profileType === "creators") return drafts.creators.nome_creator || "Creator";
 	if (payload.profileType === "torneo-evento") return drafts["torneo-evento"].nome_organizzazione || "Organizzazione";
 	return drafts["campi-impianti-sportivi"].nome_organizzazione || "Campo o impianto";

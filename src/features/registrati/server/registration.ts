@@ -1,7 +1,8 @@
 import "server-only";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
-import {getBirthDateError} from "@/features/profilo/birth-date";
+import {getRequiredBirthDateError} from "@/features/profilo/birth-date";
+import {normalizeOptionalTime} from "@/features/pubblica-annuncio/publish-field-validation";
 import {parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 import {isProfileType, MAX_PROFILE_COUNT, type ProfileType,} from "@/features/profilo/profile-model";
 import {PROFILE_SOCIAL_PLATFORMS, type ProfileSocialLinks,} from "@/features/profilo/profile-social-links";
@@ -50,7 +51,6 @@ const MONTHS = new Set([
 	"Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
 	"Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
 ]);
-const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const YEAR_PATTERN = /^\d{4}$/;
 const DAY_PATTERN = /^(?:0?[1-9]|[12]\d|3[01])$/;
 
@@ -177,7 +177,7 @@ function birthDate(
 		month: birthField(value.mese_nascita, "month", profileType),
 		year: birthField(value.anno_nascita, "year", profileType),
 	};
-	const error = getBirthDateError(normalized);
+	const error = getRequiredBirthDateError(normalized);
 	if (error) fail(error, 3, profileType);
 	return normalized;
 }
@@ -299,12 +299,12 @@ function openingHours(value: unknown, profileType: ProfileType): Json[] {
 		}
 		seen.add(entry.giorno);
 		if (typeof entry.attivo !== "boolean") fail("Gli orari inseriti non sono validi.", 3, profileType);
-		const dalle = textValue(entry.dalle, 5, profileType) ?? "";
-		const alle = textValue(entry.alle, 5, profileType) ?? "";
-		if ((dalle && !TIME_PATTERN.test(dalle)) || (alle && !TIME_PATTERN.test(alle))) {
+		const dalle = normalizeOptionalTime(entry.dalle);
+		const alle = normalizeOptionalTime(entry.alle);
+		if (dalle === undefined || alle === undefined) {
 			fail("Gli orari inseriti non sono validi.", 3, profileType);
 		}
-		return {giorno: entry.giorno, attivo: entry.attivo, dalle, alle};
+		return {giorno: entry.giorno, attivo: entry.attivo, dalle: dalle ?? "", alle: alle ?? ""};
 	});
 }
 
@@ -393,7 +393,7 @@ function normalizeDraft(
 	}
 
 	if (type === "staff-sportivo") {
-		assertExactKeys(value, ["anno_nascita", "cognome", "disponibilita", "disponibile_remoto", "figure_professionali", "giorno_nascita", "lista_esperienze", "mese_nascita", "nome", "presentazione", "qualifiche_licenze", "sport_principale", "storico_esperienze"], type);
+		assertExactKeys(value, ["anno_nascita", "cognome", "disponibilita", "disponibile_remoto", "figure_professionali", "giorno_nascita", "lista_esperienze", "mese_nascita", "nome", "presentazione", "qualifiche_licenze", "sport_principale", "storico_esperienze", "tipologie_sport"], type);
 		const normalizedBirthDate = birthDate(value, type);
 		if (typeof value.disponibile_remoto !== "boolean") fail("La disponibilità da remoto non è valida.", 3, type);
 		if (!Array.isArray(value.qualifiche_licenze) || value.qualifiche_licenze.some((entry) => !isRecord(entry) || (entry.stato !== "in-corso" && entry.stato !== "conseguito"))) {
@@ -413,11 +413,12 @@ function normalizeDraft(
 			qualifiche_licenze: experiences(value.qualifiche_licenze, type),
 			sport_principale: baseSport(value.sport_principale, type),
 			storico_esperienze: historicalStaffExperiences(value.storico_esperienze, type),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
 		};
 	}
 
 	if (type === "arbitro") {
-		assertExactKeys(value, ["anno_nascita", "cognome", "disponibilita", "giorno_nascita", "lista_esperienze", "mese_nascita", "nome", "presentazione", "qualifiche_licenze", "sport_principale", "storico_esperienze"], type);
+		assertExactKeys(value, ["anno_nascita", "cognome", "disponibilita", "giorno_nascita", "lista_esperienze", "mese_nascita", "nome", "presentazione", "qualifiche_licenze", "sport_principale", "storico_esperienze", "tipologie_sport"], type);
 		const normalizedBirthDate = birthDate(value, type);
 		if (!Array.isArray(value.qualifiche_licenze) || value.qualifiche_licenze.some((entry) => !isRecord(entry) || (entry.stato !== "in-corso" && entry.stato !== "conseguito"))) {
 			fail("Seleziona lo stato di ogni qualifica o licenza.", 3, type);
@@ -434,6 +435,7 @@ function normalizeDraft(
 			qualifiche_licenze: experiences(value.qualifiche_licenze, type),
 			sport_principale: baseSport(value.sport_principale, type),
 			storico_esperienze: historicalStaffExperiences(value.storico_esperienze, type),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
 		};
 	}
 

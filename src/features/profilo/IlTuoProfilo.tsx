@@ -65,6 +65,7 @@ import {announcementOption} from "@/features/annunci/announcement-model";
 import {requestCurrentUserPasswordReset, signOut} from "@/features/auth/server/actions";
 import {
 	isComingSoonProfileType,
+	isRestrictedProfileType,
 	MAX_PROFILE_COUNT,
 	PROFILE_OPTIONS,
 	type ProfileDrafts,
@@ -327,7 +328,7 @@ function AccountOverview({viewer, imageUrl, hasMainImage, profiles, invitationCo
 							<StarIcon data-icon="inline-start" aria-hidden="true" /><span className="truncate">Principale: {primaryLabel}</span>
 						</Badge>
 					)}
-					<span className="text-xs text-muted-foreground ms-2 mt-0.5"><span className="font-medium text-foreground">{profiles.length}/{MAX_PROFILE_COUNT}</span> sottoprofili attivi</span>
+					<span className="text-xs text-muted-foreground ms-2 mt-0.5"><span className="font-medium text-foreground">{profiles.filter(({type}) => !isRestrictedProfileType(type)).length}/{MAX_PROFILE_COUNT}</span> sottoprofili ordinari{profiles.some(({type}) => isRestrictedProfileType(type)) && ` · ${profiles.filter(({type}) => isRestrictedProfileType(type)).length} riservati`}</span>
 				</div>
 				<form action={signOut} className="ml-auto"><LogoutButton /></form>
 			</CardFooter>
@@ -388,7 +389,7 @@ function ProfileCard({
 	};
 
 	return (
-		<Card className="profile-dashboard-card profile-dashboard-interactive-card h-full" style={{"--profile-accent": accent} as CSSProperties}>
+		<Card className="profile-dashboard-card profile-dashboard-interactive-card profile-dashboard-subprofile-card h-full" style={{"--profile-accent": accent} as CSSProperties}>
 			<CardHeader className="flex flex-wrap items-center justify-between gap-3">
 				<div className="flex min-w-0 items-center gap-3">
 					<ProfileImageEditor
@@ -403,6 +404,7 @@ function ProfileCard({
 					/>
 					<div className="min-w-0">
 						<CardTitle className="wrap-anywhere">{option?.label}</CardTitle>
+						{isRestrictedProfileType(profile.type) && <Badge variant="outline" className="mt-1">Accesso limitato</Badge>}
 					</div>
 				</div>
 				{
@@ -473,6 +475,7 @@ function ProfileCard({
 								<AlertDialogTitle>Rimuovere questo sottoprofilo?</AlertDialogTitle>
 								<AlertDialogDescription>
 									Gli annunci pubblicati resteranno disponibili. Se questo è il profilo principale, il prossimo sottoprofilo attivo verrà promosso automaticamente.
+									{isRestrictedProfileType(profile.type) && " Per ricreare questo sottoprofilo servirà una nuova abilitazione dell’admin."}
 								</AlertDialogDescription>
 							</AlertDialogHeader>
 							<AlertDialogFooter>
@@ -499,20 +502,23 @@ function ProfileCard({
 function InactiveProfileCard({
 	type,
 	disabled,
+	authorized,
 	onEnable,
 }: {
 	type: ProfileType;
 	disabled: boolean;
+	authorized: boolean;
 	onEnable: () => void;
 }) {
 	const option = PROFILE_OPTIONS.find(({value}) => value === type);
 	if (!option) return null;
 
 	const accent = getProfileAccent(type);
-	const comingSoon = isComingSoonProfileType(type);
+	const restricted = isRestrictedProfileType(type);
+	const comingSoon = !restricted && isComingSoonProfileType(type);
 
 	return (
-		<Card size="sm" className="profile-dashboard-card profile-dashboard-interactive-card profile-dashboard-available-card h-full" style={{"--profile-accent": accent} as CSSProperties} data-limit-reached={disabled || comingSoon || undefined}>
+		<Card size="sm" className="profile-dashboard-card profile-dashboard-interactive-card profile-dashboard-available-card profile-dashboard-subprofile-card h-full" style={{"--profile-accent": accent} as CSSProperties} data-limit-reached={disabled || comingSoon || (restricted && !authorized) || undefined}>
 			<CardHeader>
 				<div className="flex min-w-0 items-center gap-3">
 					<div className="profile-dashboard-type-icon flex size-10 shrink-0 items-center justify-center rounded-xl">
@@ -527,11 +533,11 @@ function InactiveProfileCard({
 				<p className="leading-6 text-muted-foreground">{option.description}</p>
 			</CardContent>
 			<CardFooter className="mt-auto flex-wrap justify-between gap-2">
-				{comingSoon ? <ComingSoonBadge /> : <Badge variant="outline">Non attivo</Badge>}
-				{!comingSoon && (
+				{restricted ? <Badge variant="outline">Accesso limitato</Badge> : comingSoon ? <ComingSoonBadge /> : <Badge variant="outline">Non attivo</Badge>}
+				{!comingSoon && (!restricted || authorized) && (
 					<Button type="button" variant="outline" size="sm" onClick={onEnable} disabled={disabled} aria-label={`Abilita il profilo ${option.label}`}>
 						<PlusIcon data-icon="inline-start" aria-hidden="true" />
-						Abilita
+						{restricted ? "Completa profilo" : "Abilita"}
 					</Button>
 				)}
 			</CardFooter>
@@ -541,6 +547,7 @@ function InactiveProfileCard({
 
 function ProfilesSection({
 	profiles,
+	restrictedProfileAccess,
 	drafts,
 	locations,
 	onEnable,
@@ -549,6 +556,7 @@ function ProfilesSection({
 	onRemove,
 }: {
 	profiles: ManagedProfile[];
+	restrictedProfileAccess: ProfileDashboardData["restrictedProfileAccess"];
 	drafts: ProfileDrafts;
 	locations: ProfileLocations;
 	onEnable: (type: ProfileType) => void;
@@ -556,7 +564,8 @@ function ProfilesSection({
 	onMakePrimary: (type: ProfileType) => Promise<ProfileMutationResult>;
 	onRemove: (type: ProfileType) => Promise<ProfileMutationResult>;
 }) {
-	const limitReached = profiles.length >= MAX_PROFILE_COUNT;
+	const ordinaryCount = profiles.filter(({type}) => !isRestrictedProfileType(type)).length;
+	const limitReached = ordinaryCount >= MAX_PROFILE_COUNT;
 
 	return (
 		<div className="grid gap-8">
@@ -564,7 +573,8 @@ function ProfilesSection({
 				<div className="flex flex-col gap-1.5">
 					<div className="flex items-center gap-2">
 						<h2 id="profiles-heading" className="text-xl font-semibold tracking-tight">Sottoprofili attivi</h2>
-						<Badge variant="secondary">{profiles.length}/{MAX_PROFILE_COUNT}</Badge>
+						<Badge variant="secondary">{ordinaryCount}/{MAX_PROFILE_COUNT} ordinari</Badge>
+						{profiles.some(({type}) => isRestrictedProfileType(type)) && <Badge variant="outline">{profiles.filter(({type}) => isRestrictedProfileType(type)).length} riservati</Badge>}
 					</div>
 					<p className="text-sm leading-6 text-muted-foreground">Le identità con cui ti presenti su Bacheca. Aggiorna le informazioni e scegli il tuo profilo principale.</p>
 				</div>
@@ -588,10 +598,10 @@ function ProfilesSection({
 			<section aria-labelledby="available-profiles-heading" className="grid gap-5">
 				<div className="flex flex-col gap-1.5">
 					<h2 id="available-profiles-heading" className="text-xl font-semibold tracking-tight">Altri sottoprofili</h2>
-					<p className="text-sm leading-6 text-muted-foreground">Aggiungi una nuova tipologia: puoi attivare fino a {MAX_PROFILE_COUNT} sottoprofili, uno per categoria.</p>
+					<p className="text-sm leading-6 text-muted-foreground">Aggiungi fino a {MAX_PROFILE_COUNT} sottoprofili ordinari. Servizi e consulenze e Creators richiedono l’abilitazione dell’admin.</p>
 				</div>
 
-				{limitReached && (
+				{limitReached && PROFILE_OPTIONS.some(({value}) => !isRestrictedProfileType(value) && !profiles.some(({type}) => type === value)) && (
 					<Alert>
 						<InfoIcon aria-hidden="true" />
 						<AlertTitle>Hai raggiunto il limite di sottoprofili</AlertTitle>
@@ -601,10 +611,11 @@ function ProfilesSection({
 
 				<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 					{PROFILE_OPTIONS.filter(({value}) => !profiles.some(({type}) => type === value)).map(({value}) => (
-						<InactiveProfileCard
-							key={value}
-							type={value}
-							disabled={limitReached}
+							<InactiveProfileCard
+								key={value}
+								type={value}
+								authorized={restrictedProfileAccess.includes(value as "servizi-consulenze" | "creators")}
+								disabled={limitReached && !isRestrictedProfileType(value)}
 							onEnable={() => onEnable(value)}
 						/>
 					))}
@@ -917,7 +928,7 @@ function SettingsSection({viewer, passwordUpdated, initialNewsletterSubscribed}:
 				<Card className="profile-dashboard-card">
 					<CardHeader className="gap-3">
 						<span className="profile-dashboard-emblem flex size-10 items-center justify-center rounded-xl"><MailIcon className="size-5" aria-hidden="true" /></span>
-						<CardTitle>Notizie e newsletter</CardTitle>
+						<CardTitle>Notizie e comunicazioni</CardTitle>
 						<CardDescription>Scegli se ricevere aggiornamenti e comunicazioni dalla piattaforma.</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -929,7 +940,7 @@ function SettingsSection({viewer, passwordUpdated, initialNewsletterSubscribed}:
 								disabled={newsletterPending}
 							/>
 							<FieldContent>
-								<FieldLabel htmlFor="settings-newsletter" className="font-normal">Ricevi notizie e newsletter</FieldLabel>
+								<FieldLabel htmlFor="settings-newsletter" className="font-normal">Ricevi notizie, newsletter e comunicazioni promozionali</FieldLabel>
 								<FieldDescription>{newsletterPending ? "Salvataggio in corso…" : "Puoi cambiare questa scelta in qualsiasi momento."}</FieldDescription>
 							</FieldContent>
 						</Field>
@@ -1017,6 +1028,7 @@ export default function IlTuoProfilo({
 						<TabsContent value="profilo">
 							<ProfilesSection
 								profiles={profiles}
+								restrictedProfileAccess={data.restrictedProfileAccess}
 								drafts={drafts}
 								locations={locations}
 								onEnable={(profileType) => setEditor({mode: "add", profileType})}

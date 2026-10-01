@@ -19,9 +19,9 @@ const PRESENTATION = {
 		}},
 		{label: "Numero campi pubblicati", icon: MegaphoneIcon, getValue: profile => formatProfileFactCount(profile.announcementCount)},
 	],
-	narrativeFieldLabels: ["Orari", "Servizi inclusi", "Informazioni aggiuntive"],
+	narrativeFieldLabels: ["Informazioni aggiuntive"],
 } satisfies ProfileDetailPresentation;
 
-export default function DettagliProfiloCampiImpianti({profile, actions, authenticated, returnTo}: {profile: GenericProfileDetail<"campi-impianti-sportivi">; actions?: ReactNode; authenticated: boolean; returnTo: string}) {
-	return <ProfileDetailsLayout profile={profile} presentation={PRESENTATION} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
+export default function DettagliProfiloCampiImpianti({profile, actions, authenticated, isOwner, returnTo}: {profile: GenericProfileDetail<"campi-impianti-sportivi">; actions?: ReactNode; authenticated: boolean; isOwner?: boolean; returnTo: string}) {
+	return <ProfileDetailsLayout profile={profile} presentation={PRESENTATION} actions={actions} authenticated={authenticated} isOwner={isOwner} returnTo={returnTo} />;
 }

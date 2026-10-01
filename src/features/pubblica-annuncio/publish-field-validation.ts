@@ -28,7 +28,7 @@ export function normalizeOptionalTime(value: unknown): string | null | undefined
 	if (typeof value !== "string") return undefined;
 	const trimmed = value.trim();
 	if (!trimmed) return null;
-	const incompleteHour = trimmed.match(/^([01]?\d|2[0-3]):(?:--)?$/);
+	const incompleteHour = trimmed.match(/^([01]?\d|2[0-3])(?::(?:--)?)?$/);
 	const normalized = incompleteHour
 		? `${incompleteHour[1].padStart(2, "0")}:00`
 		: trimmed;

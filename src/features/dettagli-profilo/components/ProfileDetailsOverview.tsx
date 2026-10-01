@@ -84,11 +84,30 @@ export default function ProfileDetailsOverview({profile, presentation, authentic
 		...presentation.narrativeFieldLabels,
 		...presentation.facts.flatMap(({label, fieldLabel, sourceFieldLabels = []}) => [label, fieldLabel, ...sourceFieldLabels].filter((value): value is string => Boolean(value))),
 	]);
-	const supportingFields = fields.filter(({label}) => !usedLabels.has(label));
+	const supportingFields = fields.filter(({label}) => !usedLabels.has(label) && (profile.type !== "campi-impianti-sportivi" || label === "Costo di partenza"));
+	const expandedFactFields = fields.filter(field => field.items && field.items.length > 2 && presentation.facts.some(fact => (fact.fieldLabel ?? fact.label) === field.label));
 
 	return (
 		<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-			<div className="flex min-w-0 flex-col gap-5">
+			<aside aria-label="Informazioni del profilo" className="order-1 flex min-w-0 flex-col gap-5 lg:order-2 lg:col-start-2 lg:row-start-1">
+				{supportingFields.length > 0 && <Card className="min-w-0">
+					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{profile.type === "campi-impianti-sportivi" ? "Costo di partenza" : "Altre informazioni"}</h2></CardTitle></CardHeader>
+					<CardContent>{profile.type === "campi-impianti-sportivi" ? (
+						<p className="text-sm leading-6"><ProfileFieldValue field={supportingFields[0]} /></p>
+					) : <dl className="flex flex-col gap-5">
+						{supportingFields.map(field => <div key={field.label} className="flex min-w-0 flex-col gap-2">
+							<dt className="text-sm font-semibold">{field.label}</dt>
+							<dd className="text-sm leading-6 whitespace-pre-wrap wrap-anywhere"><ProfileFieldValue field={field} /></dd>
+						</div>)}
+					</dl>}</CardContent>
+				</Card>}
+				<ProfileLocationsCard locations={profile.locations} />
+			</aside>
+			<div className="order-2 flex min-w-0 flex-col gap-5 lg:order-1 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+				{expandedFactFields.map(field => <Card key={field.label} className="min-w-0">
+					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{field.label}</h2></CardTitle></CardHeader>
+					<CardContent><ProfileFieldValue field={field} /></CardContent>
+				</Card>)}
 				<Card>
 					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Descrizione</h2></CardTitle></CardHeader>
 					<CardContent><div className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{description && description.value !== "Non specificato" ? <ProfileFieldValue field={description} /> : "Descrizione non disponibile"}</div></CardContent>
@@ -100,17 +119,7 @@ export default function ProfileDetailsOverview({profile, presentation, authentic
 					</Card>
 				))}
 			</div>
-			<aside aria-label="Informazioni e contatti" className="flex min-w-0 flex-col gap-5">
-				{supportingFields.length > 0 && <Card className="min-w-0">
-					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Altre informazioni</h2></CardTitle></CardHeader>
-					<CardContent><dl className="flex flex-col gap-5">
-						{supportingFields.map(field => <div key={field.label} className="flex min-w-0 flex-col gap-2">
-							<dt className="text-sm font-semibold">{field.label}</dt>
-							<dd className="text-sm leading-6 whitespace-pre-wrap wrap-anywhere"><ProfileFieldValue field={field} /></dd>
-						</div>)}
-					</dl></CardContent>
-				</Card>}
-				<ProfileLocationsCard locations={profile.locations} />
+			<aside aria-label="Contatti e identificativo" className="order-3 flex min-w-0 flex-col gap-5 lg:col-start-2 lg:row-start-2">
 				<ProfileSocialLinksCard socialLinks={profile.socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />
 				<ProfileIdentifier profileId={profile.id} />
 			</aside>

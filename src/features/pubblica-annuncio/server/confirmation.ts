@@ -53,6 +53,8 @@ const DETAIL_TABLE_BY_TYPE: Record<ActiveAnnouncementType, string> = {
 	annuncio_arbitro: "annuncio_arbitro",
 	annuncio_torneo_evento: "annuncio_torneo_evento",
 	annuncio_campo_impianto: "annuncio_campo_impianto",
+	annuncio_servizi_consulenze: "annuncio_servizi_consulenze",
+	annuncio_creators: "annuncio_creator",
 };
 
 async function loadAuthorName(profileId: string, type: ActiveAnnouncementType) {
@@ -64,6 +66,7 @@ async function loadAuthorName(profileId: string, type: ActiveAnnouncementType) {
 			profilo_giocatore(nome, cognome),
 			profilo_squadra(nome_societa),
 			profilo_staff_sportivo(nome, cognome),
+			profilo_servizi_consulenze(nome, cognome),
 			profilo_arbitro(nome, cognome),
 			profilo_torneo_evento(nome_organizzazione),
 			profilo_campi_impianti(nome_organizzazione)
@@ -77,6 +80,7 @@ async function loadAuthorName(profileId: string, type: ActiveAnnouncementType) {
 		profileType === "giocatore" ? "profilo_giocatore"
 			: profileType === "squadra" ? "profilo_squadra"
 				: profileType === "staff-sportivo" ? "profilo_staff_sportivo"
+					: profileType === "servizi-consulenze" ? "profilo_servizi_consulenze"
 					: profileType === "arbitro" ? "profilo_arbitro"
 						: profileType === "torneo-evento" ? "profilo_torneo_evento"
 							: "profilo_campi_impianti"
@@ -113,6 +117,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 				annuncio_arbitro(tipologie_sport, categorie_ricercate, disponibilita_occupazione, automunito, disponibilita_spostamento, descrizione_aggiuntiva, lista_esperienze, qualifiche_licenze),
 				annuncio_torneo_evento(nome_evento, tipologie_sport, modalita_iscrizione, annate_ammesse_da, annate_ammesse_a, numero_squadre, costo_partecipazione, tipo_partecipazione, lista_premi_trofei, descrizione_aggiuntiva),
 				annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva, indirizzo),
+				annuncio_servizi_consulenze(figura_professionale, specializzazione, presentazione_servizi, tipologie_sport, descrizione_aggiuntiva),
 				annuncio_creator(titolo_post, descrizione_post),
 				localita_annuncio(regione, citta),
 				contatto_annuncio(tipo, valore),
@@ -125,7 +130,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			console.error("[publish-confirmation] Owner query failed", {code: error.code});
 			return {status: "error"};
 		}
-		if (!data || (!isActiveAnnouncementType(data.tipologia_annuncio) && data.tipologia_annuncio !== "annuncio_creators")) return {status: "not-found"};
+		if (!data || !isActiveAnnouncementType(data.tipologia_annuncio)) return {status: "not-found"};
 
 		const row = data as unknown as Record<string, unknown>;
 		const type = data.tipologia_annuncio;

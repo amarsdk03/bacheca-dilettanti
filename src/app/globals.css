@@ -69,6 +69,7 @@
     --brand-indigo-light: #ad99ff;
     --brand-ink: #111111;
     --brand-paper: #FBFAFF;
+    --announcement-accent: var(--brand-indigo);
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -408,6 +409,11 @@
     --card-spacing: 1rem;
 }
 
+.profile-dashboard .profile-dashboard-subprofile-card {
+    border-color: color-mix(in srgb, var(--profile-accent) 28%, var(--border));
+    background: linear-gradient(145deg, color-mix(in srgb, var(--profile-accent) 5%, var(--card)), var(--card) 72%);
+}
+
 .profile-dashboard .profile-dashboard-interactive-card {
     transition: border-color 180ms ease, box-shadow 180ms ease;
 }
@@ -545,6 +551,16 @@
 .announcement-preview-card .announcement-preview-type-badge {
     color: color-mix(in srgb, var(--preview-accent) 65%, #16121e);
     background: color-mix(in srgb, var(--preview-accent) 12%, white);
+}
+
+.announcement-themed-card {
+    --announcement-accent: var(--brand-indigo);
+    background-color: color-mix(in srgb, var(--announcement-accent) 5%, var(--card));
+    background-image:
+        radial-gradient(circle, color-mix(in srgb, var(--announcement-accent) 15%, transparent) 0.5px, transparent 1.5px),
+        linear-gradient(135deg, color-mix(in srgb, var(--announcement-accent) 8%, transparent), transparent 60%);
+    background-size: 14px 14px, 100% 100%;
+    border-color: color-mix(in srgb, var(--announcement-accent) 22%, var(--border));
 }
 
 .priority-announcement {

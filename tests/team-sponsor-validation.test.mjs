@@ -34,7 +34,7 @@ const payload = () => ({
 		detail: {categoria_settore: "Prima squadra", offerta_fornita: "Logo sulle divise", descrizione_aggiuntiva: ""},
 		locations: [], contacts: {email: "info@example.com", phone: ""}, extras: {genericLink: ""},
 	},
-	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
+	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true, newsletterSubscribed: false},
 });
 
 test("sponsor server payload accepts no support or locations and rejects both legacy support input and supplied locations", () => {

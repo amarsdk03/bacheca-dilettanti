@@ -7,13 +7,14 @@ import {formatProfileFactCount, getProfileDetailFieldValue} from "../profile-det
 
 const PRESENTATION = {
 	facts: [
-		{label: "Tipologia calcio", icon: ShirtIcon, getValue: profile => getProfileDetailFieldValue(profile, "Tipologie sportive")},
+		{label: "Tipologia calcio", fieldLabel: "Tipologie sportive", icon: ShirtIcon, getValue: profile => getProfileDetailFieldValue(profile, "Tipologie sportive")},
 		{label: "Follower", icon: UserRoundPlusIcon, getValue: profile => formatProfileFactCount(profile.followerCount)},
-		{label: "Annunci pubblicati", icon: MegaphoneIcon, getValue: profile => formatProfileFactCount(profile.announcementCount)},
+		{label: "Eventi pubblicati", icon: MegaphoneIcon, getValue: profile => formatProfileFactCount(profile.announcementCount)},
 	],
 	narrativeFieldLabels: [],
+	announcementsLabel: "Eventi pubblicati",
 } satisfies ProfileDetailPresentation;
 
-export default function DettagliProfiloTorneoEvento({profile, actions, authenticated, returnTo}: {profile: GenericProfileDetail<"torneo-evento">; actions?: ReactNode; authenticated: boolean; returnTo: string}) {
-	return <ProfileDetailsLayout profile={profile} presentation={PRESENTATION} actions={actions} authenticated={authenticated} returnTo={returnTo} />;
+export default function DettagliProfiloTorneoEvento({profile, actions, authenticated, isOwner, returnTo}: {profile: GenericProfileDetail<"torneo-evento">; actions?: ReactNode; authenticated: boolean; isOwner?: boolean; returnTo: string}) {
+	return <ProfileDetailsLayout profile={profile} presentation={PRESENTATION} actions={actions} authenticated={authenticated} isOwner={isOwner} returnTo={returnTo} />;
 }

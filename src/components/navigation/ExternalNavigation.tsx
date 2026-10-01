@@ -12,6 +12,7 @@ import {
 	AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import {externalNavigationUrl} from "./external-navigation";
+import {TriangleAlertIcon} from "lucide-react";
 
 interface NavigationRequest {
 	href: string;
@@ -32,12 +33,25 @@ export function ExternalNavigationProvider({children}: {children: ReactNode}) {
 		<AlertDialog open={open} onOpenChange={setOpen}>
 			<AlertDialogContent initialFocus={cancelRef} finalFocus={() => pending?.source ?? null}>
 				<AlertDialogHeader>
-					<AlertDialogTitle>Stai aprendo un sito esterno</AlertDialogTitle>
-					<AlertDialogDescription>Sarai reindirizzato a <span className="font-medium wrap-anywhere">{pending?.host}</span>, un sito esterno a Bacheca Dilettanti. Vuoi continuare?</AlertDialogDescription>
+					<AlertDialogTitle className={"flex flex-row justify-start items-center gap-2 mb-1"}>
+						<TriangleAlertIcon /> Stai aprendo un sito esterno
+					</AlertDialogTitle>
+					<AlertDialogDescription>
+						Sarai reindirizzato a <span className="font-semibold wrap-anywhere">{pending?.host}</span>, sei sicuro di voler procedere?
+						<div className={"my-1"} />
+						Questo link non è affiliato o verificato da parte di Bacheca Dilettanti: procedi con cautela.
+					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
 					<AlertDialogCancel ref={cancelRef}>Annulla</AlertDialogCancel>
-					<AlertDialogAction nativeButton={false} render={<a href={pending?.href} target={pending?.target} rel="noopener noreferrer" />} onClick={() => setOpen(false)}>Continua</AlertDialogAction>
+					<AlertDialogAction
+						nativeButton={false}
+						render={<a href={pending?.href} target={pending?.target} rel="noopener noreferrer" />}
+						onClick={() => setOpen(false)}
+						className={"bg-yellow-400 border-yellow-500 hover:bg-amber-300 text-black"}
+					>
+						Continua
+					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>

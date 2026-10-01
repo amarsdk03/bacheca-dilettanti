@@ -42,6 +42,7 @@ interface ConfermaInvioAnnuncioProps {
 	imagePreviewUrl: string | null;
 	profileDrafts: ProfileDrafts;
 	authenticated: boolean;
+	registered: boolean;
 	onEditStep: (step: number) => void;
 }
 
@@ -67,12 +68,14 @@ export default function ConfermaInvioAnnuncio({
 	imagePreviewUrl,
 	profileDrafts,
 	authenticated,
+	registered,
 	onEditStep,
 }: ConfermaInvioAnnuncioProps) {
 	const router = useRouter();
 	const [dataConfirmed, setDataConfirmed] = useState(false);
 	const [termsAccepted, setTermsAccepted] = useState(false);
 	const [privacyAccepted, setPrivacyAccepted] = useState(false);
+	const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
 	const [validationVisible, setValidationVisible] = useState(false);
 	const [verificationEmail, setVerificationEmail] = useState(payload.announcement.contacts.email);
 	const [requestedEmail, setRequestedEmail] = useState<string | null>(null);
@@ -277,7 +280,7 @@ export default function ConfermaInvioAnnuncio({
 		try {
 			const finalPayload = {
 				...payload,
-				consents: {dataConfirmed, termsAccepted, privacyAccepted},
+				consents: {dataConfirmed, termsAccepted, privacyAccepted, newsletterSubscribed: !registered && newsletterSubscribed},
 			};
 			const formData = new FormData();
 			formData.set("payload", JSON.stringify(finalPayload));
@@ -360,7 +363,7 @@ export default function ConfermaInvioAnnuncio({
 								{registeredEmail ? (
 									<FieldError>
 										Email già registrata,{" "}
-										<Link href="/accedi?next=%2Fpubblica-annuncio" className="underline underline-offset-4">accedi al profilo per pubblicare annunci</Link>
+										<Link href="/accedi?next=%2Fpubblica-annuncio" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">accedi al profilo per pubblicare annunci</Link>
 									</FieldError>
 								) : displayedEmailError ? (
 									<FieldError>{displayedEmailError}</FieldError>
@@ -467,6 +470,7 @@ export default function ConfermaInvioAnnuncio({
 								<Link
 									href="/termini-di-servizio"
 									target="_blank"
+									rel="noopener noreferrer"
 									className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4"
 								>
 									Termini di servizio.
@@ -483,6 +487,7 @@ export default function ConfermaInvioAnnuncio({
 								<Link
 									href="/privacy-policy"
 									target="_blank"
+									rel="noopener noreferrer"
 									className="font-medium text-brand-indigo underline underline-offset-2 transition-all duration-200 hover:text-violet-800 hover:underline-offset-4"
 								>
 									l’informativa sulla Privacy
@@ -491,6 +496,13 @@ export default function ConfermaInvioAnnuncio({
 							</FieldLabel>
 						</FieldContent>
 					</Field>
+					{!registered && <Field orientation="horizontal">
+						<Checkbox id="confirm-newsletter" checked={newsletterSubscribed} onCheckedChange={(checked) => setNewsletterSubscribed(Boolean(checked))} />
+						<FieldContent>
+							<FieldLabel htmlFor="confirm-newsletter" className="font-normal">Desidero ricevere notizie, newsletter e comunicazioni promozionali da Bacheca Dilettanti.</FieldLabel>
+							<FieldDescription>Scelta facoltativa, modificabile dopo la registrazione nelle impostazioni del profilo.</FieldDescription>
+						</FieldContent>
+					</Field>}
 				</FieldGroup>
 			</FieldSet>
 

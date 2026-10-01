@@ -13,12 +13,14 @@ export default function ProfileDetailsLayout<Type extends NonPlayerProfileType>(
 	presentation,
 	actions,
 	authenticated,
+	isOwner,
 	returnTo,
 }: {
 	profile: GenericProfileDetail<Type>;
 	presentation: ProfileDetailPresentation;
 	actions?: ReactNode;
 	authenticated: boolean;
+	isOwner?: boolean;
 	returnTo: string;
 }) {
 	return (
@@ -35,7 +37,7 @@ export default function ProfileDetailsLayout<Type extends NonPlayerProfileType>(
 				career={presentation.hasExperiences ? profile.qualifications ? <div className="grid gap-6"><ProfileExperienceHistory title="Lista esperienze" experiences={profile.experiences} /><ProfileExperienceHistory title="Qualifiche / patentini / licenze" concludedLabel="Conseguito" experiences={profile.qualifications} /></div> : <ProfileExperienceHistory experiences={profile.experiences} /> : undefined}
 				careerLabel="Esperienze"
 				announcementsLabel={presentation.announcementsLabel}
-				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} />}
+				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} isOwner={isOwner} />}
 				similarProfiles={<SimilarProfiles profiles={profile.similarProfiles} unavailable={profile.similarProfilesUnavailable} />}
 			/>
 		</div>

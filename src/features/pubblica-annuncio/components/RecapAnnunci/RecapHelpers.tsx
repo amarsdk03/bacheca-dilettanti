@@ -103,7 +103,7 @@ export function EsperienzeRecap({esperienze}: {esperienze: EsperienzaAnnuncio[]}
 									: ""}
 							</p>
 							{esperienza.squadraProfiloId && esperienza.ente && (
-								<TeamProfileLinks teams={[{profileId: esperienza.squadraProfiloId, name: esperienza.ente}]} className="mt-1" />
+								<TeamProfileLinks teams={[{profileId: esperienza.squadraProfiloId, name: esperienza.ente}]} className="mt-1" newTab />
 							)}
 							{esperienza.descrizione.trim() !== "" && (
 								<p className="mt-1 whitespace-pre-wrap text-muted-foreground">

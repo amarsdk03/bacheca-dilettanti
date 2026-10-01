@@ -101,8 +101,9 @@ test("leap birthdays use March 1 in a non-leap year", () => {
 
 test("public projection contains only approved properties and safe highlights", () => {
 	const result = toPublicPlayerData({...player, email: "private@example.test", note: "private"}, "javascript:alert(1)", now);
-	assert.deepEqual(Object.keys(result).sort(), ["age", "sportTypes", "primaryRoles", "specificRoles", "currentCategory", "preferredCategories", "preferredFoot", "gender", "nationality", "nationalityCode", "height", "weight", "presentation", "career", "highlightsUrl"].sort());
+	assert.deepEqual(Object.keys(result).sort(), ["age", "birthYear", "sportTypes", "primaryRoles", "specificRoles", "currentCategory", "preferredCategories", "preferredFoot", "gender", "nationality", "nationalityCode", "height", "weight", "presentation", "career", "highlightsUrl"].sort());
 	assert.equal(result.age, 26);
+	assert.equal(result.birthYear, "2000");
 	assert.equal(result.highlightsUrl, null);
 	assert.deepEqual(result.sportTypes, ["Calcio 11", "Calcio 5", "Calcio storico"]);
 	assert.equal(result.presentation, "Presentazione");
@@ -110,7 +111,7 @@ test("public projection contains only approved properties and safe highlights", 
 	assert.equal(result.gender, "Uomo");
 	assert.equal(result.nationality, "Italia");
 	assert.equal(result.nationalityCode, "IT");
-	assert.doesNotMatch(JSON.stringify(result), /nascita|private@example|2000/);
+	assert.doesNotMatch(JSON.stringify(result), /nascita|private@example/);
 	assert.equal(toPublicPlayerData(player, "https://example.test/video", now).highlightsUrl, "https://example.test/video");
 });
 
@@ -253,6 +254,26 @@ test("legacy football type filters resolve to the current label", () => {
 	assert.equal(announcementOption("annuncio_servizi_consulenze").profileType, "servizi-consulenze");
 });
 
+test("profile directory keeps completion and followers ahead of stable randomized ties", () => {
+	const {sortRankedDirectoryProfiles} = load("src/features/profili/profile-directory-ranking.ts");
+	const {parseProfileDirectoryQuery, buildProfilesHref} = load("src/features/profili/profile-directory-model.ts");
+	const profiles = Array.from({length: 20}, (_, index) => ({
+		profile: {id: `profile-${index}`, type: "giocatore"},
+		completionPercentage: index === 0 ? 90 : 80,
+		followerCount: index === 1 ? 20 : 3,
+	}));
+	const ids = seed => sortRankedDirectoryProfiles([...profiles], seed).map(({profile}) => profile.id);
+	const first = ids("seed-one");
+	assert.deepEqual(first.slice(0, 2), ["profile-0", "profile-1"]);
+	assert.deepEqual(first, ids("seed-one"));
+	assert.notDeepEqual(first.slice(2), ids("seed-two").slice(2));
+	const seed = "a".repeat(32);
+	const query = parseProfileDirectoryQuery({page: "2", seed});
+	assert.equal(query.sortSeed, seed);
+	assert.match(buildProfilesHref(query, {page: 3, sortSeed: query.sortSeed}), /page=3&seed=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/);
+	assert.equal(parseProfileDirectoryQuery({seed: "invalid"}).sortSeed, null);
+});
+
 test("single-location profile editor shows only the first saved location", () => {
 	const ProfileLocationsField = sourceLoader()("src/features/profilo/ProfileLocationsField.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(ProfileLocationsField, {
@@ -274,7 +295,7 @@ test("player form disables current category when availability is Svincolato", ()
 	const html = renderToStaticMarkup(React.createElement(Form, {type: "giocatore", drafts, locations: createProfileLocations(), socialLinks: createProfileSocialLinks().giocatore, onChange: () => {}, onLocationsChange: () => {}, onSocialLinksChange: () => {}}));
 	assert.match(html, /Categoria attuale/);
 	assert.match(html, /id="[^"]*-categoria-attuale"[^>]*disabled/);
-	assert.match(html, /anno è obbligatorio/);
+	assert.match(html, /Data di nascita/);
 	assert.match(html, /Nazionalità/);
 });
 
@@ -320,12 +341,11 @@ test("player header renders the ordered public facts", () => {
 	assert.ok(roleBadge >= 0 && roleBadge < nationalityFlag && nationalityFlag < profileBadge);
 	const factLabels = [...html.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>/g)]
 		.map(match => match[1].replace(/<[^>]+>/g, ""));
-	assert.deepEqual(factLabels, ["Età", "Genere", "Altezza", "Piede", "Nazionalità", "Disponibilità"]);
+	assert.deepEqual(factLabels, ["Età", "Genere", "Altezza", "Piede", "Categoria attuale", "Disponibilità"]);
 	assert.doesNotMatch(html, /Principale:/);
-	for (const value of ["26 anni", "180 cm", "Destro", "Uomo", "Italia", "Disponibile subito", "Difensore", "Condividi"]) assert.ok(html.includes(value), value);
+	for (const value of ["26 (2000)", "180 cm", "Destro", "Uomo", "Eccellenza", "Disponibile subito", "Difensore", "Condividi"]) assert.ok(html.includes(value), value);
 	assert.match(html, /<header[^>]*>[\s\S]*public-profile-hero[\s\S]*<dl[\s\S]*<\/header>/);
-	assert.match(html, /Italia[\s\S]*<svg/);
-	assert.doesNotMatch(html, /nascita|>2000<|Una presentazione/);
+	assert.doesNotMatch(html, /nascita|Una presentazione/);
 });
 
 test("player results card shows only the requested four facts", () => {
@@ -429,7 +449,10 @@ test("player overview shows grouped locations, visible social URLs and highlight
 	assert.ok(sidebar);
 	assert.doesNotMatch(html, /campo\.png/);
 	assert.doesNotMatch(sidebar, /campo\.png|grid-cols-3 grid-rows-7|Principale:/);
-	for (const value of ["Tipologie calcio", "Calcio 11", "Calcio 5", "Ruoli principali", "Difensore", "Ruoli specifici", "Terzino destro", "Categorie ricercate", "Eccellenza", "Social", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]) assert.ok(sidebar.includes(value), value);
+	for (const value of ["Tipologie calcio", "Calcio 11", "Calcio 5", "Ruoli principali", "Difensore", "Categorie ricercate", "Eccellenza", "Social", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]) assert.ok(sidebar.includes(value), value);
+	assert.match(html, /<h2[^>]*>Informazioni<\/h2>[\s\S]*Ruoli specifici[\s\S]*Terzino destro[\s\S]*Descrizione del giocatore/);
+	assert.ok(html.indexOf('aria-label="Informazioni sportive"') < html.indexOf('>Descrizione</h2>'));
+	assert.ok(html.indexOf('aria-label="Contatti e identificativo"') > html.indexOf('>Descrizione</h2>'));
 	assert.ok(sidebar.indexOf(">Tipologie calcio<") < sidebar.indexOf(">Ruoli principali<"));
 	assert.ok(sidebar.indexOf("Categorie ricercate") < sidebar.indexOf(">Località<"));
 	assert.ok(sidebar.indexOf(">Social<") < sidebar.indexOf("UUID profilo"));
@@ -479,6 +502,29 @@ function fixtureClient(results) {
 	};
 }
 
+test("directory ranks canonical completion before follower count without exposing ranking inputs", async () => {
+	const id = suffix => `${suffix.repeat(8)}-${suffix.repeat(4)}-4${suffix.repeat(3)}-8${suffix.repeat(3)}-${suffix.repeat(12)}`;
+	const row = (suffix, childId, presentation) => ({
+		uuid: id(suffix), tipologia_principale: "squadra", ultima_modifica_il: "2026-10-01T10:00:00Z",
+		confermato_il: null, verificato_il: null, link_foto_profilo: null,
+		localita_profilo: [{id_sottoprofilo: childId, sottoprofilo: "squadra", regione: "Lazio", citta: "Roma"}],
+		profilo_squadra: [{id: childId, nascosto: false, nome_societa: `Squadra ${suffix}`, tipologie_sport: ["Calcio 11"], categoria_attuale: "eccellenza", presentazione: presentation}],
+	});
+	const rows = [row("a", 1, "Completo A"), row("b", 2, null), row("c", 3, "Completo C")];
+	const follows = Array.from({length: 5}, (_, index) => ({uuid_profilo_seguito: index === 0 ? id("c") : id("b")}));
+	const client = fixtureClient({profilo: {data: rows, error: null}, profilo_follow: {data: follows, error: null}});
+	const {getProfileDirectory} = sourceLoader({
+		"@/lib/supabase/admin": {createAdminClient: () => client},
+		"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => new Map()},
+	})("src/features/profili/server/queries.ts");
+	const query = {...load("src/features/profili/profile-directory-model.ts").parseProfileDirectoryQuery({}), sortSeed: "a".repeat(32)};
+	const result = await getProfileDirectory(query);
+	assert.equal(result.error, false);
+	assert.deepEqual(result.profiles.map(profile => profile.id), [id("c"), id("a"), id("b")]);
+	assert.ok(client.calls.some(call => call.table === "profilo_follow" && call.operations.some(([method]) => method === "range")));
+	assert.ok(result.profiles.every(profile => !Object.hasOwn(profile, "completionPercentage") && !Object.hasOwn(profile, "followerCount")));
+});
+
 test("detail query preserves visibility filters and exposes age without birth parts", async () => {
 	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 	const client = fixtureClient({
@@ -501,7 +547,8 @@ test("detail query preserves visibility filters and exposes age without birth pa
 	const followerQuery = client.calls.find(call => call.table === "profilo_follow");
 	assert.deepEqual(followerQuery.operations, [["select", "uuid_profilo_seguito", {count: "exact", head: true}], ["eq", "uuid_profilo_seguito", id]]);
 	assert.deepEqual(result.profile.locations, [{region: "Lazio", city: "Roma"}, {region: "Toscana", city: null}]);
-	assert.doesNotMatch(JSON.stringify(result), /nascita|2000|Wrong/);
+	assert.equal(result.profile.player.birthYear, "2000");
+	assert.doesNotMatch(JSON.stringify(result), /nascita|Wrong/);
 	for (const table of ["profilo", "profilo_giocatore", "annuncio"]) {
 		assert.ok(client.calls.find(call => call.table === table).operations.some(operation => JSON.stringify(operation) === JSON.stringify(["eq", "nascosto", false])));
 	}
@@ -527,8 +574,8 @@ test("referee detail query exposes calculated age without returning birth date p
 	const {getProfileDetail} = queryLoad("src/features/dettagli-profilo/server/profile-detail-query.ts");
 	const result = await getProfileDetail(id, "arbitro");
 	assert.equal(result.status, "ok");
-	assert.ok(result.profile.primaryFields.some(field => field.label === "Età" && /^\d+ anni$/.test(field.value)));
-	assert.doesNotMatch(JSON.stringify(result.profile), /giorno_nascita|mese_nascita|anno_nascita|Settembre|2000/);
+	assert.ok(result.profile.primaryFields.some(field => field.label === "Età" && /^\d+ \(2000\)$/.test(field.value)));
+	assert.doesNotMatch(JSON.stringify(result.profile), /giorno_nascita|mese_nascita|anno_nascita|Settembre/);
 	const refereeQuery = client.calls.find(call => call.table === "profilo_arbitro" && call.operations.some(([method]) => method === "maybeSingle"));
 	assert.match(refereeQuery.operations.find(([method]) => method === "select")[1], /giorno_nascita.*mese_nascita.*anno_nascita/);
 });
@@ -609,11 +656,11 @@ test("an announcement failure leaves player details available", async (t) => {
 
 const nonPlayerCases = [
 	["squadra", "Squadra", ["Tipologia calcio", "Categoria attuale", "Follower", "Annunci pubblicati"]],
-	["staff-sportivo", "StaffSportivo", ["Mansioni", "Disponibilità", "Disponibile da remoto"]],
+	["staff-sportivo", "StaffSportivo", ["Mansioni", "Tipologie calcio", "Disponibilità", "Disponibile da remoto"]],
 	["servizi-consulenze", "ServiziConsulenze", ["Mansioni", "Tipologia calcio", "Disponibilità", "Automunito"]],
-	["arbitro", "Arbitro", ["Età", "Disponibilità", "Zona di residenza"]],
+	["arbitro", "Arbitro", ["Età", "Tipologie calcio", "Disponibilità", "Zona di residenza"]],
 	["creators", "Creator", ["Tipologia contenuti", "Numero annunci pubblicati"]],
-	["torneo-evento", "TorneoEvento", ["Tipologia calcio", "Follower", "Annunci pubblicati"]],
+	["torneo-evento", "TorneoEvento", ["Tipologia calcio", "Follower", "Eventi pubblicati"]],
 	["campi-impianti-sportivi", "CampiImpianti", ["Tipologia campi disponibili", "Numero Follower", "Sede dell’impianto / struttura", "Numero campi pubblicati"]],
 ];
 
@@ -634,31 +681,31 @@ function genericProfile(type, overrides = {}) {
 function renderedFacts(html) {
 	const header = html.match(/<header\b[\s\S]*?<\/header>/)?.[0] ?? html;
 	return [...header.matchAll(/<dt\b[^>]*>(.*?)<\/dt>\s*<dd\b[^>]*>(.*?)<\/dd>/gs)]
-		.map(([, label, value]) => [label.replace(/<[^>]*>/g, ""), value.replace(/<[^>]*>/g, "")]);
+		.map(([, label, value]) => [label.replace(/<[^>]*>/g, ""), value.replace(/<\/span><span\b[^>]*>/g, "\n").replace(/<[^>]*>/g, "")]);
 }
 
 test("all seven non-player profiles show ordered facts, integrated actions and sidebar contacts", () => {
 	const values = {
 		"Tipologie sportive": ["Calcio 11", "Calcio 5", "Calcio 8"],
 		"Tipologia campi disponibili": ["Calcio 11", "Calcio 5", "Calcio 8"], "Indirizzo del campo": "Via Roma 1",
-		"Tipologia calcio": ["Calcio 11", "Calcio 5"], "Categoria attuale": "Calcio 11 (Maschile) · Eccellenza",
+		"Tipologia calcio": ["Calcio 11", "Calcio 5"], "Tipologie calcio": ["Calcio 11", "Calcio 5", "Calcio 8"], "Categoria attuale": "Calcio 11 (Maschile) · Eccellenza",
 		"Figure professionali": ["Allenatore", "Preparatore atletico", "Match analyst"], "Disponibilità": "Disponibile subito",
 		"Disponibile anche da remoto": "No", "Automunito": "Sì", "Tipologia di contenuti": ["Video", "Podcast"], "Età": "35 anni",
 	};
 	for (const [type, name, labels] of nonPlayerCases) {
 		const Component = load(`src/features/dettagli-profilo/components/types/DettagliProfilo${name}.tsx`).default;
-		const fieldLabels = new Set(["Tipologie sportive", "Tipologia campi disponibili", "Tipologia calcio", "Figure professionali", "Tipologia di contenuti"]);
+		const fieldLabels = new Set(["Tipologie sportive", "Tipologia campi disponibili", "Tipologia calcio", "Tipologie calcio", "Figure professionali", "Tipologia di contenuti"]);
 		const primaryFields = Object.entries(values).map(([label, value]) => ({label, value: Array.isArray(value) ? value.join(", ") : value, ...(fieldLabels.has(label) ? {items: value} : {})}));
 		const profile = genericProfile(type, {primaryFields});
 		const html = renderToStaticMarkup(React.createElement(Component, {profile, actions: React.createElement("button", null, "Condividi") }));
 		const expectedValues = {
-			squadra: ["Calcio 11, Calcio 5", "Calcio 11 (Maschile) · Eccellenza", (1234).toLocaleString("it-IT"), "7"],
-			"staff-sportivo": ["Allenatore, Preparatore atletico +1", "Disponibile subito", "No"],
-			"servizi-consulenze": ["Allenatore, Preparatore atletico +1", "Calcio 11, Calcio 5 +1", "Disponibile subito", "Sì"],
-			arbitro: ["35 anni", "Disponibile subito", "Lazio"],
-			creators: ["Video, Podcast", "7"],
-			"torneo-evento": ["Calcio 11, Calcio 5 +1", (1234).toLocaleString("it-IT"), "7"],
-			"campi-impianti-sportivi": ["Calcio 11, Calcio 5 +1", (1234).toLocaleString("it-IT"), "Via Roma 1, Roma, Lazio, Viterbo, Lazio", "7"],
+			squadra: ["Calcio 11\nCalcio 5", "Calcio 11 (Maschile) · Eccellenza", (1234).toLocaleString("it-IT"), "7"],
+			"staff-sportivo": ["Allenatore\nPreparatore atletico\n+1", "Calcio 11\nCalcio 5\n+1", "Disponibile subito", "No"],
+			"servizi-consulenze": ["Allenatore\nPreparatore atletico\n+1", "Calcio 11\nCalcio 5\n+1", "Disponibile subito", "Sì"],
+			arbitro: ["35 anni", "Calcio 11\nCalcio 5\n+1", "Disponibile subito", "Lazio"],
+			creators: ["Video\nPodcast", "7"],
+			"torneo-evento": ["Calcio 11\nCalcio 5\n+1", (1234).toLocaleString("it-IT"), "7"],
+			"campi-impianti-sportivi": ["Calcio 11\nCalcio 5\n+1", (1234).toLocaleString("it-IT"), "Via Roma 1, Roma, Lazio, Viterbo, Lazio", "7"],
 		}[type];
 		assert.deepEqual(renderedFacts(html), labels.map((label, index) => [label, expectedValues[index]]), type);
 		assert.match(html, /<header\b[\s\S]*Condividi[\s\S]*<\/header>/);
@@ -667,20 +714,25 @@ test("all seven non-player profiles show ordered facts, integrated actions and s
 		assert.match(html, /Profilo verificato ufficialmente/);
 		assert.match(html, /profile-section-navigation/);
 		assert.match(html, /aria-label="Informazioni del profilo"/);
-		assert.match(html, type === "campi-impianti-sportivi" ? /<span>Campi disponibili<\/span>/ : /<span>Annunci<\/span>/);
+		assert.match(html, type === "campi-impianti-sportivi" ? /<span>Campi disponibili<\/span>/ : type === "torneo-evento" ? /<span>Eventi pubblicati<\/span>/ : /<span>Annunci<\/span>/);
 		assert.match(html, /Profili simili/);
 		assert.match(html, /Descrizione dimostrativa/);
-		const sidebar = html.match(/<aside\b[\s\S]*?<\/aside>/)?.[0] ?? "";
+		assert.ok(html.indexOf('aria-label="Informazioni del profilo"') < html.indexOf('>Descrizione</h2>'), type);
+		assert.ok(html.indexOf('aria-label="Contatti e identificativo"') > html.indexOf('>Descrizione</h2>'), type);
+		const sidebar = [...html.matchAll(/<aside\b[\s\S]*?<\/aside>/g)].map(([value]) => value).join("");
 		for (const content of ["Lazio", "Roma", "Viterbo", "instagram.com/profilo", "youtube.com/@profilo", "Copia UUID del profilo"]) assert.ok(sidebar.includes(content), `${type}: ${content}`);
 		const overview = html.slice(html.indexOf("</header>"));
-		for (const label of labels) assert.ok(!overview.includes(`>${label}<`), `${type}: duplicated ${label}`);
+		for (const label of labels.filter(label => !["Tipologia calcio", "Tipologie calcio", "Tipologia campi disponibili", "Mansioni", "Eventi pubblicati"].includes(label))) assert.ok(!overview.includes(`>${label}<`), `${type}: duplicated ${label}`);
 		const sourceLabels = {
 			"staff-sportivo": ["Figure professionali", "Disponibile anche da remoto"],
 			"servizi-consulenze": ["Figure professionali", "Tipologie sportive"],
 			creators: ["Tipologia di contenuti"],
 			"campi-impianti-sportivi": ["Indirizzo del campo"],
 		}[type] ?? [];
-		for (const label of sourceLabels) assert.ok(!overview.includes(`>${label}<`), `${type}: duplicated source ${label}`);
+		for (const label of sourceLabels) if (!["Figure professionali", "Tipologie sportive"].includes(label)) assert.ok(!overview.includes(`>${label}<`), `${type}: duplicated source ${label}`);
+		for (const item of type === "staff-sportivo" ? ["Match analyst"] : ["servizi-consulenze", "torneo-evento", "campi-impianti-sportivi"].includes(type) ? ["Calcio 8"] : []) {
+			assert.ok(overview.indexOf(item) >= 0 && overview.indexOf(item) < overview.indexOf("Descrizione dimostrativa"), `${type}: ${item}`);
+		}
 		const hasExperiences = ["staff-sportivo", "servizi-consulenze", "arbitro"].includes(type);
 		assert.equal(/role="tab"[^>]*>[\s\S]*?<span>Esperienze<\/span>/.test(html), hasExperiences, type);
 		assert.doesNotMatch(html, /Esperienza dimostrativa|campo\.png|undefined|null/);
@@ -715,6 +767,7 @@ test("the detail page places one profile action group inside every non-player he
 		assert.match(html, /public-profile-page/);
 		assert.match(html, /<header\b[\s\S]*data-presentation="profile"[\s\S]*Azioni profilo[\s\S]*<\/header>/);
 		assert.equal(html.split("Azioni profilo").length - 1, 1, type);
+		assert.match(html, /Powered by[\s\S]*placeholder\.png/);
 	}
 	const error = renderToStaticMarkup(React.createElement(Page, {result: {status: "error"}}));
 	assert.match(error, /Profilo temporaneamente non disponibile/);
@@ -728,8 +781,6 @@ test("long-form primary fields remain in dedicated overview cards without duplic
 			{label: "Servizi offerti", value: "Valutazioni e trattamenti"},
 		]],
 		["campi-impianti-sportivi", "CampiImpianti", [
-			{label: "Orari", value: "Lunedì: 09:00–18:00\nMartedì: 10:00–20:00"},
-			{label: "Servizi inclusi", value: "Spogliatoi e parcheggio"},
 			{label: "Informazioni aggiuntive", value: "Accesso senza barriere"},
 		]],
 	]) {
@@ -742,6 +793,31 @@ test("long-form primary fields remain in dedicated overview cards without duplic
 			assert.ok(html.indexOf("Descrizione dimostrativa") < html.indexOf(value));
 		}
 	}
+});
+
+test("facility overview keeps cost before description and hides hours, services and historic location", () => {
+	const Facility = load("src/features/dettagli-profilo/components/types/DettagliProfiloCampiImpianti.tsx").default;
+	const profile = genericProfile("campi-impianti-sportivi", {fields: [
+		{label: "Costo di partenza", value: "€ 45 / 1h"},
+		{label: "Sede principale storica", value: "Vecchia sede"},
+		{label: "Orari", value: "Lunedì 09:00"},
+		{label: "Servizi inclusi", value: "Parcheggio"},
+		{label: "Presentazione", value: "Descrizione campo"},
+		{label: "Informazioni aggiuntive", value: "Accesso facilitato"},
+	]});
+	const html = renderToStaticMarkup(React.createElement(Facility, {profile}));
+	assert.match(html, /Costo di partenza/);
+	assert.match(html, /Accesso facilitato/);
+	assert.doesNotMatch(html, /Altre informazioni|Vecchia sede|Lunedì 09:00|Parcheggio/);
+});
+
+test("new announcement CTA is shown only for the profile owner", () => {
+	const Announcements = load("src/features/dettagli-profilo/components/LatestProfileAnnouncements.tsx").default;
+	const base = {announcements: [], announcementsUnavailable: false};
+	const owned = renderToStaticMarkup(React.createElement(Announcements, {...base, isOwner: true}));
+	const visitor = renderToStaticMarkup(React.createElement(Announcements, {...base, isOwner: false}));
+	assert.match(owned, /href="\/pubblica-annuncio"[^>]*>Crea nuovo annuncio/);
+	assert.doesNotMatch(visitor, /Crea nuovo annuncio/);
 });
 
 test("experience timeline preserves roles, team links, periods and the empty state", () => {

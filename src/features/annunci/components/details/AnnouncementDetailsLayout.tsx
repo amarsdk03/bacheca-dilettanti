@@ -10,6 +10,7 @@ import AnnouncementDetailsContacts from "./AnnouncementDetailsContacts";
 import AnnouncementDetailsHeader from "./AnnouncementDetailsHeader";
 import AnnouncementDetailsOverview from "./AnnouncementDetailsOverview";
 import AnnouncementLocationCard from "./AnnouncementLocationCard";
+import AnnouncementAuthorCard from "./AnnouncementAuthorCard";
 import type {AnnouncementDetailPresentation} from "./announcement-detail-presentation";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {InfoIcon} from "lucide-react";
@@ -52,7 +53,8 @@ export default function AnnouncementDetailsLayout({
 					<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
 						<AnnouncementDetailsOverview announcement={announcement} presentation={presentation} />
 						<aside aria-label="Informazioni sportive e contatti" className="flex min-w-0 flex-col gap-5">
-							{playerRoles && <AnnouncementPlayerRolePitch primaryRoles={playerRoles.primaryRoles} secondaryRoles={playerRoles.secondaryRoles} textOnly={announcement.type === "annuncio_squadra_cerca_giocatore"} />}
+							<AnnouncementAuthorCard announcement={announcement} />
+							{playerRoles && announcement.type !== "annuncio_giocatore" && <AnnouncementPlayerRolePitch primaryRoles={playerRoles.primaryRoles} secondaryRoles={playerRoles.secondaryRoles} textOnly={announcement.type === "annuncio_squadra_cerca_giocatore"} />}
 							<AnnouncementDetailsContacts contacts={announcement.contacts} unavailable={announcement.contactsUnavailable} authenticated={authenticated} returnTo={returnTo} />
 							<AnnouncementLocationCard locations={announcement.locations} announcementType={announcement.type} address={facilityAddress} />
 							<DetailIdentifier id={announcement.id} entity="annuncio" />

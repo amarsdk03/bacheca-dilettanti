@@ -248,7 +248,7 @@ async function loadProfileContent(
 	if (type === "staff-sportivo") {
 		const {data, error} = await supabase
 			.from("profilo_staff_sportivo")
-			.select("id, nome, cognome, sport_principale, figure_professionali, disponibilita, disponibile_remoto, presentazione, storico_esperienze, lista_esperienze, qualifiche_licenze")
+			.select("id, nome, cognome, sport_principale, tipologie_sport, figure_professionali, disponibilita, disponibile_remoto, presentazione, storico_esperienze, lista_esperienze, qualifiche_licenze")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -261,6 +261,7 @@ async function loadProfileContent(
 				title: fullName(data.nome, data.cognome),
 				availability: data.disponibilita,
 				fields: [
+					detailListField("Tipologie calcio", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
 					detailListField("Figure professionali", normalizeFigures(cleanStringArray(data.figure_professionali))),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Disponibile anche da remoto", data.disponibile_remoto ? "Sì" : "No"),
@@ -308,7 +309,7 @@ async function loadProfileContent(
 	if (type === "arbitro") {
 		const {data, error} = await supabase
 			.from("profilo_arbitro")
-			.select("id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, sport_principale, disponibilita, presentazione, storico_esperienze, lista_esperienze, qualifiche_licenze")
+			.select("id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, sport_principale, tipologie_sport, disponibilita, presentazione, storico_esperienze, lista_esperienze, qualifiche_licenze")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -321,9 +322,10 @@ async function loadProfileContent(
 				title: fullName(data.nome, data.cognome),
 				availability: data.disponibilita,
 				fields: [
+					detailListField("Tipologie calcio", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
 					detailField("Età", (() => {
 						const age = publicPlayerAge({day: data.giorno_nascita, month: data.mese_nascita, year: data.anno_nascita});
-						return age === null ? null : `${age} ${age === 1 ? "anno" : "anni"}`;
+						return age === null ? null : `${age} (${data.anno_nascita})`;
 					})()),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Presentazione", data.presentazione, true),

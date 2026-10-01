@@ -34,7 +34,7 @@ const payload = () => ({
 		detail: {ruoli_principali: ["Difensore"], ruoli_secondari: [], annata_da: "2004", annata_a: "2008", stagione: "2026/27", descrizione_aggiuntiva: "Cerchiamo giocatori."},
 		locations: [{regione: "Lazio", citta: "Roma"}], contacts: {email: "info@example.com", phone: ""}, extras: {genericLink: ""},
 	},
-	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
+	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true, newsletterSubscribed: false},
 });
 
 test("server normalizes a valid interval for the SQL writer and rejects incomplete or legacy client payloads", () => {

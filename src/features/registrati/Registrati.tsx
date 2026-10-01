@@ -49,6 +49,7 @@ import {
 	isComingSoonProfileType,
 	isProfileType,
 	MAX_PROFILE_COUNT,
+	isRestrictedProfileType,
 	PROFILE_OPTIONS,
 	type ProfileDrafts,
 	type ProfileLocationDraft,
@@ -180,7 +181,7 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 	const [registeredEmail, setRegisteredEmail] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 	const [legalAccepted, setLegalAccepted] = useState(false);
-	const [newsletterSubscribed, setNewsletterSubscribed] = useState(true);
+	const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
 	const [legalConsentError, setLegalConsentError] = useState<string>();
 	const [clientFieldErrors, setClientFieldErrors] = useState<AuthFieldErrors>({});
 	const [selectedProfileTypes, setSelectedProfileTypes] = useState<ProfileType[]>([]);
@@ -769,8 +770,9 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 											<FieldGroup data-slot="checkbox-group" className="grid gap-3 sm:grid-cols-2">
 												{PROFILE_OPTIONS.map(({value, label, description: optionDescription, icon: Icon}) => {
 													const checked = selectedProfileTypes.includes(value);
-													const comingSoon = isComingSoonProfileType(value);
-													const disabled = comingSoon || (!checked && selectedProfileTypes.length >= MAX_PROFILE_COUNT);
+												const comingSoon = isComingSoonProfileType(value);
+												const restricted = isRestrictedProfileType(value);
+												const disabled = comingSoon || restricted || (!checked && selectedProfileTypes.length >= MAX_PROFILE_COUNT);
 
 													return (
 														<div key={value} className="relative">
@@ -781,6 +783,7 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 																		<FieldTitle className="flex-wrap">
 																			<span>{label}</span>
 																			{comingSoon && <ComingSoonBadge />}
+															{restricted && <Badge variant="outline">Accesso limitato</Badge>}
 																		</FieldTitle>
 																		<FieldDescription>{optionDescription}</FieldDescription>
 																	</FieldContent>
@@ -846,8 +849,12 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 										/>
 										{isLastProfileDetail && (
 											<FieldSet className="mt-8">
-												<FieldLegend variant="label">Consensi e comunicazioni</FieldLegend>
-												<FieldGroup className="gap-3">
+												<FieldLegend variant="label" className={"text-base"}>
+													<span className={"text-base"}>
+													Consensi e comunicazioni:
+													</span>
+												</FieldLegend>
+												<FieldGroup className="gap-3 mt-1">
 													<Field orientation="horizontal" data-invalid={Boolean(legalConsentError)}>
 														<Checkbox
 															id="registration-legal-consent"
@@ -895,7 +902,7 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 													<Field orientation="horizontal">
 														<Checkbox id="registration-newsletter" checked={newsletterSubscribed} onCheckedChange={(checked) => setNewsletterSubscribed(Boolean(checked))} />
 														<FieldContent>
-															<FieldLabel htmlFor="registration-newsletter" className="font-normal">Desidero ricevere notizie e newsletter da Bacheca Dilettanti.</FieldLabel>
+																	<FieldLabel htmlFor="registration-newsletter" className="font-normal">Desidero ricevere notizie, newsletter e comunicazioni promozionali da Bacheca Dilettanti.</FieldLabel>
 															<FieldDescription>Puoi modificare questa scelta in qualsiasi momento dalle impostazioni del profilo.</FieldDescription>
 														</FieldContent>
 													</Field>

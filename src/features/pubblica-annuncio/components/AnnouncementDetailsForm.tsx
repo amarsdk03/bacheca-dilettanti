@@ -388,6 +388,16 @@ export default function AnnouncementDetailsForm({
 					</FieldGroup>
 				)}
 
+				{profileType === "servizi-consulenze" && (
+					<FieldGroup>
+						<FiguraProfessionaleMultiselectField label="Figure professionali" value={drafts.serviziConsulenze.figura_professionale} onValueChange={(value) => updateDraft("serviziConsulenze", "figura_professionale", value)} required error={errors.professionalRole} />
+						<TipologiaCalcioMultiselectField value={drafts.serviziConsulenze.tipologie_sport} onValueChange={(value) => updateDraft("serviziConsulenze", "tipologie_sport", value)} />
+						<TextField id="service-specialization" label="Specializzazione" value={drafts.serviziConsulenze.specializzazione} onChange={(value) => updateDraft("serviziConsulenze", "specializzazione", value)} placeholder="Ambito o disciplina di specializzazione" />
+						<DescriptionField id="service-presentation" label="Servizi offerti" value={drafts.serviziConsulenze.presentazione_servizi} onChange={(value) => updateDraft("serviziConsulenze", "presentazione_servizi", value)} required error={errors.servicePresentation} placeholder="Descrivi consulenze, percorsi e prestazioni..." />
+						<DescriptionField id="service-description" label="Altre informazioni" value={drafts.serviziConsulenze.descrizione_aggiuntiva} onChange={(value) => updateDraft("serviziConsulenze", "descrizione_aggiuntiva", value)} placeholder="Aggiungi eventuali dettagli..." />
+					</FieldGroup>
+				)}
+
 				{profileType === "creators" && (
 					<FieldGroup>
 						<DescriptionField

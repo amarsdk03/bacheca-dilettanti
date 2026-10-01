@@ -4,10 +4,13 @@ import {Badge} from "@/components/ui/badge";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import type {AnnouncementDirectoryItem} from "@/features/annunci/announcement-model";
 import ProfileAnnouncementCard from "./ProfileAnnouncementCard";
+import Link from "next/link";
+import {buttonVariants} from "@/components/ui/button";
 
-export default function LatestProfileAnnouncements({announcements, announcementsUnavailable}: {
+export default function LatestProfileAnnouncements({announcements, announcementsUnavailable, isOwner = false}: {
 	announcements: AnnouncementDirectoryItem[];
 	announcementsUnavailable: boolean;
+	isOwner?: boolean;
 }) {
 	return (
 		<section aria-labelledby="latest-profile-announcements" className="flex flex-col gap-4">
@@ -15,6 +18,7 @@ export default function LatestProfileAnnouncements({announcements, announcements
 				<h2 className="font-home-display text-2xl font-medium uppercase">
 					Ultimi annunci pubblicati
 				</h2>
+				{isOwner && <Link href="/pubblica-annuncio" className={buttonVariants({size: "sm"})}>Crea nuovo annuncio</Link>}
 				{!announcementsUnavailable && (
 					<Badge variant="secondary">
 						{announcements.length === 1

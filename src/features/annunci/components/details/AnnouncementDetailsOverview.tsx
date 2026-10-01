@@ -12,13 +12,18 @@ export default function AnnouncementDetailsOverview({announcement, presentation}
 	presentation: AnnouncementDetailPresentation;
 }) {
 	const fields = announcement.fields.filter(field =>
-		(presentation.detailFieldLabels.includes(field.label) || field.wide)
+		(presentation.detailFieldLabels.includes(field.label) || field.wide || (field.items?.length ?? 0) > 2)
 		&& isSpecifiedAnnouncementValue(field.value)
 		&& field.value !== announcement.description
-		&& !(announcement.playerRoles && field.label === "Ruoli specifici"),
+		&& !(announcement.type === "annuncio_campo_impianto" && ["Orari", "Servizi inclusi"].includes(field.label))
+		&& !(announcement.type === "annuncio_squadra_cerca_giocatore" && field.label === "Ruoli specifici"),
 	);
 	return (
 		<section aria-label="Informazioni dell’annuncio" className="flex min-w-0 flex-col gap-5">
+			{fields.filter(field => (field.items?.length ?? 0) > 2).map(field => <Card key={field.label}>
+				<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{field.label}</h2></CardTitle></CardHeader>
+				<CardContent><StructuredFieldList items={field.items!} style={field.listStyle} /></CardContent>
+			</Card>)}
 			<Card>
 				<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Descrizione</h2></CardTitle></CardHeader>
 				<CardContent className="flex flex-col gap-5">
@@ -45,7 +50,7 @@ export default function AnnouncementDetailsOverview({announcement, presentation}
 					)}
 				</CardContent>
 			</Card>
-			{fields.map(field => <Card key={field.label}>
+			{fields.filter(field => (field.items?.length ?? 0) <= 2).map(field => <Card key={field.label}>
 				<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{field.label}</h2></CardTitle></CardHeader>
 				<CardContent><div className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{field.items?.length ? <StructuredFieldList items={field.items} style={field.listStyle} /> : field.value}</div></CardContent>
 			</Card>)}

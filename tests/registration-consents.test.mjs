@@ -61,7 +61,7 @@ function validPlayerPayload() {
 	const {createRegistrationPayload} = load("src/features/registrati/registration-payload.ts");
 	const drafts = createProfileDrafts();
 	const locations = createProfileLocations();
-	Object.assign(drafts.giocatore, {nome: "Mario", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"], specifici: []}, genere: "Uomo", anno_nascita: "2000", disponibilita: "sotto-contratto", categoria_attuale: "Calcio 11 (Maschile)::Eccellenza", nazionalita: "IT", piede_principale: "Ambipiede", categorie_ricercate: ["Eccellenza"]});
+	Object.assign(drafts.giocatore, {nome: "Mario", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"], specifici: []}, genere: "Uomo", anno_nascita: "2000", mese_nascita: "Gennaio", giorno_nascita: "01", disponibilita: "sotto-contratto", categoria_attuale: "Calcio 11 (Maschile)::Eccellenza", nazionalita: "IT", piede_principale: "Ambipiede", categorie_ricercate: ["Eccellenza"]});
 	locations.giocatore = [{regione: "Lazio", citta: null}];
 	return createRegistrationPayload(["giocatore"], "giocatore", drafts, locations, createProfileSocialLinks(), true, false);
 }
@@ -76,6 +76,7 @@ test("staff qualifications require a state while historical entries retain an un
 	const drafts = createProfileDrafts();
 	const locations = createProfileLocations();
 	drafts["staff-sportivo"].nome = "Ada";
+	Object.assign(drafts["staff-sportivo"], {anno_nascita: "1990", mese_nascita: "Marzo", giorno_nascita: "15"});
 	drafts["staff-sportivo"].figure_professionali = ["Allenatore"];
 	drafts["staff-sportivo"].disponibile_remoto = true;
 	drafts["staff-sportivo"].storico_esperienze = [{id: "legacy", titolo: "Voce storica", ente: "Società", periodoDa: "", periodoA: "", descrizione: "Testo originale", stato: "non-specificare", squadraProfiloId: null}, "testo libero precedente"];
@@ -93,7 +94,7 @@ test("staff qualifications require a state while historical entries retain an un
 	assert.equal(saved.qualifiche_licenze[0].stato, "conseguito");
 });
 
-test("player profile accepts year only, preserves old category preferences and normalizes current fields", () => {
+test("player profile requires a complete birth date and normalizes current fields", () => {
 	const {parseRegistrationPayload, RegistrationPayloadError} = sourceLoader()("src/features/registrati/server/registration.ts");
 	const payload = validPlayerPayload();
 	const profile = parseRegistrationPayload(JSON.stringify(payload)).profiles[0].draft;
@@ -102,10 +103,10 @@ test("player profile accepts year only, preserves old category preferences and n
 	assert.equal(profile.piede_principale, "Ambidestro");
 	assert.equal(profile.nazionalita, "IT");
 	assert.equal(profile.anno_nascita, "2000");
-	assert.equal(profile.mese_nascita, null);
+	assert.equal(profile.mese_nascita, "Gennaio");
 	payload.profiles[0].draft.disponibilita = "svincolato";
 	assert.equal(parseRegistrationPayload(JSON.stringify(payload)).profiles[0].draft.categoria_attuale, null);
-	for (const field of ["genere", "anno_nascita", "disponibilita"]) {
+	for (const field of ["genere", "anno_nascita", "mese_nascita", "giorno_nascita", "disponibilita"]) {
 		const invalid = validPlayerPayload();
 		invalid.profiles[0].draft[field] = "";
 		assert.throws(() => parseRegistrationPayload(JSON.stringify(invalid)), (error) => error instanceof RegistrationPayloadError && error.step === 3, field);
@@ -153,10 +154,10 @@ test("registration normalizes an optional invitation code and rejects malformed 
 	);
 });
 
-test("registration UI includes all legal links, a required consent and newsletter enabled by default", () => {
+test("registration UI includes all legal links, a required consent and newsletter disabled by default", () => {
 	const source = readFileSync(path.join(root, "src/features/registrati/Registrati.tsx"), "utf8");
 	assert.match(source, /useState\(false\).*legalAccepted|legalAccepted[^]*useState\(false\)/);
-	assert.match(source, /newsletterSubscribed[^]*useState\(true\)/);
+	assert.match(source, /newsletterSubscribed[^]*useState\(false\)/);
 	assert.match(source, /id="registration-legal-consent"[^]*required[^]*aria-required="true"/);
 	for (const href of ["/termini-di-servizio", "/privacy-policy", "/cookie-policy"]) {
 		assert.ok(source.includes(`href="${href}"`));

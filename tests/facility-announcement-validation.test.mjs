@@ -46,7 +46,7 @@ const payload = () => ({
 		contacts: {email: "campo@example.com", phone: ""},
 		extras: {genericLink: ""},
 	},
-	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
+	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true, newsletterSubscribed: false},
 });
 
 test("facility announcement server normalization accepts one complete address and optional description", () => {

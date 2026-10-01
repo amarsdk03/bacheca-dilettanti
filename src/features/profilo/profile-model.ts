@@ -25,9 +25,7 @@ export const PROFILE_TYPES = [
 
 export type ProfileType = typeof PROFILE_TYPES[number];
 
-export const COMING_SOON_PROFILE_TYPES = [
-	"servizi-consulenze",
-] as const satisfies readonly ProfileType[];
+export const COMING_SOON_PROFILE_TYPES = [] as const satisfies readonly ProfileType[];
 
 export type ComingSoonProfileType = typeof COMING_SOON_PROFILE_TYPES[number];
 
@@ -95,13 +93,17 @@ interface ProfileOption {
 
 export const MAX_PROFILE_COUNT = 5;
 
+export const RESTRICTED_PROFILE_TYPES = ["servizi-consulenze", "creators"] as const satisfies readonly ProfileType[];
+
+export function isRestrictedProfileType(type: ProfileType): type is typeof RESTRICTED_PROFILE_TYPES[number] {
+	return (RESTRICTED_PROFILE_TYPES as readonly ProfileType[]).includes(type);
+}
+
 export const PROFILE_DIRECTORY_UNLOCK_PROFILE_COUNT = 20;
 
 export const PROFILI_LIMITATI = true;
 
-export const LIMITED_PROFILE_TYPES = [
-	"servizi-consulenze",
-] as const satisfies readonly ProfileType[];
+export const LIMITED_PROFILE_TYPES = [] as const satisfies readonly ProfileType[];
 
 export type LimitedProfileType = typeof LIMITED_PROFILE_TYPES[number];
 
@@ -218,6 +220,7 @@ export function createProfileDrafts(): ProfileDrafts {
 			presentazione: "",
 			sport_principale: "Calcio",
 			storico_esperienze: [],
+			tipologie_sport: [],
 			lista_esperienze: [],
 			qualifiche_licenze: [],
 		},
@@ -249,6 +252,7 @@ export function createProfileDrafts(): ProfileDrafts {
 			presentazione: "",
 			sport_principale: "Calcio",
 			storico_esperienze: [],
+			tipologie_sport: [],
 			lista_esperienze: [],
 			qualifiche_licenze: [],
 		},

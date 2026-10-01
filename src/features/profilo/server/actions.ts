@@ -6,7 +6,7 @@ import {revalidatePath} from "next/cache";
 import {randomUUID} from "node:crypto";
 
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
-import {isComingSoonProfileType, isProfileType, type ProfileType,} from "@/features/profilo/profile-model";
+import {isComingSoonProfileType, isProfileType, isRestrictedProfileType, type ProfileType,} from "@/features/profilo/profile-model";
 import {
 	isProfileImageScope,
 	PROFILE_IMAGE_FALLBACK_LINK,
@@ -103,6 +103,9 @@ function imageErrorMessage(error: unknown) {
 }
 
 function profileRpcErrorMessage(message: string) {
+	if (message.includes("PROFILE_ACCESS_DENIED")) {
+		return "Questo sottoprofilo richiede l’abilitazione dell’admin.";
+	}
 	if (message.includes("PROFILE_REQUIRED_FIELDS_MISSING")) {
 		return "Completa i campi obbligatori del sottoprofilo e riprova.";
 	}
@@ -316,7 +319,15 @@ export async function saveProfile(
 
 	try {
 		const admin = createAdminClient();
-		if (isComingSoonProfileType(normalized.type)) {
+		if (isRestrictedProfileType(normalized.type)) {
+			const {data: baseProfile, error: baseError} = await admin.from("profilo").select("uuid").eq("uuid_utente", account.utenteId).eq("nascosto", false).maybeSingle();
+			if (baseError) throw baseError;
+			if (!baseProfile) return {status: "error", message: "Il profilo principale dell’account non è disponibile."};
+			const {data: access, error: accessError} = await admin.from("restricted_profile_access").select("profile_id").eq("profile_id", baseProfile.uuid).eq("profile_type", normalized.type).maybeSingle();
+			if (accessError) throw accessError;
+			if (!access) return {status: "error", message: "Questo sottoprofilo richiede l’abilitazione dell’admin."};
+		}
+		if (isComingSoonProfileType(normalized.type) && !isRestrictedProfileType(normalized.type)) {
 			const {data: baseProfile, error: baseProfileError} = await admin
 				.from("profilo")
 				.select("uuid")
@@ -522,8 +533,8 @@ export async function setNewsletterSubscription(
 	return {
 		status: "success",
 		message: enabled
-			? "Riceverai notizie e newsletter dalla piattaforma."
-			: "Non riceverai più notizie e newsletter dalla piattaforma.",
+			? "Riceverai notizie, newsletter e comunicazioni promozionali dalla piattaforma."
+			: "Non riceverai notizie, newsletter e comunicazioni promozionali dalla piattaforma.",
 	};
 }
 

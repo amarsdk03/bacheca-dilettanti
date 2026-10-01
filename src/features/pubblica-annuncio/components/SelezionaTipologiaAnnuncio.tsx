@@ -5,6 +5,7 @@ import {useState} from "react";
 import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
+import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from "@/components/ui/alert-dialog";
 import {
 	Field,
 	FieldContent,
@@ -19,6 +20,7 @@ import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
 import {
 	isLimitedProfileType,
+	isRestrictedProfileType,
 	PROFILE_DIRECTORY_UNLOCK_PROFILE_COUNT,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
@@ -35,6 +37,7 @@ type SelezionaTipologiaAnnuncioProps = {
 	onContinueAction: () => void;
 	registered: boolean;
 	enabledProfileTypes: readonly ProfileType[];
+	authorizedRestrictedProfileTypes: readonly ProfileType[];
 };
 
 export default function SelezionaTipologiaAnnuncio({
@@ -45,8 +48,10 @@ export default function SelezionaTipologiaAnnuncio({
 	onContinueAction,
 	registered,
 	enabledProfileTypes,
+	authorizedRestrictedProfileTypes,
 }: SelezionaTipologiaAnnuncioProps) {
 	const [validationVisible, setValidationVisible] = useState(false);
+	const [profileToEnable, setProfileToEnable] = useState<ProfileType | null>(null);
 	const tipologiaSelezionata = getTipologia(tipologia);
 	const richiedeSottotipologia = Boolean(tipologiaSelezionata?.sottotipologie?.length);
 	const isValid = tipologia !== "" && (!richiedeSottotipologia || sottotipologia !== "");
@@ -83,37 +88,47 @@ export default function SelezionaTipologiaAnnuncio({
 							{tipologieAnnuncio.map((opzione) => {
 								const profileType = opzione.valore as ProfileType;
 								const limited = isLimitedProfileType(profileType);
+								const restricted = isRestrictedProfileType(profileType);
 								const supported = isPublishableProfileType(profileType);
 								const enabledForAccount = supported && enabledProfileTypes.includes(profileType);
-								const disabled = !supported || (registered && !enabledForAccount);
+								const authorized = restricted && authorizedRestrictedProfileTypes.includes(profileType);
+								const unavailable = registered && supported && !enabledForAccount;
 								const accent = getProfileAccent(profileType);
-
-								return (
-								<ToggleGroupItem
-									key={opzione.valore}
-									value={opzione.valore}
-									disabled={disabled}
-									className="h-auto min-h-24 w-full items-stretch justify-start whitespace-normal rounded-xl border bg-background p-0 text-left shadow-none hover:-translate-y-0.5 hover:bg-background hover:shadow-sm data-pressed:bg-background data-pressed:ring-1 data-pressed:ring-black/25 disabled:opacity-55"
-								>
-									<Field orientation="horizontal" data-disabled={disabled} className="h-full w-full items-start border-0 p-4">
+								const content = (
+									<Field orientation="horizontal" data-disabled={!supported || (restricted && !registered)} className="h-full w-full items-start border-0 p-4">
 										<span className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{backgroundColor: `${accent}14`}}>
 											<ProfilePngIcon type={profileType} color={accent} className="size-7" />
 										</span>
 										<FieldContent className="ms-1">
 											<FieldTitle className="field-content-title flex-wrap gap-1.5">
 												{opzione.nome}
-												{!supported && <ComingSoonBadge />}
-												{supported && registered && !enabledForAccount && <Badge variant="outline">Non abilitato</Badge>}
+													{!supported && <ComingSoonBadge />}
+													{restricted && <Badge variant="outline">Accesso limitato</Badge>}
+												{unavailable && <Badge variant="outline">Non abilitato</Badge>}
 											</FieldTitle>
 											<FieldDescription>
-												{limited
+													{restricted && !registered ? "Disponibile solo per gli account abilitati dall’admin." : limited
 													? `La directory dei profili ${opzione.nome} sarà sbloccata al raggiungimento di ${PROFILE_DIRECTORY_UNLOCK_PROFILE_COUNT} profili.`
 													: opzione.descrizione}
 											</FieldDescription>
 										</FieldContent>
 									</Field>
-								</ToggleGroupItem>
 								);
+								const itemClassName = "h-auto min-h-24 w-full items-stretch justify-start whitespace-normal rounded-xl border bg-background p-0 text-left shadow-none hover:-translate-y-0.5 hover:bg-background hover:shadow-sm";
+								if (restricted && (!registered || (unavailable && !authorized))) return <div key={opzione.valore} className={`${itemClassName} opacity-60`} aria-disabled="true">{content}</div>;
+								if (unavailable) return (
+									<button key={opzione.valore} type="button" onClick={() => setProfileToEnable(profileType)} className={itemClassName} aria-label={`Abilitare profilo ${opzione.nome}?`}>
+										{content}
+									</button>
+								);
+								return <ToggleGroupItem
+									key={opzione.valore}
+									value={opzione.valore}
+									disabled={!supported}
+									className={`${itemClassName} data-pressed:ring-1 data-pressed:ring-black/25 disabled:opacity-55`}
+								>
+									{content}
+								</ToggleGroupItem>;
 							})}
 						</ToggleGroup>
 					</Field>
@@ -149,6 +164,18 @@ export default function SelezionaTipologiaAnnuncio({
 					</FieldSet>
 				)}
 			</FieldGroup>
+			<AlertDialog open={profileToEnable !== null} onOpenChange={(open) => !open && setProfileToEnable(null)}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Abilitare profilo?</AlertDialogTitle>
+						<AlertDialogDescription>Apri la sezione profilo per creare il sottoprofilo selezionato.</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Annulla</AlertDialogCancel>
+						<AlertDialogAction nativeButton={false} render={<a href="/il-tuo-profilo?sezione=profilo" target="_blank" rel="noopener noreferrer" />} onClick={() => setProfileToEnable(null)}>Apri il mio profilo</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 
 			<div className="flex justify-end">
 				<Button onClick={continueToProfile}>Avanti</Button>

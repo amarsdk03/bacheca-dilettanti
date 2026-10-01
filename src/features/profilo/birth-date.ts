@@ -35,7 +35,7 @@ const ITALY_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
 });
 
 function trimmed(value: string | null | undefined) {
-	return value?.trim() ?? "";
+	return typeof value === "string" ? value.trim() : "";
 }
 
 export function getItalyDateParts(now = new Date()): CalendarDateParts {
@@ -99,6 +99,13 @@ export function getBirthDateError(value: BirthDateValue, now = new Date()): stri
 	}
 
 	return null;
+}
+
+export function getRequiredBirthDateError(value: BirthDateValue, now = new Date()): string | null {
+	if (!trimmed(value.year)) return "Seleziona l'anno di nascita.";
+	if (!trimmed(value.month)) return "Seleziona il mese di nascita.";
+	if (!trimmed(value.day)) return "Seleziona il giorno di nascita.";
+	return getBirthDateError(value, now);
 }
 
 export function isCompleteValidBirthDate(value: BirthDateValue, now = new Date()) {

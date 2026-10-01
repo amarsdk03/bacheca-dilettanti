@@ -42,7 +42,7 @@ const payload = () => ({
 		detail: {tipologie_sport: ["Calcio 5"], categorie_ricercate: [male, female], disponibilita_spostamento: "Da valutare", descrizione_aggiuntiva: "Cerco incarico."},
 		locations: [{regione: "Lazio", citta: "Roma"}], contacts: {email: "staff@example.com", phone: ""}, extras: {genericLink: ""},
 	},
-	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true},
+	consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true, newsletterSubscribed: false},
 });
 
 test("Staff catalogue keeps homonymous categories distinct from the Player catalogue and filters", () => {
@@ -51,8 +51,8 @@ test("Staff catalogue keeps homonymous categories distinct from the Player catal
 	assert.notEqual(male, female);
 	assert.equal(catalog.staffCategoryLabel(male), "Calcio 5 (Maschile) · Serie A");
 	assert.equal(catalog.staffCategoryLabel(female), "Calcio 5 (Femminile) · Serie A");
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: male}).filters.categoriaAttuale, "");
-	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", categoriaAttuale: female}).filters.categoriaAttuale, female);
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_staff_sportivo", categoria: male}).filters.categorieRicercate, "");
+	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", categoriaAttuale: female}).filters.categoriaAttuale, undefined);
 	const content = announcementContent("annuncio_staff_sportivo", {categorie_ricercate: [male, female], disponibilita_spostamento: "Da valutare"}, [], true);
 	assert.deepEqual(content.filters.categories, [male, female]);
 	assert.deepEqual(content.fields.find(({label}) => label === "Categorie ricercate").items, ["Calcio 5 (Maschile) · Serie A", "Calcio 5 (Femminile) · Serie A"]);
@@ -82,4 +82,13 @@ test("announcement payload rejects the removed video highlights field", () => {
 	const legacy = payload();
 	legacy.announcement.extras.videoHighlights = "https://example.test/video";
 	assert.throws(() => parsePublishPayload(legacy, true), /dati inviati non sono validi/i);
+});
+
+test("a registered publisher cannot add marketing consent and an older payload defaults to no consent", () => {
+	const previousClient = payload();
+	delete previousClient.consents.newsletterSubscribed;
+	assert.equal(parsePublishPayload(previousClient, true).newsletterSubscribed, false);
+	const registered = payload();
+	registered.consents.newsletterSubscribed = true;
+	assert.throws(() => parsePublishPayload(registered, true), /preferenza per le comunicazioni/i);
 });

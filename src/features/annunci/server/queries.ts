@@ -14,6 +14,7 @@ import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
 	type AnnouncementAuthor,
+	type AnonymousAnnouncementAuthorInfo,
 	type AnnouncementContact,
 	type AnnouncementDetailField,
 	type AnnouncementDetailResult,
@@ -50,9 +51,9 @@ const PROFILE_ANNOUNCEMENT_TYPES = {
 	giocatore: ["annuncio_giocatore"],
 	squadra: ["annuncio_squadra_cerca_giocatore", "annuncio_squadra_cerca_staff", "annuncio_squadra_cerca_partita", "annuncio_squadra_cerca_sponsor"],
 	"staff-sportivo": ["annuncio_staff_sportivo"],
-	"servizi-consulenze": [],
+	"servizi-consulenze": ["annuncio_servizi_consulenze"],
 	arbitro: ["annuncio_arbitro"],
-	creators: [],
+	creators: ["annuncio_creators"],
 	"torneo-evento": ["annuncio_torneo_evento"],
 	"campi-impianti-sportivi": ["annuncio_campo_impianto"],
 } as const satisfies Record<ProfileType, readonly ActiveAnnouncementType[]>;
@@ -108,6 +109,8 @@ function announcementContentQuery(
 			annuncio_arbitro(tipologie_sport, categorie_ricercate, disponibilita_occupazione, disponibilita_spostamento, automunito, descrizione_aggiuntiva, lista_esperienze, qualifiche_licenze),
 			annuncio_torneo_evento(nome_evento, modalita_iscrizione, annate_ammesse_da, annate_ammesse_a, numero_squadre, costo_partecipazione, tipo_partecipazione, lista_premi_trofei, descrizione_aggiuntiva, tipologie_sport),
 			annuncio_campo_impianto(tipologie_sport, orari, costo_partenza, servizi_inclusi, descrizione_aggiuntiva, indirizzo),
+			annuncio_servizi_consulenze(figura_professionale, specializzazione, presentazione_servizi, tipologie_sport, descrizione_aggiuntiva),
+			annuncio_creator(titolo_post, descrizione_post, contenuto_post, descrizione_aggiuntiva),
 			localita_annuncio(regione, citta)
 		`, options);
 }
@@ -153,14 +156,24 @@ function directoryProfileFacetQuery(supabase: SupabaseClient<Database>) {
 		.from("profilo")
 		.select(`
 			uuid,
-			profilo_giocatore(nascosto, anno_nascita),
-			profilo_squadra(nascosto, categoria_attuale)
+			profilo_giocatore(nascosto, anno_nascita, genere)
 		`)
-		.eq("nascosto", false)
-		.not("uuid_utente", "is", null);
+		.eq("nascosto", false);
 }
 
-type DirectoryProfileFacetQueryRow = QueryData<ReturnType<typeof directoryProfileFacetQuery>>[number];
+function anonymousAuthorProfileQuery(supabase: SupabaseClient<Database>) {
+	return supabase.from("profilo").select(`
+		uuid,
+		profilo_giocatore(nascosto, nome, cognome, presentazione),
+		profilo_squadra(nascosto, nome_societa, presentazione),
+		profilo_staff_sportivo(nascosto, nome, cognome, presentazione),
+		profilo_servizi_consulenze(nascosto, nome, cognome, presentazione),
+		profilo_arbitro(nascosto, nome, cognome, presentazione),
+		profilo_creator(nascosto, nome_creator, presentazione),
+		profilo_torneo_evento(nascosto, nome_organizzazione, presentazione),
+		profilo_campi_impianti(nascosto, nome_organizzazione, presentazione)
+	`).eq("nascosto", false).is("uuid_utente", null);
+}
 
 type OfficialAuthorQueryRow = QueryData<ReturnType<typeof officialAuthorQuery>>[number];
 
@@ -245,7 +258,8 @@ function unavailableAuthor(profileType: ProfileType): AnnouncementAuthor {
 }
 
 function detailForType(row: AnnouncementQueryRow, type: AnnouncementType) {
-	return firstRelation((row as unknown as Record<string, unknown>)[type]) ?? {};
+	const relation = type === "annuncio_creators" ? "annuncio_creator" : type;
+	return firstRelation((row as unknown as Record<string, unknown>)[relation]) ?? {};
 }
 
 function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
@@ -319,8 +333,9 @@ function matchesDirectoryQuery(
 	if (filters.regione && !normalizedIncludes(data.regions, filters.regione)) return false;
 	if (filters.tipologia && !normalizedIncludes(data.types, filters.tipologia)) return false;
 	if (filters.ruolo && !normalizedIncludes(data.roles, filters.ruolo)) return false;
-	if (filters.annoNascita && normalizeAnnouncementSearchText(data.birthYear ?? "") !== normalizeAnnouncementSearchText(filters.annoNascita)) return false;
-	if (filters.categoriaAttuale && normalizeAnnouncementSearchText(data.currentCategory ?? "") !== normalizeAnnouncementSearchText(filters.categoriaAttuale)) return false;
+	if (filters.annoDa && (!data.birthYear || Number(data.birthYear) < Number(filters.annoDa) || Number(data.birthYear) > Number(filters.annoA))) return false;
+	if (filters.genere && normalizeAnnouncementSearchText(data.gender ?? "") !== normalizeAnnouncementSearchText(filters.genere)) return false;
+	if (filters.categorieRicercate && !normalizedIncludes(data.categories, filters.categorieRicercate)) return false;
 	if (filters.figura && !normalizedIncludes(data.figures, filters.figura)) return false;
 	return true;
 }
@@ -417,16 +432,48 @@ async function loadOfficialAuthors(
 	return {authors, error: false};
 }
 
+async function loadAnonymousAuthorInfo(supabase: SupabaseClient<Database>, profileId: string | null, profileType: ProfileType): Promise<AnonymousAnnouncementAuthorInfo | null> {
+	if (!profileId) return null;
+	try {
+		const [{data: profile, error: profileError}, {data: locations, error: locationError}] = await Promise.all([
+			anonymousAuthorProfileQuery(supabase).eq("uuid", profileId).maybeSingle(),
+			supabase.from("localita_profilo").select("regione, citta")
+				.eq("uuid_profilo", profileId).eq("sottoprofilo", profileType)
+				.order("id", {ascending: true}).limit(1),
+		]);
+		if (profileError || locationError) {
+			logQueryError("anonymous-author", profileError ?? locationError);
+			return null;
+		}
+		if (!profile) return null;
+		const table = PROFILE_TABLE_BY_TYPE[profileType];
+		const child = table ? relationRecords((profile as unknown as Record<string, unknown> | null)?.[table]).find(row => row.nascosto === false) : null;
+		if (!child) return {name: null, location: null, presentation: null};
+		const name = ["giocatore", "staff-sportivo", "servizi-consulenze", "arbitro"].includes(profileType)
+			? fullName(child.nome, child.cognome)
+			: cleanText(child.nome_societa ?? child.nome_creator ?? child.nome_organizzazione, 160);
+		const firstLocation = locations?.[0];
+		return {
+			name,
+			location: [cleanText(firstLocation?.citta, 120), cleanText(firstLocation?.regione, 80)].filter(Boolean).join(", ") || null,
+			presentation: cleanText(child.presentazione),
+		};
+	} catch (error) {
+		logQueryError("anonymous-author-unexpected", error);
+		return null;
+	}
+}
+
 async function loadDirectoryProfileFacets(
 	supabase: SupabaseClient<Database>,
 	announcements: MappedAnnouncement[],
 ): Promise<{error: boolean}> {
 	const profileIds = [...new Set(announcements.flatMap(({authorId, item}) => (
-		authorId && (item.type === "annuncio_giocatore" || item.type.startsWith("annuncio_squadra_cerca_"))
+			authorId && item.type === "annuncio_giocatore"
 			? [authorId]
 			: []
 	)))];
-	const facetsById = new Map<string, {birthYear: string | null; currentCategory: string | null}>();
+	const facetsById = new Map<string, {birthYear: string | null; gender: string | null}>();
 
 	for (let offset = 0; offset < profileIds.length; offset += AUTHOR_BATCH_SIZE) {
 		const {data, error} = await directoryProfileFacetQuery(supabase).in("uuid", profileIds.slice(offset, offset + AUTHOR_BATCH_SIZE));
@@ -437,10 +484,9 @@ async function loadDirectoryProfileFacets(
 
 		for (const row of data ?? []) {
 			const player = firstRelation(row.profilo_giocatore);
-			const team = firstRelation(row.profilo_squadra);
 			facetsById.set(row.uuid, {
 				birthYear: player?.nascosto === false ? cleanText(player.anno_nascita, 4) : null,
-				currentCategory: team?.nascosto === false ? cleanText(team.categoria_attuale, 200) : null,
+				gender: player?.nascosto === false ? cleanText(player.genere, 20) : null,
 			});
 		}
 	}
@@ -449,9 +495,9 @@ async function loadDirectoryProfileFacets(
 		if (!announcement.authorId) continue;
 		const facets = facetsById.get(announcement.authorId);
 		if (!facets) continue;
-		if (announcement.item.type === "annuncio_giocatore") announcement.filterData.birthYear = facets.birthYear;
-		if (announcement.item.type.startsWith("annuncio_squadra_cerca_")) {
-			announcement.filterData.currentCategory = facets.currentCategory;
+		if (announcement.item.type === "annuncio_giocatore") {
+			announcement.filterData.birthYear = facets.birthYear;
+			announcement.filterData.gender = facets.gender;
 		}
 	}
 
@@ -739,7 +785,7 @@ export async function loadPublicAnnouncementDirectory(
 		const mappedRows = rows
 			.map(mapAnnouncement)
 			.filter((item): item is MappedAnnouncement => Boolean(item));
-		if ((query.filters.annoNascita || query.filters.categoriaAttuale)
+		if ((query.filters.annoDa || query.filters.genere)
 			&& (await loadDirectoryProfileFacets(supabase, mappedRows)).error) {
 			return emptyDirectoryResult(true);
 		}
@@ -798,7 +844,6 @@ export async function loadPublicProfileAnnouncements(
 	profileType: ProfileType,
 ): Promise<{announcements: AnnouncementDirectoryItem[]; announcementCount: number | null; unavailable: boolean}> {
 	const allowedTypes = PROFILE_ANNOUNCEMENT_TYPES[profileType];
-	if (allowedTypes.length === 0) return {announcements: [], announcementCount: 0, unavailable: false};
 
 	try {
 		const {data, error, count} = await publicAnnouncementQuery(supabase, {count: "exact"})
@@ -927,6 +972,9 @@ export async function loadPublicAnnouncementDetail(
 			.map(validContact)
 			.filter((contact): contact is AnnouncementContact => Boolean(contact));
 		const announcement = withLoadedRelations(mapped, authorResult.authors, linkedTeams, authorResult.error);
+		const anonymousAuthorInfo = announcement.author.kind === "anonymous"
+			? await loadAnonymousAuthorInfo(supabase, mapped.authorId, announcement.profileType)
+			: null;
 		const authorFollowerCount = announcement.author.kind === "registered"
 			? await loadAnnouncementAuthorFollowerCount(supabase, announcement.author.profileId)
 			: null;
@@ -934,6 +982,7 @@ export async function loadPublicAnnouncementDetail(
 			status: "success",
 			announcement: {
 				...announcement,
+				anonymousAuthorInfo,
 				moderationStatus: data.stato_annuncio,
 				isListed,
 				announcementLink,

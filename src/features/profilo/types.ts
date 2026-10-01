@@ -49,6 +49,7 @@ export interface ProfileDashboardData {
 	mainImageUrl: string | null;
 	hasMainImage: boolean;
 	profiles: ManagedProfile[];
+	restrictedProfileAccess: Array<"servizi-consulenze" | "creators">;
 	drafts: ProfileDrafts;
 	locations: ProfileLocations;
 	socialLinks: ProfileSocialLinksByType;

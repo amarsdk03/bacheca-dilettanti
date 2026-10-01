@@ -28,6 +28,10 @@ import {
 	normalizeFigures
 } from "@/features/pubblica-annuncio/types/category-catalog";
 import {publicPlayerAge} from "@/features/dettagli-profilo/server/player-profile-data";
+import {createProfileDrafts, createProfileLocations} from "@/features/profilo/profile-model";
+import {getProfileCompletion} from "@/features/profilo/profile-completion";
+import {sortRankedDirectoryProfiles} from "../profile-directory-ranking";
+import {randomUUID} from "node:crypto";
 
 const PROFILE_DIRECTORY_BATCH_SIZE = 500;
 const NOT_SPECIFIED = "Non specificato";
@@ -57,14 +61,14 @@ function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: numbe
 			verificato_il,
 			ultima_modifica_il,
 			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
-			profilo_giocatore(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categoria_attuale, categorie_ricercate, genere, nazionalita),
+			profilo_giocatore(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categoria_attuale, categorie_ricercate, genere, nazionalita, altezza, peso, piede_principale, storico_carriera),
 			profilo_squadra(id, nascosto, nome_societa, presentazione, sport_principale, tipologie_sport, categoria_attuale),
-			profilo_staff_sportivo(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, sport_principale),
-			profilo_servizi_consulenze(id, nascosto, nome, cognome, disponibilita, figure_professionali, presentazione, presentazione_servizi, specializzazioni, sport_principale, tipologie_sport, automunito),
-			profilo_arbitro(id, nascosto, nome, cognome, disponibilita, presentazione, sport_principale),
+			profilo_staff_sportivo(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, figure_professionali, presentazione, sport_principale, lista_esperienze, qualifiche_licenze, storico_esperienze),
+			profilo_servizi_consulenze(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, figure_professionali, presentazione, presentazione_servizi, specializzazioni, sport_principale, tipologie_sport, automunito, lista_esperienze, qualifiche_licenze),
+			profilo_arbitro(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, sport_principale, lista_esperienze, qualifiche_licenze),
 			profilo_creator(id, nascosto, nome_creator, presentazione, sport_principale, tipologia_contenuti),
 			profilo_torneo_evento(id, nascosto, nome_organizzazione, presentazione, sport_principale, tipologie_sport),
-			profilo_campi_impianti(id, nascosto, nome_organizzazione, presentazione, sede_principale, indirizzo, sport_principale, tipologie_sport, costo_partenza, servizi_inclusi)
+			profilo_campi_impianti(id, nascosto, nome_organizzazione, presentazione, sede_principale, indirizzo, sport_principale, tipologie_sport, costo_partenza, servizi_inclusi, info_aggiuntive)
 		`, {count: "exact"})
 		.eq("nascosto", false)
 		.not("uuid_utente", "is", null)
@@ -459,6 +463,61 @@ function matchesDirectoryQuery(profile: DirectoryProfile, query: ProfileDirector
 	return true;
 }
 
+function profileCompletionPercentage(row: ProfileDirectoryQueryRow, profile: DirectoryProfile, highlights: ReadonlyMap<string, string>): number {
+	const children = row[PROFILE_TABLE_BY_TYPE[profile.type]];
+	const child = children?.find(candidate => candidate.nascosto === false);
+	if (!child) return 0;
+	const drafts = createProfileDrafts();
+	const locations = createProfileLocations();
+	Object.assign(drafts[profile.type], child);
+	locations[profile.type] = scopedLocations(row, profile.type, child.id)
+		.map(({regione, citta}) => ({regione, citta: citta ?? ""}));
+	if (profile.type === "giocatore") {
+		drafts.giocatore.video_highlights = highlights.get(profile.id) ?? "";
+		if (drafts.giocatore.disponibilita === "svincolato" || drafts.giocatore.disponibilita === "disponibile-subito") drafts.giocatore.categoria_attuale = "";
+	}
+	return getProfileCompletion(profile.type, drafts, locations).percentage;
+}
+
+async function loadDirectoryHighlights(supabase: SupabaseClient<Database>, ids: readonly string[]) {
+	const highlights = new Map<string, string>();
+	for (let index = 0; index < ids.length; index += 200) {
+		const chunk = ids.slice(index, index + 200);
+		for (let offset = 0; ; offset += 1000) {
+			const {data, error} = await supabase.from("media_profilo")
+				.select("uuid_profilo, link_media, id")
+				.in("uuid_profilo", chunk)
+				.eq("formato_media", "video_highlights")
+				.order("id", {ascending: false})
+				.range(offset, offset + 999);
+			if (error) throw new Error(`PROFILE_HIGHLIGHTS_UNAVAILABLE:${error.code}`);
+			for (const row of data ?? []) if (!highlights.has(row.uuid_profilo)) highlights.set(row.uuid_profilo, row.link_media);
+			if ((data?.length ?? 0) < 1000) break;
+		}
+	}
+	return highlights;
+}
+
+async function loadDirectoryFollowerCounts(supabase: SupabaseClient<Database>, ids: readonly string[]) {
+	const counts = new Map<string, number>();
+	for (let index = 0; index < ids.length; index += 200) {
+		const chunk = ids.slice(index, index + 200);
+		for (let offset = 0; ; offset += 1000) {
+			const {data, error} = await supabase.from("profilo_follow")
+				.select("uuid_profilo_seguito, creato_il, uuid_profilo_follower")
+				.in("uuid_profilo_seguito", chunk)
+				.order("uuid_profilo_seguito", {ascending: true})
+				.order("creato_il", {ascending: false})
+				.order("uuid_profilo_follower", {ascending: true})
+				.range(offset, offset + 999);
+			if (error) throw new Error(`PROFILE_FOLLOWERS_UNAVAILABLE:${error.code}`);
+			for (const row of data ?? []) counts.set(row.uuid_profilo_seguito, (counts.get(row.uuid_profilo_seguito) ?? 0) + 1);
+			if ((data?.length ?? 0) < 1000) break;
+		}
+	}
+	return counts;
+}
+
 function emptyDirectoryResult(error = false): ProfileDirectoryResult {
 	return {
 		profiles: [],
@@ -539,14 +598,20 @@ export async function getProfileDirectory(query: ProfileDirectoryQuery): Promise
 		}
 		const profileImages = await loadProfileImageUrlMap(supabase, rows.map(({uuid}) => uuid));
 
-		const filteredProfiles = rows
-			.flatMap((row) => mapProfileRow(row, profileImages))
-			.filter((profile) => !isLimitedProfileType(profile.type))
-			.filter((profile) => matchesDirectoryQuery(profile, query))
-			.sort((left, right) => {
-				const byUpdate = right.updatedAt.localeCompare(left.updatedAt);
-				return byUpdate || left.title.localeCompare(right.title, "it-IT");
-			});
+		const candidates = rows.flatMap(row => mapProfileRow(row, profileImages)
+			.filter(profile => !isLimitedProfileType(profile.type) && matchesDirectoryQuery(profile, query))
+			.map(profile => ({row, profile})));
+		const ids = [...new Set(candidates.map(({profile}) => profile.id))];
+		const playerIds = [...new Set(candidates.filter(({profile}) => profile.type === "giocatore").map(({profile}) => profile.id))];
+		const [highlights, followers] = await Promise.all([
+			loadDirectoryHighlights(supabase, playerIds),
+			loadDirectoryFollowerCounts(supabase, ids),
+		]);
+		const filteredProfiles = sortRankedDirectoryProfiles(candidates.map(({row, profile}) => ({
+			profile,
+			completionPercentage: profileCompletionPercentage(row, profile, highlights),
+			followerCount: followers.get(profile.id) ?? 0,
+		})), query.sortSeed ?? randomUUID()).map(({profile}) => profile);
 		const total = filteredProfiles.length;
 		const totalPages = Math.max(1, Math.ceil(total / PROFILE_DIRECTORY_PAGE_SIZE));
 		const currentPage = Math.min(query.page, totalPages);

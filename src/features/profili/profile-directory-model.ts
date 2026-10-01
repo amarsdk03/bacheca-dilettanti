@@ -62,6 +62,7 @@ export interface ProfileDirectoryQuery {
 	types: ProfileType[];
 	filters: ProfileDirectoryFilters;
 	page: number;
+	sortSeed: string | null;
 }
 
 export interface DirectoryProfileFilterData {
@@ -209,6 +210,7 @@ export function parseProfileDirectoryQuery(params: RawProfileSearchParams): Prof
 		types,
 		filters,
 		page,
+		sortSeed: /^[a-f0-9]{32}$/i.test(firstValue(params.seed)) ? firstValue(params.seed).toLowerCase() : null,
 	};
 }
 
@@ -234,6 +236,7 @@ export function buildProfilesHref(
 		page?: number;
 		q?: string;
 		filters?: ProfileDirectoryFilters;
+		sortSeed?: string;
 	} = {},
 ) {
 	const params = new URLSearchParams();
@@ -245,6 +248,7 @@ export function buildProfilesHref(
 	query.types.forEach((type) => params.append("type", type));
 	getProfileFilterEntries(filters).forEach(([key, value]) => params.set(key, value));
 	if (page > 1) params.set("page", String(page));
+	if (overrides.sortSeed) params.set("seed", overrides.sortSeed);
 
 	const suffix = params.toString();
 	return suffix ? `/profili?${suffix}` : "/profili";

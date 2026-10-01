@@ -51,7 +51,7 @@ export default function AnnouncementTypeSelector({
 				onValueChange={handleTypeChange}
 				aria-label="Tipi di annuncio"
 				aria-busy={pending}
-				className="w-max"
+				className="w-max gap-1.5"
 			>
 				{DIRECTORY_ANNOUNCEMENT_OPTIONS.map(({value: type, label, icon: Icon}) => (
 					<ToggleGroupItem

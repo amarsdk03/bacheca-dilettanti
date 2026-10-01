@@ -930,6 +930,32 @@ export type Database = {
           },
         ]
       }
+      restricted_profile_access: {
+        Row: {
+          profile_id: string
+          profile_type: string
+          enabled_at: string
+        }
+        Insert: {
+          profile_id: string
+          profile_type: string
+          enabled_at?: string
+        }
+        Update: {
+          profile_id?: string
+          profile_type?: string
+          enabled_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restricted_profile_access_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profilo"
+            referencedColumns: ["uuid"]
+          },
+        ]
+      }
       profilo: {
         Row: {
           confermato_il: string | null
@@ -1012,6 +1038,7 @@ export type Database = {
           qualifiche_licenze: Json
           sport_principale: string | null
           storico_esperienze: Json | null
+          tipologie_sport: string[]
           uuid_profilo: string
         }
         Insert: {
@@ -1028,6 +1055,7 @@ export type Database = {
           qualifiche_licenze?: Json
           sport_principale?: string | null
           storico_esperienze?: Json | null
+          tipologie_sport?: string[]
           uuid_profilo: string
         }
         Update: {
@@ -1044,6 +1072,7 @@ export type Database = {
           qualifiche_licenze?: Json
           sport_principale?: string | null
           storico_esperienze?: Json | null
+          tipologie_sport?: string[]
           uuid_profilo?: string
         }
         Relationships: [
@@ -1443,6 +1472,7 @@ export type Database = {
           qualifiche_licenze: Json | null
           sport_principale: string | null
           storico_esperienze: Json | null
+          tipologie_sport: string[]
           uuid_profilo: string
         }
         Insert: {
@@ -1461,6 +1491,7 @@ export type Database = {
           qualifiche_licenze?: Json | null
           sport_principale?: string | null
           storico_esperienze?: Json | null
+          tipologie_sport?: string[]
           uuid_profilo: string
         }
         Update: {
@@ -1479,6 +1510,7 @@ export type Database = {
           qualifiche_licenze?: Json | null
           sport_principale?: string | null
           storico_esperienze?: Json | null
+          tipologie_sport?: string[]
           uuid_profilo?: string
         }
         Relationships: [
@@ -1650,6 +1682,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_restricted_profile_access_v1: {
+        Args: { p_profile_id: string; p_profile_type: string; p_enabled: boolean }
+        Returns: undefined
+      }
       cancel_registration: { Args: { p_token: string }; Returns: undefined }
       complete_registration_v1: {
         Args: { p_token: string }

@@ -255,19 +255,21 @@ export const ANNOUNCEMENT_FILTER_PARAM_KEYS = [
 	"regione",
 	"tipologia",
 	"ruolo",
-	"annoNascita",
+	"annoDa",
+	"annoA",
+	"genere",
+	"categorieRicercate",
 	"figura",
-	"categoriaAttuale",
 ] as const;
 
 export type AnnouncementFilterParam = typeof ANNOUNCEMENT_FILTER_PARAM_KEYS[number];
 
 export const ANNOUNCEMENT_FILTERS_BY_TYPE = {
-	annuncio_giocatore: ["annoNascita", "regione", "ruolo", "tipologia"],
-	annuncio_squadra_cerca_giocatore: ["regione", "categoriaAttuale"],
-	annuncio_squadra_cerca_staff: ["regione", "categoriaAttuale"],
-	annuncio_squadra_cerca_partita: ["regione", "categoriaAttuale"],
-	annuncio_squadra_cerca_sponsor: ["regione", "categoriaAttuale"],
+	annuncio_giocatore: ["annoDa", "annoA", "genere", "categorieRicercate", "regione", "ruolo", "tipologia"],
+	annuncio_squadra_cerca_giocatore: ["regione"],
+	annuncio_squadra_cerca_staff: ["regione"],
+	annuncio_squadra_cerca_partita: ["regione"],
+	annuncio_squadra_cerca_sponsor: ["regione"],
 	annuncio_staff_sportivo: ["figura", "regione", "tipologia"],
 	annuncio_arbitro: ["regione", "tipologia"],
 	annuncio_torneo_evento: ["regione", "tipologia"],
@@ -281,6 +283,7 @@ export const ANNOUNCEMENT_FILTER_OPTIONS = {
 	tipologie: [...TIPOLOGIA_CALCIO_OPTIONS],
 	ruoli: [...RUOLO_PRINCIPALE_OPTIONS],
 	annate: [...ANNATE_OPTIONS],
+	generi: ["Uomo", "Donna"],
 	figure: [...FIGURA_PROFESSIONALE_OPTIONS],
 	categorie: CATEGORY_FILTER_OPTIONS,
 } as const;
@@ -290,9 +293,11 @@ export interface AnnouncementDirectoryFilters {
 	regione: string;
 	tipologia: string;
 	ruolo: string;
-	annoNascita: string;
+	annoDa: string;
+	annoA: string;
+	genere: string;
+	categorieRicercate: string;
 	figura: string;
-	categoriaAttuale: string;
 }
 
 export interface AnnouncementDirectoryQuery {
@@ -411,7 +416,14 @@ export interface AnnouncementPlayerRoles {
 	secondaryRoles: string[];
 }
 
+export interface AnonymousAnnouncementAuthorInfo {
+	name: string | null;
+	location: string | null;
+	presentation: string | null;
+}
+
 export interface AnnouncementDetail extends AnnouncementDirectoryItem {
+	anonymousAuthorInfo: AnonymousAnnouncementAuthorInfo | null;
 	moderationStatus: string | null;
 	isListed: boolean;
 	announcementLink: string | null;
@@ -475,9 +487,11 @@ export function createEmptyAnnouncementFilters(): AnnouncementDirectoryFilters {
 		regione: "",
 		tipologia: "",
 		ruolo: "",
-		annoNascita: "",
+		annoDa: "",
+		annoA: "",
+		genere: "",
+		categorieRicercate: "",
 		figura: "",
-		categoriaAttuale: "",
 	};
 }
 
@@ -496,10 +510,9 @@ function allowedValue(value: string, allowed: Set<string>) {
 
 export function getAnnouncementFiltersForDirectoryType(
 	type: AnnouncementDirectoryType,
-	_teamSearch: AnnouncementTeamSearch | "",
 ): readonly AnnouncementFilterParam[] {
 	if (type === "annuncio_squadra") {
-		return ["ricercaSquadra", "regione", "categoriaAttuale"];
+		return ["ricercaSquadra", "regione"];
 	}
 
 	return ANNOUNCEMENT_FILTERS_BY_TYPE[type];
@@ -507,10 +520,9 @@ export function getAnnouncementFiltersForDirectoryType(
 
 function supportsFilter(
 	type: AnnouncementDirectoryType,
-	teamSearch: AnnouncementTeamSearch | "",
 	filter: AnnouncementFilterParam,
 ) {
-	return getAnnouncementFiltersForDirectoryType(type, teamSearch).includes(filter);
+	return getAnnouncementFiltersForDirectoryType(type).includes(filter);
 }
 
 export function parseAnnouncementDirectoryQuery(
@@ -542,23 +554,31 @@ export function parseAnnouncementDirectoryQuery(
 			}
 		}
 
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "regione")) {
+		if (supportsFilter(selectedType, "regione")) {
 			filters.regione = allowedValue(firstValue(params.regione), REGION_SET);
 		}
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "tipologia")) {
+		if (supportsFilter(selectedType, "tipologia")) {
 			filters.tipologia = allowedValue(normalizeTipologiaCalcio(firstValue(params.tipologia)), TYPE_SET);
 		}
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "ruolo")) {
+		if (supportsFilter(selectedType, "ruolo")) {
 			filters.ruolo = allowedValue(firstValue(params.ruolo), ROLE_SET);
 		}
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "annoNascita")) {
-			filters.annoNascita = allowedValue(firstValue(params.annoNascita), YEAR_SET);
+		if (supportsFilter(selectedType, "annoDa")) {
+			filters.annoDa = allowedValue(firstValue(params.annoDa) || firstValue(params.annoNascita), YEAR_SET);
+			if (filters.annoDa) {
+				const selectedEnd = allowedValue(firstValue(params.annoA) || firstValue(params.annoNascita), YEAR_SET);
+				filters.annoA = selectedEnd && Number(selectedEnd) >= Number(filters.annoDa)
+					? selectedEnd : ANNOUNCEMENT_FILTER_OPTIONS.annate[0];
+			}
 		}
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "figura")) {
+		if (supportsFilter(selectedType, "genere")) {
+			filters.genere = allowedValue(firstValue(params.genere), new Set(ANNOUNCEMENT_FILTER_OPTIONS.generi));
+		}
+		if (supportsFilter(selectedType, "categorieRicercate")) {
+			filters.categorieRicercate = allowedValue(normalizeCategory(firstValue(params.categorieRicercate)), CATEGORY_SET);
+		}
+		if (supportsFilter(selectedType, "figura")) {
 			filters.figura = allowedValue(normalizeFigure(firstValue(params.figura)), FIGURE_SET);
-		}
-		if (supportsFilter(selectedType, filters.ricercaSquadra, "categoriaAttuale")) {
-			filters.categoriaAttuale = allowedValue(normalizeCategory(firstValue(params.categoriaAttuale)), CATEGORY_SET);
 		}
 	}
 
@@ -583,9 +603,11 @@ export function getAnnouncementFilterEntries(
 	if (filters.regione) entries.push(["regione", filters.regione]);
 	if (filters.tipologia) entries.push(["tipologia", filters.tipologia]);
 	if (filters.ruolo) entries.push(["ruolo", filters.ruolo]);
-	if (filters.annoNascita) entries.push(["annoNascita", filters.annoNascita]);
+	if (filters.annoDa) entries.push(["annoDa", filters.annoDa]);
+	if (filters.annoA) entries.push(["annoA", filters.annoA]);
+	if (filters.genere) entries.push(["genere", filters.genere]);
+	if (filters.categorieRicercate) entries.push(["categorieRicercate", filters.categorieRicercate]);
 	if (filters.figura) entries.push(["figura", filters.figura]);
-	if (filters.categoriaAttuale) entries.push(["categoriaAttuale", filters.categoriaAttuale]);
 	return entries;
 }
 

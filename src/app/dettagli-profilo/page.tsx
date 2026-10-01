@@ -14,7 +14,8 @@ import {
 import {getProfileDetail} from "@/features/dettagli-profilo/server/profile-detail-query";
 import {dynamicMetadata} from "@/server/metadata";
 import {profileMetadataDescription, profileStructuredData, profileTypeLabel,} from "@/server/structured-data";
-import {getCurrentViewer} from "@/features/auth/server/queries";
+import {getAuthenticatedViewer} from "@/features/auth/server/queries";
+import {createClient} from "@/lib/supabase/server";
 
 interface DettagliProfiloPageProps {
 	searchParams: Promise<RawProfileDetailSearchParams>;
@@ -75,13 +76,25 @@ export default async function DettagliProfiloPage({searchParams}: DettagliProfil
 	const result = await loadProfileDetail(params.id, params.type);
 	if (result.status === "not-found") notFound();
 	const path = profilePath(params.id, params.type);
-	const authenticated = Boolean(await getCurrentViewer());
+	const account = await getAuthenticatedViewer();
+	const authenticated = Boolean(account);
+	let isOwner = false;
+	if (result.status === "ok" && account?.utenteId) {
+		const supabase = await createClient();
+		const {data, error} = await supabase.from("profilo")
+			.select("uuid")
+			.eq("uuid", result.profile.id)
+			.eq("uuid_utente", account.utenteId)
+			.maybeSingle();
+		if (error) console.error("[dettagli-profilo] Ownership lookup failed", {code: error.code});
+		isOwner = Boolean(data);
+	}
 
 	return (
 		<ExternalNavigationProvider key={`${params.id}:${params.type}`}>
 			{result.status === "ok" && <JsonLd data={profileStructuredData(result.profile, path, authenticated)} />}
 			<Navbar />
-			<DettagliProfilo result={result} authenticated={authenticated} returnTo={path} />
+			<DettagliProfilo result={result} authenticated={authenticated} isOwner={isOwner} returnTo={path} />
 			<Footer />
 		</ExternalNavigationProvider>
 	);

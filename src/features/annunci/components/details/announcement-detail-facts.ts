@@ -36,7 +36,14 @@ export function getAnnouncementDetailFacts(announcement: AnnouncementDetail, pre
 		announcement.facts.filter(fact => fact.kind === kind),
 	);
 	return [
-		...heroFacts.map(fact => ({label: fact.label, icon: FACT_ICONS[fact.kind], value: isSpecifiedAnnouncementValue(fact.value) ? fact.value : null})),
+		...heroFacts.map(fact => {
+			const source = announcement.fields.find(field => field.label === fact.label)
+				?? announcement.fields.find(field => fact.kind === "figures" && field.label === "Figure professionali");
+			const items = source?.items?.map(item => item.trim()).filter(Boolean) ?? [];
+			return {label: fact.label, icon: FACT_ICONS[fact.kind], value: items.length > 0
+				? [...items.slice(0, 2), ...(items.length > 2 ? [`+${items.length - 2}`] : [])]
+				: isSpecifiedAnnouncementValue(fact.value) ? fact.value : null};
+		}),
 		{label: "Num. salvataggi", icon: HeartIcon, value: announcement.saveCount == null ? "Non disponibile" : String(announcement.saveCount)},
 		{label: "Num. follower profilo", icon: UserRoundPlusIcon, value: announcement.authorFollowerCount == null ? "Non disponibile" : String(announcement.authorFollowerCount)},
 	];

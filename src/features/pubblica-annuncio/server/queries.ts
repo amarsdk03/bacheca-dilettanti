@@ -10,6 +10,7 @@ import {
 import {createProfileSocialLinks, profileSocialLinksFromRows,} from "@/features/profilo/profile-social-links";
 import type {PublishProfileContext,} from "@/features/pubblica-annuncio/publish-model";
 import {createClient} from "@/lib/supabase/server";
+import {createAdminClient} from "@/lib/supabase/admin";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 import {normalizeCategories, normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
 
@@ -47,6 +48,8 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		.maybeSingle();
 	queryFailed(baseProfileError, "profilo");
 	if (!baseProfile) return null;
+	const {data: restrictedAccess, error: restrictedAccessError} = await createAdminClient().from("restricted_profile_access").select("profile_type").eq("profile_id", baseProfile.uuid);
+	queryFailed(restrictedAccessError, "restricted_profile_access");
 
 	const [player, playerMedia, team, staff, referee, tournament, facility, professional, creator, locationResult, socialLinksResult] = await Promise.all([
 		supabase.from("profilo_giocatore").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
@@ -112,5 +115,5 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		row ? [type] : []
 	));
 
-	return {profileId: baseProfile.uuid, enabledProfileTypes, drafts, locations, socialLinks};
+	return {profileId: baseProfile.uuid, enabledProfileTypes, authorizedRestrictedProfileTypes: (restrictedAccess ?? []).flatMap(({profile_type}) => profile_type === "servizi-consulenze" || profile_type === "creators" ? [profile_type] : []), drafts, locations, socialLinks};
 }

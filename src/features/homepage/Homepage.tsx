@@ -4,13 +4,13 @@ import {
 	ArrowRightIcon,
 	BriefcaseBusinessIcon,
 	CalendarDaysIcon,
-	ClipboardListIcon,
+	ClipboardListIcon, ExternalLink,
 	HandshakeIcon,
 	MapPinIcon,
 	UserPlusIcon,
 } from "lucide-react";
 
-import {buttonVariants} from "@/components/ui/button";
+import {Button, buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Skeleton} from "@/components/ui/skeleton";
 import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
@@ -24,6 +24,8 @@ import {HOMEPAGE_NOTICES} from "@/features/homepage/homepage-notices";
 import HomepageWorkInProgressNotice from "@/features/homepage/components/HomepageWorkInProgressNotice";
 import ArticleImage from "@/features/aggiornamenti/ArticleImage";
 import {formatArticleDate, getAllArticles, getArticleCover} from "@/lib/articles";
+import {WHATSAPP_URL} from "@/const/contactConstants";
+import {SiWhatsapp} from "@icons-pack/react-simple-icons";
 
 interface HomepageCategory {
 	type: ProfileType;
@@ -65,7 +67,7 @@ const HOMEPAGE_CATEGORIES = [
 	{
 		type: "creators",
 		label: "Creators",
-		description: "Sfoglia i content creators in collaborazione con noi",
+		description: "Scopri chi racconta il calcio dilettantistico nella tua zona.",
 	},
 	{
 		type: "servizi-consulenze",
@@ -235,7 +237,33 @@ export default function Homepage() {
 			id="main-content"
 			className="font-home-body overflow-x-clip bg-[radial-gradient(circle_at_55%_0%,rgba(142,114,255,0.10),transparent_34rem),linear-gradient(180deg,#ffffff_0%,#fbfaff_72%,#ffffff_100%)] text-brand-ink antialiased"
 		>
-			<HomepageWorkInProgressNotice />
+			<section className={"w-full flex justify-center px-4 sm:px-6"} aria-labelledby="banner-whatsapp">
+				<div className={"w-full max-w-5xl mt-8 sm:mt-12"}>
+					<a href={"https://www.whatsapp.com/channel/0029Vb8lng43AzNSP0YlRL3V"} target="_blank" rel="noopener noreferrer" className="group flex flex-col md:flex-row justify-between items-center gap-4 rounded-2xl border border-green-300 bg-green-50 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-green-400 hover:shadow-md">
+						<div className="flex items-center justify-start gap-4">
+							<span className="flex size-11 items-center justify-center rounded-xl bg-green-100 text-green-700">
+								<SiWhatsapp size={22} title="WhatsApp" />
+							</span>
+							<span className="min-w-0 flex-1">
+								<span className="block text-lg md:text-xl font-semibold text-neutral-950">
+									Non perderti nessun annuncio.
+								</span>
+								<span className="block text-base md:text-lg text-neutral-600">
+									<span className={"font-medium"}>Segui il canale WhatsApp:</span> ricevere i nuovi annunci è semplice e immediato.
+								</span>
+							</span>
+						</div>
+						<Button
+							variant={"ghost"}
+							size={"lg"}
+							className="text-lg text-green-600 transition group-hover:text-green-700 hover:text-green-700 hover:bg-white"
+						>
+							Vai al canale
+							<ExternalLink  />
+						</Button>
+					</a>
+				</div>
+			</section>
 
 			<section aria-labelledby="homepage-title">
 				<div className="mx-auto grid max-w-370 gap-10 px-4 sm:px-6 pb-10 sm:pb-12 pt-10 sm:pt-14 lg:px-8 min-[1120px]:grid-cols-[1.02fr_0.98fr] min-[1120px]:items-center min-[1120px]:pb-12 min-[1120px]:pt-16">

@@ -60,7 +60,7 @@ export default function DataNascitaFields({
 	return (
 		<Field data-invalid={Boolean(yearError)}>
 			<FieldLabel>
-				Data di nascita {!yearRequired ? <OptionalLabel /> : <OptionalLabel value={"anno obbligatorio"} />}
+				Data di nascita {!yearRequired ? <OptionalLabel /> : null}
 			</FieldLabel>
 			<FieldGroup className="grid grid-cols-3 gap-1 sm:gap-3">
 				<Field data-invalid={Boolean(yearError)}>
@@ -105,7 +105,7 @@ export default function DataNascitaFields({
 				</Field>
 
 				<Select
-					value={meseNascita || MESE_PLACEHOLDER}
+					value={meseNascita || (yearRequired ? null : MESE_PLACEHOLDER)}
 					onValueChange={(value) => {
 						if (value === MESE_PLACEHOLDER) {
 							setMeseNascita("");
@@ -133,7 +133,7 @@ export default function DataNascitaFields({
 					</SelectTrigger>
 				<SelectContent>
 					<SelectGroup>
-					<SelectItem value={MESE_PLACEHOLDER}>Non specificare</SelectItem>
+					{!yearRequired && <SelectItem value={MESE_PLACEHOLDER}>Non specificare</SelectItem>}
 					{monthOptions.map((mese) => (
 						<SelectItem key={mese} value={mese}>{mese}</SelectItem>
 					))}
@@ -142,7 +142,7 @@ export default function DataNascitaFields({
 				</Select>
 
 				<Select
-					value={giornoNascita || GIORNO_PLACEHOLDER}
+					value={giornoNascita || (yearRequired ? null : GIORNO_PLACEHOLDER)}
 					onValueChange={(value) => setGiornoNascita(value === GIORNO_PLACEHOLDER ? "" : value ?? "")}
 				>
 					<SelectTrigger
@@ -154,7 +154,7 @@ export default function DataNascitaFields({
 					</SelectTrigger>
 				<SelectContent>
 					<SelectGroup>
-					<SelectItem value={GIORNO_PLACEHOLDER}>Non specificare</SelectItem>
+					{!yearRequired && <SelectItem value={GIORNO_PLACEHOLDER}>Non specificare</SelectItem>}
 					{dayOptions.map((giorno) => (
 						<SelectItem key={giorno} value={giorno}>{giorno}</SelectItem>
 					))}
@@ -162,7 +162,7 @@ export default function DataNascitaFields({
 				</SelectContent>
 				</Select>
 			</FieldGroup>
-			<FieldDescription>L&apos;anno è obbligatorio: per pubblicare, devi avere almeno {MINIMUM_PROFILE_AGE} anni compiuti.</FieldDescription>
+			<FieldDescription>Per pubblicare, devi avere almeno {MINIMUM_PROFILE_AGE} anni compiuti. Nel profilo pubblico verrà mostrata solo l&apos;età e l&apos;anno di nascita.</FieldDescription>
 			{yearError && <FieldError>{yearError}</FieldError>}
 		</Field>
 	);

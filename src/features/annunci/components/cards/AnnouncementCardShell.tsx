@@ -125,6 +125,7 @@ export default function AnnouncementCardShell({
 			className={cn(
 				"group/card relative h-full gap-5 overflow-hidden font-home-body transition duration-200 focus-within:ring-3 focus-within:ring-ring/50 hover:-translate-y-0.5 hover:shadow-lg",
 				announcement.isPriority && "priority-announcement priority-announcement-card",
+				!announcement.isPriority && (announcement.type === "annuncio_servizi_consulenze" || announcement.type === "annuncio_creators") && "announcement-themed-card",
 			)}
 			style={style}
 		>

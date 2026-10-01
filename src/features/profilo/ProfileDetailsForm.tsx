@@ -64,6 +64,7 @@ import {
 	TIPOLOGIA_CALCIO_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import type {Json} from "@/server/supabase";
+import {normalizeOptionalTime} from "@/features/pubblica-annuncio/publish-field-validation";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import Link from "next/link";
 import {
@@ -414,7 +415,7 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 								</Field>
 
 								<Field>
-									<FieldLabel htmlFor={`${idPrefix}-squadra-${esperienza.id}`}>{staff ? "Società" : "Squadra"} <OptionalLabel /></FieldLabel>
+									<FieldLabel htmlFor={`${idPrefix}-squadra-${esperienza.id}`}>{staff ? "Società / ente" : "Squadra"} <OptionalLabel /></FieldLabel>
 									<TeamProfileComboboxField
 										id={`${idPrefix}-squadra-${esperienza.id}`}
 										value={esperienza.titolo}
@@ -481,6 +482,10 @@ export function OpeningHoursField({idPrefix, value, onChange, error}: OpeningHou
 			entry.giorno === giorno ? {...entry, ...values} : entry
 		)) as unknown as Json);
 	};
+	const completeTime = (giorno: Weekday, field: "dalle" | "alle", raw: string) => {
+		const normalized = normalizeOptionalTime(raw);
+		if (normalized !== undefined) updateDay(giorno, {[field]: normalized ?? ""});
+	};
 
 	return (
 		<FieldSet data-invalid={Boolean(error)}>
@@ -518,9 +523,13 @@ export function OpeningHoursField({idPrefix, value, onChange, error}: OpeningHou
 									<FieldLabel htmlFor={`${idPrefix}-${entry.giorno}-dalle`}>Dalle <OptionalLabel /></FieldLabel>
 									<Input
 										id={`${idPrefix}-${entry.giorno}-dalle`}
-										type="time"
+										type="text"
+										inputMode="numeric"
+										placeholder="HH:mm"
+										className="bg-white"
 										value={entry.dalle}
 										onChange={(event) => updateDay(entry.giorno, {dalle: event.target.value})}
+										onBlur={(event) => completeTime(entry.giorno, "dalle", event.target.value)}
 										disabled={!entry.attivo}
 									/>
 								</Field>
@@ -528,9 +537,13 @@ export function OpeningHoursField({idPrefix, value, onChange, error}: OpeningHou
 									<FieldLabel htmlFor={`${idPrefix}-${entry.giorno}-alle`}>Alle <OptionalLabel /></FieldLabel>
 									<Input
 										id={`${idPrefix}-${entry.giorno}-alle`}
-										type="time"
+										type="text"
+										inputMode="numeric"
+										placeholder="HH:mm"
+										className="bg-white"
 										value={entry.alle}
 										onChange={(event) => updateDay(entry.giorno, {alle: event.target.value})}
+										onBlur={(event) => completeTime(entry.giorno, "alle", event.target.value)}
 										disabled={!entry.attivo}
 									/>
 								</Field>
@@ -728,7 +741,7 @@ function GiocatoreFields({
 				onAnnoNascitaChange={(value) => onChange("giocatore", "anno_nascita", value)}
 				nameRequired={requiredFields}
 				nameError={errors.name}
-				yearRequired={requiredFields}
+				yearRequired
 				yearError={errors.birthYear}
 			/>
 			<FieldGroup className="grid gap-4 sm:grid-cols-2">
@@ -916,9 +929,12 @@ function ProfileFields({
 					onAnnoNascitaChange={(value) => onChange(type, "anno_nascita", value)}
 					nameRequired={requiredFields}
 					nameError={errors.name}
+					yearRequired
+					yearError={errors.birthYear}
 				/>
 				<FieldGroup className="grid gap-4 sm:grid-cols-2">
 					<FiguraProfessionaleMultiselectField value={draft.figure_professionali ?? []} onValueChange={(value) => onChange(type, "figure_professionali", value)} required={requiredFields} error={errors.professionalRole} />
+					<TipologiaCalcioMultiselectField label="Tipologie calcio" value={draft.tipologie_sport ?? []} onValueChange={(value) => onChange(type, "tipologie_sport", value)} />
 					<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)} onValueChange={(value) => onChange(type, "disponibilita", value)} />
 				</FieldGroup>
 				<Field orientation="horizontal">
@@ -953,6 +969,8 @@ function ProfileFields({
 					onGiornoNascitaChange={(value) => onChange(type, "giorno_nascita", value)}
 					onMeseNascitaChange={(value) => onChange(type, "mese_nascita", value)}
 					onAnnoNascitaChange={(value) => onChange(type, "anno_nascita", value)}
+					yearRequired
+					yearError={errors.birthYear}
 				/>
 				<FieldGroup className="grid gap-4 sm:grid-cols-2">
 					<FiguraProfessionaleMultiselectField value={draft.figure_professionali ?? []} onValueChange={(value) => onChange(type, "figure_professionali", value)} />
@@ -987,7 +1005,10 @@ function ProfileFields({
 					onAnnoNascitaChange={(value) => onChange(type, "anno_nascita", value)}
 					nameRequired={requiredFields}
 					nameError={errors.name}
+					yearRequired
+					yearError={errors.birthYear}
 				/>
+				<TipologiaCalcioMultiselectField label="Tipologie calcio" value={draft.tipologie_sport ?? []} onValueChange={(value) => onChange(type, "tipologie_sport", value)} />
 				<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)} onValueChange={(value) => onChange(type, "disponibilita", value)} hideContract />
 				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange(type, "presentazione", value)} placeholder="Esperienza arbitrale, categorie seguite e disponibilità..." />
 				<CareerHistoryFields idPrefix={`${prefix}-lista-esperienze`} staff esperienze={toExperiences(draft.lista_esperienze)} setEsperienze={experienceSetter(draft.lista_esperienze, (value) => onChange(type, "lista_esperienze", value))} />

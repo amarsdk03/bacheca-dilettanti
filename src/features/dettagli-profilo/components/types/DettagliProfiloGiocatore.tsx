@@ -8,7 +8,7 @@ import PlayerOverview from "../player/PlayerOverview";
 import PlayerTabs from "../player/PlayerTabs";
 import SimilarProfiles from "../SimilarProfiles";
 
-export default function DettagliProfiloGiocatore({profile, actions, authenticated, returnTo}: {profile: PlayerProfileDetail; actions?: ReactNode; authenticated: boolean; returnTo: string}) {
+export default function DettagliProfiloGiocatore({profile, actions, authenticated, isOwner, returnTo}: {profile: PlayerProfileDetail; actions?: ReactNode; authenticated: boolean; isOwner?: boolean; returnTo: string}) {
 	const {player} = profile;
 
 	return (
@@ -24,9 +24,9 @@ export default function DettagliProfiloGiocatore({profile, actions, authenticate
 				actions={actions}
 			/>
 			<PlayerTabs
-				overview={<PlayerOverview presentation={player.presentation} highlightsUrl={player.highlightsUrl} locations={profile.locations} socialLinks={profile.socialLinks} sportTypes={player.sportTypes} primaryRoles={player.primaryRoles} specificRoles={player.specificRoles} currentCategory={player.currentCategory} preferredCategories={player.preferredCategories} profileId={profile.id} authenticated={authenticated} returnTo={returnTo} />}
+				overview={<PlayerOverview presentation={player.presentation} highlightsUrl={player.highlightsUrl} locations={profile.locations} socialLinks={profile.socialLinks} sportTypes={player.sportTypes} primaryRoles={player.primaryRoles} specificRoles={player.specificRoles} preferredCategories={player.preferredCategories} height={player.height} weight={player.weight} nationality={player.nationality} nationalityCode={player.nationalityCode} profileId={profile.id} authenticated={authenticated} returnTo={returnTo} />}
 				career={<PlayerCareer entries={player.career} />}
-				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} />}
+				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} isOwner={isOwner} />}
 				similarProfiles={<SimilarProfiles profiles={profile.similarProfiles} unavailable={profile.similarProfilesUnavailable} />}
 			/>
 		</div>

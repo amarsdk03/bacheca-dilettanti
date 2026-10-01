@@ -1,6 +1,7 @@
 import type {ProfileLocationDraft, ProfileType} from "@/features/profilo/profile-model";
 import {isPlayerNationalityCode} from "@/features/profilo/player-nationalities";
 import {parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
+import {getRequiredBirthDateError} from "@/features/profilo/birth-date";
 
 export type ProfileValidationField =
 	| "name"
@@ -41,13 +42,20 @@ export function getProfileRequiredFieldErrors(
 ): ProfileValidationErrors {
 	const errors: ProfileValidationErrors = {};
 	const values = isRecord(draft) ? draft : {};
+	if (["giocatore", "staff-sportivo", "arbitro", "servizi-consulenze"].includes(type)) {
+		const birthError = getRequiredBirthDateError({
+			day: values.giorno_nascita as string | null | undefined,
+			month: values.mese_nascita as string | null | undefined,
+			year: values.anno_nascita as string | null | undefined,
+		});
+		if (birthError) errors.birthYear = birthError;
+	}
 
 	if (locations.length === 0) errors.locations = "Seleziona almeno una località per il profilo.";
 
 	if (type === "giocatore") {
 		if (!nonEmpty(values.nome)) errors.name = "Inserisci il nome del giocatore.";
 		if (values.genere !== "Uomo" && values.genere !== "Donna") errors.gender = "Seleziona il genere.";
-		if (!nonEmpty(values.anno_nascita)) errors.birthYear = "Seleziona l'anno di nascita.";
 		if (values.disponibilita !== "svincolato" && values.disponibilita !== "sotto-contratto") errors.availability = "Seleziona la disponibilità.";
 		if (!hasItems(values.tipologie_sport)) errors.sports = "Seleziona almeno una tipologia di calcio.";
 		if (!hasMainPlayerRole(values.ruoli_sport)) errors.mainRole = "Seleziona almeno un ruolo principale.";

@@ -21,10 +21,12 @@ export default function TeamProfileLinks({
 	teams,
 	limit,
 	className,
+	newTab = false,
 }: {
 	teams: readonly TeamItem[];
 	limit?: number;
 	className?: string;
+	newTab?: boolean;
 }) {
 	const uniqueTeams = useMemo(() => teams.filter((team, index, all) => (
 		all.findIndex((candidate) => candidate.profileId === team.profileId) === index
@@ -75,6 +77,8 @@ export default function TeamProfileLinks({
 					<Link
 						key={reference.profileId}
 						href={teamProfileHref(reference.profileId)}
+						target={newTab ? "_blank" : undefined}
+						rel={newTab ? "noopener noreferrer" : undefined}
 						className="relative z-20 inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-2 py-1 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
 					>
 						<Avatar size="sm">

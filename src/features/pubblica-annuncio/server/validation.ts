@@ -83,6 +83,7 @@ export interface NormalizedPublishPayload {
 	announcementLocations: ProfileLocationDraft[];
 	contacts: AnnouncementContacts;
 	extras: AnnouncementExtras;
+	newsletterSubscribed: boolean;
 }
 
 function fail(message: string, step: 1 | 2 | 3 | 4): never {
@@ -325,6 +326,18 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
 		};
 	}
+	if (type === "annuncio_servizi_consulenze") {
+		assertExactKeys(value, ["figura_professionale", "specializzazione", "presentazione_servizi", "tipologie_sport", "descrizione_aggiuntiva"], 3);
+		const figures = stringList(value.figura_professionale, 3, true).map(normalizeFigure);
+		if (!figures.every((figure) => FIGURA_PROFESSIONALE_OPTIONS.includes(figure as typeof FIGURA_PROFESSIONALE_OPTIONS[number]))) fail("Seleziona figure valide dal catalogo.", 3);
+		return {
+			figura_professionale: figures,
+			specializzazione: textValue(value.specializzazione, MAX_SHORT_TEXT, 3),
+			presentazione_servizi: textValue(value.presentazione_servizi, MAX_LONG_TEXT, 3, true),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, 3)),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+		};
+	}
 	if (type === "annuncio_creators") {
 		assertExactKeys(value, ["titolo_post", "descrizione_post"], 3);
 		return {
@@ -401,6 +414,7 @@ function assignNormalizedAnnouncementDetail(
 		annuncio_staff_sportivo: "staffSportivo",
 		annuncio_arbitro: "arbitro",
 		annuncio_creators: "creator",
+		annuncio_servizi_consulenze: "serviziConsulenze",
 		annuncio_torneo_evento: "torneoEvento",
 		annuncio_campo_impianto: "campoImpianto",
 	}[type] as keyof AnnouncementDetailsDrafts;
@@ -424,6 +438,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 	const visibility = rawValue.visibility;
 	if (typeof rawValue.profileType !== "string" || !isPublishableProfileType(rawValue.profileType)) fail("La tipologia di profilo non è valida.", 1);
 	const profileType = rawValue.profileType;
+	if (!registered && (profileType === "creators" || profileType === "servizi-consulenze")) fail("Questo profilo richiede l’abilitazione dell’admin.", 1);
 
 	let teamSubtype: TeamAnnouncementSubtype | null = null;
 	if (profileType === "squadra") {
@@ -511,6 +526,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		staffSportivo: {tipologie_sport: [], categorie_ricercate: [], disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
 		arbitro: {tipologie_sport: [], automunito: "", disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
 		creator: {titolo_post: "", descrizione_post: ""},
+		serviziConsulenze: {figura_professionale: [], specializzazione: "", presentazione_servizi: "", tipologie_sport: [], descrizione_aggiuntiva: ""},
 		torneoEvento: {nome_evento: "", tipologie_sport: [], modalita_iscrizione: "", annate_ammesse_da: "", annate_ammesse_a: "", numero_squadre: "", costo_partecipazione: "", tipo_partecipazione: "squadra", lista_premi_trofei: [], descrizione_aggiuntiva: ""},
 		campoImpianto: {tipologie_sport: [], orari: [], costo_partenza: "", servizi_inclusi: "", indirizzo: "", descrizione_aggiuntiva: ""},
 	} satisfies AnnouncementDetailsDrafts;
@@ -519,7 +535,11 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 	if (detailMessage) fail(detailMessage, 3);
 
 	if (!isRecord(rawValue.consents)) fail("Conferma i consensi richiesti.", 4);
-	assertExactKeys(rawValue.consents, ["dataConfirmed", "termsAccepted", "privacyAccepted"], 4);
+	assertExactKeys(rawValue.consents, ["dataConfirmed", "termsAccepted", "privacyAccepted", "newsletterSubscribed"], 4);
+	const newsletterSubscribed = rawValue.consents.newsletterSubscribed;
+	if ((newsletterSubscribed !== undefined && typeof newsletterSubscribed !== "boolean") || (registered && newsletterSubscribed === true)) {
+		fail("La preferenza per le comunicazioni non è valida.", 4);
+	}
 	if (rawValue.consents.dataConfirmed !== true || rawValue.consents.termsAccepted !== true || rawValue.consents.privacyAccepted !== true) {
 		fail("Conferma i dati, i termini e l’informativa privacy prima dell’invio.", 4);
 	}
@@ -539,6 +559,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		announcementLocations,
 		contacts,
 		extras,
+		newsletterSubscribed: newsletterSubscribed === true,
 	};
 }
 

@@ -82,6 +82,8 @@ const PROFILE_TYPE_BY_ANNOUNCEMENT = {
 	annuncio_arbitro: "arbitro",
 	annuncio_torneo_evento: "torneo-evento",
 	annuncio_campo_impianto: "campi-impianti-sportivi",
+	annuncio_servizi_consulenze: "servizi-consulenze",
+	annuncio_creators: "creators",
 };
 
 function fixtureAnnouncement(type, facts = FACTS, linkedTeams = [], isPriority = false) {
@@ -134,6 +136,15 @@ test("the dispatcher preserves the compact card layout for every announcement ty
 		assert.match(html, /data-icon="inline-start"/);
 		assert.doesNotMatch(html, /data-profile-icon=/);
 		assert.doesNotMatch(html, /<dl\b/);
+	}
+});
+
+test("service and creator result cards have a subtle theme without overriding priority", () => {
+	for (const type of ["annuncio_servizi_consulenze", "annuncio_creators"]) {
+		assert.match(renderAnnouncement(type), /announcement-themed-card/, type);
+		const priority = renderAnnouncement(type, FACTS, true);
+		assert.match(priority, /priority-announcement-card/, type);
+		assert.doesNotMatch(priority, /announcement-themed-card/, type);
 	}
 });
 

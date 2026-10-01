@@ -16,6 +16,9 @@ const modelJavaScript = ts.transpileModule(modelSource, {
 }).outputText;
 const modelModule = {exports: {}};
 const fieldValidators = {isValidIsoDate, isValidPhone, isValidTime, normalizeFacilityOpeningHours, parseOptionalMoney};
+const birthSource = readFileSync(new URL("../src/features/profilo/birth-date.ts", import.meta.url), "utf8");
+const birthJavaScript = ts.transpileModule(birthSource, {compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022}}).outputText;
+const birthValidators = await import(`data:text/javascript;base64,${Buffer.from(birthJavaScript).toString("base64")}`);
 vm.runInNewContext(modelJavaScript, {
 	module: modelModule,
 	exports: modelModule.exports,
@@ -45,18 +48,19 @@ vm.runInNewContext(profileJavaScript, {
 	exports: profileModule.exports,
 	require(specifier) {
 		if (specifier.endsWith("publish-field-validation")) return fieldValidators;
+		if (specifier.endsWith("birth-date")) return birthValidators;
 		if (specifier.endsWith("player-nationalities")) return {isPlayerNationalityCode: (value) => value === "IT"};
 		throw new Error(`Unexpected import: ${specifier}`);
 	},
 });
 const {getProfileRequiredFieldErrors} = profileModule.exports;
 
-test("player requires gender, birth year and availability while current category stays optional", () => {
+test("player requires a complete birth date, gender and availability while current category stays optional", () => {
 	const draft = {nome: "Mario", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"]}, genere: "", anno_nascita: "", disponibilita: ""};
 	const location = [{regione: "Lazio", citta: null}];
 	const missing = getProfileRequiredFieldErrors("giocatore", draft, location);
 	assert.ok(missing.gender && missing.birthYear && missing.availability);
-	assert.deepEqual(Object.keys(getProfileRequiredFieldErrors("giocatore", {...draft, genere: "Uomo", anno_nascita: "2000", disponibilita: "svincolato"}, location)), []);
+	assert.deepEqual(Object.keys(getProfileRequiredFieldErrors("giocatore", {...draft, genere: "Uomo", anno_nascita: "2000", mese_nascita: "Gennaio", giorno_nascita: "01", disponibilita: "svincolato"}, location)), []);
 });
 
 test("creator requires a name in the profile while the shared announcement title is optional", () => {
@@ -104,7 +108,7 @@ test("facility opening hours normalize missing minutes and reject invalid hours"
 	assert.equal(normalizeFacilityOpeningHours(schedule.map((entry, index) => index === 0 ? {...entry, alle: "20:77"} : entry)), undefined);
 });
 
-test("all ten announcement types pass client validation with complete details", () => {
+test("all eleven announcement types pass client validation with complete details", () => {
 	const drafts = createAnnouncementDetailsDrafts();
 	drafts.giocatore.descrizione_aggiuntiva = "Cerco una squadra.";
 	drafts.squadraCercaGiocatore = {...drafts.squadraCercaGiocatore, ruoli_principali: ["Difensore"], descrizione_aggiuntiva: "Cerchiamo un giocatore."};
@@ -114,6 +118,7 @@ test("all ten announcement types pass client validation with complete details", 
 	drafts.staffSportivo = {...drafts.staffSportivo, tipologie_sport: ["Calcio 11"], descrizione_aggiuntiva: "Cerco incarico."};
 	drafts.arbitro = {...drafts.arbitro, tipologie_sport: ["Calcio 11"], descrizione_aggiuntiva: "Disponibile."};
 	drafts.creator = {...drafts.creator, titolo_post: "Collaborazione video", descrizione_post: "Proposta editoriale."};
+	drafts.serviziConsulenze = {...drafts.serviziConsulenze, figura_professionale: ["Allenatore"], presentazione_servizi: "Preparazione atletica per squadre."};
 	drafts.torneoEvento = {...drafts.torneoEvento, nome_evento: "Torneo", tipologie_sport: ["Calcio 11"], descrizione_aggiuntiva: "Torneo locale."};
 	drafts.campoImpianto = {...drafts.campoImpianto, tipologie_sport: ["Calcio 11"], indirizzo: "Via Roma 1", descrizione_aggiuntiva: "Campo disponibile.", costo_partenza: "0.29"};
 	const locations = [{regione: "Lazio", citta: "Roma"}];
@@ -127,6 +132,7 @@ test("all ten announcement types pass client validation with complete details", 
 		["staff-sportivo", null],
 		["arbitro", null],
 		["creators", null],
+		["servizi-consulenze", null],
 		["torneo-evento", null],
 		["campi-impianti-sportivi", null],
 	];

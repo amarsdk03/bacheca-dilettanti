@@ -7,7 +7,7 @@ export default function AnnouncementStaffCard({announcement}: {announcement: Ann
 			announcement={announcement}
 			summary="Disponibilità professionale"
 			emptyDescription="Questo professionista non ha aggiunto una descrizione all’annuncio."
-			facts={getAnnouncementFacts(announcement, ["Figure", "Categorie", "Spostamenti", "Località"])}
+			facts={getAnnouncementFacts(announcement, ["Figure", "Categorie ricercate", "Spostamenti", "Località"])}
 		/>
 	);
 }

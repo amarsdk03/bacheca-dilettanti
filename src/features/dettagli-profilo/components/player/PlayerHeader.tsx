@@ -3,7 +3,7 @@ import DynamicReactFlag from "@/components/dynamic/DynamicReactFlag";
 import {
 	CalendarDaysIcon,
 	CircleCheckBigIcon,
-	FlagIcon,
+	TagsIcon,
 	FootprintsIcon,
 	RulerIcon,
 	ShirtIcon,
@@ -25,18 +25,17 @@ type PlayerHeaderProps = Pick<PlayerProfileDetail, "title" | "imageUrl" | "email
 };
 
 export default function PlayerHeader({title, imageUrl, emailConfirmed, officialVerified, primary, availabilityLabel, player, actions}: PlayerHeaderProps) {
-	const {age, primaryRoles, specificRoles, gender, nationality, nationalityCode, preferredFoot, height} = player;
+	const {age, primaryRoles, specificRoles, gender, nationalityCode, preferredFoot, height} = player;
 	const hasRolePitch = getPlayerRolePitchMarkers(primaryRoles, specificRoles).length > 0;
 	const facts: ProfileFact[] = [
-		{label: "Età", icon: CalendarDaysIcon, value: age !== null ? `${age} anni` : null},
+		{label: "Età", icon: CalendarDaysIcon, value: age !== null && player.birthYear ? `${age} (${player.birthYear})` : null},
 		{label: "Genere", icon: ShirtIcon, value: gender},
 		{label: "Altezza", icon: RulerIcon, value: height ? `${height} cm` : null},
 		{label: "Piede", icon: FootprintsIcon, value: preferredFoot},
 		{
-			label: "Nazionalità",
-			icon: FlagIcon,
-			value: nationality,
-			content: nationality ? <span className="inline-flex items-center gap-2">{nationality}{nationalityCode && <DynamicReactFlag code={nationalityCode} className="h-4 w-6 rounded-xs ring-1 ring-border" />}</span> : null,
+			label: "Categoria attuale",
+			icon: TagsIcon,
+			value: player.currentCategory,
 		},
 		{label: "Disponibilità", icon: CircleCheckBigIcon, value: availabilityLabel},
 	];

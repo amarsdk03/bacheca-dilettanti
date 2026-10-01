@@ -24,6 +24,8 @@ export const ACTIVE_ANNOUNCEMENT_TYPES = [
   "annuncio_arbitro",
   "annuncio_torneo_evento",
   "annuncio_campo_impianto",
+  "annuncio_servizi_consulenze",
+  "annuncio_creators",
 ] as const;
 
 export type ActiveAnnouncementType = typeof ACTIVE_ANNOUNCEMENT_TYPES[number];
@@ -43,7 +45,7 @@ export interface AnnouncementFilterData {
 	roles: string[];
 	years: string[];
 	birthYear: string | null;
-	currentCategory: string | null;
+	gender: string | null;
 	figures: string[];
   categories: string[];
   car: string | null;
@@ -206,7 +208,7 @@ function emptyFilterData(locations: AnnouncementLocation[]): AnnouncementFilterD
 		roles: [],
 		years: [],
 		birthYear: null,
-		currentCategory: null,
+		gender: null,
 		figures: [],
 		categories: [],
 		car: null,
@@ -420,7 +422,7 @@ export function announcementContent(
 		title = "Ricerca opportunità";
 		facts = [
 			contentFact("figures", "Figure", selection(figures, "selezionate")),
-			contentFact("categories", "Categorie", selection(categories, "selezionate")),
+			contentFact("categories", "Categorie ricercate", selection(categories, "selezionate")),
 			contentFact("availability", "Spostamenti", travel),
 			...(remote ? [contentFact("availability", "Da remoto", "Sì")] : []),
 			contentFact("location", "Località", location),
@@ -472,7 +474,8 @@ export function announcementContent(
 		const name = cleanText(detail.nome_evento, 160);
 		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
 		const registration = humanizeValue(detail.modalita_iscrizione);
-		const participation = humanizeValue(detail.tipo_partecipazione);
+		const participationValue = cleanText(detail.tipo_partecipazione, 40)?.toLocaleLowerCase("it-IT");
+		const participation = participationValue === "squadre" ? "squadra" : participationValue === "giocatori" ? "giocatore" : participationValue;
 		const cost = finiteNumber(detail.costo_partecipazione);
 		const teams = finiteNumber(detail.numero_squadre);
 		const years = formatYearRange(detail.annate_ammesse_da, detail.annate_ammesse_a);
@@ -481,8 +484,7 @@ export function announcementContent(
 		title = name ?? "Ricerca opportunità";
 		facts = [
 			contentFact("registration", "Iscrizione", registration),
-			contentFact("participation", "Partecipazione", participation),
-			contentFact("price", "Costo", cost === null ? null : formatCurrency(cost)),
+			contentFact("price", "Costo", cost === null ? null : `${formatCurrency(cost)}${participation ? ` / ${participation}` : ""}`),
 			contentFact("location", "Località", location),
 		];
 		fields = [
@@ -491,13 +493,12 @@ export function announcementContent(
 			detailField("Annate ammesse", years),
 			detailField("Numero di squadre", teams === null ? null : String(teams)),
 			detailField("Costo di partecipazione", cost === null ? null : formatCurrency(cost)),
-			detailField("Tipo di partecipazione", participation),
 			detailListField("Premi e trofei", prizes, prizesText, "rows", true),
 		];
 		filters.types = types;
 		filters.cost = cost;
-		searchValues = [...types, registration, participation, years, prizesText];
-	} else {
+		searchValues = [...types, registration, participation ?? "", years, prizesText];
+	} else if (type === "annuncio_campo_impianto") {
 		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
 		const cost = finiteNumber(detail.costo_partenza);
 		const services = cleanText(detail.servizi_inclusi);
@@ -507,7 +508,7 @@ export function announcementContent(
 		description = description ?? services;
 		facts = [
 			contentFact("types", "Tipologia campo da pubblicizzare", selection(types, "selezionate")),
-			contentFact("price", "Prezzo orario", cost === null ? null : `Da ${formatCurrency(cost)}`),
+			contentFact("price", "Costo orario", cost === null ? null : `Da ${formatCurrency(cost)}`),
 			contentFact("services", "Servizi", services),
 			contentFact("location", "Località", location),
 		];
@@ -515,12 +516,32 @@ export function announcementContent(
 			detailListField("Tipologia campo da pubblicizzare", types, selection(types, "selezionate")),
 			detailField("Indirizzo del campo", address),
 			detailField("Orari", hours, true),
-			detailField("Prezzo orario", cost === null ? null : formatCurrency(cost)),
+			detailField("Costo orario", cost === null ? null : formatCurrency(cost)),
 			detailField("Servizi inclusi", services, true),
 		];
 		filters.types = types;
 		filters.cost = cost;
 		searchValues = [...types, address ?? "", services ?? "", hours];
+	} else if (type === "annuncio_servizi_consulenze") {
+		const figures = cleanStringArray(detail.figura_professionale);
+		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
+		const specialization = cleanText(detail.specializzazione);
+		const services = cleanText(detail.presentazione_servizi);
+		title = figures[0] ? `Servizi di ${figures[0]}` : "Servizi e consulenze";
+		description = description ?? services;
+		facts = [contentFact("figures", "Figure professionali", selection(figures, "selezionate")), contentFact("specializations", "Specializzazione", specialization), contentFact("location", "Località", location)];
+		fields = [detailListField("Figure professionali", figures, selection(figures, "selezionate")), detailListField("Tipologie", types, selection(types, "selezionate")), detailField("Specializzazione", specialization), detailField("Servizi offerti", services)];
+		filters.types = types;
+		searchValues = [...figures, ...types, specialization ?? "", services ?? ""];
+	} else {
+		const postTitle = cleanText(detail.titolo_post, 160);
+		const postDescription = cleanText(detail.descrizione_post);
+		const postContent = cleanText(detail.contenuto_post);
+		title = postTitle ?? "Contenuto creator";
+		description = description ?? postDescription ?? postContent;
+		facts = [contentFact("content", "Contenuto", postTitle), contentFact("location", "Località", location)];
+		fields = [detailField("Contenuto", postContent), detailField("Descrizione del post", postDescription)];
+		searchValues = [postTitle ?? "", postDescription ?? "", postContent ?? ""];
 	}
 
 	return {title: cleanText(customTitle, 50) ?? title, description, location, locations, facts, fields, playerRoles, filters, searchValues};

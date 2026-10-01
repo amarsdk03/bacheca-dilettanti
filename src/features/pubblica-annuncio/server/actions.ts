@@ -9,6 +9,7 @@ import {AUTH_EMAIL_FLOW, createAuthEmailFlowMetadata,} from "@/features/auth/ema
 import {getAuthErrorMessage} from "@/features/auth/errors";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {PRIVACY_VERSION, TERMS_VERSION} from "@/features/legal/legal-versions";
+import {getRequiredBirthDateError} from "@/features/profilo/birth-date";
 import type {
 	PublishAnnouncementPayload,
 	PublishAnnouncementResult,
@@ -339,6 +340,9 @@ function rpcErrorMessage(message: string): PublishAnnouncementResult {
 			message: "La visibilità di questo invio è già stata salvata. Ricarica la pagina o avvia un nuovo annuncio.",
 		};
 	}
+	if (message.includes("PROFILE_ACCESS_DENIED")) {
+		return {status: "error", step: 1, message: "Questo profilo richiede l’abilitazione dell’admin."};
+	}
 	if (message.includes("PROFILE_NOT_ENABLED") || message.includes("REGISTERED_PROFILE_NOT_FOUND")) {
 		return {status: "error", step: 1, message: "Il profilo selezionato non è abilitato o è stato nascosto."};
 	}
@@ -395,6 +399,32 @@ export async function publishAnnouncement(
 
 	let uploadedImage: UploadedAnnouncementImage | null = null;
 	try {
+		if (payload.profileType === "servizi-consulenze" || payload.profileType === "creators") {
+			if (!account.registeredAt || !account.utenteId) return {status: "error", step: 1, message: "Questo profilo richiede l’abilitazione dell’admin."};
+			const admin = createAdminClient();
+			const {data: baseProfile, error: baseError} = await admin.from("profilo").select("uuid").eq("uuid_utente", account.utenteId).eq("nascosto", false).maybeSingle();
+			if (baseError || !baseProfile) return {status: "error", step: 1, message: "Non è stato possibile verificare l’abilitazione del profilo."};
+			const {data: access, error: accessError} = await admin.from("restricted_profile_access").select("profile_id").eq("profile_id", baseProfile.uuid).eq("profile_type", payload.profileType).maybeSingle();
+			if (accessError || !access) return {status: "error", step: 1, message: "Questo profilo richiede l’abilitazione dell’admin."};
+		}
+		if (account.registeredAt && account.utenteId && !payload.profileUpdate) {
+			const personTable = {
+				giocatore: "profilo_giocatore",
+				"staff-sportivo": "profilo_staff_sportivo",
+				arbitro: "profilo_arbitro",
+				"servizi-consulenze": "profilo_servizi_consulenze",
+			} as const;
+			const table = personTable[payload.profileType as keyof typeof personTable];
+			if (table) {
+				const admin = createAdminClient();
+				const {data: baseProfile, error: baseError} = await admin.from("profilo").select("uuid").eq("uuid_utente", account.utenteId).eq("nascosto", false).maybeSingle();
+				if (baseError || !baseProfile) return {status: "error", step: 2, message: "Non è stato possibile verificare il sottoprofilo selezionato."};
+				const {data: person, error: personError} = await admin.from(table).select("giorno_nascita, mese_nascita, anno_nascita").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle();
+				if (personError || !person) return {status: "error", step: 2, message: "Non è stato possibile verificare il sottoprofilo selezionato."};
+				const birthError = getRequiredBirthDateError({day: person.giorno_nascita, month: person.mese_nascita, year: person.anno_nascita});
+				if (birthError) return {status: "error", step: 2, message: birthError};
+			}
+		}
 		const supabase = await createClient();
 		const {data: authData, error: authError} = await supabase.auth.getUser();
 		if (authError || !authData.user) {
@@ -418,6 +448,7 @@ export async function publishAnnouncement(
 				locations: payload.profileUpdate.locations,
 			} : null,
 			announcement_title: payload.announcementTitle,
+			...(account.registeredAt ? {} : {newsletter_subscribed: payload.newsletterSubscribed}),
 			detail: payload.detail,
 			announcement_locations: payload.announcementLocations,
 			contacts: payload.contacts,

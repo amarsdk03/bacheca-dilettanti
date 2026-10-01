@@ -311,7 +311,7 @@ function DirectoryPagination({query, result}: {query: ProfileDirectoryQuery; res
 		<nav aria-label="Paginazione dei profili" className="flex flex-wrap items-center justify-between gap-3">
 			<div>
 				{result.currentPage > 1 && (
-					<Link href={buildProfilesHref(query, {page: previousPage})} className={buttonVariants({variant: "outline"})}>
+					<Link href={buildProfilesHref(query, {page: previousPage, sortSeed: query.sortSeed ?? undefined})} className={buttonVariants({variant: "outline"})}>
 						<ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
 						Precedente
 					</Link>
@@ -320,7 +320,7 @@ function DirectoryPagination({query, result}: {query: ProfileDirectoryQuery; res
 			<p className="text-sm text-muted-foreground">Pagina {result.currentPage} di {result.totalPages}</p>
 			<div>
 				{result.currentPage < result.totalPages && (
-					<Link href={buildProfilesHref(query, {page: nextPage})} className={buttonVariants({variant: "outline"})}>
+					<Link href={buildProfilesHref(query, {page: nextPage, sortSeed: query.sortSeed ?? undefined})} className={buttonVariants({variant: "outline"})}>
 						Successiva
 						<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
 					</Link>

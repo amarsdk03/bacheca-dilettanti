@@ -1,5 +1,6 @@
 import type {Metadata} from "next";
 import {Suspense} from "react";
+import {randomUUID} from "node:crypto";
 
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
@@ -48,7 +49,8 @@ export async function generateMetadata({searchParams}: ProfiliPageProps): Promis
 }
 
 export default async function ProfiliPage({searchParams}: ProfiliPageProps) {
-	const query = parseProfileDirectoryQuery(await searchParams);
+	const parsed = parseProfileDirectoryQuery(await searchParams);
+	const query = {...parsed, sortSeed: parsed.sortSeed ?? randomUUID().replaceAll("-", "")};
 	const result = getProfileDirectory(query);
 
 	return (

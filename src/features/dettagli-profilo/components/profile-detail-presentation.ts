@@ -40,8 +40,13 @@ export function formatProfileFactCount(value: number | null): string | null {
 }
 
 export function getProfileDetailFacts(profile: GenericProfileDetail, presentation: ProfileDetailPresentation): ProfileFact[] {
+	const fields = getProfileDetailFields(profile);
 	return presentation.facts.map(({label, fieldLabel, icon, getValue}) => {
+		const field = fields.find(candidate => candidate.label === (fieldLabel ?? label));
 		const value = (getValue ? getValue(profile) : getProfileDetailFieldValue(profile, fieldLabel ?? label))?.trim();
-		return {label, icon, value: value && value !== "Non specificato" ? value : null};
+		const items = field?.items ? [...new Set(field.items.map(item => item.trim()).filter(Boolean))] : [];
+		return {label, icon, value: items.length > 0
+			? [...items.slice(0, 2), ...(items.length > 2 ? [`+${items.length - 2}`] : [])]
+			: value && value !== "Non specificato" ? value : null};
 	});
 }

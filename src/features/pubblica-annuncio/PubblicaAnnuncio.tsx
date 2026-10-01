@@ -100,6 +100,7 @@ export default function PubblicaAnnuncio({
 	const [announcementValidationVisible, setAnnouncementValidationVisible] = useState(false);
 	const profileLocationSnapshot = useRef<string | null>(null);
 	const enabledProfileTypes = registered ? profileContext?.enabledProfileTypes ?? [] : [];
+	const authorizedRestrictedProfileTypes = registered ? profileContext?.authorizedRestrictedProfileTypes ?? [] : [];
 	const profileDirty = Boolean(
 		registered
 		&& profileContext
@@ -170,7 +171,7 @@ export default function PubblicaAnnuncio({
 				contacts,
 				extras,
 			},
-			consents: {dataConfirmed: false, termsAccepted: false, privacyAccepted: false},
+			consents: {dataConfirmed: false, termsAccepted: false, privacyAccepted: false, newsletterSubscribed: false},
 		};
 	}, [announcementDrafts, announcementLocations, announcementTitle, contacts, extras, profileDirty, profileDrafts, profileLocations, profileSocialLinks, profileType, profileUnlocked, registered, submissionId, teamSubtype]);
 
@@ -351,7 +352,8 @@ export default function PubblicaAnnuncio({
 									onSottotipologiaChangeAction={(value) => isTeamAnnouncementSubtype(value) && setTeamSubtype(value)}
 									onContinueAction={() => goToStep(2)}
 									registered={registered}
-									enabledProfileTypes={enabledProfileTypes}
+										enabledProfileTypes={enabledProfileTypes}
+										authorizedRestrictedProfileTypes={authorizedRestrictedProfileTypes}
 								/>
 							</CardContent>
 						</Card>
@@ -416,7 +418,7 @@ export default function PubblicaAnnuncio({
 					<TabsContent value="tab-4">
 						<Card className="my-4 pt-6">
 							<CardContent>
-								{payload && profileType && <ConfermaInvioAnnuncio payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} authenticated={authenticated} onEditStep={goToStep} />}
+								{payload && profileType && <ConfermaInvioAnnuncio payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} authenticated={authenticated} registered={registered} onEditStep={goToStep} />}
 							</CardContent>
 						</Card>
 					</TabsContent>
