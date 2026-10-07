@@ -1,3 +1,6 @@
+"use client";
+
+import {useDisabledFieldset} from "@/components/ui/disabled-fieldset";
 import type {ComponentProps, Dispatch, SetStateAction} from "react";
 import {CircleHelpIcon, PlusIcon, Trash2Icon} from "lucide-react";
 
@@ -77,6 +80,8 @@ import {TEAM_CATEGORY_GROUPS} from "@/features/profilo/team-category-catalog";
 import {categoryKey} from "@/features/pubblica-annuncio/types/category-catalog";
 
 interface ProfileDetailsFormProps {
+	disabled?: boolean;
+	professionalRegions?: readonly string[];
 	type: ProfileType;
 	drafts: ProfileDrafts;
 	locations: ProfileLocations;
@@ -631,6 +636,7 @@ function PersonalDataFields({
 }
 
 interface LocationsFieldProps {
+	allowedRegions?: readonly string[];
 	type: ProfileType;
 	prefix: string;
 	locations: ProfileLocations;
@@ -639,13 +645,14 @@ interface LocationsFieldProps {
 	error?: string | null;
 }
 
-function LocationsField({type, prefix, locations, onLocationsChange, required = false, error}: LocationsFieldProps) {
+function LocationsField({type, prefix, locations, onLocationsChange, required = false, error, allowedRegions}: LocationsFieldProps) {
 	const single = type !== "torneo-evento" && type !== "campi-impianti-sportivi" && type !== "creators" && type !== "servizi-consulenze";
 	const label = type === "torneo-evento"
 		? "Zona di svolgimento manifestazione"
 		: type === "squadra" ? "Dove ha sede la società?" : type === "creators" ? "Di che zona/e ti occupi" : type === "servizi-consulenze" ? "Aree di interesse per la tua attività" : single ? "In che zona vivi?" : "Regioni interessate";
 	return (
 		<ProfileLocationsField
+			allowedRegions={allowedRegions}
 			idPrefix={`${prefix}-regions`}
 			mode={single ? "single" : "multiple"}
 			label={label}
@@ -710,7 +717,7 @@ function AnonymousNameField({type, prefix, checked, onChange}: {
   <Checkbox id={`${prefix}-nominativo-anonimo`} checked={checked} onCheckedChange={(value) => onChange(type, "nominativo_anonimo", value === true)} />
   <FieldContent>
    <FieldLabel htmlFor={`${prefix}-nominativo-anonimo`}>Mantieni anonimo il mio nominativo</FieldLabel>
-   <FieldDescription>Il nominativo sarà sostituito da un nome generico nelle schede pubbliche e negli annunci.</FieldDescription>
+   <FieldDescription>Il nominativo non sarà mostrato pubblicamente negli annunci e nella pagina del profilo.</FieldDescription>
   </FieldContent>
  </Field>;
 }
@@ -804,11 +811,11 @@ function GiocatoreFields({
 			<LinkAnnuncioField
 				idPrefix={`${prefix}-video-highlights`}
 				label="Link video highlights"
-				placeholder="https://youtu.be/dQEemdsoLDM"
+				placeholder={draft.richiede_caricamento_highlights || draft.highlights_privati ? "" : "https://youtu.be/dQEemdsoLDM"}
 				description="Inserisci il link pubblico a un video con le tue azioni migliori"
 				value={draft.video_highlights}
 				onValueChange={(value) => onChange("giocatore", "video_highlights", value)}
-				disabled={draft.richiede_caricamento_highlights}
+				disabled={draft.richiede_caricamento_highlights || draft.highlights_privati}
 				labelAddon={(
 					<Tooltip>
 						<TooltipTrigger render={<button type="button" className="inline-flex size-5 items-center justify-center rounded-full text-brand-indigo outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo/40" aria-label="Informazioni sul link video highlights" />}>
@@ -828,12 +835,34 @@ function GiocatoreFields({
 					onCheckedChange={(checked) => {
 						const requested = Boolean(checked);
 						onChange("giocatore", "richiede_caricamento_highlights", requested);
-						if (requested) onChange("giocatore", "video_highlights", "");
+						if (requested) {
+							onChange("giocatore", "highlights_privati", false);
+							onChange("giocatore", "video_highlights", "");
+						}
 					}}
 				/>
 				<FieldContent>
 					<FieldLabel htmlFor={`${prefix}-richiede-caricamento-highlights`} className="font-normal">
 						Possiedo dei video ma non ho possibilità di caricarli online (ti contatteremo noi!)
+					</FieldLabel>
+				</FieldContent>
+			</Field>
+			<Field orientation="horizontal">
+				<Checkbox
+					id={`${prefix}-highlights-privati`}
+					checked={draft.highlights_privati}
+					onCheckedChange={(checked) => {
+						const privateHighlights = checked === true;
+						onChange("giocatore", "highlights_privati", privateHighlights);
+						if (privateHighlights) {
+							onChange("giocatore", "richiede_caricamento_highlights", false);
+							onChange("giocatore", "video_highlights", "");
+						}
+					}}
+				/>
+				<FieldContent>
+					<FieldLabel htmlFor={`${prefix}-highlights-privati`} className="font-normal">
+						Possiedo dei video ma voglio renderli disponibili solamente privatamente
 					</FieldLabel>
 				</FieldContent>
 			</Field>
@@ -967,7 +996,7 @@ function ProfileFields({
 	if (type === "servizi-consulenze") {
   const draft = drafts["servizi-consulenze"];
   return <>
-   <ProfileTextField id={`${prefix}-nome`} label="Nominativo / Ragione sociale" value={draft.nome} onChange={value => onChange(type, "nome", value)} required={requiredFields} error={errors.name} />
+   <ProfileTextField id={`${prefix}-nome`} label="Nome, Cognome o Ragione Sociale" value={draft.nome} onChange={value => onChange(type, "nome", value)} required={requiredFields} error={errors.name} />
    <ProfileTextField id={`${prefix}-specializzazioni`} label="Tipo di azienda / professione" value={draft.specializzazioni} onChange={value => onChange(type, "specializzazioni", value)} maxLength={5000} />
    <ProfileTextField id={`${prefix}-sede`} label="Sede Azienda / Professionista" value={draft.sede_professionista} onChange={value => onChange(type, "sede_professionista", value)} />
    <FieldSet>
@@ -1055,6 +1084,7 @@ function ProfileFields({
 }
 
 export default function ProfileDetailsForm({
+	disabled = false,
 	type,
 	drafts,
 	locations,
@@ -1063,20 +1093,26 @@ export default function ProfileDetailsForm({
 	socialLinks,
 	onSocialLinksChange,
 	errors = {},
+	professionalRegions,
 }: ProfileDetailsFormProps) {
 	const prefix = `registration-profile-${type}`;
+	const locked = useDisabledFieldset(disabled);
+	const changeProfile: ProfileDraftUpdater = (...args) => {if (!locked) onChange(...args);};
+	const changeLocations: ProfileDetailsFormProps["onLocationsChange"] = (...args) => {if (!locked) onLocationsChange(...args);};
+	const changeSocialLinks: ProfileDetailsFormProps["onSocialLinksChange"] = (...args) => {if (!locked) onSocialLinksChange(...args);};
 
 	return (
-		<FieldSet className="[&_input::placeholder]:text-sm [&_textarea::placeholder]:text-sm">
+		<FieldSet disabled={locked} className="[&_input::placeholder]:text-sm [&_textarea::placeholder]:text-sm">
 			<FieldLegend variant="label" className="field-legend-title mb-2">Inserisci i dati del tuo profilo:</FieldLegend>
 			<FieldGroup spacing="mixed" className="mt-2">
-				<ProfileFields type={type} drafts={drafts} prefix={prefix} onChange={onChange} locations={locations} onLocationsChange={onLocationsChange} requiredFields={true} errors={errors} />
-				<ProfileSocialLinksFields socialLinks={socialLinks} onSocialLinksChange={onSocialLinksChange} />
+				<ProfileFields type={type} drafts={drafts} prefix={prefix} onChange={changeProfile} locations={locations} onLocationsChange={changeLocations} requiredFields={true} errors={errors} />
+				<ProfileSocialLinksFields socialLinks={socialLinks} onSocialLinksChange={changeSocialLinks} />
 				{type !== "campi-impianti-sportivi" && <LocationsField
 					type={type}
+					allowedRegions={type === "servizi-consulenze" ? professionalRegions ?? [] : undefined}
 					prefix={prefix}
 					locations={locations}
-					onLocationsChange={onLocationsChange}
+					onLocationsChange={changeLocations}
 					required={true}
 					error={errors.locations ?? null}
 				/>}

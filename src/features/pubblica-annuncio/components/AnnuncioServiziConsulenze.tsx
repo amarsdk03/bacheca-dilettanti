@@ -24,7 +24,7 @@ export default function AnnuncioServiziConsulenze() {
 		<FieldGroup spacing="sections">
 			<FieldSet>
 				<div>
-					<FieldLegend variant="label" className="field-legend-title mb-0">Dati per servizi e consulenze</FieldLegend>
+					<FieldLegend variant="label" className="field-legend-title mb-0">Dati per servizi e professionisti</FieldLegend>
 					<FieldDescription>Descrivi la tua figura professionale e i servizi offerti al mondo sportivo.</FieldDescription>
 				</div>
 				<div className="grid gap-4 sm:grid-cols-2">

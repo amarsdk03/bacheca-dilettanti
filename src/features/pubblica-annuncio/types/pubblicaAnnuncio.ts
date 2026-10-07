@@ -200,7 +200,7 @@ export const tipologieAnnuncio: TipologiaAnnuncio[] = [
 		descrizione: "Pubblicizza un campo / impianto della tua struttura.",
 	},
 	{
-		nome: "Servizi e consulenze",
+		nome: "Servizi e professionisti",
 		valore: "servizi-consulenze",
 		icona: "BriefcaseBusiness",
 		descrizione: "Pubblica un servizio o una promozione pensata appositamente per la community di Bacheca",

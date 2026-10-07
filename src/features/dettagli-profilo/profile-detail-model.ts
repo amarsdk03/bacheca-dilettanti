@@ -24,6 +24,7 @@ export interface ProfileDetailField {
 }
 
 interface ProfileDetailBase {
+	anonymousName: boolean;
 	id: string;
 	title: string;
 	imageUrl: string | null;
@@ -72,6 +73,7 @@ export interface PlayerProfileData {
 	presentation: string | null;
 	career: PlayerCareerEntry[];
 	highlightsUrl: string | null;
+	privateHighlights: boolean;
 }
 
 export type PlayerProfileDetail = ProfileDetailBase & {

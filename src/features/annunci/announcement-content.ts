@@ -512,7 +512,7 @@ export function announcementContent(
 		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
 		const specialization = cleanText(detail.specializzazione);
 		const services = cleanText(detail.presentazione_servizi);
-		title = figures[0] ? `Servizi di ${figures[0]}` : "Servizi e consulenze";
+		title = figures[0] ? `Servizi di ${figures[0]}` : "Servizi e professionisti";
 		description = services;
 		facts = [contentFact("figures", "Figure professionali", selection(figures, "selezionate")), contentFact("specializations", "Specializzazione", specialization), contentFact("location", "Località", location)];
 		fields = [detailListField("Figure professionali", figures, selection(figures, "selezionate")), detailListField("Tipologie", types, selection(types, "selezionate")), detailField("Specializzazione", specialization), detailField("Contenuto", services), detailField("Promozione/offerta per la Community", cleanText(detail.descrizione_aggiuntiva), true)];

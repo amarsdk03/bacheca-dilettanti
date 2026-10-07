@@ -1,5 +1,6 @@
 "use client";
 
+import {professionalLocationsAllowed, PROFESSIONAL_REGIONS_EMPTY_MESSAGE} from "@/features/profilo/professional-regions";
 import {type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import Link from "next/link";
 import {ClipboardPenIcon, MailCheckIcon} from "lucide-react";
@@ -154,12 +155,16 @@ function PublishAnnouncementForm({
 	);
 	const imageError = getAnnouncementImageError(announcementImage);
 
+	const professionalRegions = profileContext?.professionalRegions ?? [];
 	const allProfileValidationErrors = profileType
 		? getProfileValidationErrors(profileType, profileDrafts, profileLocations)
 		: {};
 	const profileValidationErrors = registered && (!profileUnlocked || !profileDirty)
 		? {...allProfileValidationErrors, nationality: undefined}
 		: allProfileValidationErrors;
+	if (profileType === "servizi-consulenze" && !professionalLocationsAllowed(profileLocations[profileType], professionalRegions)) {
+		profileValidationErrors.locations = professionalRegions.length === 0 ? PROFESSIONAL_REGIONS_EMPTY_MESSAGE : PROFESSIONAL_AREA_ERROR;
+	}
 	const profileValidationMessage = profileType
 		? Object.values(profileValidationErrors).find(Boolean) ?? null
 		: "Seleziona una tipologia di profilo.";
@@ -167,7 +172,7 @@ function PublishAnnouncementForm({
 		? getAnnouncementValidationErrors(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras, announcementTitle, registered)
 		: {};
 	const allowedAnnouncementRegions = profileType === "servizi-consulenze"
-		? [...new Set(profileLocations[profileType].map(({regione}) => regione))]
+		? professionalRegions
 		: undefined;
 	if (allowedAnnouncementRegions && !announcementRegionsAllowed(announcementLocations, allowedAnnouncementRegions)) {
 		announcementValidationErrors.locations = PROFESSIONAL_AREA_ERROR;
@@ -280,9 +285,6 @@ function PublishAnnouncementForm({
 
 	const updateProfileLocations = (type: PublishableProfileType, value: ProfileLocationDraft[]) => {
 		setProfileLocations((previous) => ({...previous, [type]: value}));
-		if (type === "servizi-consulenze") {
-			setAnnouncementLocations((previous) => previous.filter(({regione}) => value.some((location) => location.regione === regione)));
-		}
 	};
 
 	const updateProfileSocialLinks = (type: PublishableProfileType, platform: ProfileSocialPlatform, value: string) => {
@@ -303,9 +305,7 @@ function PublishAnnouncementForm({
 			: profileLocations[profileType];
 		const nextSnapshot = JSON.stringify(sourceLocations);
 		if (profileLocationSnapshot.current !== nextSnapshot) {
-			if (profileType === "servizi-consulenze" && profileLocationSnapshot.current !== null) {
-				setAnnouncementLocations((previous) => previous.filter(({regione}) => sourceLocations.some((location) => location.regione === regione)));
-			} else {
+			if (profileType !== "servizi-consulenze" || profileLocationSnapshot.current === null) {
 				setAnnouncementLocations(structuredClone(sourceLocations));
 			}
 			profileLocationSnapshot.current = nextSnapshot;
@@ -447,6 +447,7 @@ function PublishAnnouncementForm({
 										onUnlock={() => setProfileUnlocked(true)}
 										drafts={profileDrafts}
 										locations={profileLocations}
+										professionalRegions={professionalRegions}
 										onChange={updateProfileDraft}
 										onLocationsChange={updateProfileLocations}
 										socialLinks={profileSocialLinks[profileType]}

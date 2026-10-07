@@ -7,6 +7,7 @@ import {type VariantProps} from "class-variance-authority"
 
 import {cn} from "@/lib/utils"
 import {toggleVariants} from "@/components/ui/toggle"
+import {useDisabledFieldset} from "@/components/ui/disabled-fieldset"
 
 const ToggleGroupContext = React.createContext<
   VariantProps<typeof toggleVariants> & {
@@ -33,6 +34,7 @@ function ToggleGroup({
     spacing?: number
     orientation?: "horizontal" | "vertical"
   }) {
+  const disabled = useDisabledFieldset(props.disabled)
   return (
     <ToggleGroupPrimitive
       data-slot="toggle-group"
@@ -46,6 +48,7 @@ function ToggleGroup({
         className
       )}
       {...props}
+      disabled={disabled}
     >
       <ToggleGroupContext.Provider
         value={{ variant, size, spacing, orientation }}

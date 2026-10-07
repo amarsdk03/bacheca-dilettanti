@@ -30,6 +30,7 @@ export interface ManagedAnnouncement {
 	level: string | null;
 	visibility: AnnouncementVisibility;
 	isPrivate: boolean;
+	regionSuspended: boolean;
 	moderationStatus: string | null;
 	moderationInfo: string | null;
 }
@@ -50,6 +51,7 @@ export interface ProfileDashboardData {
 	hasMainImage: boolean;
 	profiles: ManagedProfile[];
 	restrictedProfileAccess: Array<"servizi-consulenze" | "creators">;
+	professionalRegions: string[];
 	drafts: ProfileDrafts;
 	locations: ProfileLocations;
 	socialLinks: ProfileSocialLinksByType;

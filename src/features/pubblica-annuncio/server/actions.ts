@@ -11,6 +11,7 @@ import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {PRIVACY_VERSION, TERMS_VERSION} from "@/features/legal/legal-versions";
 import {getRequiredBirthDateError} from "@/features/profilo/birth-date";
 import {profileFieldsDatabaseErrorMessage} from "@/features/profilo/profile-required-fields";
+import {professionalLocationsAllowed, PROFESSIONAL_REGIONS_EMPTY_MESSAGE} from "@/features/profilo/professional-regions";
 import type {
 	PublishAnnouncementPayload,
 	PublishAnnouncementResult,
@@ -326,11 +327,11 @@ export async function verifyPublishEmailOtp(
 }
 
 function rpcErrorMessage(message: string): PublishAnnouncementResult {
-	const fieldError = profileFieldsDatabaseErrorMessage(message);
-	if (fieldError) return {status: "error", step: 2, message: fieldError};
 	if (message.includes("PROFESSIONAL_ANNOUNCEMENT_AREA_NOT_ALLOWED")) {
 		return {status: "error", step: 3, message: PROFESSIONAL_AREA_ERROR};
 	}
+	const fieldError = profileFieldsDatabaseErrorMessage(message);
+	if (fieldError) return {status: "error", step: 2, message: fieldError};
 	if (message.includes("PROFILE_REQUIRED_FIELDS_MISSING")) {
 		return {status: "error", step: 2, message: "Completa i campi obbligatori del profilo e riprova."};
 	}
@@ -411,16 +412,20 @@ export async function publishAnnouncement(
 			const admin = createAdminClient();
 			const {data: baseProfile, error: baseError} = await admin.from("profilo").select("uuid").eq("uuid_utente", account.utenteId).eq("nascosto", false).maybeSingle();
 			if (baseError || !baseProfile) return {status: "error", step: 1, message: "Non è stato possibile verificare l’abilitazione del profilo."};
-			const {data: access, error: accessError} = await admin.from("restricted_profile_access").select("profile_id").eq("profile_id", baseProfile.uuid).eq("profile_type", payload.profileType).maybeSingle();
+			const {data: access, error: accessError} = await admin.from("restricted_profile_access").select("profile_id, allowed_regions").eq("profile_id", baseProfile.uuid).eq("profile_type", payload.profileType).maybeSingle();
 			if (accessError || !access) return {status: "error", step: 1, message: "Questo profilo richiede l’abilitazione dell’admin."};
 			if (payload.profileType === "servizi-consulenze") {
+				if (access.allowed_regions.length === 0) return {status: "error", step: 2, message: PROFESSIONAL_REGIONS_EMPTY_MESSAGE};
 				let allowedLocations = payload.profileUpdate?.locations;
 				if (!allowedLocations) {
 					const {data: savedLocations, error: locationError} = await admin.from("localita_profilo").select("regione, citta").eq("uuid_profilo", baseProfile.uuid).eq("sottoprofilo", "servizi-consulenze");
-					if (locationError) return {status: "error", step: 3, message: "Non è stato possibile verificare le aree di interesse della tua attività."};
+					if (locationError) return {status: "error", step: 2, message: "Non è stato possibile verificare le aree di interesse della tua attività."};
 					allowedLocations = savedLocations ?? [];
 				}
-				if (!announcementRegionsAllowed(payload.announcementLocations, allowedLocations.map(({regione}) => regione))) {
+				if (!professionalLocationsAllowed(allowedLocations, access.allowed_regions)) {
+					return {status: "error", step: 2, message: PROFESSIONAL_AREA_ERROR};
+				}
+				if (!announcementRegionsAllowed(payload.announcementLocations, access.allowed_regions)) {
 					return {status: "error", step: 3, message: PROFESSIONAL_AREA_ERROR};
 				}
 			}

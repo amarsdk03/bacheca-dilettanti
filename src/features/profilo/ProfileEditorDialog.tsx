@@ -1,5 +1,6 @@
 "use client";
 
+import {professionalLocationsAllowed, PROFESSIONAL_REGIONS_EMPTY_MESSAGE, PROFESSIONAL_REGIONS_ERROR} from "@/features/profilo/professional-regions";
 import {useState, useTransition} from "react";
 import {CirclePlusIcon, LoaderCircleIcon, PencilIcon,} from "lucide-react";
 
@@ -30,6 +31,7 @@ import type {ProfileEditorSavePayload, ProfileMutationResult,} from "@/features/
 
 interface ProfileEditorDialogProps {
 	mode: "add" | "edit";
+	professionalRegions: readonly string[];
 	profileType: ProfileType;
 	drafts: ProfileDrafts;
 	locations: ProfileLocations;
@@ -40,6 +42,7 @@ interface ProfileEditorDialogProps {
 
 export default function ProfileEditorDialog({
 	mode,
+	professionalRegions,
 	profileType,
 	drafts,
 	locations,
@@ -48,7 +51,7 @@ export default function ProfileEditorDialog({
 	onSave,
 }: ProfileEditorDialogProps) {
 	const [workingDrafts, setWorkingDrafts] = useState<ProfileDrafts>(() => structuredClone(drafts));
-	const [workingLocations, setWorkingLocations] = useState<ProfileLocations>(() => structuredClone(locations));
+	const [workingLocations, setWorkingLocations] = useState<ProfileLocations>(() => ({...structuredClone(locations), "servizi-consulenze": locations["servizi-consulenze"].filter(({regione}) => professionalRegions.includes(regione))}));
 	const [workingSocialLinks, setWorkingSocialLinks] = useState<ProfileSocialLinksByType>(() => structuredClone(socialLinks));
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [showValidationErrors, setShowValidationErrors] = useState(false);
@@ -59,6 +62,10 @@ export default function ProfileEditorDialog({
 		workingDrafts[profileType],
 		workingLocations[profileType],
 	);
+
+	if (profileType === "servizi-consulenze" && !professionalLocationsAllowed(workingLocations[profileType], professionalRegions)) {
+		requiredFieldErrors.locations = professionalRegions.length === 0 ? PROFESSIONAL_REGIONS_EMPTY_MESSAGE : PROFESSIONAL_REGIONS_ERROR;
+	}
 
 	const updateProfileDraft = <
 		Type extends ProfileType,
@@ -151,6 +158,7 @@ export default function ProfileEditorDialog({
 						<ProfileDetailsForm
 							key={profileType}
 							type={profileType}
+							professionalRegions={professionalRegions}
 							drafts={workingDrafts}
 							locations={workingLocations}
 							onChange={updateProfileDraft}
@@ -164,7 +172,7 @@ export default function ProfileEditorDialog({
 
 				<AlertDialogFooter className="mx-0 mb-0 rounded-b-xl px-5 py-4 sm:px-6">
 					<AlertDialogCancel disabled={pending}>Annulla</AlertDialogCancel>
-					<Button type="button" onClick={handleSave} disabled={pending}>
+					<Button type="button" onClick={handleSave} disabled={pending || (profileType === "servizi-consulenze" && professionalRegions.length === 0)}>
 						{pending && <LoaderCircleIcon className="animate-spin" data-icon="inline-start" aria-hidden="true" />}
 						{pending
 							? "Salvataggio…"

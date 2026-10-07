@@ -25,5 +25,7 @@ export async function getProfileContacts(id: string, type: ProfileType): Promise
 	const {data, error} = await supabase.from("profilo_servizi_consulenze")
 		.select("contatto_email, contatto_telefono").eq("uuid_profilo", id).eq("nascosto", false).maybeSingle();
 	if (error) console.error("[profile-contacts] Professional contacts unavailable", {code: error.code});
+	const {data: locations, error: locationError} = await supabase.from("localita_profilo").select("regione").eq("uuid_profilo", id).eq("sottoprofilo", type).limit(1);
+	if (locationError || !locations?.length) return null;
 	return data ? {email: data.contatto_email, phone: data.contatto_telefono} : null;
 }

@@ -5,7 +5,7 @@ import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/co
 import type {AnnouncementDirectoryItem} from "@/features/annunci/announcement-model";
 import ProfileAnnouncementCard from "./ProfileAnnouncementCard";
 import Link from "next/link";
-import {buttonVariants} from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button-variants";
 
 export default function LatestProfileAnnouncements({announcements, announcementsUnavailable, isOwner = false, contentMode = false}: {
 	announcements: AnnouncementDirectoryItem[];

@@ -270,6 +270,8 @@ export async function signUpWithPassword(
 			},
 		});
 
+		console.log("ERRORE: " + error)
+
 		if (error?.code === "email_exists" || error?.code === "user_already_exists") {
 			return {
 				status: "success",
@@ -278,7 +280,7 @@ export async function signUpWithPassword(
 		}
 
 		if (error) {
-			console.error("[registration] Auth signup failed", {code: error.code});
+			console.error("[registration] Auth signup failed", {code: error});
 			console.error("Errore: ", error);
 			return {
 				status: "error",

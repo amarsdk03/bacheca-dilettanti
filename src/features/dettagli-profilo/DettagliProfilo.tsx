@@ -1,3 +1,4 @@
+import ProfileInterestDialog from "@/features/interessi/ProfileInterestDialog";
 import type {CSSProperties, ReactNode} from "react";
 import {TriangleAlertIcon} from "lucide-react";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
@@ -37,6 +38,7 @@ export default function DettagliProfilo({result, authenticated, isOwner = false,
 			interestTarget={{kind: "profilo", id: result.profile.id, profileType: result.profile.type}}
 			href={`/dettagli-profilo?${new URLSearchParams({id: result.profile.id, type: result.profile.type}).toString()}`}
 			presentation="profile"
+			managedInterest
 		/>
 	) : null;
 	const content = (
@@ -60,5 +62,12 @@ export default function DettagliProfilo({result, authenticated, isOwner = false,
 			</aside>}
 		</main>
 	);
-	return <div className={cn("min-h-[calc(100vh-4rem)] bg-brand-paper", hasProfile && "public-profile-page")} style={hasProfile ? {"--profile-accent": getProfileAccent(result.profile.type)} as CSSProperties : undefined}>{content}</div>;
+	const page = <div className={cn("min-h-[calc(100vh-4rem)] bg-brand-paper", hasProfile && "public-profile-page")} style={hasProfile ? {"--profile-accent": getProfileAccent(result.profile.type)} as CSSProperties : undefined}>{content}</div>;
+	if (result.status !== "ok") return page;
+	return (
+		<ProfileInterestDialog
+			target={{kind: "profilo", id: result.profile.id, profileType: result.profile.type}}
+			href={"/dettagli-profilo?" + new URLSearchParams({id: result.profile.id, type: result.profile.type}).toString()}
+		>{page}</ProfileInterestDialog>
+	);
 }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import {ArrowUpRightIcon, CheckCircle2Icon, CircleAlertIcon, CrownIcon, SparklesIcon} from "lucide-react";
 
 import {ExternalNavigationProvider} from "@/components/navigation/ExternalNavigation";
-import {buttonVariants} from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button-variants";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import AnnouncementCard from "@/features/annunci/components/cards/AnnouncementCard";
 import AnnouncementViewLink from "@/features/annunci/AnnouncementViewLink";

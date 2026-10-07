@@ -8,7 +8,12 @@ import {Button} from "@/components/ui/button"
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput,} from "@/components/ui/input-group"
 import {CheckIcon, ChevronDownIcon, XIcon} from "lucide-react"
 
-const Combobox = ComboboxPrimitive.Root
+import {useDisabledFieldset} from "@/components/ui/disabled-fieldset"
+
+function Combobox<Value, Multiple extends boolean | undefined = false>(props: ComboboxPrimitive.Root.Props<Value, Multiple>) {
+  const disabled = useDisabledFieldset(props.disabled)
+  return <ComboboxPrimitive.Root {...props} disabled={disabled} />
+}
 
 function ComboboxValue({ ...props }: ComboboxPrimitive.Value.Props) {
   return <ComboboxPrimitive.Value data-slot="combobox-value" {...props} />

@@ -1,7 +1,7 @@
 import ProfileContactsCard from "./ProfileContactsCard";
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import type {ReactNode} from "react";
-import {ExternalLinkIcon, StarIcon} from "lucide-react";
+import {ExternalLinkIcon, EyeOff, StarIcon} from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -56,6 +56,7 @@ export function ProfileDetailsHeader({profile, presentation, actions}: {
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge variant="secondary" className="public-profile-type-badge"><ProfilePngIcon type={profile.type} color="currentColor" className="size-3" />{option.label}</Badge>
 								<RegisteredUserBadge emailConfirmed={profile.emailConfirmed} />
+								{profile.anonymousName && <Badge variant="outline"><EyeOff data-icon="inline-start" aria-hidden="true" />Nome nascosto</Badge>}
 								{profile.primary && <Badge variant="outline"><StarIcon data-icon="inline-start" aria-hidden="true" />Profilo principale</Badge>}
 							</div>
 						</div>

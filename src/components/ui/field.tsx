@@ -6,17 +6,22 @@ import {cva, type VariantProps} from "class-variance-authority"
 import {cn} from "@/lib/utils"
 import {Label} from "@/components/ui/label"
 import {Separator} from "@/components/ui/separator"
+import {DisabledFieldsetContext, useDisabledFieldset} from "@/components/ui/disabled-fieldset"
 
-function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
+function FieldSet({ className, disabled, ...props }: React.ComponentProps<"fieldset">) {
+  const isDisabled = useDisabledFieldset(disabled)
   return (
-    <fieldset
-      data-slot="field-set"
-      className={cn(
-        "flex flex-col gap-4 has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3",
-        className
-      )}
-      {...props}
-    />
+    <DisabledFieldsetContext.Provider value={isDisabled}>
+      <fieldset
+        data-slot="field-set"
+        className={cn(
+          "flex flex-col gap-4 has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3",
+          className
+        )}
+        {...props}
+        disabled={isDisabled}
+      />
+    </DisabledFieldsetContext.Provider>
   )
 }
 

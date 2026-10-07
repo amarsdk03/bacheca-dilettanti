@@ -5,7 +5,7 @@ import {CrownIcon, ShieldCheckIcon} from "lucide-react";
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
-import {buttonVariants} from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button-variants";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import PriorityCheckoutRedirect, {
 	type PriorityCheckoutResult,

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {EyeIcon} from "lucide-react";
-import {buttonVariants} from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button-variants";
 
 export default function AnnouncementViewLink({id, isListed}: {id: string; isListed: boolean}) {
 	return (

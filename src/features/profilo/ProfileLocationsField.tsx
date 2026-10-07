@@ -1,7 +1,8 @@
 import {type Dispatch, type SetStateAction, useEffect, useRef} from "react";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
-import {Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {PROFESSIONAL_REGIONS_EMPTY_MESSAGE} from "@/features/profilo/professional-regions";
 import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import type {ProfileLocationDraft} from "@/features/profilo/profile-model";
@@ -69,6 +70,13 @@ export default function ProfileLocationsField({
 	useEffect(() => {
 		currentSelection.current = {regions, citiesByRegion};
 	}, [citiesByRegion, regions]);
+
+	if (allowedRegions?.length === 0) {
+		return <FieldSet>
+			<FieldLegend variant="label" className="field-legend-title">{label} <FieldRequirementIndicator required={required} /></FieldLegend>
+			<FieldDescription>{PROFESSIONAL_REGIONS_EMPTY_MESSAGE}</FieldDescription>
+		</FieldSet>;
+	}
 
 	if (mode === "single") {
 		const first = value[0];

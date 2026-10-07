@@ -19,7 +19,7 @@ import {Field, FieldError, FieldLabel} from "@/components/ui/field";
 import {Textarea} from "@/components/ui/textarea";
 import {toast} from "@/components/ui/toast";
 import InteractionButton from "@/features/interazioni/InteractionButton";
-import InterestDialog from "@/features/interessi/InterestDialog";
+import InterestDialog, {InterestDialogTrigger} from "@/features/interessi/InterestDialog";
 import type {InterestContext, InterestTarget} from "@/features/interessi/interest-model";
 import type {InteractionState, InteractionTarget} from "@/features/interazioni/interaction-model";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
@@ -40,6 +40,7 @@ interface DetailActionsProps {
 	interestContext?: InterestContext | null;
 	presentation?: "default" | "profile" | "announcement";
 	shareOnly?: boolean;
+	managedInterest?: boolean;
 }
 
 function ReportForm({
@@ -107,7 +108,7 @@ function ReportForm({
 	);
 }
 
-export default function DetailActions({href, target, interaction, interestTarget, interestContext, presentation = "default", shareOnly = false}: DetailActionsProps) {
+export default function DetailActions({href, target, interaction, interestTarget, interestContext, presentation = "default", shareOnly = false, managedInterest = false}: DetailActionsProps) {
 	const [reportOpen, setReportOpen] = useState(false);
 	const [reportPending, setReportPending] = useState(false);
 	const isDetail = presentation !== "default";
@@ -135,7 +136,7 @@ export default function DetailActions({href, target, interaction, interestTarget
 		<div className={isDetail ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2"} role="group" aria-label="Azioni">
 			{!shareOnly && isDetail && <div className="flex flex-wrap items-center gap-2">
 				{followButton}
-				{interestTarget && interestContext && <InterestDialog key={`${interestTarget.kind}:${interestTarget.id}:${interestContext.status}`} target={interestTarget} context={interestContext} href={href} />}
+				{managedInterest ? <InterestDialogTrigger /> : interestTarget && interestContext && <InterestDialog key={`${interestTarget.kind}:${interestTarget.id}:${interestContext.status}`} target={interestTarget} context={interestContext} href={href} />}
 			</div>}
 			<Tooltip>
 				<TooltipTrigger render={<Button type="button" variant="outline" size={isDetail ? "icon-lg" : "icon"} className={isDetail ? "size-11" : undefined} onClick={handleShare} aria-label="Condividi" />}>

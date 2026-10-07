@@ -25,7 +25,7 @@ function NotificationText({item}: {item: NotificationItem}) {
 		case "annuncio_seguito": return <>{actor} ha pubblicato un nuovo annuncio: {target}.</>;
 		case "stato_annuncio": return <>Il tuo annuncio {target} è stato <strong>{notificationStateLabel(item.state)}</strong>.</>;
 		case "segnalazione": return <>Abbiamo ricevuto la tua segnalazione per {target}. Il team la valuterà.</>;
-		case "profilo_speciale": return <>È stata autorizzata la creazione del tuo profilo <strong>{item.state === "creators" ? "Creators" : "Servizi e consulenze"}</strong>. <Link className="notification-link" href="/il-tuo-profilo?sezione=profilo">Completa il profilo</Link> per iniziare a utilizzarlo.</>;
+		case "profilo_speciale": return <>È stata autorizzata la creazione del tuo profilo <strong>{item.state === "creators" ? "Creators" : "Servizi e professionisti"}</strong>. <Link className="notification-link" href="/il-tuo-profilo?sezione=profilo">Completa il profilo</Link> per iniziare a utilizzarlo.</>;
 		case "novita": return <>{item.info ?? "Novità da Bacheca Dilettanti."}</>;
 	}
 }

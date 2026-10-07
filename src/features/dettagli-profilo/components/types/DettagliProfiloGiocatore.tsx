@@ -14,6 +14,7 @@ export default function DettagliProfiloGiocatore({profile, actions, authenticate
 	return (
 		<div className="public-profile-detail flex min-w-0 flex-col gap-6 font-home-body" style={{"--profile-accent": getProfileAccent("giocatore")} as CSSProperties}>
 			<PlayerHeader
+				anonymousName={profile.anonymousName}
 				title={profile.title}
 				imageUrl={profile.imageUrl}
 				emailConfirmed={profile.emailConfirmed}
@@ -24,7 +25,7 @@ export default function DettagliProfiloGiocatore({profile, actions, authenticate
 				actions={actions}
 			/>
 			<PlayerTabs
-				overview={<PlayerOverview presentation={player.presentation} highlightsUrl={player.highlightsUrl} locations={profile.locations} socialLinks={profile.socialLinks} sportTypes={player.sportTypes} primaryRoles={player.primaryRoles} specificRoles={player.specificRoles} height={player.height} weight={player.weight} nationality={player.nationality} nationalityCode={player.nationalityCode} profileId={profile.id} authenticated={authenticated} returnTo={returnTo} />}
+				overview={<PlayerOverview presentation={player.presentation} highlightsUrl={player.highlightsUrl} privateHighlights={player.privateHighlights} locations={profile.locations} socialLinks={profile.socialLinks} sportTypes={player.sportTypes} primaryRoles={player.primaryRoles} specificRoles={player.specificRoles} height={player.height} weight={player.weight} nationality={player.nationality} nationalityCode={player.nationalityCode} profileId={profile.id} authenticated={authenticated} returnTo={returnTo} />}
 				career={<PlayerCareer entries={player.career} />}
 				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} isOwner={isOwner} />}
 				similarProfiles={<SimilarProfiles profiles={profile.similarProfiles} unavailable={profile.similarProfilesUnavailable} />}

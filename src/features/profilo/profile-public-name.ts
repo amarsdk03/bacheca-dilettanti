@@ -1,10 +1,10 @@
 import type {ProfileType} from "@/features/profilo/profile-model";
 
 export const ANONYMOUS_PROFILE_NAMES = {
-	giocatore: "Giocatore anonimo",
-	squadra: "Squadra anonima",
-	"staff-sportivo": "Staff sportivo anonimo",
-	arbitro: "Arbitro anonimo",
+	giocatore: "Giocatore",
+	squadra: "Squadra",
+	"staff-sportivo": "Staff sportivo",
+	arbitro: "Arbitro",
 } as const;
 
 export type AnonymousNameProfileType = keyof typeof ANONYMOUS_PROFILE_NAMES;

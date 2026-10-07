@@ -4,8 +4,10 @@ import {Checkbox as CheckboxPrimitive} from "@base-ui/react/checkbox"
 
 import {cn} from "@/lib/utils"
 import {CheckIcon} from "lucide-react"
+import {useDisabledFieldset} from "@/components/ui/disabled-fieldset"
 
 function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
+  const disabled = useDisabledFieldset(props.disabled)
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
@@ -14,6 +16,7 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
         className
       )}
       {...props}
+      disabled={disabled}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"

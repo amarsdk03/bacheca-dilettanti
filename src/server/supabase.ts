@@ -941,16 +941,19 @@ export type Database = {
       }
       restricted_profile_access: {
         Row: {
+          allowed_regions: string[]
           profile_id: string
           profile_type: string
           enabled_at: string
         }
         Insert: {
+          allowed_regions?: string[]
           profile_id: string
           profile_type: string
           enabled_at?: string
         }
         Update: {
+          allowed_regions?: string[]
           profile_id?: string
           profile_type?: string
           enabled_at?: string
@@ -1276,6 +1279,7 @@ export type Database = {
           peso: string | null
           piede_principale: string | null
           presentazione: string | null
+          highlights_privati: boolean
           richiede_caricamento_highlights: boolean
           ruoli_sport: Json | null
           sport_principale: string | null
@@ -1301,6 +1305,7 @@ export type Database = {
           peso?: string | null
           piede_principale?: string | null
           presentazione?: string | null
+          highlights_privati?: boolean
           richiede_caricamento_highlights?: boolean
           ruoli_sport?: Json | null
           sport_principale?: string | null
@@ -1326,6 +1331,7 @@ export type Database = {
           peso?: string | null
           piede_principale?: string | null
           presentazione?: string | null
+          highlights_privati?: boolean
           richiede_caricamento_highlights?: boolean
           ruoli_sport?: Json | null
           sport_principale?: string | null
@@ -1734,6 +1740,10 @@ export type Database = {
       get_profile_activity_v1: {
         Args: {p_ids: string[]}
         Returns: {profile_id: string; profile_type: string; last_activity: string}[]
+      }
+      admin_configure_professional_access_v1: {
+        Args: { p_profile_id: string; p_allowed_regions: string[] }
+        Returns: undefined
       }
       admin_set_restricted_profile_access_v1: {
         Args: { p_profile_id: string; p_profile_type: string; p_enabled: boolean }

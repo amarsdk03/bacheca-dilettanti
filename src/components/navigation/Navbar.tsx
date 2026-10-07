@@ -5,7 +5,7 @@ import {ArrowLeftIcon, ClipboardPenIcon, UserIcon} from "lucide-react";
 import NavbarNavigation from "@/components/navigation/NavbarNavigation";
 import UserAvatar from "@/components/navigation/UserAvatar";
 import NotificationBell from "@/features/notifiche/NotificationBell";
-import {buttonVariants} from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button-variants";
 import {DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
 import {getCurrentViewer} from "@/features/auth/server/queries";
 import {cn} from "@/lib/utils";

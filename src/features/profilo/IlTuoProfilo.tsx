@@ -1,5 +1,7 @@
 "use client";
 
+import {PROFESSIONAL_REGIONS_SUSPENDED_MESSAGE} from "@/features/profilo/professional-regions";
+
 import {type CSSProperties, type ReactNode, useActionState, useState, useTransition} from "react";
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
@@ -129,7 +131,7 @@ const FAQ_GROUPS = [
 			{
 				value: "profile-count",
 				question: "Quanti sottoprofili posso creare?",
-				answer: "Puoi configurare fino a cinque sottoprofili ordinari, uno per ciascuna tipologia. Servizi e consulenze e Creators sono due profili riservati che possono aggiungersi a questo limite, se abilitati dall’admin: puoi quindi arrivare a sette sottoprofili complessivi. Puoi scegliere quale rendere principale.",
+				answer: "Puoi configurare fino a cinque sottoprofili ordinari, uno per ciascuna tipologia. Servizi e professionisti e Creators sono due profili riservati che possono aggiungersi a questo limite, se abilitati dall’admin: puoi quindi arrivare a sette sottoprofili complessivi. Puoi scegliere quale rendere principale.",
 			},
 			{
 				value: "profile-manage",
@@ -138,7 +140,7 @@ const FAQ_GROUPS = [
 			},
 			{
 				value: "restricted-profiles",
-				question: "Perché Servizi e consulenze e Creators mostrano Accesso limitato?",
+				question: "Perché Servizi e professionisti e Creators mostrano Accesso limitato?",
 				answer: (
 					<>
 						Queste tipologie possono essere abilitate soltanto dall’admin e non sono selezionabili durante la registrazione. Se vuoi richiedere l’accesso, scrivici dalla <Link href="/contatti">pagina Contatti</Link>. Dopo l’abilitazione puoi completare il sottoprofilo e pubblicare i relativi annunci, anche se hai già cinque sottoprofili ordinari.
@@ -148,7 +150,7 @@ const FAQ_GROUPS = [
 			{
 				value: "profile-remove",
 				question: "Cosa succede se rimuovo un sottoprofilo?",
-				answer: "Deve rimanere attivo almeno un sottoprofilo ordinario. Se rimuovi quello principale, un altro sottoprofilo attivo verrà promosso automaticamente; gli annunci già pubblicati resteranno disponibili. Se elimini Servizi e consulenze o Creators, viene revocata anche l’abilitazione: per ricrearlo servirà un nuovo intervento dell’admin.",
+				answer: "Deve rimanere attivo almeno un sottoprofilo ordinario. Se rimuovi quello principale, un altro sottoprofilo attivo verrà promosso automaticamente; gli annunci già pubblicati resteranno disponibili. Se elimini Servizi e professionisti o Creators, viene revocata anche l’abilitazione: per ricrearlo servirà un nuovo intervento dell’admin.",
 			},
 			{
 				value: "profile-completion",
@@ -185,7 +187,7 @@ const FAQ_GROUPS = [
 			{
 				value: "announcement-limits",
 				question: "Quali limiti ci sono per la pubblicazione?",
-				answer: "Per pubblicare dal tuo account devi avere un sottoprofilo attivo della tipologia scelta. Servizi e consulenze e Creators richiedono l’abilitazione admin e consentono pubblicazioni illimitate. Come ospite puoi pubblicare al massimo un annuncio ogni 24 ore, verificando l’indirizzo email con un codice monouso; i due profili riservati sono disponibili soltanto per account registrati abilitati.",
+				answer: "Per pubblicare dal tuo account devi avere un sottoprofilo attivo della tipologia scelta. Servizi e professionisti e Creators richiedono l’abilitazione admin e consentono pubblicazioni illimitate. Come ospite puoi pubblicare al massimo un annuncio ogni 24 ore, verificando l’indirizzo email con un codice monouso; i due profili riservati sono disponibili soltanto per account registrati abilitati.",
 			},
 			{
 				value: "announcement-priority",
@@ -430,6 +432,7 @@ function ProfileCard({
 	const option = PROFILE_OPTIONS.find(({value}) => value === profile.type);
 	const accent = getProfileAccent(profile.type);
 	const profileCompletion = getProfileCompletion(profile.type, drafts, locations);
+	const regionSuspended = profile.type === "servizi-consulenze" && locations[profile.type].length === 0;
 	const [removeOpen, setRemoveOpen] = useState(false);
 	const [pendingAction, setPendingAction] = useState<"primary" | "remove" | null>(null);
 	const [pending, startTransition] = useTransition();
@@ -486,7 +489,7 @@ function ProfileCard({
 					</div>
 				</div>
 				{
-					profile.isPrimary ? (
+					regionSuspended ? <Badge variant="outline"><EyeOffIcon data-icon="inline-start" aria-hidden="true" /> Sospeso</Badge> : profile.isPrimary ? (
 						<Badge variant="secondary" className="profile-dashboard-type-badge"><StarIcon data-icon="inline-start" aria-hidden="true" /> Principale</Badge>
 					) : (
 						<Badge variant="outline"><CheckIcon data-icon="inline-start" aria-hidden="true" /> Attivo</Badge>
@@ -494,6 +497,7 @@ function ProfileCard({
 				}
 			</CardHeader>
 			<CardContent className="flex flex-1 flex-col gap-5">
+				{regionSuspended && <Alert><InfoIcon aria-hidden="true" /><AlertDescription>{PROFESSIONAL_REGIONS_SUSPENDED_MESSAGE}</AlertDescription></Alert>}
 				<p className="leading-6 text-muted-foreground">
 					{option?.description}
 				</p>
@@ -528,7 +532,7 @@ function ProfileCard({
 					)}
 				</div>
 				<div className="flex flex-wrap justify-end gap-2">
-					<Tooltip>
+					{!regionSuspended && <Tooltip>
 						<TooltipTrigger render={<Link
 							href={`/dettagli-profilo?${new URLSearchParams({id: profile.profileId, type: profile.type})}`}
 							target="_blank"
@@ -539,7 +543,7 @@ function ProfileCard({
 							<EyeIcon aria-hidden="true" />
 						</TooltipTrigger>
 						<TooltipContent>Visualizza profilo</TooltipContent>
-					</Tooltip>
+					</Tooltip>}
 					<Button type="button" variant="outline" onClick={onEdit} disabled={pending} aria-label={`Aggiorna il profilo ${option?.label ?? profile.type}`}>
 						<PencilIcon data-icon="inline-start" aria-hidden="true" /> Aggiorna
 					</Button>
@@ -687,7 +691,7 @@ function ProfilesSection({
 			<section aria-labelledby="available-profiles-heading" className="grid gap-5">
 				<div className="flex flex-col gap-1.5">
 					<h2 id="available-profiles-heading" className="text-xl font-semibold tracking-tight">Altri sottoprofili</h2>
-					<p className="text-sm leading-6 text-muted-foreground">Aggiungi fino a {MAX_PROFILE_COUNT} sottoprofili ordinari. Servizi e consulenze e Creators richiedono l’abilitazione dell’admin.</p>
+					<p className="text-sm leading-6 text-muted-foreground">Aggiungi fino a {MAX_PROFILE_COUNT} sottoprofili ordinari. Servizi e professionisti e Creators richiedono l’abilitazione dell’admin.</p>
 				</div>
 
 				{limitReached && PROFILE_OPTIONS.some(({value}) => !isRestrictedProfileType(value) && !profiles.some(({type}) => type === value)) && (
@@ -773,6 +777,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 						<div className="flex flex-wrap gap-1.5">
 							<Badge variant="secondary" className="profile-dashboard-type-badge">{announcement.profileType === "squadra" ? "Squadra" : announcement.type}</Badge>
 							{announcement.profileType !== "squadra" && <Badge variant="outline">{announcement.subtype}</Badge>}
+							{announcement.regionSuspended && <Badge variant="outline">Sospeso</Badge>}
 							<Badge variant={moderationVariant(announcement.moderationStatus)}>{moderationLabel(announcement.moderationStatus)}</Badge>
 							{announcement.level === "prioritario" && <Badge variant="secondary"><StarIcon data-icon="inline-start" aria-hidden="true" /> Prioritario</Badge>}
 						</div>
@@ -782,6 +787,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 			</CardHeader>
 			<CardContent className="grid gap-4">
 				<p className="wrap-anywhere leading-6 text-muted-foreground">{announcement.description}</p>
+				{announcement.regionSuspended && <Alert><InfoIcon aria-hidden="true" /><AlertDescription>{PROFESSIONAL_REGIONS_SUSPENDED_MESSAGE}</AlertDescription></Alert>}
 				{announcement.moderationInfo && (
 					<Alert>
 						<InfoIcon aria-hidden="true" />
@@ -806,7 +812,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 				</dl>
 			</CardContent>
 			<CardFooter className="flex flex-wrap justify-end gap-2">
-				<AnnouncementViewLink id={announcement.id} isListed={isAnnouncementListed(announcement.moderationStatus, isHidden, announcement.isPrivate)} />
+				{!announcement.regionSuspended && <AnnouncementViewLink id={announcement.id} isListed={isAnnouncementListed(announcement.moderationStatus, isHidden, announcement.isPrivate)} />}
 				{paymentPending ? (
 					<Button render={<Link href={`/pubblica-annuncio/pagamento?id=${encodeURIComponent(announcement.id)}`} />} nativeButton={false} className="profile-dashboard-action" disabled={pending}>
 						Completa pagamento
@@ -817,7 +823,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 						type="button"
 						variant="outline"
 						onClick={() => runMutation("visibility", onToggleVisibility)}
-						disabled={pending}
+						disabled={pending || announcement.regionSuspended}
 					>
 						{pending && pendingAction === "visibility"
 							? <LoaderCircleIcon className="animate-spin" data-icon="inline-start" aria-hidden="true" />
@@ -1139,6 +1145,7 @@ export default function IlTuoProfilo({
 				<ProfileEditorDialog
 					key={`${editor.mode}:${editor.profileType}`}
 					mode={editor.mode}
+					professionalRegions={data.professionalRegions}
 					profileType={editor.profileType}
 					drafts={drafts}
 					locations={locations}

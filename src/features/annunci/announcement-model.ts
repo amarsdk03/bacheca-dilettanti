@@ -161,7 +161,7 @@ export const ANNOUNCEMENT_OPTIONS: readonly AnnouncementOption[] = [
 	},
 	{
 		value: "annuncio_servizi_consulenze",
-		label: "Servizi e consulenze",
+		label: "Servizi e professionisti",
 		description: "Pubblica un servizio o una promozione pensata appositamente per la community di Bacheca",
 		profileType: "servizi-consulenze",
 		icon: BriefcaseBusinessIcon,
@@ -229,7 +229,7 @@ export const ANNOUNCEMENT_DIRECTORY_OPTIONS: readonly AnnouncementDirectoryOptio
 	{
 		value: "annuncio_servizi_consulenze",
 		profileType: "servizi-consulenze",
-		label: "Servizi e consulenze",
+		label: "Servizi e professionisti",
 		description: "Pubblica un servizio o una promozione pensata appositamente per la community di Bacheca",
 		icon: BriefcaseBusinessIcon,
 	},

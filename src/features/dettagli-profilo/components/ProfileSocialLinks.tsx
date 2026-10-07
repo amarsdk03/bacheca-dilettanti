@@ -1,7 +1,7 @@
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import {ArrowUpRightIcon, LinkIcon} from "lucide-react";
 
-import {buttonVariants} from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button-variants";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import ContactAccessPrompt from "@/components/data-info/ContactAccessPrompt";
 import {PROFILE_SOCIAL_LINK_OPTIONS, type ProfileSocialLinks,} from "@/features/profilo/profile-social-links";

@@ -41,6 +41,7 @@ export async function loadSitemapProfiles(): Promise<SitemapProfileEntry[]> {
 			.select(`
 				uuid,
 				ultima_modifica_il,
+				localita_profilo(sottoprofilo),
 				profilo_giocatore(id, nascosto),
 				profilo_squadra(id, nascosto),
 				profilo_staff_sportivo(id, nascosto),
@@ -61,6 +62,7 @@ export async function loadSitemapProfiles(): Promise<SitemapProfileEntry[]> {
 
 		for (const row of data ?? []) {
 			for (const [relation, type] of PROFILE_RELATIONS) {
+				if (type === "servizi-consulenze" && !row.localita_profilo.some(location => location.sottoprofilo === type)) continue;
 				if (!records(row[relation]).some((child) => child.nascosto === false)) continue;
 				entries.push({id: row.uuid, type, updatedAt: row.ultima_modifica_il});
 			}
@@ -76,7 +78,8 @@ export async function loadSitemapAnnouncements(): Promise<SitemapAnnouncementEnt
 	for (let start = 0; ; start += BATCH_SIZE) {
 		const {data, error} = await admin
 			.from("annuncio")
-			.select("uuid, creato_il")
+			.select("uuid, creato_il, localita_annuncio(regione)")
+			.or("tipologia_annuncio.neq.annuncio_servizi_consulenze,localita_annuncio.not.is.null")
 			.eq("stato_annuncio", "pubblicato")
 			.eq("nascosto", false)
 			.eq("privato", false)

@@ -45,7 +45,7 @@ function profileTitle(payload: PublishAnnouncementPayload, drafts: ProfileDrafts
 	if (payload.profileType === "squadra") return publicProfileName("squadra", drafts.squadra.nominativo_anonimo, drafts.squadra.nome_societa || "Squadra") ?? "Profilo";
 	if (payload.profileType === "staff-sportivo") return publicProfileName("staff-sportivo", drafts["staff-sportivo"].nominativo_anonimo, [drafts["staff-sportivo"].nome, drafts["staff-sportivo"].cognome].filter(Boolean).join(" ") || "Staff sportivo") ?? "Profilo";
 	if (payload.profileType === "arbitro") return publicProfileName("arbitro", drafts.arbitro.nominativo_anonimo, [drafts.arbitro.nome, drafts.arbitro.cognome].filter(Boolean).join(" ") || "Arbitro") ?? "Profilo";
-	if (payload.profileType === "servizi-consulenze") return drafts["servizi-consulenze"].nome || "Servizi e consulenze";
+	if (payload.profileType === "servizi-consulenze") return drafts["servizi-consulenze"].nome || "Servizi e professionisti";
 	if (payload.profileType === "creators") return drafts.creators.nome_creator || "Creator";
 	if (payload.profileType === "torneo-evento") return drafts["torneo-evento"].nome_organizzazione || "Organizzazione";
 	return drafts["campi-impianti-sportivi"].nome_organizzazione || "Campo o impianto";

@@ -4,10 +4,10 @@ import type {InteractionTarget} from "@/features/interazioni/interaction-model";
 import {getInterestContext} from "@/features/interessi/server/queries";
 import type {InterestTarget} from "@/features/interessi/interest-model";
 
-export default async function DetailActions({href, target, interestTarget, presentation = "default", shareOnly = false}: {href: string; target: InteractionTarget; interestTarget?: InterestTarget; presentation?: "default" | "profile" | "announcement"; shareOnly?: boolean}) {
+export default async function DetailActions({href, target, interestTarget, presentation = "default", shareOnly = false, managedInterest = false}: {href: string; target: InteractionTarget; interestTarget?: InterestTarget; presentation?: "default" | "profile" | "announcement"; shareOnly?: boolean; managedInterest?: boolean}) {
 	const [interaction, interestContext] = await Promise.all([
 		shareOnly ? {status: "guest" as const} : getInteractionState(target),
-		!shareOnly && presentation !== "default" && interestTarget ? getInterestContext(interestTarget) : null,
+		!managedInterest && !shareOnly && presentation !== "default" && interestTarget ? getInterestContext(interestTarget) : null,
 	]);
-	return <DetailActionsClient href={href} target={target} interaction={interaction} interestTarget={interestTarget} interestContext={interestContext} presentation={presentation} shareOnly={shareOnly} />;
+	return <DetailActionsClient href={href} target={target} interaction={interaction} interestTarget={interestTarget} interestContext={interestContext} presentation={presentation} shareOnly={shareOnly} managedInterest={managedInterest} />;
 }

@@ -339,7 +339,7 @@ function normalizeDraft(
 	if (!isRecord(value)) fail("I dati del profilo non sono validi.", 3, type);
 
 	if (type === "giocatore") {
-		assertExactKeys(value, ["nominativo_anonimo", "altezza", "anno_nascita", "categoria_attuale", "categorie_ricercate", "cognome", "disponibilita", "genere", "giorno_nascita", "mese_nascita", "nome", "nazionalita", "peso", "piede_principale", "presentazione", "richiede_caricamento_highlights", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport", "video_highlights"], type);
+		assertExactKeys(value, ["nominativo_anonimo", "altezza", "anno_nascita", "categoria_attuale", "categorie_ricercate", "cognome", "disponibilita", "genere", "giorno_nascita", "mese_nascita", "nome", "nazionalita", "peso", "piede_principale", "presentazione", "highlights_privati", "richiede_caricamento_highlights", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport", "video_highlights"], type);
 		const normalizedBirthDate = birthDate(value, type);
 		const availability = value.disponibilita === "disponibile-subito" ? "svincolato" : enumText(value.disponibilita, new Set(["svincolato", "sotto-contratto"]), type);
 		const category = textValue(value.categoria_attuale, 120, type);
@@ -347,7 +347,8 @@ function normalizeDraft(
 		const gender = enumText(value.genere, new Set(["Uomo", "Donna"]), type);
 		const nationality = enumText(value.nazionalita, NATIONALITIES, type);
 		const highlightsUploadRequested = value.richiede_caricamento_highlights ?? false;
-		if (typeof highlightsUploadRequested !== "boolean") {
+		const privateHighlights = value.highlights_privati ?? false;
+		if (typeof privateHighlights !== "boolean" || typeof highlightsUploadRequested !== "boolean" || (privateHighlights && highlightsUploadRequested)) {
 			fail("La richiesta relativa agli highlights non è valida.", 3, type);
 		}
 		return {
@@ -370,8 +371,9 @@ function normalizeDraft(
 			sport_principale: baseSport(value.sport_principale, type),
 			storico_carriera: experiences(value.storico_carriera, type),
 			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
-			video_highlights: highlightsUploadRequested ? "" : profileVideoLink(value.video_highlights, type),
+			video_highlights: highlightsUploadRequested || privateHighlights ? "" : profileVideoLink(value.video_highlights, type),
 			richiede_caricamento_highlights: highlightsUploadRequested,
+			highlights_privati: privateHighlights,
 		};
 	}
 

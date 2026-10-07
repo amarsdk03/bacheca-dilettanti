@@ -5,7 +5,7 @@ import {ArrowLeft, SearchX} from "lucide-react";
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
 import FrasiErrori from "@/features/status-pages/FrasiErrori";
-import {buttonVariants} from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button-variants";
 
 export default function Errore404() {
 	return (

@@ -46,6 +46,7 @@ const PRIMARY_FIELD_LABELS = {
 } as const satisfies Record<ProfileType, readonly string[]>;
 
 interface ProfileContent {
+	anonymousName?: boolean;
 	childId: number;
 	title: string | null;
 	availability: string | null;
@@ -139,7 +140,7 @@ async function loadProfileContent(
 		const [playerResult, mediaResult] = await Promise.all([
 			supabase
 				.from("profilo_giocatore")
-				.select("nominativo_anonimo, id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, tipologie_sport, categoria_attuale, disponibilita, genere, nazionalita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
+				.select("highlights_privati, richiede_caricamento_highlights, nominativo_anonimo, id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, tipologie_sport, categoria_attuale, disponibilita, genere, nazionalita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
 				.eq("uuid_profilo", id)
 				.eq("nascosto", false)
 				.maybeSingle(),
@@ -160,6 +161,7 @@ async function loadProfileContent(
 			status: "ok",
 			content: {
 				childId: data.id,
+				anonymousName: data.nominativo_anonimo,
 				title: publicProfileName("giocatore", data.nominativo_anonimo, fullName(data.nome, data.cognome)),
 				availability: data.disponibilita,
 				fields: [],
@@ -181,6 +183,7 @@ async function loadProfileContent(
 			status: "ok",
 			content: {
 				childId: data.id,
+				anonymousName: data.nominativo_anonimo,
 				title: publicProfileName("squadra", data.nominativo_anonimo, cleanText(data.nome_societa)),
 				availability: null,
 				fields: [
@@ -205,6 +208,7 @@ async function loadProfileContent(
 			status: "ok",
 			content: {
 				childId: data.id,
+				anonymousName: data.nominativo_anonimo,
 				title: publicProfileName("staff-sportivo", data.nominativo_anonimo, fullName(data.nome, data.cognome)),
 				availability: data.disponibilita,
 				fields: [
@@ -260,6 +264,7 @@ async function loadProfileContent(
 			status: "ok",
 			content: {
 				childId: data.id,
+				anonymousName: data.nominativo_anonimo,
 				title: publicProfileName("arbitro", data.nominativo_anonimo, fullName(data.nome, data.cognome)),
 				availability: data.disponibilita,
 				fields: [
@@ -426,6 +431,7 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 		if (!baseResult.data || contentResult.status === "not-found") {
 			return {status: "not-found"};
 		}
+		if (type === "servizi-consulenze" && locationsResult.data?.length === 0) return {status: "not-found"};
 
 		const [similarResult] = await Promise.allSettled([loadRecentSimilarProfiles(supabase, id, type)]);
 		const similarProfiles = similarResult.status === "fulfilled" ? similarResult.value : [];
@@ -465,6 +471,7 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 		const locations = publicLocations(locationsResult.data ?? [], content.childId);
 		const splitFields = splitProfileFields(type, content.fields);
 		const common = {
+			anonymousName: content.anonymousName === true,
 			id: baseResult.data.uuid,
 			title: content.title ?? `Profilo ${typeLabel.toLocaleLowerCase("it-IT")}`,
 			imageUrl: resolvedProfileImageUrl(profileImages, id, type, cleanText(baseResult.data.link_foto_profilo)),

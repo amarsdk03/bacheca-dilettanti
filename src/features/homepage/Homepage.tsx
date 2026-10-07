@@ -10,7 +10,8 @@ import {
 	UserPlusIcon,
 } from "lucide-react";
 
-import {Button, buttonVariants} from "@/components/ui/button";
+import {Button} from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button-variants";
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Skeleton} from "@/components/ui/skeleton";
 import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
@@ -71,8 +72,8 @@ const HOMEPAGE_CATEGORIES = [
 	},
 	{
 		type: "servizi-consulenze",
-		label: "Servizi e consulenze",
-		description: "Scopri servizi e consulenze pensati per il mondo del calcio.",
+		label: "Servizi e professionisti",
+		description: "Scopri servizi e professionisti per il mondo del calcio.",
 	},
 ] as const satisfies readonly HomepageCategory[];
 
@@ -80,7 +81,7 @@ const PROFILE_LABELS: Record<ProfileType, string> = {
 	giocatore: "Giocatori",
 	squadra: "Squadre",
 	"staff-sportivo": "Staff",
-	"servizi-consulenze": "Servizi e consulenze",
+	"servizi-consulenze": "Servizi e professionisti",
 	arbitro: "Arbitri",
 	creators: "Creators",
 	"torneo-evento": "Tornei / Eventi",
@@ -120,9 +121,9 @@ const PROMOTIONS = [
 		accent: "#8e72ff",
 	},
 	{
-		eyebrow: "Servizi e consulenze",
+		eyebrow: "Servizi e professionisti",
 		title: "Trova il servizio giusto",
-		description: "Scopri servizi e consulenze per le tue esigenze nel mondo del calcio.",
+		description: "Scopri servizi e professionisti per le tue esigenze nel mondo del calcio.",
 		href: "/profili?type=servizi-consulenze",
 		cta: "Scopri di più",
 		icon: BriefcaseBusinessIcon,

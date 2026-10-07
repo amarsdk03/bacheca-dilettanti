@@ -5,6 +5,7 @@ import type {ProfileLocationDraft, ProfileType} from "@/features/profilo/profile
 import {isPlayerNationalityCode} from "@/features/profilo/player-nationalities";
 import {parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 import {getRequiredBirthDateError} from "@/features/profilo/birth-date";
+import {PROFESSIONAL_REGIONS_EMPTY_MESSAGE, PROFESSIONAL_REGIONS_ERROR} from "@/features/profilo/professional-regions";
 
 export type ProfileValidationField =
 	| "name"
@@ -27,9 +28,13 @@ export type ProfileValidationField =
 export type ProfileValidationErrors = Partial<Record<ProfileValidationField, string>>;
 
 const PROFILE_FIELD_DATABASE_ERRORS: Record<string, string> = {
+	PROFESSIONAL_REGIONS_REQUIRED: PROFESSIONAL_REGIONS_EMPTY_MESSAGE,
+	PROFESSIONAL_PROFILE_AREA_NOT_ALLOWED: PROFESSIONAL_REGIONS_ERROR,
+	PROFESSIONAL_ANNOUNCEMENT_AREA_NOT_ALLOWED: PROFESSIONAL_REGIONS_ERROR,
+	INVALID_PLAYER_HIGHLIGHTS_SETTINGS: "Seleziona una sola opzione per gli highlights.",
 	INVALID_PROFILE_NAME_ANONYMITY: "La preferenza sul nominativo non è valida.",
 	TEAM_FIRST_TEAM_CATEGORY_REQUIRED: "Seleziona la categoria attuale della Prima Squadra.",
-	PROFESSIONAL_NAME_REQUIRED: "Inserisci il nominativo o la ragione sociale.",
+	PROFESSIONAL_NAME_REQUIRED: "Inserisci nome, cognome o ragione sociale.",
 	PROFESSIONAL_CONTACT_REQUIRED: "Inserisci almeno un recapito del profilo tra email e telefono.",
 	INVALID_PROFILE_EMAIL: "Inserisci un indirizzo email valido nel profilo.",
 	INVALID_PROFILE_PHONE: "Inserisci un numero di telefono valido nel profilo.",
@@ -96,7 +101,7 @@ export function getProfileRequiredFieldErrors(
 		if (Array.isArray(values.qualifiche_licenze) && values.qualifiche_licenze.some((item) => !isRecord(item) || (item.stato !== "in-corso" && item.stato !== "conseguito"))) errors.qualificationState = "Seleziona lo stato di ogni qualifica o licenza.";
 	}
 	if (type === "servizi-consulenze") {
-  if (!nonEmpty(values.nome)) errors.name = "Inserisci il nominativo o la ragione sociale.";
+  if (!nonEmpty(values.nome)) errors.name = "Inserisci nome, cognome o ragione sociale.";
   if (!nonEmpty(values.contatto_email) && !nonEmpty(values.contatto_telefono)) errors.contacts = "Inserisci almeno un recapito tra email e telefono.";
   if (nonEmpty(values.contatto_telefono) && (String(values.contatto_telefono).trim().length > 40 || !isValidPhone(String(values.contatto_telefono).trim()))) errors.phone = "Inserisci un numero di telefono valido.";
  }

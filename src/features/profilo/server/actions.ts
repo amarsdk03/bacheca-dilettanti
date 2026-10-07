@@ -6,6 +6,7 @@ import {revalidatePath} from "next/cache";
 import {randomUUID} from "node:crypto";
 
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
+import {professionalLocationsAllowed, PROFESSIONAL_REGIONS_EMPTY_MESSAGE, PROFESSIONAL_REGIONS_ERROR, PROFESSIONAL_REGIONS_SUSPENDED_MESSAGE} from "@/features/profilo/professional-regions";
 import {profileFieldsDatabaseErrorMessage} from "@/features/profilo/profile-required-fields";
 import {isComingSoonProfileType, isProfileType, isRestrictedProfileType, type ProfileType,} from "@/features/profilo/profile-model";
 import {
@@ -326,9 +327,12 @@ export async function saveProfile(
 			const {data: baseProfile, error: baseError} = await admin.from("profilo").select("uuid").eq("uuid_utente", account.utenteId).eq("nascosto", false).maybeSingle();
 			if (baseError) throw baseError;
 			if (!baseProfile) return {status: "error", message: "Il profilo principale dell’account non è disponibile."};
-			const {data: access, error: accessError} = await admin.from("restricted_profile_access").select("profile_id").eq("profile_id", baseProfile.uuid).eq("profile_type", normalized.type).maybeSingle();
+			const {data: access, error: accessError} = await admin.from("restricted_profile_access").select("profile_id, allowed_regions").eq("profile_id", baseProfile.uuid).eq("profile_type", normalized.type).maybeSingle();
 			if (accessError) throw accessError;
 			if (!access) return {status: "error", message: "Questo sottoprofilo richiede l’abilitazione dell’admin."};
+			if (normalized.type === "servizi-consulenze" && !professionalLocationsAllowed(normalized.locations, access.allowed_regions)) {
+				return {status: "error", message: access.allowed_regions.length === 0 ? PROFESSIONAL_REGIONS_EMPTY_MESSAGE : PROFESSIONAL_REGIONS_ERROR};
+			}
 		}
 		if (isComingSoonProfileType(normalized.type) && !isRestrictedProfileType(normalized.type)) {
 			const {data: baseProfile, error: baseProfileError} = await admin
@@ -481,9 +485,12 @@ export async function setAnnouncementVisibility(
 	const supabase = await createClient();
 	// Verify ownership through the session's RLS before using the server writer.
 	// Notification/activity side effects access private tables as service_role.
-	const owned = await supabase.from("annuncio").select("uuid").eq("uuid", announcementId).maybeSingle();
+	const owned = await supabase.from("annuncio").select("uuid, tipologia_annuncio, localita_annuncio(regione)").eq("uuid", announcementId).maybeSingle();
 	if (owned.error || !owned.data) {
 		return {status: "error", message: "L’annuncio non è più disponibile oppure non appartiene al tuo account."};
+	}
+	if (!hidden && owned.data.tipologia_annuncio === "annuncio_servizi_consulenze" && owned.data.localita_annuncio.length === 0) {
+		return {status: "error", message: PROFESSIONAL_REGIONS_SUSPENDED_MESSAGE};
 	}
 	const {data, error} = await createAdminClient()
 		.from("annuncio")

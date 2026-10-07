@@ -8,6 +8,7 @@ import {
 	RulerIcon,
 	ShirtIcon,
 	StarIcon,
+	EyeOff,
 } from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
@@ -20,11 +21,11 @@ import ProfileFactsGrid, {type ProfileFact} from "../ProfileFactsGrid";
 import PlayerRolePitch from "./PlayerRolePitch";
 import {getPlayerRolePitchMarkers} from "@/features/profilo/player-roles";
 
-type PlayerHeaderProps = Pick<PlayerProfileDetail, "title" | "imageUrl" | "emailConfirmed" | "officialVerified" | "primary" | "availabilityLabel" | "player"> & {
+type PlayerHeaderProps = Pick<PlayerProfileDetail, "anonymousName" | "title" | "imageUrl" | "emailConfirmed" | "officialVerified" | "primary" | "availabilityLabel" | "player"> & {
 	actions?: ReactNode;
 };
 
-export default function PlayerHeader({title, imageUrl, emailConfirmed, officialVerified, primary, availabilityLabel, player, actions}: PlayerHeaderProps) {
+export default function PlayerHeader({anonymousName, title, imageUrl, emailConfirmed, officialVerified, primary, availabilityLabel, player, actions}: PlayerHeaderProps) {
 	const {age, primaryRoles, specificRoles, gender, nationalityCode, preferredFoot, height} = player;
 	const hasRolePitch = getPlayerRolePitchMarkers(primaryRoles, specificRoles).length > 0;
 	const facts: ProfileFact[] = [
@@ -62,6 +63,7 @@ export default function PlayerHeader({title, imageUrl, emailConfirmed, officialV
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge variant="secondary" className="public-profile-type-badge"><ProfilePngIcon type="giocatore" color="currentColor" className="size-3" />Giocatore</Badge>
 								<RegisteredUserBadge emailConfirmed={emailConfirmed} />
+								{anonymousName && <Badge variant="outline"><EyeOff data-icon="inline-start" aria-hidden="true" />Nome nascosto</Badge>}
 								{primary && <Badge variant="outline"><StarIcon data-icon="inline-start" aria-hidden="true" />Profilo principale</Badge>}
 							</div>
 						</div>

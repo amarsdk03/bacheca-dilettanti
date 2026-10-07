@@ -1,6 +1,6 @@
 "use client";
 
-import {useId, useRef, useState, type FormEvent} from "react";
+import {createContext, useContext, useId, useRef, useState, type FormEvent, type ReactNode} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {LoaderCircleIcon, MessageCircleMore} from "lucide-react";
@@ -15,7 +15,19 @@ import {toast} from "@/components/ui/toast";
 import {INTEREST_OWNERSHIP_CONSENT, INTEREST_SHARING_CONSENT, validateInterestForm, type InterestContext, type InterestField, type InterestResult, type InterestTarget} from "./interest-model";
 import {submitInterest} from "./server/actions";
 
-export default function InterestDialog({target, context, href}: {target: InterestTarget; context: InterestContext; href: string}) {
+const InterestAvailabilityContext = createContext(false);
+
+export function InterestDialogTrigger({inline = false}: {inline?: boolean}) {
+	const available = useContext(InterestAvailabilityContext);
+	if (!available) return inline ? <span>Manifesta interesse</span> : null;
+	return (
+		<AlertDialogTrigger render={<Button type="button" variant={inline ? "link" : "default"} className={inline ? "h-auto p-0 align-baseline [font-size:inherit]" : "min-h-11 gap-2 px-4"} />}>
+			{!inline && <MessageCircleMore data-icon="inline-start" aria-hidden="true" />}Manifesta interesse
+		</AlertDialogTrigger>
+	);
+}
+
+export function InterestDialogProvider({target, context, href, children}: {target: InterestTarget; context: InterestContext; href: string; children: ReactNode}) {
 	const id = useId();
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
@@ -73,12 +85,10 @@ export default function InterestDialog({target, context, href}: {target: Interes
 		}
 	}
 
-	if (context.status === "unavailable") return null;
-	return (
+	if (context.status === "unavailable") return <InterestAvailabilityContext.Provider value={false}>{children}</InterestAvailabilityContext.Provider>;
+	const dialog = (
 		<AlertDialog open={open} onOpenChange={changeOpen}>
-			<AlertDialogTrigger render={<Button type="button" className="min-h-11 gap-2 px-4" />}>
-				<MessageCircleMore className={"ms-2"} data-icon="inline-start" aria-hidden="true" /> Manifesta interesse
-			</AlertDialogTrigger>
+			{children}
 			<AlertDialogContent size="lg" className="max-h-[calc(100dvh-2rem)] overflow-y-auto data-[size=lg]:sm:max-w-lg data-[size=lg]:lg:max-w-lg">
 				<AlertDialogHeader>
 					<AlertDialogTitle>Manifesta interesse</AlertDialogTitle>
@@ -141,11 +151,16 @@ export default function InterestDialog({target, context, href}: {target: Interes
 						{status !== "guest" && <Alert><AlertDescription>{status === "registration-required" ? "Completa la registrazione per manifestare interesse." : status === "profile-required" ? "Crea un sottoprofilo per manifestare interesse." : "Non è stato possibile caricare il modulo. Riprova tra poco."}</AlertDescription></Alert>}
 						<AlertDialogFooter>
 							<AlertDialogCancel>Chiudi</AlertDialogCancel>
-							{status === "error" ? <Button onClick={() => router.refresh()}>Riprova</Button> : <Button render={<Link href={status === "guest" ? `/accedi?${new URLSearchParams({next: href})}` : status === "registration-required" ? "/registrati" : "/il-tuo-profilo"} />}>{status === "guest" ? "Accedi" : status === "registration-required" ? "Completa registrazione" : "Completa profilo"}</Button>}
+							{status === "error" ? <Button onClick={() => router.refresh()}>Riprova</Button> : <Button nativeButton={false} render={<Link href={status === "guest" ? `/accedi?${new URLSearchParams({next: href})}` : status === "registration-required" ? "/registrati" : "/il-tuo-profilo"} />}>{status === "guest" ? "Accedi" : status === "registration-required" ? "Completa registrazione" : "Completa profilo"}</Button>}
 						</AlertDialogFooter>
 					</>
 				)}
 			</AlertDialogContent>
 		</AlertDialog>
 	);
+	return <InterestAvailabilityContext.Provider value={true}>{dialog}</InterestAvailabilityContext.Provider>;
+}
+
+export default function InterestDialog({target, context, href}: {target: InterestTarget; context: InterestContext; href: string}) {
+	return <InterestDialogProvider target={target} context={context} href={href}><InterestDialogTrigger /></InterestDialogProvider>;
 }

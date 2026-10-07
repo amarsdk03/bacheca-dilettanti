@@ -1,3 +1,4 @@
+import {professionalAllowedRegions} from "@/features/profilo/professional-regions";
 import "server-only";
 import {normalizeTeamCategory} from "@/features/profilo/team-category-catalog";
 
@@ -49,7 +50,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		.maybeSingle();
 	queryFailed(baseProfileError, "profilo");
 	if (!baseProfile) return null;
-	const {data: restrictedAccess, error: restrictedAccessError} = await createAdminClient().from("restricted_profile_access").select("profile_type").eq("profile_id", baseProfile.uuid);
+	const {data: restrictedAccess, error: restrictedAccessError} = await createAdminClient().from("restricted_profile_access").select("profile_type, allowed_regions").eq("profile_id", baseProfile.uuid);
 	queryFailed(restrictedAccessError, "restricted_profile_access");
 
 	const [player, playerMedia, team, staff, referee, tournament, facility, professional, creator, locationResult, socialLinksResult] = await Promise.all([
@@ -80,7 +81,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 
 	const drafts = createProfileDrafts();
 	drafts.giocatore = hydrateDraft(drafts.giocatore, player.data);
-	drafts.giocatore.video_highlights = playerMedia.data?.link_media ?? "";
+	drafts.giocatore.video_highlights = drafts.giocatore.highlights_privati || drafts.giocatore.richiede_caricamento_highlights ? "" : playerMedia.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, team.data);
 	drafts.squadra.categoria_attuale = normalizeTeamCategory(drafts.squadra.categoria_attuale);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staff.data);
@@ -117,5 +118,5 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		row ? [type] : []
 	));
 
-	return {profileId: baseProfile.uuid, enabledProfileTypes, authorizedRestrictedProfileTypes: (restrictedAccess ?? []).flatMap(({profile_type}) => profile_type === "servizi-consulenze" || profile_type === "creators" ? [profile_type] : []), drafts, locations, socialLinks};
+	return {professionalRegions: professionalAllowedRegions(restrictedAccess?.find(row => row.profile_type === "servizi-consulenze")?.allowed_regions), profileId: baseProfile.uuid, enabledProfileTypes, authorizedRestrictedProfileTypes: (restrictedAccess ?? []).flatMap(({profile_type}) => profile_type === "servizi-consulenze" || profile_type === "creators" ? [profile_type] : []), drafts, locations, socialLinks};
 }

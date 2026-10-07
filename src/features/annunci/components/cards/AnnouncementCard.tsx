@@ -32,7 +32,7 @@ export default function AnnouncementCard({announcement}: {announcement: Announce
 		case "annuncio_campo_impianto":
 			return <AnnouncementFacilityCard announcement={{...announcement, type: "annuncio_campo_impianto"}} />;
 		case "annuncio_servizi_consulenze":
-			return <AnnouncementCardShell announcement={{...announcement, type: "annuncio_servizi_consulenze"}} summary="Servizi e consulenze" emptyDescription="Scopri il servizio offerto." facts={getAnnouncementFacts(announcement, ["Figure professionali", "Specializzazione", "Località"])} />;
+			return <AnnouncementCardShell announcement={{...announcement, type: "annuncio_servizi_consulenze"}} summary="Servizi e professionisti" emptyDescription="Scopri il servizio offerto." facts={getAnnouncementFacts(announcement, ["Figure professionali", "Specializzazione", "Località"])} />;
 		case "annuncio_creators":
 			return <AnnouncementCardShell announcement={{...announcement, type: "annuncio_creators"}} summary="Contenuto creator" emptyDescription="Scopri il contenuto pubblicato." facts={getAnnouncementFacts(announcement, ["Contenuto", "Località"])} />;
 	}

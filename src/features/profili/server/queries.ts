@@ -347,6 +347,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 
 	for (const professional of row.profilo_servizi_consulenze ?? []) {
 		if (professional.nascosto !== false) continue;
+		if (scopedLocations(row, "servizi-consulenze", professional.id).length === 0) continue;
 		const sportTypes = ordinaTipologieCalcio(cleanStringArray(professional.tipologie_sport));
 		profiles.push(createDirectoryProfile(row, "servizi-consulenze", professional.id, {
 			title: cleanText(professional.nome),

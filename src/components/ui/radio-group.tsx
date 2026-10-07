@@ -4,13 +4,16 @@ import {Radio as RadioPrimitive} from "@base-ui/react/radio"
 import {RadioGroup as RadioGroupPrimitive} from "@base-ui/react/radio-group"
 
 import {cn} from "@/lib/utils"
+import {useDisabledFieldset} from "@/components/ui/disabled-fieldset"
 
 function RadioGroup({ className, ...props }: RadioGroupPrimitive.Props) {
+  const disabled = useDisabledFieldset(props.disabled)
   return (
     <RadioGroupPrimitive
       data-slot="radio-group"
       className={cn("grid w-full gap-2", className)}
       {...props}
+      disabled={disabled}
     />
   )
 }

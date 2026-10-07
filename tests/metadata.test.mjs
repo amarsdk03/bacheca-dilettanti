@@ -77,7 +77,7 @@ test("metadata descriptions are normalized and shortened on a word boundary", ()
 	assert.doesNotMatch(result, /\s{2,}/);
 });
 
-function metadataImageRoute({listed = true} = {}) {
+function metadataImageRoute({listed = true, professional = false, regions = ["Lazio"]} = {}) {
 	const admin = {
 		from() {
 			return {
@@ -88,6 +88,8 @@ function metadataImageRoute({listed = true} = {}) {
 						stato_annuncio: listed ? "pubblicato" : "in_revisione",
 						nascosto: !listed,
 						privato: false,
+						tipologia_annuncio: professional ? "annuncio_servizi_consulenze" : "annuncio_giocatore",
+						localita_annuncio: regions.map(regione => ({regione})),
 						media_annuncio: [{formato_media: "image/webp", link_media: "owner/id/image.webp"}],
 					}, error: null};
 				},
@@ -122,4 +124,12 @@ test("announcement metadata image route never persistently caches an unlisted pr
 	const response = await GET(new Request("https://example.test/api/metadata/annuncio-immagine?id=11111111-1111-4111-8111-111111111111"));
 	assert.equal(response.status, 200);
 	assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
+});
+
+test("announcement metadata image is unavailable for suspended professional content", async () => {
+	for (const regions of [[], ["Lombardia"]]) {
+		const {GET} = metadataImageRoute({professional: true, regions});
+		const response = await GET(new Request("https://example.test/api/metadata/annuncio-immagine?id=11111111-1111-4111-8111-111111111111"));
+		assert.equal(response.status, regions.length === 0 ? 404 : 200);
+	}
 });

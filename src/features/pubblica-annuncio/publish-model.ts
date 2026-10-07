@@ -261,7 +261,7 @@ export type AnnouncementValidationField =
 	| "tournamentPrizes"
 	| "type";
 
-export const PROFESSIONAL_AREA_ERROR = "Seleziona solo zone comprese nelle aree di interesse della tua attività.";
+export {PROFESSIONAL_REGIONS_ERROR as PROFESSIONAL_AREA_ERROR} from "@/features/profilo/professional-regions";
 
 export function announcementRegionsAllowed(locations: readonly ProfileLocationDraft[], allowedRegions: readonly string[]) {
 	return locations.every(({regione}) => allowedRegions.includes(regione));
@@ -273,6 +273,7 @@ export interface PublishProfileContext {
 	profileId: string;
 	enabledProfileTypes: ProfileType[];
 	authorizedRestrictedProfileTypes: Array<"servizi-consulenze" | "creators">;
+	professionalRegions: string[];
 	drafts: ProfileDrafts;
 	locations: Record<ProfileType, ProfileLocationDraft[]>;
 	socialLinks: ProfileSocialLinksByType;

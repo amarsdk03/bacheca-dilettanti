@@ -27,6 +27,7 @@ interface PublishProfileStepProps {
 	socialLinks: ProfileSocialLinks;
 	onSocialLinksChange: (platform: ProfileSocialPlatform, value: string) => void;
 	errors?: ProfileValidationErrors;
+	professionalRegions?: readonly string[];
 }
 
 export default function PublishProfileStep({
@@ -41,6 +42,7 @@ export default function PublishProfileStep({
 	socialLinks,
 	onSocialLinksChange,
 	errors = {},
+	professionalRegions,
 }: PublishProfileStepProps) {
 	return (
 		<div className="grid gap-6">
@@ -79,6 +81,7 @@ export default function PublishProfileStep({
 
 			<fieldset disabled={registered && !unlocked} aria-disabled={registered && !unlocked} className={registered && !unlocked ? "opacity-75" : undefined}>
 				<ProfileDetailsForm
+					disabled={registered && !unlocked}
 					type={profileType}
 					drafts={drafts}
 					locations={locations}
@@ -87,6 +90,7 @@ export default function PublishProfileStep({
 					socialLinks={socialLinks}
 					onSocialLinksChange={onSocialLinksChange}
 					errors={errors}
+					professionalRegions={professionalRegions}
 				/>
 			</fieldset>
 		</div>

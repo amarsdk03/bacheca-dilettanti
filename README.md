@@ -92,15 +92,15 @@ Crea `.env.local` nella root del progetto. Il file è ignorato da Git e non deve
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_MAINTENANCE_MODE=false
 
+# Gate opzionale di pre-accesso
+SITE_ACCESS_RESTRICTED=false
+SITE_ACCESS_PASSWORD=<password>
+SITE_ACCESS_SECRET=<segreto-hmac-lungo-e-casuale>
+
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 SUPABASE_SECRET_KEY=<server-secret-key>
-
-# Gate opzionale di pre-accesso
-SITE_ACCESS_ENABLED=false
-SITE_ACCESS_PASSWORD=<password>
-SITE_ACCESS_SECRET=<segreto-hmac-lungo-e-casuale>
 
 # Stripe, necessario soltanto per le bozze prioritarie preesistenti
 STRIPE_SECRET_KEY=<stripe-secret-key>
@@ -163,6 +163,8 @@ node --test $testFiles
 
 Push effettuato il: ??/??/2026
 
+### Feature principali
+
 - Dashboard amministrativa di gestione utenti, profili, annunci e moderazione
 - Personalizzazione aumentata e miglioramento UI per le pagine dei profili e annunci
 - Ampliati i dati degli annunci con gruppi squadra, categorie, contenuti e promozioni professionali
@@ -199,9 +201,8 @@ Push effettuato il: 17/09/2026
     - Arbitro
     - Torneo / evento
     - Campi e impianti
-    - Servizi e consulenze (disponibile solo con abilitazione admin)
+    - Servizi e professionisti (disponibile solo con abilitazione admin)
     - Creators (disponibile solo con abilitazione admin)
-- Eliminazione dei profili riservati con revoca dell'abilitazione; gli annunci pubblicati restano disponibili.
 - Possibilità di cercare e filtrare i profili creati sulla piattaforma
 - Possibilità di visualizzare maggiori info su un profilo specifico
 - Possibilità di segnalare un annuncio con eventuale messaggio di info aggiuntivo
@@ -216,11 +217,10 @@ Push effettuato il: 17/09/2026
     - Pubblicazione gratuita degli annunci; i pagamenti prioritari restano disponibili solo per le bozze preesistenti.
     - Verifica tramite codice OTP per utenti anonimi (rate limiting)
     - Limite giornaliero e protezione dai retry duplicati per il flusso anonimo.
-- Pubblicazioni illimitate per **Servizi e consulenze** e **Creators**, disponibili solo per account registrati abilitati dall'admin.
 - Possibilità di visualizzare, nascondere o eliminare annunci dal proprio profilo
 - Possibilità di cercare e filtrare gli annunci pubblicati sulla piattaforma
 - Possibilità di visualizzare maggiori info su un annuncio specifico
-- Possibilità di segnalare un annuncio con eventuale messaggio di info aggiuntivo
+- Possibilità di segnalare un annuncio con eventuali info aggiuntive
 
 ### Admin
 

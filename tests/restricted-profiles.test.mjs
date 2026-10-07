@@ -51,7 +51,7 @@ test("restricted categories cannot be self-selected at registration", () => {
 });
 
 const servicePayload = () => ({
-	version: 4, submissionId: "11111111-1111-4111-8111-111111111111", visibility: "gratuito",
+	version: publishModel.PUBLISH_PAYLOAD_VERSION, submissionId: "11111111-1111-4111-8111-111111111111", visibility: "gratuito",
 	profileType: "servizi-consulenze", teamSubtype: null, anonymousProfile: null, profileUpdate: null,
 	announcement: {
 		type: "annuncio_servizi_consulenze", title: "Consulenza per società",

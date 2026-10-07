@@ -123,6 +123,7 @@ function publicAnnouncementQuery(
 ) {
 	// Every discovery query must retain all three visibility predicates.
 	return announcementContentQuery(supabase, options)
+		.or("tipologia_annuncio.neq.annuncio_servizi_consulenze,localita_annuncio.not.is.null")
 		.eq("stato_annuncio", "pubblicato")
 		.eq("nascosto", false)
 		.eq("privato", false);
@@ -143,6 +144,7 @@ function officialAuthorQuery(supabase: SupabaseClient<Database>) {
 			profilo_giocatore(nominativo_anonimo, nascosto, nome, cognome, presentazione),
 			profilo_squadra(nominativo_anonimo, nascosto, nome_societa, presentazione),
 			profilo_staff_sportivo(nominativo_anonimo, nascosto, nome, cognome, presentazione),
+			localita_profilo(sottoprofilo, regione),
 			profilo_servizi_consulenze(nascosto, nome, presentazione),
 			profilo_arbitro(nominativo_anonimo, nascosto, nome, cognome, presentazione),
 			profilo_creator(nascosto, nome_creator, presentazione),
@@ -284,6 +286,7 @@ async function sanitizeAnnouncementTeamNames(supabase: SupabaseClient<Database>,
 
 function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 	if (!isActiveAnnouncementType(row.tipologia_annuncio)) return null;
+	if (row.tipologia_annuncio === "annuncio_servizi_consulenze" && announcementLocations(row).length === 0) return null;
 	const priorityEndsAt = row.priorita_fine_il ? Date.parse(row.priorita_fine_il) : NaN;
 	const isPriority = row.livello_annuncio === "prioritario"
 		&& row.stato_annuncio === "pubblicato"
@@ -369,6 +372,7 @@ function registeredAuthor(
 	profileType: ProfileType,
 	profileImages: ReadonlyMap<string, string>,
 ): AnnouncementAuthor | null {
+	if (profileType === "servizi-consulenze" && !row.localita_profilo.some(location => location.sottoprofilo === profileType)) return null;
 	const table = PROFILE_TABLE_BY_TYPE[profileType];
 	if (!table) return null;
 	const child = relationRecords((row as unknown as Record<string, unknown>)[table])

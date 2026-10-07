@@ -12,10 +12,11 @@ export async function GET(request: Request) {
 	const admin = createAdminClient();
 	const {data: announcement, error} = await admin
 		.from("annuncio")
-		.select("stato_annuncio, nascosto, privato, media_annuncio(formato_media, link_media)")
+		.select("stato_annuncio, nascosto, privato, tipologia_annuncio, localita_annuncio(regione), media_annuncio(formato_media, link_media)")
 		.eq("uuid", id)
 		.maybeSingle();
 	if (error || !announcement) return new Response(null, {status: 404});
+	if (announcement.tipologia_annuncio === "annuncio_servizi_consulenze" && announcement.localita_annuncio.length === 0) return new Response(null, {status: 404});
 
 	const media = (Array.isArray(announcement.media_annuncio)
 		? announcement.media_annuncio

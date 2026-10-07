@@ -1,3 +1,4 @@
+import {professionalAllowedRegions} from "@/features/profilo/professional-regions";
 import "server-only";
 import {normalizeTeamCategory} from "@/features/profilo/team-category-catalog";
 
@@ -113,7 +114,7 @@ const DETAIL_DEFINITIONS = [
 	{
 		key: "annuncio_servizi_consulenze",
 		profileType: "servizi-consulenze",
-		subtype: "Servizi e consulenze",
+		subtype: "Servizi e professionisti",
 		fallbackTitle: "Servizio professionale",
 		titleFields: ["specializzazione", "figura_professionale"],
 		descriptionFields: ["presentazione_servizi", "descrizione_aggiuntiva"],
@@ -251,8 +252,9 @@ function toManagedAnnouncement(row: AnnouncementQueryRow): ManagedAnnouncement {
 		location: locationLabel(row),
 		createdAt: row.creato_il,
 		level: row.livello_annuncio,
-		visibility: row.nascosto === true ? "hidden" : "visible",
+		visibility: row.nascosto === true || (row.tipologia_annuncio === "annuncio_servizi_consulenze" && row.localita_annuncio.length === 0) ? "hidden" : "visible",
 		isPrivate: row.privato !== false,
+		regionSuspended: row.tipologia_annuncio === "annuncio_servizi_consulenze" && row.localita_annuncio.length === 0,
 		moderationStatus: row.stato_annuncio,
 		moderationInfo: row.info_stato_annuncio,
 	};
@@ -365,6 +367,7 @@ export async function getProfileDashboardData(
 			hasMainImage: false,
 			profiles: [],
 			restrictedProfileAccess: [],
+			professionalRegions: [],
 			drafts,
 			locations,
 			socialLinks,
@@ -401,7 +404,7 @@ export async function getProfileDashboardData(
 		supabase.from("profilo_campi_impianti").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_servizi_consulenze").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
-		admin.from("restricted_profile_access").select("profile_type").eq("profile_id", baseProfile.uuid),
+		admin.from("restricted_profile_access").select("profile_type, allowed_regions").eq("profile_id", baseProfile.uuid),
 		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
 		admin.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
 		loadProfileImageUrlMap(admin, [baseProfile.uuid]),
@@ -426,7 +429,7 @@ export async function getProfileDashboardData(
 	if (drafts.giocatore.piede_principale === "Ambipiede") drafts.giocatore.piede_principale = "Ambidestro";
 	if (drafts.giocatore.disponibilita === "disponibile-subito") drafts.giocatore.disponibilita = "svincolato";
 	if (drafts.giocatore.disponibilita === "svincolato") drafts.giocatore.categoria_attuale = "";
-	drafts.giocatore.video_highlights = playerMediaResult.data?.link_media ?? "";
+	drafts.giocatore.video_highlights = drafts.giocatore.highlights_privati || drafts.giocatore.richiede_caricamento_highlights ? "" : playerMediaResult.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, teamResult.data);
 	drafts.squadra.categoria_attuale = normalizeTeamCategory(drafts.squadra.categoria_attuale);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staffResult.data);
@@ -481,6 +484,7 @@ export async function getProfileDashboardData(
 		mainImageUrl,
 		hasMainImage: Boolean(mainImageUrl),
 		profiles,
+		professionalRegions: professionalAllowedRegions(restrictedAccessResult.data?.find(row => row.profile_type === "servizi-consulenze")?.allowed_regions),
 		restrictedProfileAccess: (restrictedAccessResult.data ?? []).flatMap(({profile_type}) => profile_type === "servizi-consulenze" || profile_type === "creators" ? [profile_type] : []),
 		drafts,
 		locations,

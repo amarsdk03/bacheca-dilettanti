@@ -156,8 +156,8 @@ export const PROFILE_OPTIONS: readonly ProfileOption[] = [
 	},
 	{
 		value: "servizi-consulenze",
-		label: "Servizi e consulenze",
-		description: "Servizi e consulenze per ogni esigenza del mondo del calcio, offerti da professionisti, studi e aziende specializzati nel settore",
+		label: "Servizi e professionisti",
+		description: "Servizi e professionisti per ogni esigenza del mondo del calcio, offerti da professionisti, studi e aziende specializzati nel settore",
 		icon: BriefcaseBusinessIcon,
 		colore: "#D4B21F",
 	},
@@ -198,6 +198,7 @@ export function createProfileDrafts(): ProfileDrafts {
 			tipologie_sport: [],
 			video_highlights: "",
 			richiede_caricamento_highlights: false,
+			highlights_privati: false,
 		},
 		squadra: {
 			nominativo_anonimo: false,

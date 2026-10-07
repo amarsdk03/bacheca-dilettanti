@@ -17,7 +17,7 @@ import {nationalityLabel} from "@/features/profilo/player-nationalities";
 
 type PlayerRow = Pick<Tables<"profilo_giocatore">,
 	"giorno_nascita" | "mese_nascita" | "anno_nascita" | "tipologie_sport" | "ruoli_sport" |
-	"categoria_attuale" | "piede_principale" | "genere" | "nazionalita" | "altezza" | "peso" | "presentazione" | "storico_carriera"
+	"highlights_privati" | "richiede_caricamento_highlights" | "categoria_attuale" | "piede_principale" | "genere" | "nazionalita" | "altezza" | "peso" | "presentazione" | "storico_carriera"
 >;
 
 function cleanText(value: unknown) {
@@ -93,6 +93,7 @@ export function toPublicPlayerData(data: PlayerRow, highlights: unknown, now = n
 		weight: cleanText(data.peso),
 		presentation: cleanText(data.presentazione),
 		career: parsePlayerCareer(data.storico_carriera),
-		highlightsUrl: url && isLinkAnnuncioValid(url) ? url : null,
+		privateHighlights: data.highlights_privati,
+		highlightsUrl: !data.highlights_privati && !data.richiede_caricamento_highlights && url && isLinkAnnuncioValid(url) ? url : null,
 	};
 }

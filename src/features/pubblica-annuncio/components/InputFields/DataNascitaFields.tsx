@@ -60,7 +60,7 @@ export default function DataNascitaFields({
 	return (
 		<Field data-invalid={Boolean(yearError)}>
 			<FieldLabel>
-				Data di nascita {!yearRequired ? <OptionalLabel /> : null}
+				Data di nascita {yearRequired ? <span aria-hidden="true" className="text-destructive">*</span> : <OptionalLabel />}
 			</FieldLabel>
 			<FieldGroup className="grid grid-cols-3 gap-1 sm:gap-3">
 				<Field data-invalid={Boolean(yearError)}>

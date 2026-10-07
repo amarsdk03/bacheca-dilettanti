@@ -6,7 +6,12 @@ import {Select as SelectPrimitive} from "@base-ui/react/select"
 import {cn} from "@/lib/utils"
 import {CheckIcon, ChevronDownIcon, ChevronUpIcon} from "lucide-react"
 
-const Select = SelectPrimitive.Root
+import {useDisabledFieldset} from "@/components/ui/disabled-fieldset"
+
+function Select<Value, Multiple extends boolean | undefined = false>(props: SelectPrimitive.Root.Props<Value, Multiple>) {
+  const disabled = useDisabledFieldset(props.disabled)
+  return <SelectPrimitive.Root {...props} disabled={disabled} />
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (

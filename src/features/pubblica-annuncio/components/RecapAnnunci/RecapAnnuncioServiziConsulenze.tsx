@@ -26,7 +26,7 @@ export default function RecapAnnuncioServiziConsulenze() {
 
 	return (
 		<div>
-			<p className="mb-1 text-muted-foreground">Dettagli servizi e consulenze</p>
+			<p className="mb-1 text-muted-foreground">Dettagli servizi e professionisti</p>
 			<dl className="grid gap-1 sm:grid-cols-2">
 				<RecapField label="Nome">{data.nome || "—"}</RecapField>
 				<RecapField label="Cognome">{data.cognome || "—"}</RecapField>

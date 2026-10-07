@@ -1,14 +1,14 @@
 import type {NextRequest} from 'next/server';
 import {NextResponse} from 'next/server';
 
-import {SITE_ACCESS_COOKIE, verifySiteAccessToken,} from '@/lib/site-access';
+import {sanitizeSiteAccessNextPath, SITE_ACCESS_COOKIE, verifySiteAccessToken,} from '@/lib/site-access';
 import {updateSession} from '@/lib/supabase/proxy';
 
 const MAINTENANCE_MODE =
 	process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
 
 const SITE_ACCESS_ENABLED =
-	process.env.SITE_ACCESS_ENABLED === 'true';
+	process.env.SITE_ACCESS_RESTRICTED === 'true';
 
 /**
  * Mantiene i cookie aggiornati da Supabase quando dobbiamo
@@ -39,14 +39,6 @@ function copyResponseCookies(
 	});
 
 	return destination;
-}
-
-function isSafeInternalPath(value: string | null) {
-	return (
-		value !== null &&
-		value.startsWith('/') &&
-		!value.startsWith('//')
-	);
 }
 
 export default async function proxy(request: NextRequest) {
@@ -101,15 +93,13 @@ export default async function proxy(request: NextRequest) {
 				const next =
 					request.nextUrl.searchParams.get('next');
 
-				const destination =
-					isSafeInternalPath(next)
-						? next!
-						: '/';
+				const destination = sanitizeSiteAccessNextPath(next);
 
 				return copyResponseCookies(
 					sessionResponse,
 					NextResponse.redirect(
 						new URL(destination, request.url),
+						request.method === 'POST' ? 303 : 307,
 					),
 				);
 			}
@@ -166,7 +156,7 @@ export default async function proxy(request: NextRequest) {
 	 * Questo controllo viene fatto DOPO il password gate
 	 * per evitare un possibile bypass.
 	 */
-	if (pathname === '/in-manutenzione') {
+	if (pathname === '/in-manutenzione' || (!SITE_ACCESS_ENABLED && pathname === '/accesso')) {
 		return copyResponseCookies(
 			sessionResponse,
 			NextResponse.redirect(
