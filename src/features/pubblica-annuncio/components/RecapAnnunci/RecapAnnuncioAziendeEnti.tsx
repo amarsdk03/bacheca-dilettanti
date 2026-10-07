@@ -30,7 +30,7 @@ export default function RecapAnnuncioAziendeEnti() {
 				<OptionalRecapField label="Categorie / realtà a cui si rivolge" value={data.categorieDestinatarie} />
 				<OptionalRecapField label="Esperienza / presentazione" value={data.esperienzaPresentazione} />
 				<OptionalRecapField label="Qualifiche / certificazioni" value={data.qualificheCertificazioni} />
-				<OptionalRecapField label="Descrizione / info aggiuntive" value={data.infoAggiuntive} />
+				<OptionalRecapField label="Informazioni aggiuntive" value={data.infoAggiuntive} />
 				<AnnouncementImageRecap image={data.immagineAnnuncio} />
 				<AnnouncementLinkRecap link={data.linkAnnuncio} />
 			</dl>

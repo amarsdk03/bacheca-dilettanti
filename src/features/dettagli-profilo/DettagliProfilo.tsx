@@ -33,7 +33,8 @@ export default function DettagliProfilo({result, authenticated, isOwner = false,
 	const hasProfile = result.status === "ok";
 	const actions = result.status === "ok" ? (
 		<DetailActions
-			target={{kind: "profilo", id: result.profile.id}}
+			target={{kind: "profilo", id: result.profile.id, profileType: result.profile.type}}
+			interestTarget={{kind: "profilo", id: result.profile.id, profileType: result.profile.type}}
 			href={`/dettagli-profilo?${new URLSearchParams({id: result.profile.id, type: result.profile.type}).toString()}`}
 			presentation="profile"
 		/>

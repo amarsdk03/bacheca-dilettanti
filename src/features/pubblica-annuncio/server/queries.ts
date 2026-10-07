@@ -1,4 +1,5 @@
 import "server-only";
+import {normalizeTeamCategory} from "@/features/profilo/team-category-catalog";
 
 import {
 	createProfileDrafts,
@@ -81,6 +82,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 	drafts.giocatore = hydrateDraft(drafts.giocatore, player.data);
 	drafts.giocatore.video_highlights = playerMedia.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, team.data);
+	drafts.squadra.categoria_attuale = normalizeTeamCategory(drafts.squadra.categoria_attuale);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staff.data);
 	drafts.arbitro = hydrateDraft(drafts.arbitro, referee.data);
 	drafts["torneo-evento"] = hydrateDraft(drafts["torneo-evento"], tournament.data);

@@ -34,6 +34,7 @@ type RegioniInteresseFieldProps = {
 	required?: boolean;
 	error?: ReactNode | null;
 	label?: string;
+	allowedRegions?: readonly string[];
 };
 
 // --- Sub-componente estratto: prima era duplicato 3 volte nel file originale ---
@@ -125,13 +126,15 @@ export default function RegioniInteresseField({
 	required = true,
 	error,
 	label = "Regioni interessate",
+	allowedRegions,
 }: RegioniInteresseFieldProps) {
 	const [bozzaCittaPerRegione, setBozzaCittaPerRegione] = useState<Record<string, string>>({});
 	const generatedId = useId();
 	const resolvedIdPrefix = idPrefix ?? `regioni-${generatedId}`;
 	const getCittaFieldId = (regione: string) => `${resolvedIdPrefix}-citta-${encodeURIComponent(regione)}`;
-	const tutteLeRegioni = REGIONI_ITALIANE.map((regione) => regione.nome);
-	const tutteSelezionate = regioniInteressate.length === tutteLeRegioni.length;
+	const availableAreas = Object.entries(regioniPerArea).map(([area, regioni]) => [area, regioni.filter(({nome}) => allowedRegions === undefined || allowedRegions.includes(nome))] as const).filter(([, regioni]) => regioni.length > 0);
+	const tutteLeRegioni = availableAreas.flatMap(([, regioni]) => regioni.map(({nome}) => nome));
+	const tutteSelezionate = tutteLeRegioni.length > 0 && tutteLeRegioni.every((regione) => regioniInteressate.includes(regione));
 	const resolvedError = error !== undefined
 		? error
 		: required && regioniInteressate.length === 0
@@ -139,6 +142,7 @@ export default function RegioniInteresseField({
 			: null;
 
 	const handleRegioniChange = (prossimeRegioni: string[]) => {
+		prossimeRegioni = prossimeRegioni.filter((regione) => tutteLeRegioni.includes(regione));
 		setRegioniInteressate(prossimeRegioni);
 		setCittaComuniPerRegione((prev) =>
 			Object.fromEntries(
@@ -197,7 +201,7 @@ export default function RegioniInteresseField({
 
 	return (
 		<FieldSet>
-			<Field data-invalid={Boolean(resolvedError)} className="mt-4">
+			<Field data-invalid={Boolean(resolvedError)}>
 				<div className="flex items-center justify-between gap-3">
 					<FieldLegend variant="label" className="field-legend-title mb-0">
 						{label} <FieldRequirementIndicator required={required} />
@@ -206,6 +210,7 @@ export default function RegioniInteresseField({
 						type="button"
 						variant="outline"
 						size="sm"
+						disabled={tutteLeRegioni.length === 0}
 						onClick={() => handleRegioniChange(tutteSelezionate ? [] : tutteLeRegioni)}
 					>
 						{tutteSelezionate ? "Deseleziona tutte" : "Seleziona tutte"}
@@ -214,7 +219,7 @@ export default function RegioniInteresseField({
 				{resolvedError && <FieldError>{resolvedError}</FieldError>}
 			</Field>
 
-			{Object.entries(regioniPerArea).map(([area, regioni]) => (
+			{availableAreas.map(([area, regioni]) => (
 				<Field key={area} data-invalid={Boolean(resolvedError)}>
 					<FieldLabel htmlFor={`${resolvedIdPrefix}-area-${area}`}>{area}</FieldLabel>
 					<ToggleGroup

@@ -26,8 +26,7 @@ import {normalizeTipologiaCalcio} from "@/features/pubblica-annuncio/types/tipol
 import {
 	CATEGORY_FILTER_OPTIONS,
 	normalizeCategory,
-	normalizeFigure,
-	UNRESOLVED_LEGACY_CATEGORY_FILTERS
+	normalizeFigure
 } from "@/features/pubblica-annuncio/types/category-catalog";
 
 export const ANNOUNCEMENTS_PER_PAGE = 12;
@@ -409,6 +408,7 @@ export interface AnnouncementContact {
 	label: string;
 	value: string;
 	href: string;
+	referentRole: string | null;
 }
 
 export interface AnnouncementPlayerRoles {
@@ -429,7 +429,6 @@ export interface AnnouncementDetail extends AnnouncementDirectoryItem {
 	announcementLink: string | null;
 	shareImageUrl: string | null;
 	saveCount: number | null;
-	authorFollowerCount: number | null;
 	similarAnnouncements: AnnouncementDirectoryItem[];
 	similarAnnouncementsUnavailable: boolean;
 	fields: AnnouncementDetailField[];
@@ -453,7 +452,6 @@ const YEAR_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.annate);
 const FIGURE_SET = new Set<string>(ANNOUNCEMENT_FILTER_OPTIONS.figure);
 const CATEGORY_SET = new Set<string>([
 	...ANNOUNCEMENT_FILTER_OPTIONS.categorie.map(({value}) => value),
-	...UNRESOLVED_LEGACY_CATEGORY_FILTERS,
 ]);
 const TEAM_SEARCH_SET = new Set<string>(ANNOUNCEMENT_TEAM_SEARCHES);
 const UUID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;

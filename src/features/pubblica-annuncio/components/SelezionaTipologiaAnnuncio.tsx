@@ -70,7 +70,7 @@ export default function SelezionaTipologiaAnnuncio({
 
 	return (
 		<div className="grid gap-8 mt-2">
-			<FieldGroup className="w-full">
+			<FieldGroup spacing="sections">
 				<FieldSet>
 					<FieldLegend variant="label" className="field-legend-title mb-0">
 						Chi pubblica l&apos;annuncio? <RequiredMark />

@@ -33,6 +33,7 @@ type CategorieCalcioMultiselectFieldProps = {
 	placeholder?: string;
 	emptyText?: string;
 	includeAny?: boolean;
+	anyExclusive?: boolean;
 };
 
 export default function CategorieCalcioMultiselectField({
@@ -48,6 +49,7 @@ export default function CategorieCalcioMultiselectField({
 	placeholder = "Seleziona categorie...",
 	emptyText = "Nessuna categoria trovata.",
 	includeAny = false,
+	anyExclusive = includeAny,
 }: CategorieCalcioMultiselectFieldProps) {
 	const anchor = useComboboxAnchor();
 	const groupedItems = [
@@ -58,7 +60,7 @@ export default function CategorieCalcioMultiselectField({
 		})),
 	];
 	const updateValue = (nextValue: string[]) => {
-		if (!includeAny) return onValueChangeAction(nextValue);
+		if (!anyExclusive) return onValueChangeAction(nextValue);
 		if (nextValue.includes(ANY_CATEGORY) && !value.includes(ANY_CATEGORY)) return onValueChangeAction([ANY_CATEGORY]);
 		onValueChangeAction(nextValue.filter((item) => item !== ANY_CATEGORY));
 	};

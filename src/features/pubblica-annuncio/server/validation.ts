@@ -35,7 +35,7 @@ import {
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {ordinaTipologieCalcio, TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 import {ANY_CATEGORY, normalizeCategories, normalizeFigure} from "@/features/pubblica-annuncio/types/category-catalog";
-import {isStaffCategory} from "@/features/pubblica-annuncio/types/staff-category-catalog";
+import {isStaffCategory, normalizeStaffCategories} from "@/features/pubblica-annuncio/types/staff-category-catalog";
 import {parseProfileEditorPayload, RegistrationPayloadError,} from "@/features/registrati/server/registration";
 import type {Json} from "@/server/supabase";
 import {
@@ -200,17 +200,19 @@ function normalizeLocations(value: unknown, step: 2 | 3, allowEmpty = false) {
 	});
 }
 
-function normalizeContacts(value: unknown): AnnouncementContacts {
+function normalizeContacts(value: unknown, registered: boolean): AnnouncementContacts {
 	if (!isRecord(value)) fail("I contatti dell’annuncio non sono validi.", 3);
-	assertExactKeys(value, ["email", "phone"], 3);
+	assertExactKeys(value, ["email", "phone", "contactRole"], 3);
 	const email = textValue(value.email, 254, 3) ?? "";
 	const phone = textValue(value.phone, 40, 3) ?? "";
-	if (!email && !phone) fail("Inserisci almeno un contatto tra email e telefono.", 3);
+	const contactRole = textValue(value.contactRole, 120, 3) ?? "";
+	if (!registered && !email && !phone) fail("Inserisci almeno un contatto tra email e telefono.", 3);
+	if (contactRole && !email && !phone) fail("Inserisci almeno un recapito per indicare un referente o un ruolo.", 3);
 	if (email && !EMAIL_PATTERN.test(email)) fail("Inserisci un indirizzo email valido.", 3);
 	if (phone && !isValidPhone(phone)) {
 		fail("Inserisci un numero di telefono valido.", 3);
 	}
-	return {email: email.toLowerCase(), phone};
+	return {email: email.toLowerCase(), phone, contactRole};
 }
 
 function normalizeExtras(value: unknown): AnnouncementExtras {
@@ -245,7 +247,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		};
 	}
 	if (type === "annuncio_squadra_cerca_giocatore") {
-		assertExactKeys(value, ["ruoli_principali", "ruoli_secondari", "annata_da", "annata_a", "stagione", "descrizione_aggiuntiva"], 3);
+		assertExactKeys(value, ["gruppo_squadra", "ruoli_principali", "ruoli_secondari", "annata_da", "annata_a", "stagione", "descrizione_aggiuntiva"], 3);
 		const roles = playerRoles(value.ruoli_principali, value.ruoli_secondari);
 		const from = textValue(value.annata_da, 4, 3);
 		const to = textValue(value.annata_a, 4, 3);
@@ -254,6 +256,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		}
 		return {
 			ruoli_principali: roles.primary,
+			gruppo_squadra: textValue(value.gruppo_squadra, MAX_SHORT_TEXT, 3),
 			ruoli_secondari: roles.specific,
 			annate_ricercate: [],
 			annata_da: from,
@@ -278,7 +281,9 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		};
 	}
 	if (type === "annuncio_squadra_cerca_partita") {
-		assertExactKeys(value, ["categorie_avversario", "periodo_dal", "periodo_al", "orario_dalle", "orario_alle", "disponibilita_trasferta", "descrizione_aggiuntiva"], 3);
+		assertExactKeys(value, ["gruppo_squadra", "categorie_avversario", "periodo_dal", "periodo_al", "orario_dalle", "orario_alle", "disponibilita_trasferta", "descrizione_aggiuntiva"], 3);
+		if (!Array.isArray(value.categorie_avversario) || value.categorie_avversario.length !== 1) fail("Inserisci la categoria avversario cercata.", 3);
+		const opponentCategory = textValue(value.categorie_avversario[0], MAX_SHORT_TEXT, 3, true);
 		const from = dateValue(value.periodo_dal);
 		const to = dateValue(value.periodo_al);
 		if (from && to && from > to) fail("La data finale non può precedere quella iniziale.", 3);
@@ -286,7 +291,8 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 		const timeTo = timeValue(value.orario_alle);
 		if (Boolean(timeFrom) !== Boolean(timeTo)) fail("Completa entrambi gli orari indicativi.", 3);
 		return {
-			categorie_avversario: normalizeCategories(stringList(value.categorie_avversario, 3, true)),
+			gruppo_squadra: textValue(value.gruppo_squadra, MAX_SHORT_TEXT, 3),
+			categorie_avversario: [opponentCategory],
 			periodo_dal: from,
 			periodo_al: to,
 			orario_dalle: timeFrom,
@@ -306,7 +312,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 	if (type === "annuncio_staff_sportivo") {
 		assertExactKeys(value, ["tipologie_sport", "categorie_ricercate", "disponibilita_spostamento", "descrizione_aggiuntiva"], 3);
 		const staffCategories = stringList(value.categorie_ricercate, 3);
-		const normalizedStaffCategories = staffCategories.includes(ANY_CATEGORY) ? [ANY_CATEGORY] : staffCategories;
+		const normalizedStaffCategories = normalizeStaffCategories(staffCategories);
 		if (normalizedStaffCategories.some((category) => category !== ANY_CATEGORY && !isStaffCategory(category))) fail("Seleziona categorie valide dal catalogo Staff.", 3);
 		const staffTravel = textValue(value.disponibilita_spostamento, 40, 3);
 		if (staffTravel && !["Si", "No", "Da valutare"].includes(staffTravel)) fail("La disponibilità agli spostamenti non è valida.", 3);
@@ -418,7 +424,9 @@ function assignNormalizedAnnouncementDetail(
 		annuncio_torneo_evento: "torneoEvento",
 		annuncio_campo_impianto: "campoImpianto",
 	}[type] as keyof AnnouncementDetailsDrafts;
-	(drafts as unknown as Record<keyof AnnouncementDetailsDrafts, Record<string, Json>>)[key] = detail;
+	(drafts as unknown as Record<keyof AnnouncementDetailsDrafts, Record<string, Json>>)[key] = type === "annuncio_squadra_cerca_partita"
+		? {...detail, categorie_avversario: (detail.categorie_avversario as string[]).join(", ")}
+		: detail;
 }
 
 export function parsePublishPayload(rawValue: unknown, registered: boolean): NormalizedPublishPayload {
@@ -514,14 +522,14 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		&& (announcementLocations.length !== 1 || !announcementLocations[0]?.citta)) {
 		fail("Seleziona una sola Regione e inserisci la Città o il comune dell’impianto.", 3);
 	}
-	const contacts = normalizeContacts(rawValue.announcement.contacts);
+	const contacts = normalizeContacts(rawValue.announcement.contacts, registered);
 	const extras = normalizeExtras(rawValue.announcement.extras);
 
 	const normalizedDrafts = {
 		giocatore: {categorie_ricercate: [], descrizione_aggiuntiva: ""},
-		squadraCercaGiocatore: {ruoli_principali: [], ruoli_secondari: [], annata_da: "", annata_a: "", stagione: "", descrizione_aggiuntiva: ""},
+		squadraCercaGiocatore: {gruppo_squadra: "", ruoli_principali: [], ruoli_secondari: [], annata_da: "", annata_a: "", stagione: "", descrizione_aggiuntiva: ""},
 		squadraCercaStaff: {figure_ricercate: [], settore: "", compenso_mensile: "", requisiti: "", stagione: "", descrizione_aggiuntiva: ""},
-		squadraCercaPartita: {categorie_avversario: [], periodo_dal: "", periodo_al: "", orario_dalle: "", orario_alle: "", disponibilita_trasferta: "", descrizione_aggiuntiva: ""},
+		squadraCercaPartita: {gruppo_squadra: "", categorie_avversario: "", periodo_dal: "", periodo_al: "", orario_dalle: "", orario_alle: "", disponibilita_trasferta: "", descrizione_aggiuntiva: ""},
 		squadraCercaSponsor: {categoria_settore: "", offerta_fornita: "", descrizione_aggiuntiva: ""},
 		staffSportivo: {tipologie_sport: [], categorie_ricercate: [], disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
 		arbitro: {tipologie_sport: [], automunito: "", disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
@@ -531,7 +539,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean): Nor
 		campoImpianto: {tipologie_sport: [], orari: [], costo_partenza: "", servizi_inclusi: "", indirizzo: "", descrizione_aggiuntiva: ""},
 	} satisfies AnnouncementDetailsDrafts;
 	assignNormalizedAnnouncementDetail(normalizedDrafts, expectedAnnouncementType, detail);
-	const detailMessage = getAnnouncementValidationMessage(profileType, teamSubtype, normalizedDrafts, announcementLocations, contacts, extras, announcementTitle);
+	const detailMessage = getAnnouncementValidationMessage(profileType, teamSubtype, normalizedDrafts, announcementLocations, contacts, extras, announcementTitle, registered);
 	if (detailMessage) fail(detailMessage, 3);
 
 	if (!isRecord(rawValue.consents)) fail("Conferma i consensi richiesti.", 4);

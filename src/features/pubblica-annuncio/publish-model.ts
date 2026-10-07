@@ -19,7 +19,7 @@ import {isStaffCategory} from "@/features/pubblica-annuncio/types/staff-category
 import {ANY_CATEGORY} from "@/features/pubblica-annuncio/types/category-catalog";
 import {TIPOLOGIA_CALCIO_OPTIONS} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 
-export const PUBLISH_PAYLOAD_VERSION = 4 as const;
+export const PUBLISH_PAYLOAD_VERSION = 5 as const;
 
 export const PUBLISHABLE_PROFILE_TYPES = [
 	"giocatore",
@@ -59,6 +59,7 @@ export type DatabaseAnnouncementType =
 export interface AnnouncementContacts {
 	email: string;
 	phone: string;
+	contactRole?: string;
 }
 
 export interface TournamentPrize {
@@ -73,6 +74,7 @@ export interface AnnouncementDetailsDrafts {
 		descrizione_aggiuntiva: string;
 	};
 	squadraCercaGiocatore: {
+		gruppo_squadra: string;
 		ruoli_principali: string[];
 		ruoli_secondari: string[];
 		annata_da: string;
@@ -89,7 +91,8 @@ export interface AnnouncementDetailsDrafts {
 		descrizione_aggiuntiva: string;
 	};
 	squadraCercaPartita: {
-		categorie_avversario: string[];
+		gruppo_squadra: string;
+		categorie_avversario: string;
 		periodo_dal: string;
 		periodo_al: string;
 		orario_dalle: string;
@@ -147,7 +150,9 @@ export interface AnnouncementDetailsDrafts {
 	};
 }
 
-export type AnnouncementDetailDraft = AnnouncementDetailsDrafts[keyof AnnouncementDetailsDrafts];
+export type AnnouncementDetailDraft =
+	| Exclude<AnnouncementDetailsDrafts[keyof AnnouncementDetailsDrafts], AnnouncementDetailsDrafts["squadraCercaPartita"]>
+	| (Omit<AnnouncementDetailsDrafts["squadraCercaPartita"], "categorie_avversario"> & {categorie_avversario: string[]});
 
 export interface AnonymousProfilePayload {
 	type: PublishableProfileType;
@@ -223,6 +228,7 @@ export type AnnouncementValidationField =
 	| "contacts"
 	| "email"
 	| "phone"
+	| "contactRole"
 	| "locations"
 	| "description"
 	| "title"
@@ -254,6 +260,12 @@ export type AnnouncementValidationField =
 	| "tournamentYears"
 	| "tournamentPrizes"
 	| "type";
+
+export const PROFESSIONAL_AREA_ERROR = "Seleziona solo zone comprese nelle aree di interesse della tua attività.";
+
+export function announcementRegionsAllowed(locations: readonly ProfileLocationDraft[], allowedRegions: readonly string[]) {
+	return locations.every(({regione}) => allowedRegions.includes(regione));
+}
 
 export type AnnouncementValidationErrors = Partial<Record<AnnouncementValidationField, string>>;
 
@@ -314,6 +326,7 @@ export function createAnnouncementDetailsDrafts(): AnnouncementDetailsDrafts {
 	return {
 		giocatore: {categorie_ricercate: [], descrizione_aggiuntiva: ""},
 		squadraCercaGiocatore: {
+			gruppo_squadra: "",
 			ruoli_principali: [],
 			ruoli_secondari: [],
 			annata_da: "",
@@ -330,7 +343,8 @@ export function createAnnouncementDetailsDrafts(): AnnouncementDetailsDrafts {
 			descrizione_aggiuntiva: "",
 		},
 		squadraCercaPartita: {
-			categorie_avversario: [],
+			gruppo_squadra: "",
+			categorie_avversario: "",
 			periodo_dal: "",
 			periodo_al: "",
 			orario_dalle: "",
@@ -426,7 +440,10 @@ export function getAnnouncementDetail(
 	};
 	if (teamSubtype === "cerca-giocatore") return drafts.squadraCercaGiocatore;
 	if (teamSubtype === "cerca-staff") return drafts.squadraCercaStaff;
-	if (teamSubtype === "cerca-partite-amichevoli") return drafts.squadraCercaPartita;
+	if (teamSubtype === "cerca-partite-amichevoli") return {
+		...drafts.squadraCercaPartita,
+		categorie_avversario: drafts.squadraCercaPartita.categorie_avversario.trim() ? [drafts.squadraCercaPartita.categorie_avversario.trim()] : [],
+	};
 	if (teamSubtype === "cerca-sponsor") return drafts.squadraCercaSponsor;
 	return null;
 }
@@ -439,8 +456,9 @@ export function getAnnouncementValidationMessage(
 	contacts: AnnouncementContacts,
 	extras: AnnouncementExtras = {genericLink: ""},
 	title = "",
+	registered = false,
 ): string | null {
-	return Object.values(getAnnouncementValidationErrors(type, teamSubtype, drafts, locations, contacts, extras, title))[0] ?? null;
+	return Object.values(getAnnouncementValidationErrors(type, teamSubtype, drafts, locations, contacts, extras, title, registered))[0] ?? null;
 }
 
 export function getAnnouncementValidationErrors(
@@ -451,14 +469,17 @@ export function getAnnouncementValidationErrors(
 	contacts: AnnouncementContacts,
 	extras: AnnouncementExtras = {genericLink: ""},
 	title = "",
+	registered = false,
 ): AnnouncementValidationErrors {
 	const errors: AnnouncementValidationErrors = {};
 	if (title.trim().length > 50) errors.title = "Il titolo può contenere al massimo 50 caratteri.";
 	const email = contacts.email.trim();
 	const phone = contacts.phone.trim();
-	if (!email && !phone) errors.contacts = "Inserisci almeno un contatto tra email e telefono.";
+	if (!registered && !email && !phone) errors.contacts = "Inserisci almeno un contatto tra email e telefono.";
 	if (email && (email.length > 254 || !EMAIL_PATTERN.test(email))) errors.email = "Inserisci un indirizzo email valido.";
 	if (phone && !isValidPhone(phone)) errors.phone = "Inserisci un numero di telefono valido.";
+	if ((contacts.contactRole?.trim().length ?? 0) > 120) errors.contactRole = "Il referente può contenere al massimo 120 caratteri.";
+	if (contacts.contactRole?.trim() && !email && !phone) errors.contactRole = "Inserisci almeno un recapito per indicare un referente o un ruolo.";
 	if (!(type === "squadra" && teamSubtype === "cerca-sponsor") && locations.length === 0) errors.locations = "Seleziona almeno una località per l’annuncio.";
 	if (!isLinkAnnuncioValid(extras.genericLink)) errors.genericLink = "Inserisci un link completo che inizi con http:// o https://.";
 
@@ -466,11 +487,11 @@ export function getAnnouncementValidationErrors(
 	if (!detail) errors.type = "La tipologia di annuncio non è valida.";
 
 	if (type === "giocatore" && !nonEmpty(drafts.giocatore.descrizione_aggiuntiva)) {
-		errors.description = "Inserisci una descrizione dell’annuncio.";
+		errors.description = "Inserisci le informazioni aggiuntive dell’annuncio.";
 	}
 	if (type === "servizi-consulenze") {
 		if (drafts.serviziConsulenze.figura_professionale.length === 0) errors.professionalRole = "Seleziona almeno una figura professionale.";
-		if (!nonEmpty(drafts.serviziConsulenze.presentazione_servizi)) errors.servicePresentation = "Descrivi il servizio offerto.";
+		if (!nonEmpty(drafts.serviziConsulenze.presentazione_servizi)) errors.servicePresentation = "Inserisci il contenuto dell’annuncio.";
 	}
 	if (type === "squadra" && teamSubtype === "cerca-giocatore") {
 		const draft = drafts.squadraCercaGiocatore;
@@ -480,7 +501,7 @@ export function getAnnouncementValidationErrors(
 		if (!draft.annata_da && draft.annata_a) errors.yearTo = "Seleziona prima l'annata iniziale.";
 		if (draft.annata_a && !ANNATE_OPTIONS.includes(draft.annata_a)) errors.yearTo = "Seleziona un'annata finale valida.";
 		if (!errors.yearFrom && !errors.yearTo && draft.annata_da && draft.annata_a && Number(draft.annata_a) < Number(draft.annata_da)) errors.yearTo = "L'annata finale non può precedere quella iniziale.";
-		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione della ricerca.";
+		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci le informazioni aggiuntive della ricerca.";
 	}
 	if (type === "squadra" && teamSubtype === "cerca-staff") {
 		const draft = drafts.squadraCercaStaff;
@@ -491,7 +512,8 @@ export function getAnnouncementValidationErrors(
 	}
 	if (type === "squadra" && teamSubtype === "cerca-partite-amichevoli") {
 		const draft = drafts.squadraCercaPartita;
-		if (draft.categorie_avversario.length === 0) errors.matchCategories = "Seleziona almeno un livello avversario.";
+		if (!nonEmpty(draft.categorie_avversario)) errors.matchCategories = "Inserisci la categoria avversario cercata.";
+		else if (draft.categorie_avversario.length > 160) errors.matchCategories = "La categoria può contenere al massimo 160 caratteri.";
 		if (draft.periodo_dal && !isValidIsoDate(draft.periodo_dal)) errors.periodFrom = "Inserisci una data iniziale valida.";
 		if (draft.periodo_al && !isValidIsoDate(draft.periodo_al)) errors.periodTo = "Inserisci una data finale valida.";
 		if (!errors.periodFrom && !errors.periodTo && draft.periodo_dal && draft.periodo_al && draft.periodo_dal > draft.periodo_al) errors.periodTo = "La data finale non può precedere quella iniziale.";
@@ -509,12 +531,12 @@ export function getAnnouncementValidationErrors(
 		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
 		if (draft.categorie_ricercate.length > 32 || draft.categorie_ricercate.some((category) => category !== ANY_CATEGORY && !isStaffCategory(category))) errors.staffCategories = "Seleziona categorie valide dal catalogo Staff.";
 		if (draft.disponibilita_spostamento && !["Si", "No", "Da valutare"].includes(draft.disponibilita_spostamento)) errors.staffTravel = "Seleziona una disponibilità agli spostamenti valida.";
-		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’annuncio.";
+		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci le informazioni aggiuntive dell’annuncio.";
 	}
 	if (type === "arbitro") {
 		const draft = drafts.arbitro;
 		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
-		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’annuncio.";
+		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci le informazioni aggiuntive dell’annuncio.";
 	}
 	if (type === "torneo-evento") {
 		const draft = drafts.torneoEvento;

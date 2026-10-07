@@ -762,7 +762,7 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 								)}
 
 								{visibleStep === 2 && (
-									<FieldGroup>
+									<FieldGroup spacing="sections">
 										<FieldSet>
 											<FieldLegend variant="label">Seleziona i tuoi profili <RequiredMark /></FieldLegend>
 											<FieldDescription>Puoi scegliere fino a un massimo di {MAX_PROFILE_COUNT} tipologie, che potrai modificare in seguito.</FieldDescription>
@@ -780,10 +780,14 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 																<Field orientation="horizontal" data-disabled={disabled} aria-disabled={disabled}>
 																	<Icon aria-hidden="true" />
 																	<FieldContent>
-																		<FieldTitle className="flex-wrap">
+																		<FieldTitle className="flex-wrap mb-0.5">
 																			<span>{label}</span>
 																			{comingSoon && <ComingSoonBadge />}
-															{restricted && <Badge variant="outline">Accesso limitato</Badge>}
+																			{restricted && (
+																				<Badge className={"pt-0.5"} variant="outline">
+																					Accesso limitato
+																				</Badge>
+																			)}
 																		</FieldTitle>
 																		<FieldDescription>{optionDescription}</FieldDescription>
 																	</FieldContent>
@@ -804,7 +808,7 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 										</FieldSet>
 
 										{registrableProfileTypes.length > 1 && (
-											<FieldSet className="mt-4">
+											<FieldSet>
 												<FieldLegend variant="label">Scegli il profilo principale <RequiredMark /></FieldLegend>
 												<FieldDescription>È il profilo che rappresenterà per primo la tua presenza sulla piattaforma.</FieldDescription>
 												<RadioGroup
@@ -835,7 +839,7 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 								)}
 
 								{visibleStep === 3 && currentProfileType && (
-									<>
+									<FieldGroup spacing="sections">
 										<ProfileDetailsForm
 											key={currentProfileType}
 											type={currentProfileType}
@@ -848,7 +852,7 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 											errors={currentProfileErrors}
 										/>
 										{isLastProfileDetail && (
-											<FieldSet className="mt-8">
+											<FieldSet>
 												<FieldLegend variant="label" className={"text-base"}>
 													<span className={"text-base"}>
 													Consensi e comunicazioni:
@@ -909,7 +913,7 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 												</FieldGroup>
 											</FieldSet>
 										)}
-									</>
+									</FieldGroup>
 								)}
 			</CardContent>
 

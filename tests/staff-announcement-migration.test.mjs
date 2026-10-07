@@ -1,25 +1,16 @@
 import assert from "node:assert/strict";
 import {existsSync, readFileSync} from "node:fs";
-import {createRequire} from "node:module";
 import {test} from "node:test";
-import ts from "typescript";
 
 const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const profileMigrationUrl = new URL("../supabase/migrations/20260926220000_staff_profile_experiences.sql", import.meta.url);
 const announcementMigrationUrl = new URL("../supabase/migrations/20260927002300_staff_announcement_catalog.sql", import.meta.url);
-const require = createRequire(import.meta.url);
 
 function staffCategoryKeys() {
-	const cache = new Map();
-	function load(url) {
-		if (cache.has(url.href)) return cache.get(url.href).exports;
-		const loadedModule = {exports: {}};
-		cache.set(url.href, loadedModule);
-		const {outputText} = ts.transpileModule(readFileSync(url, "utf8"), {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022}});
-		new Function("require", "module", "exports", outputText)((specifier) => specifier.startsWith(".") ? load(new URL(`${specifier}.ts`, url)) : require(specifier), loadedModule, loadedModule.exports);
-		return loadedModule.exports;
-	}
-	return load(new URL("../src/features/pubblica-annuncio/types/staff-category-catalog.ts", import.meta.url)).STAFF_CATEGORY_FILTER_OPTIONS.map(({value}) => value);
+	// This test exercises the historical migration, whose catalogue is frozen.
+	return [...readFileSync(announcementMigrationUrl, "utf8").matchAll(/\('([^']+)', array\[([^\]]+)\]\)/g)].flatMap(([, group, options]) =>
+		[...options.matchAll(/'([^']+)'/g)].map(([, option]) => `${group}::${option}`),
+	);
 }
 
 test("Staff publication RPC accepts Catalog C and Da valutare but rejects other categories", {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async () => {

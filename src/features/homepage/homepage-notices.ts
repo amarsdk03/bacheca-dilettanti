@@ -2,7 +2,7 @@ export interface HomepageNotice {
 	id: string;
 	tipo: "notizia" | "evento" | "problema";
 	titolo: string;
-	testo: string;
+	testo?: string;
 	/** Data di pubblicazione nel formato YYYY-MM-DD. */
 	data: string;
 	azione?: {
@@ -18,15 +18,22 @@ export const HOMEPAGE_NOTICES = [
 		tipo: "notizia",
 		titolo: "Bacheca Dilettanti, presto in arrivo...",
 		testo: "Bacheca Dilettanti è ufficialmente online: uno spazio per giocatori, squadre, staff e professionisti che vogliono farsi trovare o scoprire nuove opportunità nel calcio dilettantistico.\n\nDurante ottobre, continueremo ad ampliare la piattaforma con nuove tipologie di profilo, strumenti per gli annunci e miglioramenti pensati per rendere più semplice il primo contatto tra le persone giuste.",
-		data: "2026-09-18",
+		data: "2026-10-01",
 		azione: {etichetta: "Sfoglia gli annunci", href: "/annunci"},
+	},
+	{
+		id: "founding-partner-bacheca",
+		tipo: "evento",
+		titolo: "Entra nel progetto sin dall’inizio: diventa Founding Partner di Bacheca",
+		data: "2026-10-01",
+		azione: {etichetta: "Scopri la Partnership", href: "/partner"},
 	},
 	{
 		id: "stato-alpha-segnalazioni",
 		tipo: "problema",
 		titolo: "Sito web ancora in fase di sviluppo",
 		testo: "La piattaforma è ancora in fase alpha: alcune funzionalità possono cambiare, essere incomplete o presentare rallentamenti. Stiamo lavorando per migliorare l'esperienza ogni giorno.\n\nSe trovi un errore, un'informazione poco chiara o hai un suggerimento, segnalacelo dalla pagina Contatti oppure tramite i nostri canali WhatsApp e Instagram. Ogni segnalazione ci aiuta a costruire una Bacheca migliore.",
-		data: "2026-09-18",
+		data: "2026-10-01",
 		azione: {etichetta: "Vai ai contatti", href: "/contatti"},
 	},
 ] as const satisfies readonly HomepageNotice[];

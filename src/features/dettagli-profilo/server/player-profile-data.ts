@@ -12,12 +12,12 @@ import type {PlayerCareerEntry, PlayerProfileData} from "../profile-detail-model
 import {UUID_PATTERN} from "@/features/profilo/team-profile";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
-import {categoryLabel, normalizeCategories} from "@/features/pubblica-annuncio/types/category-catalog";
+import {categoryLabel} from "@/features/pubblica-annuncio/types/category-catalog";
 import {nationalityLabel} from "@/features/profilo/player-nationalities";
 
 type PlayerRow = Pick<Tables<"profilo_giocatore">,
 	"giorno_nascita" | "mese_nascita" | "anno_nascita" | "tipologie_sport" | "ruoli_sport" |
-	"categoria_attuale" | "categorie_ricercate" | "piede_principale" | "genere" | "nazionalita" | "altezza" | "peso" | "presentazione" | "storico_carriera"
+	"categoria_attuale" | "piede_principale" | "genere" | "nazionalita" | "altezza" | "peso" | "presentazione" | "storico_carriera"
 >;
 
 function cleanText(value: unknown) {
@@ -71,29 +71,6 @@ export function parsePlayerCareer(value: unknown): PlayerCareerEntry[] {
 	});
 }
 
-export function parseLegacyStaffQualifications(value: unknown): PlayerCareerEntry[] {
-	if (!Array.isArray(value)) return [];
-	return value.map((item, index) => {
-		const parsed = parsePlayerCareer([item])[0];
-		const entry = record(item);
-		const extra = entry ? Object.entries(entry)
-			.filter(([key, field]) => !["id", "titolo", "ente", "periodoDa", "periodoA", "descrizione", "squadraProfiloId"].includes(key) && !(key === "stato" && ["in-corso", "conseguito", "non-specificare"].includes(String(field))))
-			.map(([key, field]) => `${key}: ${typeof field === "string" ? field : JSON.stringify(field)}`)
-			.join("\n") : typeof item === "string" ? item : JSON.stringify(item);
-		return {
-			id: cleanText(entry?.id) ?? `staff-legacy-${index}`,
-			title: parsed?.title ?? `Qualifica / Licenza ${index + 1}`,
-			organization: parsed?.organization ?? null,
-			from: parsed?.from ?? null,
-			to: parsed?.to ?? null,
-			status: parsed?.status ?? null,
-			description: [parsed?.description, extra].filter(Boolean).join("\n") || null,
-			teamProfileId: parsed?.teamProfileId ?? null,
-			linkedTeam: null,
-		};
-	});
-}
-
 // Explicit public projection: birth-date parts must never leave this server module.
 export function toPublicPlayerData(data: PlayerRow, highlights: unknown, now = new Date()): PlayerProfileData {
 	const roles = record(data.ruoli_sport);
@@ -108,7 +85,6 @@ export function toPublicPlayerData(data: PlayerRow, highlights: unknown, now = n
 		primaryRoles: normalizePlayerPrimaryRoles(strings(roles?.principali)),
 		specificRoles: normalizePlayerSpecificRoles(strings(roles?.specifici)),
 		currentCategory: category ? categoryLabel(category) : null,
-		preferredCategories: normalizeCategories(strings(data.categorie_ricercate)).map(categoryLabel),
 		preferredFoot: data.piede_principale === "Ambipiede" ? "Ambidestro" : cleanText(data.piede_principale),
 		gender: cleanText(data.genere),
 		nationality,

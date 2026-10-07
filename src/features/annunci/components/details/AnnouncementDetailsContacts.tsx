@@ -52,7 +52,7 @@ export default function AnnouncementDetailsContacts({
 											className="w-full justify-start"
 										>
 											<Icon data-icon="inline-start" aria-hidden="true" />
-											<span className="min-w-0 truncate">{contact.label}: {contact.value}</span>
+											<span className="min-w-0 truncate">{contact.label}: {contact.value}{contact.referentRole ? ` (${contact.referentRole})` : ""}</span>
 										</Button>
 									</li>
 								);

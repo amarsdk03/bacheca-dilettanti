@@ -320,7 +320,7 @@ export default function ConfermaInvioAnnuncio({
 	};
 
 	return (
-		<div className="grid gap-8">
+		<FieldGroup spacing="sections">
 			<FieldSet>
 				<FieldLegend variant="label" className="field-legend-title mb-4">Conferma e pubblica:</FieldLegend>
 				<ExternalNavigationProvider>
@@ -328,7 +328,7 @@ export default function ConfermaInvioAnnuncio({
 				</ExternalNavigationProvider>
 
 				{!authenticated && (
-					<FieldSet className={"mt-6"}>
+					<FieldSet className="mt-4">
 						<FieldLegend>Verifica indirizzo email</FieldLegend>
 						<FieldDescription className={"pt-1"}>
 							L’indirizzo è precompilato dal contatto pubblico, ma puoi modificarlo. Verrà usato soltanto per la verifica e non sostituirà il contatto mostrato nell’annuncio.
@@ -513,6 +513,6 @@ export default function ConfermaInvioAnnuncio({
 					{isSubmitting ? "Salvataggio in corso..." : "Conferma e invia"}
 				</Button>
 			</div>
-		</div>
+		</FieldGroup>
 	);
 }

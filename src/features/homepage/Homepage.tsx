@@ -256,7 +256,7 @@ export default function Homepage() {
 						<Button
 							variant={"ghost"}
 							size={"lg"}
-							className="text-lg text-green-600 transition group-hover:text-green-700 hover:text-green-700 hover:bg-white"
+							className="text-lg text-green-600 transition group-hover:text-green-700 hover:text-green-700 hover:bg-green-100"
 						>
 							Vai al canale
 							<ExternalLink  />

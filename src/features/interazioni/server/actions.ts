@@ -3,43 +3,36 @@
 import "server-only";
 import {revalidatePath} from "next/cache";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
-import {type InteractionResult, isInteractionId} from "@/features/interazioni/interaction-model";
-import {getOwnProfileId} from "@/features/interazioni/server/queries";
-import {loadPublicPrimaryProfiles} from "@/features/profili/server/queries";
+import {type InteractionResult, type InteractionTarget, isInteractionId} from "@/features/interazioni/interaction-model";
+import {isProfileType, type ProfileType} from "@/features/profilo/profile-model";
 import {createAdminClient} from "@/lib/supabase/admin";
-import {createClient} from "@/lib/supabase/server";
 
 const UNAVAILABLE: InteractionResult = {status: "error", message: "Operazione momentaneamente non disponibile. Riprova."};
 
-export async function setProfileFollow(profileId: string, followed: boolean): Promise<InteractionResult> {
-	if (!isInteractionId(profileId) || typeof followed !== "boolean") {
+export async function setProfileFollow(target: InteractionTarget, followed: boolean, sourceType?: ProfileType): Promise<InteractionResult> {
+	if (!target || target.kind !== "profilo" || !isInteractionId(target.id) || !isProfileType(target.profileType)
+		|| typeof followed !== "boolean" || (followed && (!sourceType || !isProfileType(sourceType)))) {
 		return {status: "error", message: "Il profilo indicato non è valido."};
 	}
-	profileId = profileId.toLowerCase();
 	try {
 		const account = await getAuthenticatedViewer();
 		if (!account) return {status: "guest"};
 		if (!account.utenteId || !account.registeredAt) return {status: "registration-required"};
-		const ownId = await getOwnProfileId(await createClient(), account.utenteId);
-		if (!ownId) return UNAVAILABLE;
-		if (ownId === profileId) return {status: "error", message: "Non puoi seguire il tuo stesso profilo."};
-		// Unfollowing must still work if the target became unavailable.
-		if (followed && (await loadPublicPrimaryProfiles([profileId])).length === 0) {
-			return {status: "error", message: "Questo profilo non è più disponibile."};
-		}
-		const admin = createAdminClient();
-		const {error} = followed
-			? await admin.from("profilo_follow").upsert({uuid_profilo_follower: ownId, uuid_profilo_seguito: profileId}, {
-				onConflict: "uuid_profilo_follower,uuid_profilo_seguito", ignoreDuplicates: true,
-			})
-			: await admin.from("profilo_follow").delete().eq("uuid_profilo_follower", ownId).eq("uuid_profilo_seguito", profileId);
+		const {data, error} = await createAdminClient().rpc("set_profile_follow_v2", {
+			p_user: account.utenteId, p_target: target.id.toLowerCase(), p_target_type: target.profileType,
+			p_source_type: sourceType ?? null, p_followed: followed,
+		});
 		if (error) {
+			if (error.message.includes("FOLLOW_DAILY_LIMIT")) return {status: "error", message: "Hai raggiunto il limite di 30 nuovi Follow al giorno. Riprova domani."};
+			if (error.message.includes("FOLLOW_SELF")) return {status: "error", message: "Non puoi seguire un profilo del tuo account."};
+			if (error.message.includes("FOLLOW_PROFILE_UNAVAILABLE")) return {status: "error", message: "Questo sottoprofilo non è più disponibile. Ricarica la pagina e riprova."};
 			console.error("[interactions] Follow mutation failed", {code: error.code});
 			return UNAVAILABLE;
 		}
+		const result = data as {active: boolean; sourceType: ProfileType | null};
 		revalidatePath("/il-tuo-profilo");
 		revalidatePath("/dettagli-profilo");
-		return {status: "success", active: followed};
+		return {status: "success", active: result.active, sourceType: result.sourceType};
 	} catch (error) {
 		console.error("[interactions] Follow failed", {cause: error instanceof Error ? error.message : "unknown"});
 		return UNAVAILABLE;

@@ -6,6 +6,7 @@ import {revalidatePath} from "next/cache";
 import {randomUUID} from "node:crypto";
 
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
+import {profileFieldsDatabaseErrorMessage} from "@/features/profilo/profile-required-fields";
 import {isComingSoonProfileType, isProfileType, isRestrictedProfileType, type ProfileType,} from "@/features/profilo/profile-model";
 import {
 	isProfileImageScope,
@@ -103,6 +104,8 @@ function imageErrorMessage(error: unknown) {
 }
 
 function profileRpcErrorMessage(message: string) {
+	const fieldError = profileFieldsDatabaseErrorMessage(message);
+	if (fieldError) return fieldError;
 	if (message.includes("PROFILE_ACCESS_DENIED")) {
 		return "Questo sottoprofilo richiede l’abilitazione dell’admin.";
 	}
@@ -372,6 +375,10 @@ export async function saveProfile(
 
 	revalidatePath("/il-tuo-profilo");
 	revalidatePath("/dettagli-profilo");
+	revalidatePath("/profili");
+	revalidatePath("/annunci");
+	revalidatePath("/dettagli-annuncio");
+	revalidatePath("/centro-notifiche");
 	return {status: "success", message: "Il sottoprofilo è stato salvato."};
 }
 
@@ -471,12 +478,16 @@ export async function setAnnouncementVisibility(
 	if (!userId) {
 		return {status: "error", message: "La sessione non è più valida. Accedi di nuovo."};
 	}
-	void userId;
-
 	const supabase = await createClient();
-	const {data, error} = await supabase
+	// Verify ownership through the session's RLS before using the server writer.
+	// Notification/activity side effects access private tables as service_role.
+	const owned = await supabase.from("annuncio").select("uuid").eq("uuid", announcementId).maybeSingle();
+	if (owned.error || !owned.data) {
+		return {status: "error", message: "L’annuncio non è più disponibile oppure non appartiene al tuo account."};
+	}
+	const {data, error} = await createAdminClient()
 		.from("annuncio")
-		.update({nascosto: hidden})
+		.update({nascosto: hidden, ultima_modifica_da: userId})
 		.eq("uuid", announcementId)
 		.select("uuid")
 		.maybeSingle();

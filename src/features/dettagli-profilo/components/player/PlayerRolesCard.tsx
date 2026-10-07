@@ -3,11 +3,10 @@ import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import type {PlayerProfileData} from "../../profile-detail-model";
 
-export default function PlayerRolesCard({sportTypes, primaryRoles, preferredCategories}: Pick<PlayerProfileData, "sportTypes" | "primaryRoles" | "preferredCategories">) {
+export default function PlayerRolesCard({sportTypes, primaryRoles}: Pick<PlayerProfileData, "sportTypes" | "primaryRoles">) {
 	const groups = [
 		{label: "Tipologie calcio", values: sportTypes},
 		{label: "Ruoli principali", values: primaryRoles},
-		...(preferredCategories.length > 0 ? [{label: "Categorie ricercate storiche", values: preferredCategories}] : []),
 	];
 
 	return (
@@ -15,7 +14,7 @@ export default function PlayerRolesCard({sportTypes, primaryRoles, preferredCate
 			<CardHeader>
 				<CardTitle>
 					<h2 className="flex items-center gap-2 font-home-display text-2xl uppercase">
-						<TargetIcon className="profile-detail-accent size-5" aria-hidden="true" /> Ruoli e categorie
+						<TargetIcon className="profile-detail-accent size-5" aria-hidden="true" /> Tipologie e ruoli
 					</h2>
 				</CardTitle>
 			</CardHeader>

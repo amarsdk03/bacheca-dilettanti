@@ -36,9 +36,9 @@ export default function AnnuncioCampoImpianto() {
 	};
 
 	return (
-		<FieldGroup className="w-full gap-6">
+		<FieldGroup spacing="sections">
 			<FieldSet>
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">Dati campo / impianto</FieldLegend>
 				</div>
 
@@ -81,7 +81,7 @@ export default function AnnuncioCampoImpianto() {
 			/>
 
 			<FieldSet>
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">Disponibilità campo / struttura</FieldLegend>
 				</div>
 				<div className="grid gap-4 sm:grid-cols-2">

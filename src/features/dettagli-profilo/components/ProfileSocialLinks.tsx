@@ -1,21 +1,11 @@
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
-import type {SVGProps} from "react";
-import {ArrowUpRightIcon, GlobeIcon, LinkIcon} from "lucide-react";
-import {SiFacebook, SiInstagram, SiYoutube} from "@icons-pack/react-simple-icons";
+import {ArrowUpRightIcon, LinkIcon} from "lucide-react";
 
 import {buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import ContactAccessPrompt from "@/components/data-info/ContactAccessPrompt";
 import {PROFILE_SOCIAL_LINK_OPTIONS, type ProfileSocialLinks,} from "@/features/profilo/profile-social-links";
-
-// LinkedIn is not included in the installed Simple Icons package.
-function LinkedInBrandIcon(props: SVGProps<SVGSVGElement>) {
-	return <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-		<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.049c.476-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z" />
-	</svg>;
-}
-
-const SOCIAL_ICONS = {website: GlobeIcon, instagram: SiInstagram, facebook: SiFacebook, youtube: SiYoutube, linkedin: LinkedInBrandIcon};
+import {PROFILE_SOCIAL_ICONS} from "@/features/profilo/profile-social-icons";
 
 export default function ProfileSocialLinksCard({socialLinks, presentation = "default", authenticated = true, returnTo = "/"}: {socialLinks: ProfileSocialLinks; presentation?: "default" | "profile"; authenticated?: boolean; returnTo?: string}) {
 	const links = PROFILE_SOCIAL_LINK_OPTIONS.flatMap(({platform, label}) => {
@@ -34,7 +24,7 @@ export default function ProfileSocialLinksCard({socialLinks, presentation = "def
 			<CardContent>
 				<ul className="flex flex-col gap-1">
 					{links.map(({platform, label, href}) => {
-						const Icon = SOCIAL_ICONS[platform];
+						const Icon = PROFILE_SOCIAL_ICONS[platform];
 						return <li key={platform} className="min-w-0">
 							<ExternalLink href={href} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-start gap-3 rounded-lg px-2 py-3 hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
 								<Icon className="profile-detail-accent mt-0.5 size-4 shrink-0" aria-hidden="true" data-social-brand={platform} />

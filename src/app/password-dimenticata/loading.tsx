@@ -1,3 +1,3 @@
 import {FormPageSkeleton} from "@/components/loading/PageSkeletons";
 
-export default function Loading() { return <FormPageSkeleton kind="recupero" />; }
+export default function Loading() { return <FormPageSkeleton kind="richiesta-recupero" />; }

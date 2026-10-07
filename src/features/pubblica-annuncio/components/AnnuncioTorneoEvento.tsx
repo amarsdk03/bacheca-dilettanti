@@ -21,9 +21,9 @@ export default function AnnuncioTorneoEvento() {
 	const intervalloAnnateValido = data.annataDa === "" || data.annataA === "" || Number(data.annataDa) <= Number(data.annataA);
 
 	return (
-		<FieldGroup className="w-full gap-6">
+		<FieldGroup spacing="sections">
 			<FieldSet>
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">Dati torneo / evento</FieldLegend>
 					<FieldDescription>Inserisci le informazioni utili per squadre e partecipanti.</FieldDescription>
 				</div>
@@ -38,7 +38,7 @@ export default function AnnuncioTorneoEvento() {
 			<RegioniInteresseField idPrefix="torneo-evento-regioni-interessate" regioniInteressate={data.regioniInteressate} setRegioniInteressate={(value) => data.setField("regioniInteressate", value)} cittaComuniPerRegione={data.cittaComuniPerRegione} setCittaComuniPerRegione={(value) => data.setField("cittaComuniPerRegione", value)} />
 
 			<FieldSet>
-				<div className="mt-4"><FieldLegend variant="label" className="field-legend-title mb-0">Iscrizioni e partecipazione</FieldLegend></div>
+				<div><FieldLegend variant="label" className="field-legend-title mb-0">Iscrizioni e partecipazione</FieldLegend></div>
 				<Field>
 					<FieldLabel>Modalità di iscrizione <OptionalLabel /></FieldLabel>
 					<Select value={data.modalitaIscrizione || null} onValueChange={(value) => data.setField("modalitaIscrizione", value ?? "")}>

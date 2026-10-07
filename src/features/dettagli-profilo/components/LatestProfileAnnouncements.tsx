@@ -7,23 +7,24 @@ import ProfileAnnouncementCard from "./ProfileAnnouncementCard";
 import Link from "next/link";
 import {buttonVariants} from "@/components/ui/button";
 
-export default function LatestProfileAnnouncements({announcements, announcementsUnavailable, isOwner = false}: {
+export default function LatestProfileAnnouncements({announcements, announcementsUnavailable, isOwner = false, contentMode = false}: {
 	announcements: AnnouncementDirectoryItem[];
 	announcementsUnavailable: boolean;
 	isOwner?: boolean;
+	contentMode?: boolean;
 }) {
 	return (
 		<section aria-labelledby="latest-profile-announcements" className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<h2 className="font-home-display text-2xl font-medium uppercase">
-					Ultimi annunci pubblicati
+					{contentMode ? "Contenuti / promozioni" : "Ultimi annunci pubblicati"}
 				</h2>
-				{isOwner && <Link href="/pubblica-annuncio" className={buttonVariants({size: "sm"})}>Crea nuovo annuncio</Link>}
+				{isOwner && <Link href="/pubblica-annuncio" className={buttonVariants({size: "sm"})}>{contentMode ? "Crea contenuto / promozione" : "Crea nuovo annuncio"}</Link>}
 				{!announcementsUnavailable && (
 					<Badge variant="secondary">
 						{announcements.length === 1
-							? "1 annuncio mostrato"
-							: `${announcements.length} annunci mostrati`}
+							? contentMode ? "1 contenuto / promozione mostrato" : "1 annuncio mostrato"
+							: contentMode ? `${announcements.length} contenuti / promozioni mostrati` : `${announcements.length} annunci mostrati`}
 					</Badge>
 				)}
 			</div>
@@ -31,16 +32,16 @@ export default function LatestProfileAnnouncements({announcements, announcements
 			{announcementsUnavailable ? (
 				<Alert variant="destructive">
 					<TriangleAlertIcon aria-hidden="true" />
-					<AlertTitle>Annunci temporaneamente non disponibili</AlertTitle>
-					<AlertDescription>Le informazioni del profilo restano consultabili. Riprova più tardi per gli annunci.</AlertDescription>
+					<AlertTitle>{contentMode ? "Contenuti / promozioni temporaneamente non disponibili" : "Annunci temporaneamente non disponibili"}</AlertTitle>
+					<AlertDescription>{contentMode ? "Le informazioni del profilo restano consultabili. Riprova più tardi per i contenuti / promozioni." : "Le informazioni del profilo restano consultabili. Riprova più tardi per gli annunci."}</AlertDescription>
 				</Alert>
 			) : announcements.length === 0 ? (
 				<Empty className="min-h-56 border bg-card">
 					<EmptyHeader>
 						<EmptyMedia variant="icon"><MegaphoneIcon aria-hidden="true" /></EmptyMedia>
-						<EmptyTitle>Nessun annuncio pubblicato</EmptyTitle>
+						<EmptyTitle>{contentMode ? "Nessun contenuto / promozione pubblicato" : "Nessun annuncio pubblicato"}</EmptyTitle>
 						<EmptyDescription>
-							Questo profilo non ha ancora annunci pubblici per la tipologia selezionata.
+							{contentMode ? "Questo profilo non ha ancora contenuti / promozioni pubblici." : "Questo profilo non ha ancora annunci pubblici per la tipologia selezionata."}
 						</EmptyDescription>
 					</EmptyHeader>
 				</Empty>

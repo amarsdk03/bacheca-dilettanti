@@ -25,7 +25,7 @@ export default function AnnouncementDetailsOverview({announcement, presentation}
 				<CardContent><StructuredFieldList items={field.items!} style={field.listStyle} /></CardContent>
 			</Card>)}
 			<Card>
-				<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Descrizione</h2></CardTitle></CardHeader>
+				<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{announcement.type === "annuncio_servizi_consulenze" ? "Contenuto" : announcement.type === "annuncio_creators" ? "Contenuto dell’annuncio" : "Descrizione"}</h2></CardTitle></CardHeader>
 				<CardContent className="flex flex-col gap-5">
 					<p className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{announcement.description ?? presentation.emptyNarrative}</p>
 					{announcement.announcementLink && (

@@ -80,7 +80,7 @@ export default function EsperienzeAnnuncioFields({
 
 	return (
 		<FieldSet>
-			<div className="flex items-center justify-between gap-3 mt-4">
+			<div className="flex items-center justify-between gap-3">
 				<div className="flex flex-col items-start">
 					<FieldLegend variant="label" className="field-legend-title mb-0">{titolo} <OptionalLabel /></FieldLegend>
 					<FieldDescription>Licenze, patentini, incarichi o esperienze rilevanti.</FieldDescription>

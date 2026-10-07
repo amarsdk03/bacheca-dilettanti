@@ -9,7 +9,7 @@ import ProfileSocialLinksCard from "../ProfileSocialLinks";
 import ProfileIdentifier from "../ProfileIdentifier";
 import PlayerRolesCard from "./PlayerRolesCard";
 
-type PlayerOverviewProps = Pick<PlayerProfileData, "presentation" | "highlightsUrl" | "sportTypes" | "primaryRoles" | "specificRoles" | "preferredCategories" | "height" | "weight" | "nationality" | "nationalityCode"> & Pick<PlayerProfileDetail, "locations" | "socialLinks"> & {profileId: string; authenticated: boolean; returnTo: string};
+type PlayerOverviewProps = Pick<PlayerProfileData, "presentation" | "highlightsUrl" | "sportTypes" | "primaryRoles" | "specificRoles" | "height" | "weight" | "nationality" | "nationalityCode"> & Pick<PlayerProfileDetail, "locations" | "socialLinks"> & {profileId: string; authenticated: boolean; returnTo: string};
 
 function youtubeEmbedUrl(value: string) {
 	try {
@@ -36,7 +36,7 @@ function youtubeEmbedUrl(value: string) {
 	}
 }
 
-export default function PlayerOverview({presentation, highlightsUrl, locations, socialLinks, sportTypes, primaryRoles, specificRoles, preferredCategories, height, weight, nationality, nationalityCode, profileId, authenticated, returnTo}: PlayerOverviewProps) {
+export default function PlayerOverview({presentation, highlightsUrl, locations, socialLinks, sportTypes, primaryRoles, specificRoles, height, weight, nationality, nationalityCode, profileId, authenticated, returnTo}: PlayerOverviewProps) {
 	const embedUrl = highlightsUrl ? youtubeEmbedUrl(highlightsUrl) : null;
 	const information = [
 		{label: "Altezza", value: height ? `${height} cm` : null},
@@ -48,7 +48,7 @@ export default function PlayerOverview({presentation, highlightsUrl, locations, 
 	return (
 		<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
 			<aside aria-label="Informazioni sportive" className="order-1 flex min-w-0 flex-col gap-5 lg:order-2 lg:col-start-2 lg:row-start-1">
-				<PlayerRolesCard sportTypes={sportTypes} primaryRoles={primaryRoles} preferredCategories={preferredCategories} />
+				<PlayerRolesCard sportTypes={sportTypes} primaryRoles={primaryRoles} />
 				<ProfileLocationsCard locations={locations} />
 			</aside>
 			<div className="order-2 flex min-w-0 flex-col gap-5 lg:order-1 lg:col-start-1 lg:row-span-2 lg:row-start-1">

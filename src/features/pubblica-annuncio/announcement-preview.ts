@@ -1,3 +1,4 @@
+import {publicProfileName} from "@/features/profilo/profile-public-name";
 import {announcementContent} from "@/features/annunci/announcement-content";
 import {
 	type AnnouncementDetailField,
@@ -32,12 +33,19 @@ export interface AnnouncementPreviewData {
 	linkedTeams: TeamProfileReference[];
 }
 
+function announcementPreviewContacts(payload: PublishAnnouncementPayload) {
+	const role = payload.announcement.contacts.contactRole?.trim();
+	return [payload.announcement.contacts.email, payload.announcement.contacts.phone]
+		.filter(Boolean)
+		.map((contact) => role ? `${contact} (${role})` : contact);
+}
+
 function profileTitle(payload: PublishAnnouncementPayload, drafts: ProfileDrafts) {
-	if (payload.profileType === "giocatore") return [drafts.giocatore.nome, drafts.giocatore.cognome].filter(Boolean).join(" ") || "Giocatore";
-	if (payload.profileType === "squadra") return drafts.squadra.nome_societa || "Squadra";
-	if (payload.profileType === "staff-sportivo") return [drafts["staff-sportivo"].nome, drafts["staff-sportivo"].cognome].filter(Boolean).join(" ") || "Staff sportivo";
-	if (payload.profileType === "arbitro") return [drafts.arbitro.nome, drafts.arbitro.cognome].filter(Boolean).join(" ") || "Arbitro";
-	if (payload.profileType === "servizi-consulenze") return [drafts["servizi-consulenze"].nome, drafts["servizi-consulenze"].cognome].filter(Boolean).join(" ") || "Servizi e consulenze";
+	if (payload.profileType === "giocatore") return publicProfileName("giocatore", drafts.giocatore.nominativo_anonimo, [drafts.giocatore.nome, drafts.giocatore.cognome].filter(Boolean).join(" ") || "Giocatore") ?? "Profilo";
+	if (payload.profileType === "squadra") return publicProfileName("squadra", drafts.squadra.nominativo_anonimo, drafts.squadra.nome_societa || "Squadra") ?? "Profilo";
+	if (payload.profileType === "staff-sportivo") return publicProfileName("staff-sportivo", drafts["staff-sportivo"].nominativo_anonimo, [drafts["staff-sportivo"].nome, drafts["staff-sportivo"].cognome].filter(Boolean).join(" ") || "Staff sportivo") ?? "Profilo";
+	if (payload.profileType === "arbitro") return publicProfileName("arbitro", drafts.arbitro.nominativo_anonimo, [drafts.arbitro.nome, drafts.arbitro.cognome].filter(Boolean).join(" ") || "Arbitro") ?? "Profilo";
+	if (payload.profileType === "servizi-consulenze") return drafts["servizi-consulenze"].nome || "Servizi e consulenze";
 	if (payload.profileType === "creators") return drafts.creators.nome_creator || "Creator";
 	if (payload.profileType === "torneo-evento") return drafts["torneo-evento"].nome_organizzazione || "Organizzazione";
 	return drafts["campi-impianti-sportivi"].nome_organizzazione || "Campo o impianto";
@@ -86,7 +94,7 @@ export function buildPublishPreview(
 	const locations = payload.announcement.locations.map(({regione, citta}) => ({region: regione, city: citta}));
 	if (type === "annuncio_creators") {
 		const title = (typeof payload.announcement.title === "string" ? payload.announcement.title.trim() : "")
-			|| (typeof detail.titolo_post === "string" && detail.titolo_post.trim() ? detail.titolo_post.trim() : "Annuncio creator");
+			|| "Annuncio creator";
 		const description = typeof detail.descrizione_post === "string" && detail.descrizione_post.trim() ? detail.descrizione_post.trim() : null;
 		const location = locations.map(({city, region}) => [city, region].filter(Boolean).join(", ")).join(", ") || "Località non specificata";
 		return {
@@ -97,7 +105,7 @@ export function buildPublishPreview(
 			author: profileTitle(payload, drafts),
 			description,
 			locations,
-			contacts: [payload.announcement.contacts.email, payload.announcement.contacts.phone].filter(Boolean),
+			contacts: announcementPreviewContacts(payload),
 			facts: [{kind: "location", label: "Zone di ricerca", value: location}],
 			fields: [],
 			playerRoles: null,
@@ -124,7 +132,7 @@ export function buildPublishPreview(
 		author: profileTitle(payload, drafts),
 		description: content.description,
 		locations: content.locations,
-		contacts: [payload.announcement.contacts.email, payload.announcement.contacts.phone].filter(Boolean),
+		contacts: announcementPreviewContacts(payload),
 		facts: content.facts,
 		fields: content.fields,
 		playerRoles: content.playerRoles,

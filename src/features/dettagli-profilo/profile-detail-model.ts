@@ -31,11 +31,11 @@ interface ProfileDetailBase {
 	officialVerified: boolean;
 	primary: boolean;
 	availabilityLabel: string | null;
+	contacts?: {email: string | null; phone: string | null} | null;
 	socialLinks: ProfileSocialLinks;
 	announcements: AnnouncementDirectoryItem[];
 	announcementsUnavailable: boolean;
 	announcementCount: number | null;
-	followerCount: number | null;
 	similarProfiles: DirectoryProfile[];
 	similarProfilesUnavailable: boolean;
 }
@@ -63,7 +63,6 @@ export interface PlayerProfileData {
 	primaryRoles: string[];
 	specificRoles: string[];
 	currentCategory: string | null;
-	preferredCategories: string[];
 	preferredFoot: string | null;
 	gender: string | null;
 	nationality: string | null;

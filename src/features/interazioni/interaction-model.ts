@@ -1,13 +1,19 @@
 import type {AnnouncementDirectoryItem} from "@/features/annunci/announcement-model";
 import type {ProfileType} from "@/features/profilo/profile-model";
 
-export type InteractionTarget = {kind: "profilo" | "annuncio"; id: string};
+export type InteractionTarget = {kind: "profilo"; id: string; profileType: ProfileType} | {kind: "annuncio"; id: string};
+export interface FollowProfile {
+	id: string;
+	type: ProfileType;
+	title: string;
+	isPrimary: boolean;
+}
 export type InteractionState =
-	| {status: "ready"; active: boolean}
+	| {status: "ready"; active: boolean; profiles?: FollowProfile[]; sourceType?: ProfileType | null}
 	| {status: "guest" | "registration-required" | "own-profile" | "error"};
 
 export type InteractionResult =
-	| {status: "success"; active: boolean}
+	| {status: "success"; active: boolean; sourceType?: ProfileType | null}
 	| {status: "error"; message: string}
 	| {status: "guest" | "registration-required"};
 
@@ -17,6 +23,7 @@ export interface RelationshipProfile {
 	title: string;
 	imageUrl: string | null;
 	followedAt: string;
+	ownedProfile: {id: string; type: ProfileType; title: string};
 }
 
 export interface SavedAnnouncement {

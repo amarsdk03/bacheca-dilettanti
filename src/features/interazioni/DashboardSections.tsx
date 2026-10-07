@@ -52,7 +52,7 @@ function RelationshipList({list, following}: {list: InteractionList<Relationship
 	return (
 		<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 			{list.items.map((profile) => (
-				<Card key={profile.id} className="profile-dashboard-card profile-dashboard-interactive-card">
+				<Card key={`${profile.id}:${profile.type}:${profile.ownedProfile.type}`} className="profile-dashboard-card profile-dashboard-interactive-card">
 					<CardHeader className="flex flex-1 items-start gap-3">
 						<Avatar className="size-12">
 							{profile.imageUrl && <AvatarImage src={profile.imageUrl} alt="" />}
@@ -65,10 +65,18 @@ function RelationshipList({list, following}: {list: InteractionList<Relationship
 								</Link>
 							</CardTitle>
 							<CardDescription>{PROFILE_OPTIONS.find(({value}) => value === profile.type)?.label}</CardDescription>
+							<CardDescription>
+								{following ? "Segui con " : "Segue il tuo profilo "}
+								<Link className="underline underline-offset-4" href={`/dettagli-profilo?${new URLSearchParams({id: profile.ownedProfile.id, type: profile.ownedProfile.type})}`}>
+									{profile.ownedProfile.title}
+								</Link>
+								{` (${PROFILE_OPTIONS.find(({value}) => value === profile.ownedProfile.type)?.label})`}
+							</CardDescription>
 						</div>
 					</CardHeader>
 					{following && <CardFooter className="justify-end">
-						<InteractionButton target={{kind: "profilo", id: profile.id}} state={{status: "ready", active: true}}
+						<InteractionButton target={{kind: "profilo", id: profile.id, profileType: profile.type}} state={{status: "ready", active: true,
+							sourceType: profile.ownedProfile.type, profiles: [{...profile.ownedProfile, isPrimary: false}]}}
 							href="/il-tuo-profilo?sezione=relazioni" showLabel />
 					</CardFooter>}
 				</Card>

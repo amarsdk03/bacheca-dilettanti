@@ -11,7 +11,7 @@ type LinkAnnuncioFieldProps = {
 	tipologia?: string;
 	value: string;
 	onValueChange: (value: string) => void;
-	label?: string;
+	label?: ReactNode;
 	functionName?: string;
 	placeholder?: string;
 	description?: string;

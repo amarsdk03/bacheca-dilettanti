@@ -56,10 +56,7 @@ export type ProfileDrafts = {
 	};
 	squadra: Omit<EditableProfileDraft<"profilo_squadra">, "sede_principale">;
 	"staff-sportivo": EditableProfileDraft<"profilo_staff_sportivo">;
-	"servizi-consulenze": EditableProfileDraft<"profilo_servizi_consulenze"> & {
-		lista_esperienze: TablesInsert<"profilo_servizi_consulenze">["storico_esperienze"];
-		qualifiche_licenze: TablesInsert<"profilo_servizi_consulenze">["storico_esperienze"];
-	};
+	"servizi-consulenze": Omit<EditableProfileDraft<"profilo_servizi_consulenze">, "anno_nascita" | "automunito" | "cognome" | "figure_professionali" | "giorno_nascita" | "mese_nascita" | "storico_esperienze" | "lista_esperienze" | "qualifiche_licenze">;
 	arbitro: EditableProfileDraft<"profilo_arbitro"> & {
 		lista_esperienze: TablesInsert<"profilo_arbitro">["storico_esperienze"];
 		qualifiche_licenze: TablesInsert<"profilo_arbitro">["storico_esperienze"];
@@ -180,6 +177,7 @@ export function isProfileType(value: string): value is ProfileType {
 export function createProfileDrafts(): ProfileDrafts {
 	return {
 		giocatore: {
+			nominativo_anonimo: false,
 			altezza: "",
 			anno_nascita: "",
 			categoria_attuale: "",
@@ -202,6 +200,7 @@ export function createProfileDrafts(): ProfileDrafts {
 			richiede_caricamento_highlights: false,
 		},
 		squadra: {
+			nominativo_anonimo: false,
 			nome_societa: "",
 			presentazione: "",
 			categoria_attuale: "",
@@ -209,6 +208,7 @@ export function createProfileDrafts(): ProfileDrafts {
 			tipologie_sport: [],
 		},
 		"staff-sportivo": {
+			nominativo_anonimo: false,
 			anno_nascita: "",
 			cognome: "",
 			disponibilita: "non-specificare",
@@ -225,24 +225,19 @@ export function createProfileDrafts(): ProfileDrafts {
 			qualifiche_licenze: [],
 		},
 		"servizi-consulenze": {
-			anno_nascita: "",
-			automunito: "",
-			cognome: "",
 			disponibilita: "non-specificare",
-			figure_professionali: [],
-			giorno_nascita: "",
-			mese_nascita: "",
 			nome: "",
+			sede_professionista: "",
+			contatto_email: "",
+			contatto_telefono: "",
 			presentazione: "",
 			presentazione_servizi: "",
 			specializzazioni: "",
 			sport_principale: "Calcio",
-			storico_esperienze: [],
-			lista_esperienze: [],
-			qualifiche_licenze: [],
 			tipologie_sport: [],
 		},
 		arbitro: {
+			nominativo_anonimo: false,
 			anno_nascita: "",
 			cognome: "",
 			disponibilita: "non-specificare",
@@ -258,6 +253,7 @@ export function createProfileDrafts(): ProfileDrafts {
 		},
 		creators: {
 			nome_creator: "",
+			contatto_email: "",
 			presentazione: "",
 			sport_principale: "Calcio",
 			tipologia_contenuti: "",

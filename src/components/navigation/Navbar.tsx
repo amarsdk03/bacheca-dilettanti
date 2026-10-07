@@ -4,6 +4,7 @@ import {ArrowLeftIcon, ClipboardPenIcon, UserIcon} from "lucide-react";
 
 import NavbarNavigation from "@/components/navigation/NavbarNavigation";
 import UserAvatar from "@/components/navigation/UserAvatar";
+import NotificationBell from "@/features/notifiche/NotificationBell";
 import {buttonVariants} from "@/components/ui/button";
 import {DEFAULT_LOGO_PATH} from "@/const/defaultConstants";
 import {getCurrentViewer} from "@/features/auth/server/queries";
@@ -46,9 +47,9 @@ export default async function Navbar({minimal = false, backToHome = false, workI
 					/>
 				</Link>
 
-				{!minimal && <NavbarNavigation authenticated={Boolean(viewer)} viewer={viewer} backToHome={backToHome} />}
+				{!minimal && <NavbarNavigation authenticated={Boolean(viewer)} viewer={viewer} backToHome={backToHome} display="desktop" />}
 
-				<div className={cn("flex shrink-0 items-center gap-3", minimal ? "ml-auto" : "lg:ml-0")}>
+				<div className={cn("ml-auto flex shrink-0 items-center lg:gap-3", !minimal && "lg:ml-0")}>
 					{
 						backToHome ? (
 							<Link
@@ -61,7 +62,7 @@ export default async function Navbar({minimal = false, backToHome = false, workI
 							</Link>
 						) : (
 							<>
-								<div className={"hidden lg:flex items-center gap-3"}>
+								<div className="flex items-center gap-3">
 									<Link
 										href="/pubblica-annuncio"
 										aria-label="Pubblica un annuncio"
@@ -71,18 +72,19 @@ export default async function Navbar({minimal = false, backToHome = false, workI
 										)}
 									>
 										<ClipboardPenIcon aria-hidden="true" />
-										Pubblica annuncio
+										<span className="hidden lg:inline">Pubblica annuncio</span>
 									</Link>
+									{viewer && <NotificationBell />}
 								</div>
-								<div className="hidden lg:flex items-center">
+								<div className="hidden items-center gap-1 lg:flex">
 									{viewer ? (
 										<UserAvatar viewer={viewer} />
 									) : (
 										<Link
-											href="/accedi"
+												href="/accedi"
 											className={cn(
 												buttonVariants({variant: "ghost", size: "icon-lg"}),
-												"rounded-full"
+												"hidden rounded-full lg:inline-flex"
 											)}
 										>
 											<Avatar className="size-9">
@@ -93,6 +95,7 @@ export default async function Navbar({minimal = false, backToHome = false, workI
 										</Link>
 									)}
 								</div>
+								{!minimal && <NavbarNavigation authenticated={Boolean(viewer)} viewer={viewer} backToHome={backToHome} display="mobile" />}
 							</>
 						)
 					}

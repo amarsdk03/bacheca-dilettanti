@@ -387,6 +387,7 @@ export type Database = {
       }
       annuncio_squadra_cerca_giocatore: {
         Row: {
+          gruppo_squadra: string | null
           annata_da: number | null
           annata_a: number | null
           annate_ricercate: string[] | null
@@ -399,6 +400,7 @@ export type Database = {
           uuid_annuncio: string
         }
         Insert: {
+          gruppo_squadra?: string | null
           annata_da?: number | null
           annata_a?: number | null
           annate_ricercate?: string[] | null
@@ -411,6 +413,7 @@ export type Database = {
           uuid_annuncio: string
         }
         Update: {
+          gruppo_squadra?: string | null
           annata_da?: number | null
           annata_a?: number | null
           annate_ricercate?: string[] | null
@@ -434,6 +437,7 @@ export type Database = {
       }
       annuncio_squadra_cerca_partita: {
         Row: {
+          gruppo_squadra: string | null
           categorie_avversario: string[] | null
           descrizione_aggiuntiva: string | null
           disponibilita_trasferta: string | null
@@ -445,6 +449,7 @@ export type Database = {
           uuid_annuncio: string
         }
         Insert: {
+          gruppo_squadra?: string | null
           categorie_avversario?: string[] | null
           descrizione_aggiuntiva?: string | null
           disponibilita_trasferta?: string | null
@@ -456,6 +461,7 @@ export type Database = {
           uuid_annuncio: string
         }
         Update: {
+          gruppo_squadra?: string | null
           categorie_avversario?: string[] | null
           descrizione_aggiuntiva?: string | null
           disponibilita_trasferta?: string | null
@@ -670,18 +676,21 @@ export type Database = {
           tipo: string
           uuid_annuncio: string
           valore: string
+          referente: string | null
         }
         Insert: {
           id?: number
           tipo: string
           uuid_annuncio: string
           valore: string
+          referente?: string | null
         }
         Update: {
           id?: number
           tipo?: string
           uuid_annuncio?: string
           valore?: string
+          referente?: string | null
         }
         Relationships: [
           {
@@ -1025,6 +1034,7 @@ export type Database = {
       }
       profilo_arbitro: {
         Row: {
+          nominativo_anonimo: boolean
           anno_nascita: string | null
           cognome: string | null
           disponibilita: string | null
@@ -1042,6 +1052,7 @@ export type Database = {
           uuid_profilo: string
         }
         Insert: {
+          nominativo_anonimo?: boolean
           anno_nascita?: string | null
           cognome?: string | null
           disponibilita?: string | null
@@ -1059,6 +1070,7 @@ export type Database = {
           uuid_profilo: string
         }
         Update: {
+          nominativo_anonimo?: boolean
           anno_nascita?: string | null
           cognome?: string | null
           disponibilita?: string | null
@@ -1157,6 +1169,8 @@ export type Database = {
       }
       profilo_creator: {
         Row: {
+          contatto_email: string | null
+
           id: number
           nascosto: boolean
           nome_creator: string | null
@@ -1166,6 +1180,8 @@ export type Database = {
           uuid_profilo: string
         }
         Insert: {
+          contatto_email?: string | null
+
           id?: number
           nascosto?: boolean
           nome_creator?: string | null
@@ -1175,6 +1191,8 @@ export type Database = {
           uuid_profilo: string
         }
         Update: {
+          contatto_email?: string | null
+
           id?: number
           nascosto?: boolean
           nome_creator?: string | null
@@ -1202,16 +1220,22 @@ export type Database = {
       }
       profilo_follow: {
         Row: {
+          sottoprofilo_follower: string
+          sottoprofilo_seguito: string
           creato_il: string
           uuid_profilo_follower: string
           uuid_profilo_seguito: string
         }
         Insert: {
+          sottoprofilo_follower: string
+          sottoprofilo_seguito: string
           creato_il?: string
           uuid_profilo_follower: string
           uuid_profilo_seguito: string
         }
         Update: {
+          sottoprofilo_follower?: string
+          sottoprofilo_seguito?: string
           creato_il?: string
           uuid_profilo_follower?: string
           uuid_profilo_seguito?: string
@@ -1235,6 +1259,7 @@ export type Database = {
       }
       profilo_giocatore: {
         Row: {
+          nominativo_anonimo: boolean
           altezza: string | null
           anno_nascita: string | null
           categoria_attuale: string | null
@@ -1259,6 +1284,7 @@ export type Database = {
           uuid_profilo: string
         }
         Insert: {
+          nominativo_anonimo?: boolean
           altezza?: string | null
           anno_nascita?: string | null
           categoria_attuale?: string | null
@@ -1283,6 +1309,7 @@ export type Database = {
           uuid_profilo: string
         }
         Update: {
+          nominativo_anonimo?: boolean
           altezza?: string | null
           anno_nascita?: string | null
           categoria_attuale?: string | null
@@ -1325,6 +1352,10 @@ export type Database = {
       }
       profilo_servizi_consulenze: {
         Row: {
+          sede_professionista: string | null
+          contatto_email: string | null
+          contatto_telefono: string | null
+
           anno_nascita: string | null
           automunito: string | null
           cognome: string | null
@@ -1346,6 +1377,10 @@ export type Database = {
           uuid_profilo: string
         }
         Insert: {
+          sede_professionista?: string | null
+          contatto_email?: string | null
+          contatto_telefono?: string | null
+
           anno_nascita?: string | null
           automunito?: string | null
           cognome?: string | null
@@ -1367,6 +1402,10 @@ export type Database = {
           uuid_profilo: string
         }
         Update: {
+          sede_professionista?: string | null
+          contatto_email?: string | null
+          contatto_telefono?: string | null
+
           anno_nascita?: string | null
           automunito?: string | null
           cognome?: string | null
@@ -1406,6 +1445,7 @@ export type Database = {
       }
       profilo_squadra: {
         Row: {
+          nominativo_anonimo: boolean
 		  categoria_attuale: string | null
           id: number
           nascosto: boolean
@@ -1417,6 +1457,7 @@ export type Database = {
           uuid_profilo: string
         }
         Insert: {
+          nominativo_anonimo?: boolean
 		  categoria_attuale?: string | null
           id?: number
           nascosto?: boolean
@@ -1428,6 +1469,7 @@ export type Database = {
           uuid_profilo: string
         }
         Update: {
+          nominativo_anonimo?: boolean
 		  categoria_attuale?: string | null
           id?: number
           nascosto?: boolean
@@ -1457,6 +1499,7 @@ export type Database = {
       }
       profilo_staff_sportivo: {
         Row: {
+          nominativo_anonimo: boolean
           anno_nascita: string | null
           cognome: string | null
           disponibilita: string | null
@@ -1476,6 +1519,7 @@ export type Database = {
           uuid_profilo: string
         }
         Insert: {
+          nominativo_anonimo?: boolean
           anno_nascita?: string | null
           cognome?: string | null
           disponibilita?: string | null
@@ -1495,6 +1539,7 @@ export type Database = {
           uuid_profilo: string
         }
         Update: {
+          nominativo_anonimo?: boolean
           anno_nascita?: string | null
           cognome?: string | null
           disponibilita?: string | null
@@ -1682,9 +1727,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      set_profile_follow_v2: {
+        Args: {p_user: string; p_target: string; p_target_type: string; p_source_type: string | null; p_followed: boolean}
+        Returns: Json
+      }
+      get_profile_activity_v1: {
+        Args: {p_ids: string[]}
+        Returns: {profile_id: string; profile_type: string; last_activity: string}[]
+      }
       admin_set_restricted_profile_access_v1: {
         Args: { p_profile_id: string; p_profile_type: string; p_enabled: boolean }
         Returns: undefined
+      }
+      get_notifications_v1: {
+        Args: { p_user: string; p_limit?: number; p_cursor_date?: string | null; p_cursor_id?: string | null }
+        Returns: Json
+      }
+      mark_notifications_read_v1: {
+        Args: { p_user: string; p_ids: string[] }
+        Returns: number
       }
       cancel_registration: { Args: { p_token: string }; Returns: undefined }
       complete_registration_v1: {
@@ -1853,6 +1914,21 @@ export type Database = {
       set_owned_primary_subprofile: {
         Args: { p_profile_type: string; p_user_id: string }
         Returns: undefined
+      }
+      submit_manifestazione_interesse_v1: {
+        Args: {
+          p_sender_user_uuid: string
+          p_sender_profile_type: string
+          p_target_kind: string
+          p_target_uuid: string
+          p_target_profile_type: string | null
+          p_email: string | null
+          p_phone: string | null
+          p_ownership_consent: boolean
+          p_sharing_consent: boolean
+          p_consent_version: string
+        }
+        Returns: Json
       }
       submit_segnalazione_v1: {
         Args: {

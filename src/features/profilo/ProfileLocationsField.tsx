@@ -19,6 +19,7 @@ interface ProfileLocationsFieldProps {
 	error?: string | null;
 	mode?: "single" | "multiple";
 	label?: string;
+	allowedRegions?: readonly string[];
 }
 
 function locationsToRegions(value: readonly ProfileLocationDraft[]) {
@@ -59,6 +60,7 @@ export default function ProfileLocationsField({
 	error,
 	mode = "multiple",
 	label = "Regioni interessate",
+	allowedRegions,
 }: ProfileLocationsFieldProps) {
 	const regions = locationsToRegions(value);
 	const citiesByRegion = locationsToCities(value);
@@ -81,7 +83,7 @@ export default function ProfileLocationsField({
 							<SelectTrigger id={`${idPrefix}-regione`} className="w-full" aria-required={required} aria-invalid={Boolean(error)}><SelectValue placeholder="Seleziona una regione" /></SelectTrigger>
 							<SelectContent>
 								<SelectGroup>
-									{REGIONI_ITALIANE.map(({nome}) => <SelectItem key={nome} value={nome}>{nome}</SelectItem>)}
+									{REGIONI_ITALIANE.filter(({nome}) => allowedRegions === undefined || allowedRegions.includes(nome)).map(({nome}) => <SelectItem key={nome} value={nome}>{nome}</SelectItem>)}
 								</SelectGroup>
 							</SelectContent>
 						</Select>
@@ -123,6 +125,7 @@ export default function ProfileLocationsField({
 		<RegioniInteresseField
 			idPrefix={idPrefix}
 			label={label}
+			allowedRegions={allowedRegions}
 			regioniInteressate={regions}
 			setRegioniInteressate={setRegions}
 			cittaComuniPerRegione={citiesByRegion}

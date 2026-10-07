@@ -33,6 +33,7 @@ interface NavbarNavigationProps {
 	authenticated: boolean;
 	viewer: ViewerDTO | null;
 	backToHome: boolean;
+	display: "desktop" | "mobile";
 }
 
 const desktopLinkClassName =
@@ -118,7 +119,7 @@ function MobileLink({
 	);
 }
 
-export default function NavbarNavigation({authenticated, backToHome}: NavbarNavigationProps) {
+export default function NavbarNavigation({authenticated, backToHome, display}: NavbarNavigationProps) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -141,8 +142,8 @@ export default function NavbarNavigation({authenticated, backToHome}: NavbarNavi
 	}
 
 	return (
-		<div className="ml-auto flex items-center lg:ml-3 lg:min-w-0 lg:flex-1">
-			<nav aria-label="Navigazione principale" className="hidden items-center gap-1 lg:flex">
+		<div className={cn("items-center", display === "desktop" ? "hidden lg:ml-3 lg:flex lg:min-w-0 lg:flex-1" : "flex lg:hidden")}>
+			{display === "desktop" && <nav aria-label="Navigazione principale" className="flex items-center gap-1">
 				<DesktopDropdown label="Sfoglia annunci" rootHref="/annunci">
 					<DropdownMenuGroup>
 						<DropdownMenuLabel className="px-2 pb-1 pt-1.5 font-bold uppercase tracking-[0.14em]">
@@ -252,26 +253,11 @@ export default function NavbarNavigation({authenticated, backToHome}: NavbarNavi
 				>
 					Contatti
 				</Link>
-			</nav>
+			</nav>}
 
 			{
-				!backToHome && (
+				display === "mobile" && !backToHome && (
 					<>
-						<div className={"block lg:hidden"}>
-							<Link
-								href="/pubblica-annuncio"
-								aria-label="Pubblica un annuncio"
-								className={cn(
-									buttonVariants({variant: "outline", size: "lg"}),
-									"text-black rounded-md",
-								)}
-							>
-								<ClipboardPenIcon aria-hidden="true" />
-								<span className="block sm:hidden">Pubblica</span>
-								<span className="hidden sm:block">Pubblica annuncio</span>
-							</Link>
-						</div>
-
 						<Sheet open={mobileMenuOpen} onOpenChange={(open) => setMobileMenuOpen(open)}>
 							<SheetTrigger
 								render={(
@@ -279,7 +265,7 @@ export default function NavbarNavigation({authenticated, backToHome}: NavbarNavi
 										type="button"
 										variant="ghost"
 										size="icon-lg"
-										className="size-11 ms-1 rounded-xl text-white hover:bg-white/10 hover:text-white focus-visible:ring-[#8e72ff]/70 lg:hidden"
+										className="size-11 mx-2 rounded-xl text-white hover:bg-white/10 hover:text-white focus-visible:ring-[#8e72ff]/70"
 									/>
 								)}
 								aria-label="Apri il menu di navigazione"

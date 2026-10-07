@@ -9,7 +9,6 @@ import {ANNATE_OPTIONS, ordinaTipologieCalcio} from "@/features/pubblica-annunci
 import {
 	categoryLabel,
 	normalizeCategories,
-	normalizeFigure,
 	normalizeFigures
 } from "@/features/pubblica-annuncio/types/category-catalog";
 import {normalizeStaffCategories, staffCategoryLabel} from "@/features/pubblica-annuncio/types/staff-category-catalog";
@@ -231,10 +230,8 @@ function staffHistoryLines(value: unknown, qualification = false): string[] {
 		const to = cleanText(entry.periodoA, 4);
 		const description = cleanText(entry.descrizione);
 		const status = entry.stato === "in-corso" ? "In corso" : entry.stato === "conseguito" ? "Conseguito" : null;
-		const extra = qualification ? Object.entries(entry)
-			.filter(([key, item]) => !["id", "titolo", "ente", "periodoDa", "periodoA", "descrizione", "squadraProfiloId"].includes(key) && !(key === "stato" && ["in-corso", "conseguito", "non-specificare"].includes(String(item))))
-			.map(([key, item]) => `${key}: ${typeof item === "string" ? item : JSON.stringify(item)}`) : [];
-		const parts = [title, organization, from && to ? `${from}–${to}` : from ?? to, description, qualification ? status : null, ...extra].filter(Boolean);
+
+		const parts = [title, organization, from && to ? `${from}–${to}` : from ?? to, description, qualification ? status : null].filter(Boolean);
 		return parts.length > 0 ? [parts.join(" · ")] : [];
 	});
 }
@@ -304,12 +301,11 @@ export function announcementContent(
 		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
 		const primaryRoles = normalizePlayerPrimaryRoles(cleanStringArray(detail.ruoli_principali));
 		const secondaryRoles = normalizePlayerSpecificRoles(cleanStringArray(detail.ruoli_secondari));
-		const legacyYears = cleanStringArray(detail.annate_ricercate);
 		const yearFrom = finiteNumber(detail.annata_da);
 		const yearTo = finiteNumber(detail.annata_a);
 		const hasRange = yearFrom !== null && yearTo !== null && Number.isInteger(yearFrom) && Number.isInteger(yearTo) && yearFrom >= 1900 && yearTo >= yearFrom;
-		const years = hasRange ? ANNATE_OPTIONS.filter((year) => Number(year) >= yearFrom && Number(year) <= yearTo) : legacyYears;
-		const yearLabel = hasRange ? `Dal ${yearFrom} al ${yearTo}` : selection(legacyYears, "selezionate");
+		const years = hasRange ? ANNATE_OPTIONS.filter((year) => Number(year) >= yearFrom && Number(year) <= yearTo) : [];
+		const yearLabel = hasRange ? `Dal ${yearFrom} al ${yearTo}` : NOT_SPECIFIED;
 		const season = cleanText(detail.stagione, 80);
 		const specificRoleCount = secondaryRoles.length;
 		const effectiveRoleCount = primaryRoles.length + specificRoleCount;
@@ -329,86 +325,80 @@ export function announcementContent(
 		];
 		fields = [
 			detailListField("Ruolo/i cercati", primaryRoles, selection(primaryRoles, "selezionati")),
+			...(cleanText(detail.gruppo_squadra, 160) ? [detailField("Gruppo squadra", cleanText(detail.gruppo_squadra, 160))] : []),
 			detailListField("Ruoli specifici", secondaryRoles, selection(secondaryRoles, "selezionati")),
-			detailListField("Annate ricercate", hasRange ? [yearLabel] : legacyYears, yearLabel),
+			...(hasRange ? [detailListField("Annate ricercate", [yearLabel], yearLabel)] : []),
 			detailField("Stagione", season),
 			detailListField("Tipologie", types, selection(types, "selezionate")),
 		];
 		filters.types = types;
 		filters.roles = [...new Set([...primaryRoles, ...secondaryRoles])];
 		filters.years = years;
-		searchValues = [...types, ...primaryRoles, ...secondaryRoles, ...years, season ?? ""];
+		searchValues = [...types, ...primaryRoles, ...secondaryRoles, ...years, season ?? "", cleanText(detail.gruppo_squadra, 160) ?? ""];
 		playerRoles = {primaryRoles, secondaryRoles};
 	} else if (type === "annuncio_squadra_cerca_staff") {
-		const rawFigure = cleanText(detail.figura_ricercata, 160);
-		const savedFigures = normalizeFigures(cleanStringArray(detail.figure_ricercate));
-		const figures = savedFigures.length ? savedFigures : rawFigure ? [normalizeFigure(rawFigure)] : [];
+		const figures = normalizeFigures(cleanStringArray(detail.figure_ricercate));
 		const figure = figures[0] ?? null;
 		const season = cleanText(detail.stagione, 80);
 		const sector = cleanText(detail.settore, 160);
 		const compensation = finiteNumber(detail.compenso_mensile);
 		const requirements = cleanText(detail.requisiti);
-		const historicalPeriod = formatPeriod(detail.periodo_dal, detail.periodo_al);
 		title = figures.length === 1
 			? `Ricerca ${figure}`
 			: "Ricerca staff sportivo";
 		description = description ?? requirements;
 		facts = [
 			contentFact("figures", figures.length === 1 ? "Figura ricercata" : "Figure ricercate", selection(figures, "selezionate")),
-			contentFact("sector", "Settore", sector),
+			contentFact("sector", "Gruppo squadra", sector),
 			contentFact("compensation", "Compenso mensile", compensation === null ? null : formatCurrency(compensation)),
 			contentFact("location", "Località", location),
 		];
 		fields = [
 			detailListField("Figure ricercate", figures, selection(figures, "selezionate")),
-			detailField("Settore", sector),
+			detailField("Gruppo squadra", sector),
 			detailField("Compenso mensile", compensation === null ? null : formatCurrency(compensation)),
 			...(season ? [detailField("Stagione", season)] : []),
-			...(historicalPeriod !== NOT_SPECIFIED ? [detailField("Periodo", historicalPeriod)] : []),
 			detailField("Requisiti", requirements, true),
 		];
 		filters.figures = figures;
 		filters.compensation = compensation;
 		searchValues = [...figures, sector ?? "", season ?? "", requirements ?? ""];
 	} else if (type === "annuncio_squadra_cerca_partita") {
-		const categoryValues = normalizeCategories(cleanStringArray(detail.categorie_avversario));
-		const categories = categoryValues.map(categoryLabel);
+		const categoryValues = cleanStringArray(detail.categorie_avversario);
+		const categories = categoryValues.map(value => value.includes("::") ? categoryLabel(value) : value);
 		const travel = cleanText(detail.disponibilita_trasferta, 40);
 		const period = formatPeriod(detail.periodo_dal, detail.periodo_al);
 		const time = formatTimeRange(detail.orario_dalle, detail.orario_alle);
 		title = "Ricerca partite/amichevoli";
 		facts = [
-			contentFact("categories", "Livelli cercati", selection(categories, "selezionati")),
+			contentFact("categories", "Categoria avversario cercata", selection(categories, "selezionate")),
 			contentFact("period", "Periodo", period),
 			contentFact("availability", "Trasferta", travel),
 			contentFact("location", "Località", location),
 		];
 		fields = [
-			detailListField("Livelli avversari cercati", categories, selection(categories, "selezionati")),
+			detailListField("Categoria avversario cercata", categories, selection(categories, "selezionate")),
+			...(cleanText(detail.gruppo_squadra, 160) ? [detailField("Gruppo squadra", cleanText(detail.gruppo_squadra, 160))] : []),
 			detailField("Disponibilità alla trasferta", travel),
 			detailField("Periodo", period),
 			detailField("Orario", time),
 		];
 		filters.categories = categoryValues;
-		searchValues = [...categories, travel ?? "", period, time];
+		searchValues = [...categories, travel ?? "", period, time, cleanText(detail.gruppo_squadra, 160) ?? ""];
 	} else if (type === "annuncio_squadra_cerca_sponsor") {
 		const sector = cleanText(detail.categoria_settore, 160);
-		const support = cleanText(detail.supporto_cercato);
 		const offer = cleanText(detail.offerta_fornita);
 		title = "Ricerca sponsor";
-		description = description ?? support;
 		facts = [
 			contentFact("sector", "Settore", sector),
-			contentFact("services", "Supporto cercato", support),
 			contentFact("services", "Visibilità offerta", offer),
 			...(locations.length > 0 ? [contentFact("location", "Località", location)] : []),
 		];
 		fields = [
 			detailField("Settore", sector),
-			...(support ? [detailField("Supporto cercato", support, true)] : []),
 			detailField("Visibilità offerta", offer, true),
 		];
-		searchValues = [sector ?? "", support ?? "", offer ?? ""];
+		searchValues = [sector ?? "", offer ?? ""];
 	} else if (type === "annuncio_staff_sportivo") {
 		const figures = normalizeFigures(cleanStringArray(detail.figure_professionali));
 		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
@@ -422,7 +412,7 @@ export function announcementContent(
 		title = "Ricerca opportunità";
 		facts = [
 			contentFact("figures", "Figure", selection(figures, "selezionate")),
-			contentFact("categories", "Categorie ricercate", selection(categories, "selezionate")),
+			contentFact("categories", "Categoria/Settore cercato", selection(categories, "selezionate")),
 			contentFact("availability", "Spostamenti", travel),
 			...(remote ? [contentFact("availability", "Da remoto", "Sì")] : []),
 			contentFact("location", "Località", location),
@@ -430,7 +420,7 @@ export function announcementContent(
 		fields = [
 			detailListField("Figure professionali", figures, selection(figures, "selezionate")),
 			detailListField("Tipologie", types, selection(types, "selezionate")),
-			detailListField("Categorie ricercate", categories, selection(categories, "selezionate")),
+			detailListField("Categoria/Settore cercato", categories, selection(categories, "selezionate")),
 			detailField("Disponibilità lavorativa", humanizeValue(occupation)),
 			detailField("Disponibilità agli spostamenti", travel),
 			detailField("Disponibile anche da remoto", remote ? "Sì" : "No"),
@@ -443,8 +433,6 @@ export function announcementContent(
 		searchValues = [...figures, ...types, ...categories, occupation ?? "", travel ?? "", ...experienceLines, ...qualificationLines];
 	} else if (type === "annuncio_arbitro") {
 		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
-		const categoryValues = normalizeCategories(cleanStringArray(detail.categorie_ricercate));
-		const categories = categoryValues.map(categoryLabel);
 		const occupation = cleanText(detail.disponibilita_occupazione, 160);
 		const travel = cleanText(detail.disponibilita_spostamento, 40);
 		const car = cleanText(detail.automunito, 40);
@@ -452,14 +440,12 @@ export function announcementContent(
 		const qualificationLines = staffHistoryLines(detail.qualifiche_licenze, true);
 		title = "Ricerca opportunità";
 		facts = [
-			...(categories.length > 0 ? [contentFact("categories", "Categorie", selection(categories, "selezionate"))] : []),
 			contentFact("availability", "Disponibilità", humanizeValue(occupation)),
 			contentFact("car", "Automunito", car),
 			contentFact("location", "Località", location),
 		];
 		fields = [
 			detailListField("Tipologie", types, selection(types, "selezionate")),
-			...(categories.length > 0 ? [detailListField("Categorie storiche", categories, selection(categories, "selezionate"))] : []),
 			detailField("Disponibilità", humanizeValue(occupation)),
 			detailField("Disponibilità agli spostamenti", travel),
 			detailField("Automunito", car),
@@ -467,9 +453,8 @@ export function announcementContent(
 			detailListField("Qualifiche / Licenze", qualificationLines, selection(qualificationLines, "selezionate")),
 		];
 		filters.types = types;
-		filters.categories = categoryValues;
 		filters.car = car;
-		searchValues = [...types, ...categories, occupation ?? "", travel ?? "", car ?? "", ...experienceLines, ...qualificationLines];
+		searchValues = [...types, occupation ?? "", travel ?? "", car ?? "", ...experienceLines, ...qualificationLines];
 	} else if (type === "annuncio_torneo_evento") {
 		const name = cleanText(detail.nome_evento, 160);
 		const types = ordinaTipologieCalcio(cleanStringArray(detail.tipologie_sport));
@@ -528,20 +513,18 @@ export function announcementContent(
 		const specialization = cleanText(detail.specializzazione);
 		const services = cleanText(detail.presentazione_servizi);
 		title = figures[0] ? `Servizi di ${figures[0]}` : "Servizi e consulenze";
-		description = description ?? services;
+		description = services;
 		facts = [contentFact("figures", "Figure professionali", selection(figures, "selezionate")), contentFact("specializations", "Specializzazione", specialization), contentFact("location", "Località", location)];
-		fields = [detailListField("Figure professionali", figures, selection(figures, "selezionate")), detailListField("Tipologie", types, selection(types, "selezionate")), detailField("Specializzazione", specialization), detailField("Servizi offerti", services)];
+		fields = [detailListField("Figure professionali", figures, selection(figures, "selezionate")), detailListField("Tipologie", types, selection(types, "selezionate")), detailField("Specializzazione", specialization), detailField("Contenuto", services), detailField("Promozione/offerta per la Community", cleanText(detail.descrizione_aggiuntiva), true)];
 		filters.types = types;
 		searchValues = [...figures, ...types, specialization ?? "", services ?? ""];
 	} else {
-		const postTitle = cleanText(detail.titolo_post, 160);
 		const postDescription = cleanText(detail.descrizione_post);
-		const postContent = cleanText(detail.contenuto_post);
-		title = postTitle ?? "Contenuto creator";
-		description = description ?? postDescription ?? postContent;
-		facts = [contentFact("content", "Contenuto", postTitle), contentFact("location", "Località", location)];
-		fields = [detailField("Contenuto", postContent), detailField("Descrizione del post", postDescription)];
-		searchValues = [postTitle ?? "", postDescription ?? "", postContent ?? ""];
+		title = "Contenuto creator";
+		description = postDescription;
+		facts = [contentFact("location", "Località", location)];
+		fields = [detailField("Contenuto dell’annuncio", postDescription)];
+		searchValues = [postDescription ?? ""];
 	}
 
 	return {title: cleanText(customTitle, 50) ?? title, description, location, locations, facts, fields, playerRoles, filters, searchValues};

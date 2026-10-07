@@ -10,6 +10,8 @@ export default function robots(): MetadataRoute.Robots {
 			disallow: [
 				"/auth/",
 				"/il-tuo-profilo",
+				"/centro-notifiche",
+				"/api/notifiche",
 				"/pubblica-annuncio/conferma",
 				"/pubblica-annuncio/pagamento",
 				"/reimposta-password",

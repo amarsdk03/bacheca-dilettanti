@@ -26,12 +26,13 @@ function load(file) {
 }
 
 const {parsePublishPayload} = load(path.join(root, "src/features/pubblica-annuncio/server/validation.ts"));
+const {PUBLISH_PAYLOAD_VERSION} = load(path.join(root, "src/features/pubblica-annuncio/publish-model.ts"));
 const weekdays = ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica"];
 const schedule = () => weekdays.map((giorno, index) => ({
 	giorno, attivo: index === 0, dalle: index === 0 ? "20:--" : "", alle: index === 0 ? "22:00" : "",
 }));
 const payload = () => ({
-	version: 4,
+	version: PUBLISH_PAYLOAD_VERSION,
 	submissionId: "11111111-1111-4111-8111-111111111111",
 	visibility: "gratuito",
 	profileType: "campi-impianti-sportivi",

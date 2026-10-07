@@ -41,15 +41,14 @@ function sourceLoader(overrides = {}) {
 }
 
 const load = sourceLoader();
-const {publicPlayerAge, parsePlayerCareer, parseLegacyStaffQualifications, toPublicPlayerData} = load("src/features/dettagli-profilo/server/player-profile-data.ts");
+const {publicPlayerAge, parsePlayerCareer, toPublicPlayerData} = load("src/features/dettagli-profilo/server/player-profile-data.ts");
 
-test("staff legacy qualification keeps free text and unknown fields without assigning a status", () => {
-	const parsed = parseLegacyStaffQualifications(["testo libero precedente", {titolo: "Licenza", note: "annotazione storica", stato: "non-specificare"}]);
-	assert.equal(parsed[0].description, "testo libero precedente");
-	assert.equal(parsed[0].status, null);
-	assert.equal(parsed[1].title, "Licenza");
-	assert.match(parsed[1].description, /annotazione storica/);
-	assert.equal(parsed[1].status, null);
+test("current qualifications ignore obsolete free text and unknown properties", () => {
+ const parsed = parsePlayerCareer(["testo libero precedente", {titolo: "Licenza attuale", note: "annotazione storica", stato: "conseguito"}]);
+ assert.equal(parsed.length, 1);
+ assert.equal(parsed[0].title, "Licenza attuale");
+ assert.equal(parsed[0].status, "conseguito");
+ assert.doesNotMatch(JSON.stringify(parsed), /testo libero precedente|annotazione storica/);
 });
 const {availabilityLabel} = load("src/features/profilo/public-profile-display.ts");
 const {groupPublicProfileLocations, publicProfileLocationLabel} = load("src/features/profilo/public-profile-locations.ts");
@@ -101,7 +100,7 @@ test("leap birthdays use March 1 in a non-leap year", () => {
 
 test("public projection contains only approved properties and safe highlights", () => {
 	const result = toPublicPlayerData({...player, email: "private@example.test", note: "private"}, "javascript:alert(1)", now);
-	assert.deepEqual(Object.keys(result).sort(), ["age", "birthYear", "sportTypes", "primaryRoles", "specificRoles", "currentCategory", "preferredCategories", "preferredFoot", "gender", "nationality", "nationalityCode", "height", "weight", "presentation", "career", "highlightsUrl"].sort());
+	assert.deepEqual(Object.keys(result).sort(), ["age", "birthYear", "sportTypes", "primaryRoles", "specificRoles", "currentCategory", "preferredFoot", "gender", "nationality", "nationalityCode", "height", "weight", "presentation", "career", "highlightsUrl"].sort());
 	assert.equal(result.age, 26);
 	assert.equal(result.birthYear, "2000");
 	assert.equal(result.highlightsUrl, null);
@@ -254,13 +253,14 @@ test("legacy football type filters resolve to the current label", () => {
 	assert.equal(announcementOption("annuncio_servizi_consulenze").profileType, "servizi-consulenze");
 });
 
-test("profile directory keeps completion and followers ahead of stable randomized ties", () => {
+test("profile directory keeps completion and activity ahead of stable randomized ties", () => {
 	const {sortRankedDirectoryProfiles} = load("src/features/profili/profile-directory-ranking.ts");
 	const {parseProfileDirectoryQuery, buildProfilesHref} = load("src/features/profili/profile-directory-model.ts");
 	const profiles = Array.from({length: 20}, (_, index) => ({
 		profile: {id: `profile-${index}`, type: "giocatore"},
 		completionPercentage: index === 0 ? 90 : 80,
-		followerCount: index === 1 ? 20 : 3,
+		lastActivityAt: index === 1 ? "2026-10-05T10:00:00Z" : "2026-10-01T10:00:00Z",
+		followerCount: index === 2 ? 999 : 0,
 	}));
 	const ids = seed => sortRankedDirectoryProfiles([...profiles], seed).map(({profile}) => profile.id);
 	const first = ids("seed-one");
@@ -394,16 +394,16 @@ test("registered profile hover card links to complete information with or withou
 		presentation: "Presentazione del giocatore",
 	};
 	const withPresentation = renderToStaticMarkup(React.createElement(HoverCard, {author}));
-	assert.match(withPresentation, /Informazioni complete/);
+	assert.match(withPresentation, /Vedi scheda Giocatore/);
 	assert.match(withPresentation, /href="\/dettagli-profilo\?id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa&amp;type=giocatore"/);
 	assert.match(withPresentation, /Presentazione del giocatore/);
 
 	const withoutPresentation = renderToStaticMarkup(React.createElement(HoverCard, {author: {...author, presentation: null}}));
-	assert.match(withoutPresentation, /Informazioni complete/);
+	assert.match(withoutPresentation, /Vedi scheda Giocatore/);
 	assert.doesNotMatch(withoutPresentation, /Presentazione del giocatore/);
 
 	const anonymous = renderToStaticMarkup(React.createElement(HoverCard, {author: {kind: "anonymous", profileType: "giocatore", label: "Giocatore anonimo"}}));
-	assert.doesNotMatch(anonymous, /Informazioni complete/);
+	assert.doesNotMatch(anonymous, /Vedi scheda/);
 });
 
 test("email confirmation and official verification have distinct profile marks", () => {
@@ -449,7 +449,7 @@ test("player overview shows grouped locations, visible social URLs and highlight
 	assert.ok(sidebar);
 	assert.doesNotMatch(html, /campo\.png/);
 	assert.doesNotMatch(sidebar, /campo\.png|grid-cols-3 grid-rows-7|Principale:/);
-	for (const value of ["Tipologie calcio", "Calcio 11", "Calcio 5", "Ruoli principali", "Difensore", "Categorie ricercate", "Eccellenza", "Social", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]) assert.ok(sidebar.includes(value), value);
+	for (const value of ["Tipologie calcio", "Calcio 11", "Calcio 5", "Ruoli principali", "Difensore", "Social", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]) assert.ok(sidebar.includes(value), value);
 	assert.match(html, /<h2[^>]*>Informazioni<\/h2>[\s\S]*Ruoli specifici[\s\S]*Terzino destro[\s\S]*Descrizione del giocatore/);
 	assert.ok(html.indexOf('aria-label="Informazioni sportive"') < html.indexOf('>Descrizione</h2>'));
 	assert.ok(html.indexOf('aria-label="Contatti e identificativo"') > html.indexOf('>Descrizione</h2>'));
@@ -502,7 +502,7 @@ function fixtureClient(results) {
 	};
 }
 
-test("directory ranks canonical completion before follower count without exposing ranking inputs", async () => {
+test("directory ranks completion then activity without reading followers or exposing ranking inputs", async () => {
 	const id = suffix => `${suffix.repeat(8)}-${suffix.repeat(4)}-4${suffix.repeat(3)}-8${suffix.repeat(3)}-${suffix.repeat(12)}`;
 	const row = (suffix, childId, presentation) => ({
 		uuid: id(suffix), tipologia_principale: "squadra", ultima_modifica_il: "2026-10-01T10:00:00Z",
@@ -513,6 +513,11 @@ test("directory ranks canonical completion before follower count without exposin
 	const rows = [row("a", 1, "Completo A"), row("b", 2, null), row("c", 3, "Completo C")];
 	const follows = Array.from({length: 5}, (_, index) => ({uuid_profilo_seguito: index === 0 ? id("c") : id("b")}));
 	const client = fixtureClient({profilo: {data: rows, error: null}, profilo_follow: {data: follows, error: null}});
+	client.rpc = async (name, args) => {
+		assert.equal(name, "get_profile_activity_v1");
+		assert.deepEqual(args.p_ids, rows.map(row => row.uuid));
+		return {data: [{profile_id: id("c"), profile_type: "squadra", last_activity: "2026-10-05T10:00:00Z"}], error: null};
+	};
 	const {getProfileDirectory} = sourceLoader({
 		"@/lib/supabase/admin": {createAdminClient: () => client},
 		"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => new Map()},
@@ -521,7 +526,7 @@ test("directory ranks canonical completion before follower count without exposin
 	const result = await getProfileDirectory(query);
 	assert.equal(result.error, false);
 	assert.deepEqual(result.profiles.map(profile => profile.id), [id("c"), id("a"), id("b")]);
-	assert.ok(client.calls.some(call => call.table === "profilo_follow" && call.operations.some(([method]) => method === "range")));
+	assert.ok(!client.calls.some(call => call.table === "profilo_follow"));
 	assert.ok(result.profiles.every(profile => !Object.hasOwn(profile, "completionPercentage") && !Object.hasOwn(profile, "followerCount")));
 });
 
@@ -539,13 +544,12 @@ test("detail query preserves visibility filters and exposes age without birth pa
 	const {getProfileDetail} = queryLoad("src/features/dettagli-profilo/server/profile-detail-query.ts");
 	const result = await getProfileDetail(id, "giocatore");
 	assert.equal(result.status, "ok");
-	assert.equal(result.profile.followerCount, 42);
+	assert.ok(!Object.hasOwn(result.profile, "followerCount"));
+	assert.ok(!client.calls.some(call => call.table === "profilo_follow"));
 	assert.equal(result.profile.announcementCount, 7);
 	assert.equal(result.profile.emailConfirmed, true);
 	assert.equal(result.profile.officialVerified, true);
 	assert.doesNotMatch(JSON.stringify(result.profile), /2026-09-01T10:00:00Z|2026-09-02T10:00:00Z/);
-	const followerQuery = client.calls.find(call => call.table === "profilo_follow");
-	assert.deepEqual(followerQuery.operations, [["select", "uuid_profilo_seguito", {count: "exact", head: true}], ["eq", "uuid_profilo_seguito", id]]);
 	assert.deepEqual(result.profile.locations, [{region: "Lazio", city: "Roma"}, {region: "Toscana", city: null}]);
 	assert.equal(result.profile.player.birthYear, "2000");
 	assert.doesNotMatch(JSON.stringify(result), /nascita|Wrong/);
@@ -610,7 +614,7 @@ test("similar profiles select six newest visible children of the same type and r
 	assert.equal(emptyClient.calls.length, 1);
 });
 
-test("follower and similar-profile failures do not hide the current profile", async (t) => {
+test("similar-profile failures do not hide the current profile", async (t) => {
 	t.mock.method(console, "error", () => {});
 	const client = fixtureClient({
 		profilo: {data: {uuid: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}, error: null},
@@ -621,7 +625,7 @@ test("follower and similar-profile failures do not hide the current profile", as
 	const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("src/features/dettagli-profilo/server/profile-detail-query.ts");
 	const result = await getProfileDetail("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "giocatore");
 	assert.equal(result.status, "ok");
-	assert.equal(result.profile.followerCount, null);
+	assert.ok(!Object.hasOwn(result.profile, "followerCount"));
 	assert.equal(result.profile.similarProfilesUnavailable, true);
 	assert.deepEqual(result.profile.similarProfiles, []);
 });
@@ -633,9 +637,6 @@ test("similar profiles tab and empty/error states are available", () => {
 	assert.match(html, /role="tab"[^>]*[\s\S]*Profili simili/);
 	assert.match(renderToStaticMarkup(React.createElement(SimilarProfiles, {profiles: [], unavailable: false})), /Nessun profilo simile/);
 	assert.match(renderToStaticMarkup(React.createElement(SimilarProfiles, {profiles: [], unavailable: true})), /temporaneamente non disponibili/);
-	const Count = load("src/features/dettagli-profilo/components/ProfileFollowerCount.tsx").default;
-	assert.match(renderToStaticMarkup(React.createElement(Count, {count: 0})), /0 follower/);
-	assert.equal(renderToStaticMarkup(React.createElement(Count, {count: null})), "");
 });
 
 test("an announcement failure leaves player details available", async (t) => {
@@ -655,13 +656,13 @@ test("an announcement failure leaves player details available", async (t) => {
 });
 
 const nonPlayerCases = [
-	["squadra", "Squadra", ["Tipologia calcio", "Categoria attuale", "Follower", "Annunci pubblicati"]],
+	["squadra", "Squadra", ["Tipologia calcio", "Categoria attuale Prima Squadra", "Annunci pubblicati"]],
 	["staff-sportivo", "StaffSportivo", ["Mansioni", "Tipologie calcio", "Disponibilità", "Disponibile da remoto"]],
-	["servizi-consulenze", "ServiziConsulenze", ["Mansioni", "Tipologia calcio", "Disponibilità", "Automunito"]],
+	["servizi-consulenze", "ServiziConsulenze", ["Tipo di azienda / professione", "Tipologia calcio", "Disponibilità", "Sede Azienda / Professionista"]],
 	["arbitro", "Arbitro", ["Età", "Tipologie calcio", "Disponibilità", "Zona di residenza"]],
 	["creators", "Creator", ["Tipologia contenuti", "Numero annunci pubblicati"]],
-	["torneo-evento", "TorneoEvento", ["Tipologia calcio", "Follower", "Eventi pubblicati"]],
-	["campi-impianti-sportivi", "CampiImpianti", ["Tipologia campi disponibili", "Numero Follower", "Sede dell’impianto / struttura", "Numero campi pubblicati"]],
+	["torneo-evento", "TorneoEvento", ["Tipologia calcio", "Eventi pubblicati"]],
+	["campi-impianti-sportivi", "CampiImpianti", ["Tipologia campi disponibili", "Sede dell’impianto / struttura", "Numero campi pubblicati"]],
 ];
 
 function genericProfile(type, overrides = {}) {
@@ -688,7 +689,7 @@ test("all seven non-player profiles show ordered facts, integrated actions and s
 	const values = {
 		"Tipologie sportive": ["Calcio 11", "Calcio 5", "Calcio 8"],
 		"Tipologia campi disponibili": ["Calcio 11", "Calcio 5", "Calcio 8"], "Indirizzo del campo": "Via Roma 1",
-		"Tipologia calcio": ["Calcio 11", "Calcio 5"], "Tipologie calcio": ["Calcio 11", "Calcio 5", "Calcio 8"], "Categoria attuale": "Calcio 11 (Maschile) · Eccellenza",
+		"Tipologia calcio": ["Calcio 11", "Calcio 5"], "Tipologie calcio": ["Calcio 11", "Calcio 5", "Calcio 8"], "Categoria attuale Prima Squadra": "Calcio a 11 maschile — FIGC-LND — Eccellenza", "Tipo di azienda / professione": "Fisioterapia", "Sede Azienda / Professionista": "Via Roma 2",
 		"Figure professionali": ["Allenatore", "Preparatore atletico", "Match analyst"], "Disponibilità": "Disponibile subito",
 		"Disponibile anche da remoto": "No", "Automunito": "Sì", "Tipologia di contenuti": ["Video", "Podcast"], "Età": "35 anni",
 	};
@@ -697,15 +698,15 @@ test("all seven non-player profiles show ordered facts, integrated actions and s
 		const fieldLabels = new Set(["Tipologie sportive", "Tipologia campi disponibili", "Tipologia calcio", "Tipologie calcio", "Figure professionali", "Tipologia di contenuti"]);
 		const primaryFields = Object.entries(values).map(([label, value]) => ({label, value: Array.isArray(value) ? value.join(", ") : value, ...(fieldLabels.has(label) ? {items: value} : {})}));
 		const profile = genericProfile(type, {primaryFields});
-		const html = renderToStaticMarkup(React.createElement(Component, {profile, actions: React.createElement("button", null, "Condividi") }));
+		const html = renderToStaticMarkup(React.createElement(Component, {profile, authenticated: true, returnTo: "/dettagli-profilo", actions: React.createElement("button", null, "Condividi") }));
 		const expectedValues = {
-			squadra: ["Calcio 11\nCalcio 5", "Calcio 11 (Maschile) · Eccellenza", (1234).toLocaleString("it-IT"), "7"],
+			squadra: ["Calcio 11\nCalcio 5", "Calcio a 11 maschile — FIGC-LND — Eccellenza", "7"],
 			"staff-sportivo": ["Allenatore\nPreparatore atletico\n+1", "Calcio 11\nCalcio 5\n+1", "Disponibile subito", "No"],
-			"servizi-consulenze": ["Allenatore\nPreparatore atletico\n+1", "Calcio 11\nCalcio 5\n+1", "Disponibile subito", "Sì"],
+			"servizi-consulenze": ["Fisioterapia", "Calcio 11\nCalcio 5\n+1", "Disponibile subito", "Via Roma 2"],
 			arbitro: ["35 anni", "Calcio 11\nCalcio 5\n+1", "Disponibile subito", "Lazio"],
 			creators: ["Video\nPodcast", "7"],
-			"torneo-evento": ["Calcio 11\nCalcio 5\n+1", (1234).toLocaleString("it-IT"), "7"],
-			"campi-impianti-sportivi": ["Calcio 11\nCalcio 5\n+1", (1234).toLocaleString("it-IT"), "Via Roma 1, Roma, Lazio, Viterbo, Lazio", "7"],
+			"torneo-evento": ["Calcio 11\nCalcio 5\n+1", "7"],
+			"campi-impianti-sportivi": ["Calcio 11\nCalcio 5\n+1", "Via Roma 1, Roma, Lazio, Viterbo, Lazio", "7"],
 		}[type];
 		assert.deepEqual(renderedFacts(html), labels.map((label, index) => [label, expectedValues[index]]), type);
 		assert.match(html, /<header\b[\s\S]*Condividi[\s\S]*<\/header>/);
@@ -714,11 +715,11 @@ test("all seven non-player profiles show ordered facts, integrated actions and s
 		assert.match(html, /Profilo verificato ufficialmente/);
 		assert.match(html, /profile-section-navigation/);
 		assert.match(html, /aria-label="Informazioni del profilo"/);
-		assert.match(html, type === "campi-impianti-sportivi" ? /<span>Campi disponibili<\/span>/ : type === "torneo-evento" ? /<span>Eventi pubblicati<\/span>/ : /<span>Annunci<\/span>/);
+		assert.match(html, type === "campi-impianti-sportivi" ? /<span>Campi disponibili<\/span>/ : type === "torneo-evento" ? /<span>Eventi pubblicati<\/span>/ : type === "servizi-consulenze" ? /<span>Contenuti \/ promozioni<\/span>/ : /<span>Annunci<\/span>/);
 		assert.match(html, /Profili simili/);
 		assert.match(html, /Descrizione dimostrativa/);
-		assert.ok(html.indexOf('aria-label="Informazioni del profilo"') < html.indexOf('>Descrizione</h2>'), type);
-		assert.ok(html.indexOf('aria-label="Contatti e identificativo"') > html.indexOf('>Descrizione</h2>'), type);
+		assert.ok(html.indexOf('aria-label="Informazioni del profilo"') < html.indexOf(["staff-sportivo", "torneo-evento"].includes(type) ? ">Presentazione</h2>" : ">Descrizione</h2>"), type);
+		assert.ok(html.indexOf('aria-label="Contatti e identificativo"') > html.indexOf(["staff-sportivo", "torneo-evento"].includes(type) ? ">Presentazione</h2>" : ">Descrizione</h2>"), type);
 		const sidebar = [...html.matchAll(/<aside\b[\s\S]*?<\/aside>/g)].map(([value]) => value).join("");
 		for (const content of ["Lazio", "Roma", "Viterbo", "instagram.com/profilo", "youtube.com/@profilo", "Copia UUID del profilo"]) assert.ok(sidebar.includes(content), `${type}: ${content}`);
 		const overview = html.slice(html.indexOf("</header>"));
@@ -733,8 +734,8 @@ test("all seven non-player profiles show ordered facts, integrated actions and s
 		for (const item of type === "staff-sportivo" ? ["Match analyst"] : ["servizi-consulenze", "torneo-evento", "campi-impianti-sportivi"].includes(type) ? ["Calcio 8"] : []) {
 			assert.ok(overview.indexOf(item) >= 0 && overview.indexOf(item) < overview.indexOf("Descrizione dimostrativa"), `${type}: ${item}`);
 		}
-		const hasExperiences = ["staff-sportivo", "servizi-consulenze", "arbitro"].includes(type);
-		assert.equal(/role="tab"[^>]*>[\s\S]*?<span>Esperienze<\/span>/.test(html), hasExperiences, type);
+		const hasExperiences = ["staff-sportivo", "arbitro"].includes(type);
+		assert.equal(/role="tab"[^>]*>[\s\S]*?<span>Esperienze(?: e qualifiche)?<\/span>/.test(html), hasExperiences, type);
 		assert.doesNotMatch(html, /Esperienza dimostrativa|campo\.png|undefined|null/);
 	}
 });
@@ -747,11 +748,11 @@ test("non-player facts retain expected cells with missing data and distinguish u
 			locations: [], socialLinks: {instagram: "", facebook: "", youtube: "", linkedin: ""},
 			followerCount: 0, announcementCount: null, announcementsUnavailable: true,
 		});
-		const html = renderToStaticMarkup(React.createElement(Component, {profile}));
+		const html = renderToStaticMarkup(React.createElement(Component, {profile, authenticated: false, returnTo: "/dettagli-profilo"}));
 		const facts = renderedFacts(html);
 		assert.equal(facts.length, labels.length, type);
-		assert.deepEqual(facts, labels.map((label, index) => [label, ["Follower", "Numero Follower"].includes(label) ? "0" : "Non specificato"]));
-		assert.match(html, /Descrizione non disponibile/);
+		assert.deepEqual(facts, labels.map((label) => [label, ["Follower"].includes(label) ? "0" : "Non specificato"]));
+		assert.match(html, /(?:Descrizione|Presentazione) non disponibile/);
 		assert.match(html, /Nessuna località indicata/);
 		assert.doesNotMatch(html, /undefined|null|data-social-brand/);
 	}
@@ -777,7 +778,6 @@ test("the detail page places one profile action group inside every non-player he
 test("long-form primary fields remain in dedicated overview cards without duplication", () => {
 	for (const [type, name, narrativeFields] of [
 		["servizi-consulenze", "ServiziConsulenze", [
-			{label: "Specializzazioni", value: "Riabilitazione sportiva"},
 			{label: "Servizi offerti", value: "Valutazioni e trattamenti"},
 		]],
 		["campi-impianti-sportivi", "CampiImpianti", [
@@ -786,7 +786,7 @@ test("long-form primary fields remain in dedicated overview cards without duplic
 	]) {
 		const Component = load(`src/features/dettagli-profilo/components/types/DettagliProfilo${name}.tsx`).default;
 		const profile = genericProfile(type, {primaryFields: narrativeFields, fields: [{label: "Presentazione", value: "Descrizione dimostrativa"}, ...narrativeFields.slice(0, 1)]});
-		const html = renderToStaticMarkup(React.createElement(Component, {profile}));
+		const html = renderToStaticMarkup(React.createElement(Component, {profile, authenticated: false, returnTo: "/dettagli-profilo"}));
 		for (const {label, value} of narrativeFields) {
 			assert.ok(html.includes(`>${label}</h2>`), label);
 			assert.equal(html.split(value).length - 1, 1, value);
@@ -795,7 +795,7 @@ test("long-form primary fields remain in dedicated overview cards without duplic
 	}
 });
 
-test("facility overview keeps cost before description and hides hours, services and historic location", () => {
+test("facility overview hides obsolete cost, hours, services and historic location", () => {
 	const Facility = load("src/features/dettagli-profilo/components/types/DettagliProfiloCampiImpianti.tsx").default;
 	const profile = genericProfile("campi-impianti-sportivi", {fields: [
 		{label: "Costo di partenza", value: "€ 45 / 1h"},
@@ -806,7 +806,7 @@ test("facility overview keeps cost before description and hides hours, services 
 		{label: "Informazioni aggiuntive", value: "Accesso facilitato"},
 	]});
 	const html = renderToStaticMarkup(React.createElement(Facility, {profile}));
-	assert.match(html, /Costo di partenza/);
+	assert.doesNotMatch(html, /Costo di partenza/);
 	assert.match(html, /Accesso facilitato/);
 	assert.doesNotMatch(html, /Altre informazioni|Vecchia sede|Lunedì 09:00|Parcheggio/);
 });
@@ -880,4 +880,46 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 		assert.ok(badgeIndex >= 0 && badgeIndex < avatarIndex);
 		assert.ok(avatarIndex < titleIndex);
 	}
+});
+
+
+test("public profiles conceal the nominative for every supported subprofile without losing current data", async () => {
+ const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+ for (const [type, table, name] of [
+  ["giocatore", "profilo_giocatore", "Giocatore anonimo"],
+  ["squadra", "profilo_squadra", "Squadra anonima"],
+  ["staff-sportivo", "profilo_staff_sportivo", "Staff sportivo anonimo"],
+  ["arbitro", "profilo_arbitro", "Arbitro anonimo"],
+ ]) {
+  const child = {...player, nome: "Nome riservato", cognome: "Cognome riservato", nome_societa: "Società riservata", nominativo_anonimo: true,
+   storico_carriera: [], lista_esperienze: [{titolo: "Esperienza attuale", ente: "Ente sportivo"}],
+   qualifiche_licenze: [{titolo: "Licenza attuale", stato: "conseguito"}], storico_esperienze: [{titolo: "Licenza obsoleta"}]};
+  const client = fixtureClient({
+   profilo: {data: {uuid: id, tipologia_principale: type}, error: null},
+   [table]: call => call.operations.some(([method]) => method === "maybeSingle") ? {data: child, error: null} : {data: [], error: null},
+   media_profilo: {data: null, error: null}, annuncio: {data: [], count: 0, error: null},
+  });
+  const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("src/features/dettagli-profilo/server/profile-detail-query.ts");
+  const result = await getProfileDetail(id, type);
+  assert.equal(result.status, "ok", type);
+  assert.equal(result.profile.title, name);
+  assert.doesNotMatch(JSON.stringify(result), /Nome riservato|Cognome riservato|Società riservata|Licenza obsoleta/);
+  if (type === "staff-sportivo" || type === "arbitro") {
+   assert.equal(result.profile.experiences[0].title, "Esperienza attuale");
+   assert.equal(result.profile.qualifications[0].title, "Licenza attuale");
+  }
+ }
+});
+
+test("linked team names are resolved publicly and stale identifying copies never become fallbacks", () => {
+ const {publicTeamExperienceNames} = load("src/features/profilo/team-profile.ts");
+ const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+ const source = [{titolo: "Società riservata", ente: "Società riservata", squadraProfiloId: id, periodoDa: "2024"}];
+ const teams = new Map([[id, {profileId: id, name: "Squadra anonima", anonymousName: true}]]);
+ const concealed = publicTeamExperienceNames(source, teams, "titolo");
+ assert.doesNotMatch(JSON.stringify(concealed), /Società riservata/);
+ assert.equal(concealed[0].titolo, "Squadra anonima");
+ assert.equal(concealed[0].periodoDa, "2024");
+ assert.doesNotMatch(JSON.stringify(publicTeamExperienceNames(source, new Map(), "titolo")), /Società riservata/);
+ assert.equal(source[0].titolo, "Società riservata");
 });

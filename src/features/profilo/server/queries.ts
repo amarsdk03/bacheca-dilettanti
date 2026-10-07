@@ -1,4 +1,5 @@
 import "server-only";
+import {normalizeTeamCategory} from "@/features/profilo/team-category-catalog";
 
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
@@ -427,6 +428,7 @@ export async function getProfileDashboardData(
 	if (drafts.giocatore.disponibilita === "svincolato") drafts.giocatore.categoria_attuale = "";
 	drafts.giocatore.video_highlights = playerMediaResult.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, teamResult.data);
+	drafts.squadra.categoria_attuale = normalizeTeamCategory(drafts.squadra.categoria_attuale);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staffResult.data);
 	drafts.arbitro = hydrateDraft(drafts.arbitro, refereeResult.data);
 	drafts["torneo-evento"] = hydrateDraft(drafts["torneo-evento"], tournamentResult.data);

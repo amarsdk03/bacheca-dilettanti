@@ -113,7 +113,7 @@ test("all eleven announcement types pass client validation with complete details
 	drafts.giocatore.descrizione_aggiuntiva = "Cerco una squadra.";
 	drafts.squadraCercaGiocatore = {...drafts.squadraCercaGiocatore, ruoli_principali: ["Difensore"], descrizione_aggiuntiva: "Cerchiamo un giocatore."};
 	drafts.squadraCercaStaff = {...drafts.squadraCercaStaff, figure_ricercate: ["Allenatore", "Preparatore atletico"], requisiti: "Esperienza", compenso_mensile: "19.99", stagione: "2026/27"};
-	drafts.squadraCercaPartita = {...drafts.squadraCercaPartita, categorie_avversario: ["Under 17"], periodo_dal: "2026-10-01", periodo_al: "2026-12-31", orario_dalle: "18:30", orario_alle: "20:00"};
+	drafts.squadraCercaPartita = {...drafts.squadraCercaPartita, categorie_avversario: "Under 17", periodo_dal: "2026-10-01", periodo_al: "2026-12-31", orario_dalle: "18:30", orario_alle: "20:00"};
 	drafts.squadraCercaSponsor = {...drafts.squadraCercaSponsor, categoria_settore: "Locale", offerta_fornita: "Visibilità"};
 	drafts.staffSportivo = {...drafts.staffSportivo, tipologie_sport: ["Calcio 11"], descrizione_aggiuntiva: "Cerco incarico."};
 	drafts.arbitro = {...drafts.arbitro, tipologie_sport: ["Calcio 11"], descrizione_aggiuntiva: "Disponibile."};
@@ -184,7 +184,7 @@ test("client validation catches errors before confirming publication", () => {
 	assert.ok(staff.professionalRole);
 	assert.ok(staff.phone);
 
-	drafts.squadraCercaPartita = {...drafts.squadraCercaPartita, categorie_avversario: ["Under 17"], periodo_dal: "2026-02-29", orario_dalle: "24:00", orario_alle: "20:00"};
+	drafts.squadraCercaPartita = {...drafts.squadraCercaPartita, categorie_avversario: "Under 17", periodo_dal: "2026-02-29", orario_dalle: "24:00", orario_alle: "20:00"};
 	const match = getAnnouncementValidationErrors("squadra", "cerca-partite-amichevoli", drafts, locations, {email: "public@example.com", phone: ""});
 	assert.ok(match.periodFrom);
 	assert.ok(match.matchTimeFrom);

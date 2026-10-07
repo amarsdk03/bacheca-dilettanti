@@ -151,15 +151,21 @@ node --test $testFiles
 
 # 2. Changelog
 
+## Versioni future
+
+- Completamento del flusso operativo di pagamento e rimborso degli annunci prioritari.
+- Analitiche visualizzazione per aggiornamenti, profili e annunci
+- Aggiunta di sponsor/partner nelle varie sezioni dedicate
+
+---
+
 ## Versione 1.0 - Deploy prima versione
 
 Push effettuato il: ??/??/2026
 
 - Dashboard amministrativa di gestione utenti, profili, annunci e moderazione
 - Personalizzazione aumentata e miglioramento UI per le pagine dei profili e annunci
-- Completamento del flusso operativo di pagamento e rimborso degli annunci prioritari.
-- Analitiche visualizzazione per aggiornamenti, profili e annunci
-- Aggiunta di sponsor/partner nelle varie sezioni dedicate
+- Ampliati i dati degli annunci con gruppi squadra, categorie, contenuti e promozioni professionali
 
 ---
 
@@ -222,4 +228,3 @@ Push effettuato il: 17/09/2026
 - Visualizzazione riepilogo e statistiche piattaforma
 - Gestione profili e annunci
 - Approvazione o rifiuto pubblicazione annunci
-- La futura dashboard separata abilita o revoca **Servizi e consulenze** e **Creators** tramite `admin_set_restricted_profile_access_v1(p_profile_id, p_profile_type, p_enabled)` con un client server `service_role`. `p_profile_id` è l'UUID della riga `profilo`. La revoca rimuove il sottoprofilo attivo e conserva gli annunci già pubblicati. I dati dei profili possono essere modificati dalla dashboard con le credenziali amministrative.

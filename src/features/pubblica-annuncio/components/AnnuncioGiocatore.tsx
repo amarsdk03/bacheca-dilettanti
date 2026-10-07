@@ -44,9 +44,9 @@ export default function AnnuncioGiocatore() {
 	);
 
 	return (
-		<FieldGroup className="w-full">
+		<FieldGroup spacing="sections">
 			<FieldSet>
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">
 						Dati giocatore
 					</FieldLegend>
@@ -101,7 +101,7 @@ export default function AnnuncioGiocatore() {
 			/>
 
 			<FieldSet>
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">
 						Profilo calcistico
 					</FieldLegend>
@@ -142,7 +142,7 @@ export default function AnnuncioGiocatore() {
 
 				<Field>
 					<div className="flex items-center justify-between gap-3">
-						<FieldLabel htmlFor="giocatore-descrizione-aggiuntiva">Breve descrizione aggiuntiva <OptionalLabel /></FieldLabel>
+						<FieldLabel htmlFor="giocatore-descrizione-aggiuntiva">Informazioni aggiuntive <OptionalLabel /></FieldLabel>
 						<span className="text-xs text-muted-foreground">{descrizioneAggiuntiva.length}/2000</span>
 					</div>
 					<Textarea

@@ -49,6 +49,7 @@ export default function TeamProfileComboboxField({
 		return items.find((item) => item.profileId === profileId) ?? {
 			profileId,
 			name: value,
+			anonymousName: false,
 			imageUrl: null,
 			location: null,
 		};

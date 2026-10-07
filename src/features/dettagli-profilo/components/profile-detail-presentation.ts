@@ -13,6 +13,8 @@ export interface ProfileDetailPresentation {
 	narrativeFieldLabels: readonly string[];
 	announcementsLabel?: string;
 	hasExperiences?: boolean;
+	presentationLabel?: string;
+	careerLabel?: string;
 }
 
 export function getProfileDetailFields(profile: GenericProfileDetail): ProfileDetailField[] {

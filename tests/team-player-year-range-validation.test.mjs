@@ -26,8 +26,9 @@ function load(file) {
 }
 
 const {parsePublishPayload} = load(path.join(root, "src/features/pubblica-annuncio/server/validation.ts"));
+const {PUBLISH_PAYLOAD_VERSION} = load(path.join(root, "src/features/pubblica-annuncio/publish-model.ts"));
 const payload = () => ({
-	version: 4, submissionId: "11111111-1111-4111-8111-111111111111", visibility: "gratuito",
+	version: PUBLISH_PAYLOAD_VERSION, submissionId: "11111111-1111-4111-8111-111111111111", visibility: "gratuito",
 	profileType: "squadra", teamSubtype: "cerca-giocatore", anonymousProfile: null, profileUpdate: null,
 	announcement: {
 		type: "annuncio_squadra_cerca_giocatore",

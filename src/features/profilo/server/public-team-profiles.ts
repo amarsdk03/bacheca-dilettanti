@@ -1,4 +1,5 @@
 import "server-only";
+import {publicProfileName} from "@/features/profilo/profile-public-name";
 
 import type {SupabaseClient} from "@supabase/supabase-js";
 
@@ -54,7 +55,7 @@ export async function loadPublicTeamProfiles(
 				.not("uuid_utente", "is", null),
 			supabase
 				.from("profilo_squadra")
-				.select("uuid_profilo, nome_societa")
+				.select("uuid_profilo, nome_societa, nominativo_anonimo")
 				.in("uuid_profilo", chunk)
 				.eq("nascosto", false),
 		]);
@@ -67,17 +68,17 @@ export async function loadPublicTeamProfiles(
 	const profileImages = await loadProfileImageUrlMap(supabase, profiles.map(({uuid}) => uuid));
 
 	const teamsById = new Map(teams.flatMap((team) => {
-		const name = cleanText(team.nome_societa);
-		return name ? [[team.uuid_profilo, name] as const] : [];
+		const name = publicProfileName("squadra", team.nominativo_anonimo, cleanText(team.nome_societa));
+		return name ? [[team.uuid_profilo, {name, anonymousName: team.nominativo_anonimo}] as const] : [];
 	}));
 	const order = new Map(ids.map((id, index) => [id, index]));
 
 	return profiles.flatMap((profile): PublicTeamProfile[] => {
-		const name = teamsById.get(profile.uuid);
-		if (!name) return [];
+		const team = teamsById.get(profile.uuid);
+		if (!team) return [];
 		return [{
 			profileId: profile.uuid,
-			name,
+			...team,
 			imageUrl: resolvedProfileImageUrl(profileImages, profile.uuid, "squadra", cleanText(profile.link_foto_profilo)),
 			location: locationLabel(profile.localita_profilo),
 		}];
@@ -95,6 +96,7 @@ export async function searchPublicTeamProfiles(
 		.from("profilo_squadra")
 		.select("uuid_profilo")
 		.eq("nascosto", false)
+		.eq("nominativo_anonimo", false)
 		.ilike("nome_societa", `%${query}%`)
 		.order("nome_societa", {ascending: true})
 		.limit(TEAM_PROFILE_SEARCH_LIMIT * 3);

@@ -46,7 +46,7 @@ export default function AnnouncementDetailsLayout({
 			<AnnouncementDetailsHeader
 				announcement={announcement}
 				presentation={presentation}
-				actions={<DetailActions target={{kind: "annuncio", id: announcement.id}} href={`/dettagli-annuncio?${new URLSearchParams({id: announcement.id})}`} presentation="announcement" shareOnly={!announcement.isListed} />}
+				actions={<DetailActions target={{kind: "annuncio", id: announcement.id}} interestTarget={{kind: "annuncio", id: announcement.id}} href={`/dettagli-annuncio?${new URLSearchParams({id: announcement.id})}`} presentation="announcement" shareOnly={!announcement.isListed} />}
 			/>
 			<AnnouncementDetailsTabs
 				overview={

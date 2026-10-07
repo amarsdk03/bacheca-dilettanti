@@ -115,7 +115,7 @@ export default function ProfileCardShell({
 					<ProfileFactGrid facts={facts} accent={accent} />
 				</CardContent>
 				<CardFooter className="justify-between gap-3">
-					<span className="text-sm font-semibold">Informazioni complete</span>
+					<span className="text-sm font-semibold">Vedi scheda {option.label}</span>
 					<ArrowUpRightIcon className="size-5 transition-transform motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:translate-x-0.5" aria-hidden="true" />
 				</CardFooter>
 			</Card>

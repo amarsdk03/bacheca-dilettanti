@@ -28,11 +28,11 @@ export const PROFILE_FILTERS_BY_TYPE = {
 	giocatore: ["regione", "tipologia", "ruolo", "disponibilita"],
 	squadra: ["regione", "tipologia"],
 	"staff-sportivo": ["regione", "figura", "disponibilita"],
-	"servizi-consulenze": ["regione", "tipologia", "figura", "disponibilita", "automunito"],
+	"servizi-consulenze": ["regione", "tipologia", "disponibilita"],
 	arbitro: ["regione", "disponibilita"],
 	creators: ["regione"],
 	"torneo-evento": ["regione", "tipologia"],
-	"campi-impianti-sportivi": ["regione", "tipologia", "costoMax"],
+	"campi-impianti-sportivi": ["regione", "tipologia"],
 } as const satisfies Record<ProfileType, readonly ProfileFilterParam[]>;
 
 export const PROFILE_FILTER_OPTIONS = {

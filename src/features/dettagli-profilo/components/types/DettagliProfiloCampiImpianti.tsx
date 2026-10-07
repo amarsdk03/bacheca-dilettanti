@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-import {MapPinIcon, MegaphoneIcon, ShirtIcon, UserRoundPlusIcon} from "lucide-react";
+import {MapPinIcon, MegaphoneIcon, ShirtIcon} from "lucide-react";
 import type {GenericProfileDetail} from "../../profile-detail-model";
 import ProfileDetailsLayout from "../ProfileDetailsLayout";
 import type {ProfileDetailPresentation} from "../profile-detail-presentation";
@@ -9,7 +9,6 @@ const PRESENTATION = {
 	announcementsLabel: "Campi disponibili",
 	facts: [
 		{label: "Tipologia campi disponibili", icon: ShirtIcon},
-		{label: "Numero Follower", icon: UserRoundPlusIcon, getValue: profile => formatProfileFactCount(profile.followerCount)},
 		{label: "Sede dell’impianto / struttura", sourceFieldLabels: ["Indirizzo del campo"], icon: MapPinIcon, getValue: profile => {
 			const address = getProfileDetailFieldValue(profile, "Indirizzo del campo");
 			const location = profile.locations

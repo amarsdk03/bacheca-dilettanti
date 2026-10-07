@@ -44,7 +44,7 @@ export default function AnnouncementAuthorCard({announcement}: {announcement: An
 				</div>
 				<Button render={<Link href={href} />} nativeButton={false} variant="outline" className="h-auto min-h-10 w-full whitespace-normal">
 					<ExternalLinkIcon data-icon="inline-start" aria-hidden="true" />
-					Informazioni complete
+					Vedi scheda {option.label}
 				</Button>
 			</CardContent>
 		</Card>;

@@ -1,3 +1,4 @@
+import {isTeamCategory} from "@/features/profilo/team-category-catalog";
 import {isCompleteValidBirthDate} from "@/features/profilo/birth-date";
 import {isPlayerNationalityCode} from "@/features/profilo/player-nationalities";
 import type {ProfileDrafts, ProfileLocations, ProfileType,} from "@/features/profilo/profile-model";
@@ -60,8 +61,10 @@ export function getProfileCompletion(
 	type: ProfileType,
 	drafts: ProfileDrafts,
 	locations: ProfileLocations,
+	options: {includePrivateContacts?: boolean} = {},
 ): ProfileCompletion {
 	const hasLocations = locations[type].some(({regione}) => hasText(regione));
+	const includePrivateContacts = options.includePrivateContacts !== false;
 
 	if (type === "giocatore") {
 		const draft = drafts.giocatore;
@@ -91,7 +94,7 @@ export function getProfileCompletion(
 		return completion([
 			hasText(draft.nome_societa),
 			Array.isArray(draft.tipologie_sport) && draft.tipologie_sport.length === 1,
-			hasText(draft.categoria_attuale),
+			isTeamCategory(draft.categoria_attuale),
 			hasText(draft.presentazione),
 			hasLocations,
 		]);
@@ -107,7 +110,7 @@ export function getProfileCompletion(
 			hasText(draft.disponibilita) && draft.disponibilita !== "non-specificare",
 			hasText(draft.presentazione),
 			hasExperiences(draft.lista_esperienze),
-			hasExperiences(draft.qualifiche_licenze) || hasExperiences(draft.storico_esperienze),
+			hasExperiences(draft.qualifiche_licenze),
 			hasLocations,
 		]);
 	}
@@ -116,17 +119,13 @@ export function getProfileCompletion(
 		const draft = drafts["servizi-consulenze"];
 		return completion([
 			hasText(draft.nome),
-			hasText(draft.cognome),
-			hasBirthDate(draft),
-			hasItems(draft.figure_professionali),
+			hasText(draft.sede_professionista),
+			...(includePrivateContacts ? [hasText(draft.contatto_email) || hasText(draft.contatto_telefono)] : []),
 			hasItems(draft.tipologie_sport),
 			hasText(draft.disponibilita) && draft.disponibilita !== "non-specificare",
-			hasText(draft.automunito),
 			hasText(draft.specializzazioni),
 			hasText(draft.presentazione),
 			hasText(draft.presentazione_servizi),
-			hasExperiences(draft.lista_esperienze),
-			hasExperiences(draft.qualifiche_licenze),
 			hasLocations,
 		]);
 	}
@@ -149,6 +148,7 @@ export function getProfileCompletion(
 		const draft = drafts.creators;
 		return completion([
 			hasText(draft.nome_creator),
+			...(includePrivateContacts ? [hasText(draft.contatto_email)] : []),
 			hasText(draft.tipologia_contenuti),
 			hasText(draft.presentazione),
 			hasLocations,

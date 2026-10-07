@@ -13,7 +13,9 @@ const PRESENTATION = {
 		{label: "Disponibile da remoto", fieldLabel: "Disponibile anche da remoto", icon: WifiIcon, getValue: profile => getProfileDetailFieldValue(profile, "Disponibile anche da remoto")},
 	],
 	narrativeFieldLabels: [],
+	presentationLabel: "Presentazione",
 	hasExperiences: true,
+	careerLabel: "Esperienze e qualifiche",
 } satisfies ProfileDetailPresentation;
 
 export default function DettagliProfiloStaffSportivo({profile, actions, authenticated, isOwner, returnTo}: {profile: GenericProfileDetail<"staff-sportivo">; actions?: ReactNode; authenticated: boolean; isOwner?: boolean; returnTo: string}) {

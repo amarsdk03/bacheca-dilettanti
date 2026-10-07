@@ -10,7 +10,7 @@ export default function Partner() {
 		<GradientBackground id="main-content" className="bg-[radial-gradient(circle_at_50%_0%,rgba(142,114,255,0.16),transparent_34rem)] px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
 			<section className="mx-auto flex max-w-2xl flex-col items-center text-center" aria-labelledby="partner-title">
 				<Badge variant="secondary" className="h-auto gap-1.5 px-3 py-1 text-brand-indigo">
-					<SparklesIcon aria-hidden="true" /> Coming soon
+					<SparklesIcon aria-hidden="true" /> Presto in arrivo...
 				</Badge>
 				<h1 id="partner-title" className="mt-5 font-home-display text-4xl font-medium uppercase tracking-tight sm:text-5xl">
 					Partner e sponsor

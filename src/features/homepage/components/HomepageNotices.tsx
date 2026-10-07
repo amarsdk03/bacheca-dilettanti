@@ -85,22 +85,37 @@ export default function HomepageNotices({notices}: HomepageNoticesProps) {
 											<span className="font-home-display wrap-break-word text-lg sm:text-2xl font-normal uppercase leading-tight">
 												{notice.titolo}
 											</span>
+											{
+												(!notice.testo && notice.azione) && (
+													<Link
+														href={notice.azione.href}
+														className={cn(buttonVariants({variant: "link", size: "lg"}), "homepage-notices-action text-base max-w-full justify-start gap-2 px-0 whitespace-normal")}
+													>
+														{notice.azione.etichetta}
+														<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
+													</Link>
+												)
+											}
 										</span>
 									</AccordionTrigger>
-									<AccordionContent className="h-auto px-4 pb-5 sm:pr-16 sm:pl-21">
-										<p className="max-w-2xl whitespace-pre-line wrap-break-word text-base leading-6 text-muted-foreground">
-											{notice.testo}
-										</p>
-										{notice.azione && (
-											<Link
-												href={notice.azione.href}
-												className={cn(buttonVariants({variant: "link", size: "lg"}), "homepage-notices-action text-base mt-3 min-h-11 max-w-full justify-start gap-2 px-0 whitespace-normal")}
-											>
-												{notice.azione.etichetta}
-												<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-											</Link>
-										)}
-									</AccordionContent>
+									{
+										notice.testo && (
+											<AccordionContent className="h-auto px-4 pb-5 sm:pr-16 sm:pl-21">
+												<p className="max-w-2xl whitespace-pre-line wrap-break-word text-base leading-6 text-muted-foreground">
+													{notice.testo}
+												</p>
+												{notice.azione && (
+													<Link
+														href={notice.azione.href}
+														className={cn(buttonVariants({variant: "link", size: "lg"}), "homepage-notices-action text-base mt-3 min-h-11 max-w-full justify-start gap-2 px-0 whitespace-normal")}
+													>
+														{notice.azione.etichetta}
+														<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
+													</Link>
+												)}
+											</AccordionContent>
+										)
+									}
 								</AccordionItem>
 							);
 						})}

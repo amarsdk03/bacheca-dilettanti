@@ -1,6 +1,6 @@
 "use client";
 
-import {type ReactNode, useEffect, useMemo, useRef, useState} from "react";
+import {type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import Link from "next/link";
 import {ClipboardPenIcon, MailCheckIcon} from "lucide-react";
 
@@ -18,6 +18,7 @@ import {
 	type ProfileLocationDraft,
 	type ProfileLocations,
 } from "@/features/profilo/profile-model";
+import {birthMonthNumber, daysInBirthMonth, getItalyDateParts} from "@/features/profilo/birth-date";
 import {createProfileSocialLinks, type ProfileSocialPlatform,} from "@/features/profilo/profile-social-links";
 import AnnouncementDetailsForm from "@/features/pubblica-annuncio/components/AnnouncementDetailsForm";
 import ConfermaInvioAnnuncio from "@/features/pubblica-annuncio/components/ConfermaInvioAnnuncio";
@@ -26,13 +27,14 @@ import SelezionaTipologiaAnnuncio from "@/features/pubblica-annuncio/components/
 import {
 	type AnnouncementContacts,
 	type AnnouncementExtras,
+	announcementRegionsAllowed,
+	PROFESSIONAL_AREA_ERROR,
 	cloneProfileDrafts,
 	cloneProfileLocations,
 	cloneProfileSocialLinks,
 	createAnnouncementDetailsDrafts,
 	getAnnouncementDetail,
 	getAnnouncementValidationErrors,
-	getAnnouncementValidationMessage,
 	getDatabaseAnnouncementType,
 	getProfileValidationErrors,
 	isPublishableProfileType,
@@ -53,6 +55,24 @@ interface PubblicaAnnuncioProps {
 	profileContext: PublishProfileContext | null;
 }
 
+function getMinorContactNotice(profileType: PublishableProfileType, drafts: ProfileDrafts) {
+	if (profileType === "servizi-consulenze") return false;
+	if (
+		profileType !== "giocatore"
+		&& profileType !== "staff-sportivo"
+		&& profileType !== "arbitro"
+	) return true;
+	const draft = drafts[profileType];
+	const year = Number(draft.anno_nascita);
+	const month = birthMonthNumber(draft.mese_nascita);
+	const day = Number(draft.giorno_nascita);
+	if (!Number.isInteger(year) || year < 1900 || !month || !Number.isInteger(day) || day < 1 || day > daysInBirthMonth(year, month)) return true;
+	const today = getItalyDateParts();
+	let age = today.year - year;
+	if (today.month < month || (today.month === month && today.day < day)) age--;
+	return age < 18;
+}
+
 function PublishStepTab({value, locked, reason, resetKey, children}: {
 	value: string;
 	locked: boolean;
@@ -68,7 +88,24 @@ function PublishStepTab({value, locked, reason, resetKey, children}: {
 	</Tooltip>;
 }
 
-export default function PubblicaAnnuncio({
+export default function PubblicaAnnuncio(props: PubblicaAnnuncioProps) {
+	const [visit, setVisit] = useState(0);
+	useLayoutEffect(() => {
+		const resetVisit = () => setVisit((previous) => previous + 1);
+		const restoreVisit = (event: PageTransitionEvent) => {
+			if (event.persisted) resetVisit();
+		};
+		window.addEventListener("pageshow", restoreVisit);
+		return () => {
+			window.removeEventListener("pageshow", restoreVisit);
+			// Also runs when Next hides a cached route through Activity.
+			resetVisit();
+		};
+	}, []);
+	return <PublishAnnouncementForm key={`${props.profileContext?.profileId ?? props.initialEmail}:${props.registered}:${visit}`} {...props} />;
+}
+
+function PublishAnnouncementForm({
 	authenticated,
 	registered,
 	initialEmail,
@@ -89,13 +126,13 @@ export default function PubblicaAnnuncio({
 	const [announcementDrafts, setAnnouncementDrafts] = useState(createAnnouncementDetailsDrafts);
 	const [announcementTitle, setAnnouncementTitle] = useState("");
 	const [announcementLocations, setAnnouncementLocations] = useState<ProfileLocationDraft[]>([]);
-	const [contacts, setContacts] = useState<AnnouncementContacts>({email: registered ? initialEmail : "", phone: ""});
+	const [contacts, setContacts] = useState<AnnouncementContacts>({email: registered ? initialEmail : "", phone: "", contactRole: ""});
 	const [extras, setExtras] = useState<AnnouncementExtras>({genericLink: ""});
 	const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
 	const [announcementImagePreviewUrl, setAnnouncementImagePreviewUrl] = useState<string | null>(null);
 	const announcementImagePreviewUrlRef = useRef<string | null>(null);
 	const [profileUnlocked, setProfileUnlocked] = useState(false);
-	const [submissionId] = useState(() => globalThis.crypto.randomUUID());
+	const [submissionId, setSubmissionId] = useState(() => globalThis.crypto.randomUUID());
 	const [profileValidationVisible, setProfileValidationVisible] = useState(false);
 	const [announcementValidationVisible, setAnnouncementValidationVisible] = useState(false);
 	const profileLocationSnapshot = useRef<string | null>(null);
@@ -127,10 +164,16 @@ export default function PubblicaAnnuncio({
 		? Object.values(profileValidationErrors).find(Boolean) ?? null
 		: "Seleziona una tipologia di profilo.";
 	const announcementValidationErrors = profileType
-		? getAnnouncementValidationErrors(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras, announcementTitle)
+		? getAnnouncementValidationErrors(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras, announcementTitle, registered)
 		: {};
+	const allowedAnnouncementRegions = profileType === "servizi-consulenze"
+		? [...new Set(profileLocations[profileType].map(({regione}) => regione))]
+		: undefined;
+	if (allowedAnnouncementRegions && !announcementRegionsAllowed(announcementLocations, allowedAnnouncementRegions)) {
+		announcementValidationErrors.locations = PROFESSIONAL_AREA_ERROR;
+	}
 	const announcementValidationMessage = profileType
-		? getAnnouncementValidationMessage(profileType, teamSubtype, announcementDrafts, announcementLocations, contacts, extras, announcementTitle)
+		? Object.values(announcementValidationErrors).find(Boolean) ?? null
 		: "Seleziona una tipologia di profilo.";
 	const step1Valid = profileType !== "" && (profileType !== "squadra" || teamSubtype !== null);
 	const step2Valid = step1Valid && profileValidationMessage === null;
@@ -204,8 +247,23 @@ export default function PubblicaAnnuncio({
 	const handleProfileTypeChange = (value: string) => {
 		if (!isPublishableProfileType(value)) return;
 		if (registered && !enabledProfileTypes.includes(value)) return;
+		if (value === profileType) return;
+		resetCompilation();
 		setProfileType(value);
 		setTeamSubtype(null);
+	};
+
+	const resetCompilation = () => {
+		setProfileDrafts(registered && profileContext ? cloneProfileDrafts(profileContext.drafts) : createProfileDrafts());
+		setProfileLocations(registered && profileContext ? cloneProfileLocations(profileContext.locations) : createProfileLocations());
+		setProfileSocialLinks(registered && profileContext ? cloneProfileSocialLinks(profileContext.socialLinks) : createProfileSocialLinks());
+		setAnnouncementDrafts(createAnnouncementDetailsDrafts());
+		setAnnouncementTitle("");
+		setContacts({email: registered ? initialEmail : "", phone: "", contactRole: ""});
+		setExtras({genericLink: ""});
+		updateAnnouncementImage(null);
+		setSubmissionId(globalThis.crypto.randomUUID());
+		setStep(1);
 		setProfileValidationVisible(false);
 		setAnnouncementValidationVisible(false);
 		setProfileUnlocked(false);
@@ -222,6 +280,9 @@ export default function PubblicaAnnuncio({
 
 	const updateProfileLocations = (type: PublishableProfileType, value: ProfileLocationDraft[]) => {
 		setProfileLocations((previous) => ({...previous, [type]: value}));
+		if (type === "servizi-consulenze") {
+			setAnnouncementLocations((previous) => previous.filter(({regione}) => value.some((location) => location.regione === regione)));
+		}
 	};
 
 	const updateProfileSocialLinks = (type: PublishableProfileType, platform: ProfileSocialPlatform, value: string) => {
@@ -242,7 +303,11 @@ export default function PubblicaAnnuncio({
 			: profileLocations[profileType];
 		const nextSnapshot = JSON.stringify(sourceLocations);
 		if (profileLocationSnapshot.current !== nextSnapshot) {
-			setAnnouncementLocations(structuredClone(sourceLocations));
+			if (profileType === "servizi-consulenze" && profileLocationSnapshot.current !== null) {
+				setAnnouncementLocations((previous) => previous.filter(({regione}) => sourceLocations.some((location) => location.regione === regione)));
+			} else {
+				setAnnouncementLocations(structuredClone(sourceLocations));
+			}
 			profileLocationSnapshot.current = nextSnapshot;
 		}
 
@@ -339,8 +404,15 @@ export default function PubblicaAnnuncio({
 										<div className="mx-auto mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
 											<MailCheckIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 											<p>
-												<strong>Pubblicazione senza profilo:</strong> prima dell’invio, verificheremo il tuo indirizzo
-												email con un codice monouso. Senza profilo, è possibile pubblicare <b>massimo 1 annuncio</b> ogni 24 ore.
+												<strong>Pubblicazione senza profilo:</strong> prima dell’invio,
+												verificheremo il tuo indirizzo email con un codice monouso. Senza
+												profilo, è possibile pubblicare <b>massimo 1 annuncio</b> ogni 24 ore: {" "}
+												<Link
+													href={"/registrati"}
+													className={"text-violet-800 underline decoration-violet-400 underline-offset-2"}
+												>
+													registrati per accedere a tutti i vantaggi!
+												</Link>
 											</p>
 										</div>
 									)
@@ -349,7 +421,11 @@ export default function PubblicaAnnuncio({
 									tipologia={profileType}
 									sottotipologia={teamSubtype ?? ""}
 									onTipologiaChangeAction={handleProfileTypeChange}
-									onSottotipologiaChangeAction={(value) => isTeamAnnouncementSubtype(value) && setTeamSubtype(value)}
+									onSottotipologiaChangeAction={(value) => {
+										if (!isTeamAnnouncementSubtype(value) || value === teamSubtype) return;
+										resetCompilation();
+										setTeamSubtype(value);
+									}}
 									onContinueAction={() => goToStep(2)}
 									registered={registered}
 										enabledProfileTypes={enabledProfileTypes}
@@ -364,6 +440,7 @@ export default function PubblicaAnnuncio({
 							<CardContent className="grid gap-8">
 								{profileType && (
 									<PublishProfileStep
+										key={submissionId}
 										profileType={profileType}
 										registered={registered}
 										unlocked={profileUnlocked}
@@ -390,6 +467,8 @@ export default function PubblicaAnnuncio({
 							<CardContent className="grid gap-8">
 								{profileType && (
 									<AnnouncementDetailsForm
+										key={submissionId}
+										allowedRegions={allowedAnnouncementRegions}
 										profileType={profileType}
 										teamSubtype={teamSubtype}
 										announcementTitle={announcementTitle}
@@ -400,6 +479,8 @@ export default function PubblicaAnnuncio({
 										onLocationsChange={setAnnouncementLocations}
 										contacts={contacts}
 										onContactsChange={setContacts}
+										registered={registered}
+										showMinorContactNotice={getMinorContactNotice(profileType, profileDrafts)}
 										extras={extras}
 										onExtrasChange={setExtras}
 										image={announcementImage}
@@ -418,7 +499,7 @@ export default function PubblicaAnnuncio({
 					<TabsContent value="tab-4">
 						<Card className="my-4 pt-6">
 							<CardContent>
-								{payload && profileType && <ConfermaInvioAnnuncio payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} authenticated={authenticated} registered={registered} onEditStep={goToStep} />}
+								{payload && profileType && <ConfermaInvioAnnuncio key={submissionId} payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} authenticated={authenticated} registered={registered} onEditStep={goToStep} />}
 							</CardContent>
 						</Card>
 					</TabsContent>

@@ -21,9 +21,9 @@ export default function AnnuncioServiziConsulenze() {
 	const data = useAnnuncioServiziConsulenzeStore();
 
 	return (
-		<FieldGroup className="w-full gap-6">
+		<FieldGroup spacing="sections">
 			<FieldSet>
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">Dati per servizi e consulenze</FieldLegend>
 					<FieldDescription>Descrivi la tua figura professionale e i servizi offerti al mondo sportivo.</FieldDescription>
 				</div>
@@ -38,7 +38,7 @@ export default function AnnuncioServiziConsulenze() {
 			<ContattiAnnuncioFields contatti={data.contatti} setContatti={(value) => data.setField("contatti", value)} />
 
 			<FieldSet>
-				<div className="mt-4"><FieldLegend variant="label" className="field-legend-title mb-0">Servizio</FieldLegend></div>
+				<div><FieldLegend variant="label" className="field-legend-title mb-0">Servizio</FieldLegend></div>
 				<AnnuncioTextareaField id="servizi-consulenze-servizi-offerti" label="Servizi offerti" value={data.serviziOfferti} onValueChange={(value) => data.setField("serviziOfferti", value)} placeholder="Descrivi consulenze, percorsi e prestazioni..." />
 				<Field>
 					<FieldLabel>Modalità del servizio <OptionalLabel /></FieldLabel>
@@ -55,7 +55,7 @@ export default function AnnuncioServiziConsulenze() {
 			<RegioniInteresseField idPrefix="servizi-consulenze-regioni-interessate" regioniInteressate={data.regioniInteressate} setRegioniInteressate={(value) => data.setField("regioniInteressate", value)} cittaComuniPerRegione={data.cittaComuniPerRegione} setCittaComuniPerRegione={(value) => data.setField("cittaComuniPerRegione", value)} />
 
 			<FieldSet>
-				<div className="mt-4"><FieldLegend variant="label" className="field-legend-title mb-0">Esperienza e disponibilità</FieldLegend></div>
+				<div><FieldLegend variant="label" className="field-legend-title mb-0">Esperienza e disponibilità</FieldLegend></div>
 				<AnnuncioTextareaField id="servizi-consulenze-categorie-destinatarie" label="Categorie / realtà a cui si rivolge" value={data.categorieDestinatarie} onValueChange={(value) => data.setField("categorieDestinatarie", value)} placeholder="Settore giovanile, prime squadre, singoli calciatori, società..." />
 				<AnnuncioTextareaField id="servizi-consulenze-qualifiche" label="Qualifiche / titoli / abilitazioni" value={data.qualificheTitoliAbilitazioni} onValueChange={(value) => data.setField("qualificheTitoliAbilitazioni", value)} placeholder="Titoli di studio, albo, abilitazioni e certificazioni..." />
 				<AnnuncioTextareaField id="servizi-consulenze-esperienza" label="Esperienza" value={data.esperienza} onValueChange={(value) => data.setField("esperienza", value)} placeholder="Esperienze professionali e collaborazioni rilevanti..." />

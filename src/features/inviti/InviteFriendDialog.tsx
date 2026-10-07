@@ -32,7 +32,7 @@ export default function InviteFriendDialog({code, confirmedCount}: InviteFriendD
 	function invitationMessage() {
 		const link = new URL("/registrati", window.location.origin);
 		link.searchParams.set("codice-invito", code);
-		return `Ciao! Ti invito a iscriverti a Bacheca Dilettanti: usa il mio codice ${code}.\n${link.toString()}`;
+		return `Ciao! Ti invito ad entrare in Bacheca Dilettanti, il tuo prossimo passo nel calcio ⚽️. Usa il mio codice invito: ${code}.\n\n${link.toString()}`;
 	}
 
 	return (

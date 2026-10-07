@@ -95,9 +95,9 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 	);
 
 	return (
-		<FieldGroup className="w-full gap-6">
+		<FieldGroup spacing="sections">
 			<FieldSet>
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">
 						Dati squadra
 					</FieldLegend>
@@ -171,7 +171,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 
 			{sottotipologia === "cerca-giocatore" && (
 				<FieldSet>
-					<div className="mt-4">
+					<div>
 						<FieldLegend variant="label" className="field-legend-title mb-0">
 							Ricerca giocatore
 						</FieldLegend>
@@ -340,7 +340,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 
 			{sottotipologia === "cerca-staff" && (
 				<FieldSet>
-					<div className="mt-4">
+					<div>
 						<FieldLegend variant="label" className="field-legend-title mb-0">
 							Ricerca staff sportivo
 						</FieldLegend>
@@ -437,7 +437,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 
 			{sottotipologia === "cerca-partite-amichevoli" && (
 				<FieldSet>
-					<div className="mt-4">
+					<div>
 						<FieldLegend variant="label" className="field-legend-title mb-0">
 							Ricerca amichevoli
 						</FieldLegend>
@@ -520,7 +520,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 
 			{sottotipologia === "cerca-sponsor" && (
 				<FieldSet>
-					<div className="mt-4">
+					<div>
 						<FieldLegend variant="label" className="field-legend-title mb-0">
 							Ricerca sponsor
 						</FieldLegend>

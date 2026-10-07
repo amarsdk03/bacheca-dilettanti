@@ -27,7 +27,7 @@ export default function RecapAnnuncioGiocatore() {
 				<RecapField label="Contatti pubblici per questo annuncio" wide>{formatContatti(data.contatti)}</RecapField>
 				<AnnouncementImageRecap image={data.immagineAnnuncio} />
 				{data.descrizioneAggiuntiva.trim() !== "" && (
-					<RecapField label="Breve descrizione aggiuntiva" wide>{data.descrizioneAggiuntiva}</RecapField>
+					<RecapField label="Informazioni aggiuntive" wide>{data.descrizioneAggiuntiva}</RecapField>
 				)}
 				<AnnouncementLinkRecap link={data.linkAnnuncio} />
 			</dl>

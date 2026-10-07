@@ -19,7 +19,9 @@ import {Field, FieldError, FieldLabel} from "@/components/ui/field";
 import {Textarea} from "@/components/ui/textarea";
 import {toast} from "@/components/ui/toast";
 import InteractionButton from "@/features/interazioni/InteractionButton";
-import type {InteractionState} from "@/features/interazioni/interaction-model";
+import InterestDialog from "@/features/interessi/InterestDialog";
+import type {InterestContext, InterestTarget} from "@/features/interessi/interest-model";
+import type {InteractionState, InteractionTarget} from "@/features/interazioni/interaction-model";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {
 	INITIAL_REPORT_ACTION_STATE,
@@ -32,8 +34,10 @@ import {cn, copyText} from "@/lib/utils";
 
 interface DetailActionsProps {
 	href: string;
-	target: ReportTarget;
+	target: InteractionTarget;
 	interaction: InteractionState;
+	interestTarget?: InterestTarget;
+	interestContext?: InterestContext | null;
 	presentation?: "default" | "profile" | "announcement";
 	shareOnly?: boolean;
 }
@@ -103,11 +107,11 @@ function ReportForm({
 	);
 }
 
-export default function DetailActions({href, target, interaction, presentation = "default", shareOnly = false}: DetailActionsProps) {
+export default function DetailActions({href, target, interaction, interestTarget, interestContext, presentation = "default", shareOnly = false}: DetailActionsProps) {
 	const [reportOpen, setReportOpen] = useState(false);
 	const [reportPending, setReportPending] = useState(false);
 	const isDetail = presentation !== "default";
-	const followButton = <InteractionButton target={target} state={interaction} href={href} showLabel={isDetail} className={cn(isDetail && target.kind === "profilo" && "profile-detail-follow", isDetail && "col-span-2 min-h-11 gap-2 px-4")} />;
+	const followButton = <InteractionButton target={target} state={interaction} href={href} showLabel={isDetail} className={cn(isDetail && target.kind === "profilo" && "profile-detail-follow", isDetail && "min-h-11 gap-2 px-4")} />;
 
 	const handleReportComplete = useCallback((state: Extract<ReportActionState, {status: "success" | "rate_limited"}>) => {
 		setReportPending(false);
@@ -128,18 +132,17 @@ export default function DetailActions({href, target, interaction, presentation =
 	}
 
 	return (
-		<div className={isDetail ? "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center" : "flex items-center gap-2"} role="group" aria-label="Azioni">
-			{!shareOnly && isDetail && followButton}
-			{isDetail ? (
-				<Button type="button" variant="outline" className="min-h-11 gap-2 pe-4" onClick={handleShare}>
-					<Share2Icon data-icon="inline-start" className="ms-1.5" aria-hidden="true" />Condividi
-				</Button>
-			) : <Tooltip>
-				<TooltipTrigger render={<Button type="button" variant="outline" size="icon" onClick={handleShare} aria-label="Condividi" />}>
+		<div className={isDetail ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2"} role="group" aria-label="Azioni">
+			{!shareOnly && isDetail && <div className="flex flex-wrap items-center gap-2">
+				{followButton}
+				{interestTarget && interestContext && <InterestDialog key={`${interestTarget.kind}:${interestTarget.id}:${interestContext.status}`} target={interestTarget} context={interestContext} href={href} />}
+			</div>}
+			<Tooltip>
+				<TooltipTrigger render={<Button type="button" variant="outline" size={isDetail ? "icon-lg" : "icon"} className={isDetail ? "size-11" : undefined} onClick={handleShare} aria-label="Condividi" />}>
 					<Share2Icon aria-hidden="true" />
 				</TooltipTrigger>
 				<TooltipContent>Condividi</TooltipContent>
-			</Tooltip>}
+			</Tooltip>
 
 			{!shareOnly && !isDetail && followButton}
 
@@ -149,10 +152,14 @@ export default function DetailActions({href, target, interaction, presentation =
 					if (!reportPending) setReportOpen(open);
 				}}
 			>
-				<DialogTrigger render={<Button type="button" variant={isDetail ? "outline" : "default"} className={isDetail ? "min-h-11 gap-2 pe-4" : undefined} />}>
-					<FlagIcon data-icon="inline-start" className="ms-1.5" aria-hidden="true" />
-					Segnala
-				</DialogTrigger>
+				{isDetail ? <Tooltip>
+					<TooltipTrigger render={<DialogTrigger render={<Button type="button" variant="outline" size="icon-lg" className="size-11" aria-label="Segnala" />} />}>
+						<FlagIcon aria-hidden="true" />
+					</TooltipTrigger>
+					<TooltipContent>Segnala</TooltipContent>
+				</Tooltip> : <DialogTrigger render={<Button type="button" variant="default" />}>
+					<FlagIcon data-icon="inline-start" aria-hidden="true" />Segnala
+				</DialogTrigger>}
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Segnala {target.kind === "annuncio" ? "questo annuncio" : "questo profilo"}</DialogTitle>

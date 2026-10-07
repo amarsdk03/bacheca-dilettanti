@@ -49,7 +49,7 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 	const hasContactLinks = preview.contacts.length > 0 || Boolean(preview.genericLink);
 	const locationLabel = preview.announcementType === "annuncio_campo_impianto"
 		? "Località del campo"
-		: "Zone di ricerca";
+		: preview.announcementType === "annuncio_torneo_evento" ? "Zona/e di svolgimento per questo torneo" : "Zone di ricerca";
 	const style = {"--preview-accent": accent} as CSSProperties;
 
 	return (
@@ -75,7 +75,7 @@ export default function AnnouncementPreviewCard({preview}: {preview: Announcemen
 					})}
 				</dl>}
 				<section className="flex flex-col gap-1.5">
-					<h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Descrizione</h3>
+					<h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{preview.announcementType === "annuncio_servizi_consulenze" ? "Contenuto" : preview.announcementType === "annuncio_creators" ? "Contenuto dell’annuncio" : "Informazioni aggiuntive"}</h3>
 					<p className="text-sm leading-6 whitespace-pre-wrap wrap-anywhere">{preview.description ?? presentation.emptyNarrative}</p>
 					{preview.imageUrl && (
 						// Preview URLs can be browser blobs or short-lived signed Storage URLs.

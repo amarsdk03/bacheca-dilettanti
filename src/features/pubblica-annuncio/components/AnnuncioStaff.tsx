@@ -45,9 +45,9 @@ export default function AnnuncioStaff() {
 	} = useAnnuncioStaffStore();
 
 	return (
-		<FieldGroup className="w-full">
+		<FieldGroup spacing="sections">
 			<FieldSet>
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">Dati staff</FieldLegend>
 					<FieldDescription>Puoi lasciare anonimi i dati personali.</FieldDescription>
 				</div>
@@ -84,7 +84,7 @@ export default function AnnuncioStaff() {
 			/>
 
 			<FieldSet className="grid gap-x-4 gap-y-6">
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-1">Profilo professionale</FieldLegend>
 					<FieldDescription
 						className="text-red-800 font-medium"

@@ -38,12 +38,19 @@ function FieldLegend({
   )
 }
 
-function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
+function FieldGroup({ className, spacing = "fields", ...props }: React.ComponentProps<"div"> & {
+  spacing?: "fields" | "sections" | "mixed"
+}) {
   return (
     <div
       data-slot="field-group"
+      data-spacing={spacing}
       className={cn(
-        "group/field-group @container/field-group flex w-full flex-col gap-5 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4",
+        "group/field-group @container/field-group flex w-full flex-col gap-4 data-[slot=checkbox-group]:gap-3",
+        spacing === "fields" && "gap-4",
+        spacing === "sections" && "gap-8",
+        // Mixed forms keep fields close and separate each fieldset by the same 2rem.
+        spacing === "mixed" && "gap-4 [&>[data-slot=field-set]:not(:first-child)]:mt-4 [&>[data-slot=field-set]+*]:mt-4",
         className
       )}
       {...props}

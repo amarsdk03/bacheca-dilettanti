@@ -3,7 +3,12 @@ import type {DirectoryProfile} from "./profile-directory-model";
 export interface RankedDirectoryProfile {
 	profile: DirectoryProfile;
 	completionPercentage: number;
-	followerCount: number;
+	lastActivityAt: string | null;
+}
+
+function activityTime(value: string | null): number {
+	const time = value ? Date.parse(value) : NaN;
+	return Number.isFinite(time) ? time : 0;
 }
 
 function tieBreak(seed: string, profile: DirectoryProfile): number {
@@ -18,7 +23,7 @@ function tieBreak(seed: string, profile: DirectoryProfile): number {
 export function sortRankedDirectoryProfiles(profiles: RankedDirectoryProfile[], seed: string): RankedDirectoryProfile[] {
 	return profiles.sort((left, right) =>
 		right.completionPercentage - left.completionPercentage
-		|| right.followerCount - left.followerCount
+		|| activityTime(right.lastActivityAt) - activityTime(left.lastActivityAt)
 		|| tieBreak(seed, left.profile) - tieBreak(seed, right.profile)
 		|| `${left.profile.id}:${left.profile.type}`.localeCompare(`${right.profile.id}:${right.profile.type}`),
 	);

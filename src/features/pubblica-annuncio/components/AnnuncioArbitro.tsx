@@ -36,9 +36,9 @@ export default function AnnuncioArbitro() {
 	} = useAnnuncioArbitroStore();
 
 	return (
-		<FieldGroup className="w-full">
+		<FieldGroup spacing="sections">
 			<FieldSet>
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">
 						Dati arbitro
 					</FieldLegend>
@@ -88,7 +88,7 @@ export default function AnnuncioArbitro() {
 			/>
 
 			<FieldSet>
-				<div className="mt-4">
+				<div>
 					<FieldLegend variant="label" className="field-legend-title mb-0">
 						Profilo arbitrale
 					</FieldLegend>

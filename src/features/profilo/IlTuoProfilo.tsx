@@ -16,7 +16,7 @@ import {
 	InfoIcon,
 	KeyRoundIcon,
 	ListChecksIcon,
-	LoaderCircleIcon,
+	LoaderCircleIcon, LockIcon,
 	LogOutIcon,
 	MailIcon,
 	MapPinIcon,
@@ -129,17 +129,36 @@ const FAQ_GROUPS = [
 			{
 				value: "profile-count",
 				question: "Quanti sottoprofili posso creare?",
-				answer: "Puoi configurare fino a cinque sottoprofili attivi, uno per ciascuna tipologia, e scegliere quello che rappresenta il tuo profilo principale.",
+				answer: "Puoi configurare fino a cinque sottoprofili ordinari, uno per ciascuna tipologia. Servizi e consulenze e Creators sono due profili riservati che possono aggiungersi a questo limite, se abilitati dall’admin: puoi quindi arrivare a sette sottoprofili complessivi. Puoi scegliere quale rendere principale.",
 			},
 			{
 				value: "profile-manage",
 				question: "Come abilito o modifico un sottoprofilo?",
-				answer: "Nella sezione Il tuo profilo seleziona Abilita su una tipologia non attiva oppure Modifica su un sottoprofilo già configurato.",
+				answer: "Nella sezione Il tuo profilo seleziona Abilita su una tipologia disponibile oppure Modifica su un sottoprofilo già configurato. Per un profilo riservato autorizzato dall’admin, usa Completa profilo. Compila i campi obbligatori e salva le modifiche; puoi aggiungere in seguito le informazioni facoltative, come esperienze, qualifiche e tipologie calcio quando previste.",
+			},
+			{
+				value: "restricted-profiles",
+				question: "Perché Servizi e consulenze e Creators mostrano Accesso limitato?",
+				answer: (
+					<>
+						Queste tipologie possono essere abilitate soltanto dall’admin e non sono selezionabili durante la registrazione. Se vuoi richiedere l’accesso, scrivici dalla <Link href="/contatti">pagina Contatti</Link>. Dopo l’abilitazione puoi completare il sottoprofilo e pubblicare i relativi annunci, anche se hai già cinque sottoprofili ordinari.
+					</>
+				),
 			},
 			{
 				value: "profile-remove",
 				question: "Cosa succede se rimuovo un sottoprofilo?",
-				answer: "Deve rimanere attivo almeno un sottoprofilo. Se rimuovi quello principale, un altro sottoprofilo attivo verrà promosso automaticamente; gli annunci già pubblicati resteranno disponibili.",
+				answer: "Deve rimanere attivo almeno un sottoprofilo ordinario. Se rimuovi quello principale, un altro sottoprofilo attivo verrà promosso automaticamente; gli annunci già pubblicati resteranno disponibili. Se elimini Servizi e consulenze o Creators, viene revocata anche l’abilitazione: per ricrearlo servirà un nuovo intervento dell’admin.",
+			},
+			{
+				value: "profile-completion",
+				question: "A cosa serve la percentuale di completamento?",
+				answer: "Indica quanto sono complete le informazioni del sottoprofilo in base alla sua tipologia. Usa Modifica per aggiungere i dati mancanti. Nella directory Profili vengono mostrati prima i sottoprofili più completi; a parità di completamento, quelli con attività significativa più recente, come modifiche delle informazioni o pubblicazione e aggiornamento degli annunci. Il semplice accesso non influisce sull’ordinamento.",
+			},
+			{
+				value: "profile-images-social",
+				question: "Posso personalizzare foto e link Social dei sottoprofili?",
+				answer: "Sì. Puoi impostare una foto per l’account e una foto dedicata per ciascun sottoprofilo, oppure scegliere l’avatar predefinito per quel sottoprofilo. Nel form di modifica puoi aggiungere sito web, Instagram, Facebook, YouTube e LinkedIn. Inserisci link completi dei canali che vuoi condividere.",
 			},
 		],
 	},
@@ -156,12 +175,27 @@ const FAQ_GROUPS = [
 			{
 				value: "announcement-review",
 				question: "Cosa succede dopo aver inviato un annuncio?",
-				answer: "L’annuncio viene inviato gratuitamente in revisione. Puoi controllarne lo stato nella sezione I tuoi annunci.",
+				answer: "L’annuncio viene inviato gratuitamente in revisione. Puoi controllarne lo stato nella sezione I tuoi annunci. Comparirà nella bacheca pubblica dopo l’approvazione.",
+			},
+			{
+				value: "announcement-profile-update",
+				question: "Posso aggiornare il profilo mentre pubblico un annuncio?",
+				answer: "Sì. Nella fase Dati profilo vengono caricate le informazioni del sottoprofilo selezionato. Premi Sblocca campi per modificarle: le modifiche saranno salvate insieme all’invio finale dell’annuncio. Per aggiornarle senza pubblicare, usa Modifica nell’area personale.",
+			},
+			{
+				value: "announcement-limits",
+				question: "Quali limiti ci sono per la pubblicazione?",
+				answer: "Per pubblicare dal tuo account devi avere un sottoprofilo attivo della tipologia scelta. Servizi e consulenze e Creators richiedono l’abilitazione admin e consentono pubblicazioni illimitate. Come ospite puoi pubblicare al massimo un annuncio ogni 24 ore, verificando l’indirizzo email con un codice monouso; i due profili riservati sono disponibili soltanto per account registrati abilitati.",
+			},
+			{
+				value: "announcement-priority",
+				question: "La pubblicazione è gratuita? Posso scegliere un annuncio prioritario?",
+				answer: "La pubblicazione è gratuita. Al momento non è possibile acquistare nuovi annunci prioritari. Il pagamento resta disponibile soltanto per eventuali bozze prioritarie create prima della sospensione di questa opzione.",
 			},
 			{
 				value: "announcement-edit",
 				question: "Posso modificare un annuncio pubblicato?",
-				answer: "No. Puoi nasconderlo temporaneamente oppure eliminarlo. Per cambiare i contenuti devi pubblicare un nuovo annuncio.",
+				answer: "No. Puoi nasconderlo temporaneamente oppure eliminarlo. Per cambiare i contenuti devi pubblicare un nuovo annuncio. Le modifiche successive al sottoprofilo non sostituiscono i dati dell’annuncio già inviato.",
 			},
 			{
 				value: "announcement-visibility",
@@ -171,14 +205,56 @@ const FAQ_GROUPS = [
 		],
 	},
 	{
+		id: "discovery",
+		title: "Ricerca e interazioni",
+		description: "Trova opportunità, salva annunci e segui i profili che ti interessano.",
+		items: [
+			{
+				value: "search-filters",
+				question: "Come cerco annunci e profili adatti a me?",
+				answer: "Apri Annunci o Profili, cerca per parole chiave e seleziona una tipologia. Il pulsante Filtri apre le opzioni dedicate a quella tipologia, per esempio regione, ruolo o tipologia calcio. I filtri specifici richiedono una sola tipologia selezionata. Negli annunci Giocatore puoi filtrare anche per genere, categorie ricercate e intervallo di annate.",
+			},
+			{
+				value: "saved-announcements",
+				question: "Dove ritrovo gli annunci salvati?",
+				answer: "Da un annuncio usa il pulsante per salvarlo. Lo ritroverai nella sezione Salvati dell’area personale, da cui puoi anche rimuoverlo dall’elenco. Salvare un annuncio non invia una candidatura o un messaggio all’autore.",
+			},
+			{
+				value: "profile-followers",
+				question: "Come seguo un profilo e dove vedo i follower?",
+				answer: "Apri il dettaglio del sottoprofilo e premi Segui profilo. Se hai più sottoprofili disponibili, scegli con quale seguire; se ne hai uno solo, il Follow è immediato. Puoi effettuare al massimo 30 nuovi Follow al giorno per account e seguire ciascun sottoprofilo con una sola identità. Nella sezione Follower e seguiti puoi vedere chi ti segue, chi segui e con quale sottoprofilo, e interrompere il Follow quando vuoi.",
+			},
+			{
+				value: "private-follower-count",
+				question: "Perché non vedo il numero di follower?",
+				answer: "Al lancio il conteggio resterà privato, anche se la funzione Follow sarà già attiva. Verrà reso pubblico più avanti, quando la community sarà sufficientemente ampia da rendere il dato significativo.",
+			},
+			{
+				value: "contacts-author",
+				question: "Come contatto l’autore di un annuncio?",
+				answer: "Accedi al tuo account e consulta i recapiti nella sezione Contatti del dettaglio annuncio. Puoi usare l’email o il telefono indicati dall’autore. Apri profilo permette di conoscere il suo sottoprofilo; per gli annunci pubblicati come ospite trovi invece Info autore. Anche i link Social nei dettagli dei profili sono accessibili agli utenti autenticati.",
+			},
+		],
+	},
+	{
 		id: "account",
 		title: "Account e assistenza",
-		description: "Accesso, cancellazione dei dati e richieste allo staff.",
+		description: "Accesso, preferenze di comunicazione e richieste allo staff.",
 		items: [
 			{
 				value: "password",
 				question: "Come cambio la password?",
 				answer: "Apri Impostazioni e richiedi il link di ripristino. Riceverai un’email all’indirizzo associato al tuo account.",
+			},
+			{
+				value: "newsletter-preferences",
+				question: "Come cambio la preferenza per newsletter e comunicazioni promozionali?",
+				answer: "Apri Impostazioni e usa la spunta nella card Notizie e comunicazioni. La scelta è facoltativa e viene salvata quando la modifichi. Puoi attivarla o disattivarla in qualsiasi momento.",
+			},
+			{
+				value: "profile-verification",
+				question: "Cosa distingue Utente registrato da Profilo verificato ufficialmente?",
+				answer: "Il badge Utente registrato indica che l’indirizzo email dell’account è stato verificato. La spunta di verifica ufficiale è un riconoscimento distinto, assegnato dall’amministrazione, e non si ottiene automaticamente registrandosi o completando il profilo.",
 			},
 			{
 				value: "account-removal",
@@ -194,7 +270,7 @@ const FAQ_GROUPS = [
 				question: "Come segnalo un problema o un contenuto inappropriato?",
 				answer: (
 					<>
-						Scrivi a <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> oppure usa uno dei canali nella <Link href="/contatti">pagina Contatti</Link>. Indica il link interessato e descrivi il problema senza inviare password o altri dati sensibili.
+						Per un annuncio o un profilo usa Segnala nella pagina di dettaglio: puoi aggiungere una motivazione facoltativa e la segnalazione verrà valutata dal team. Per problemi tecnici scrivi a <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> oppure usa la <Link href="/contatti">pagina Contatti</Link>, indicando il link e una descrizione del problema.
 					</>
 				),
 			},
@@ -404,7 +480,9 @@ function ProfileCard({
 					/>
 					<div className="min-w-0">
 						<CardTitle className="wrap-anywhere">{option?.label}</CardTitle>
-						{isRestrictedProfileType(profile.type) && <Badge variant="outline" className="mt-1">Accesso limitato</Badge>}
+						{isRestrictedProfileType(profile.type) && <Badge variant="outline" className="mt-1">
+                            <LockIcon /> Accesso limitato
+						</Badge>}
 					</div>
 				</div>
 				{
@@ -474,8 +552,19 @@ function ProfileCard({
 								<AlertDialogMedia><Trash2Icon aria-hidden="true" /></AlertDialogMedia>
 								<AlertDialogTitle>Rimuovere questo sottoprofilo?</AlertDialogTitle>
 								<AlertDialogDescription>
-									Gli annunci pubblicati resteranno disponibili. Se questo è il profilo principale, il prossimo sottoprofilo attivo verrà promosso automaticamente.
-									{isRestrictedProfileType(profile.type) && " Per ricreare questo sottoprofilo servirà una nuova abilitazione dell’admin."}
+									Gli annunci pubblicati resteranno disponibili. <br />
+									Se questo è il profilo principale, il prossimo sottoprofilo attivo verrà promosso
+									automaticamente.
+									{isRestrictedProfileType(profile.type) && (
+										<>
+											<br />
+											<br />
+											<span className={"font-medium"}>
+												<span className={"font-semibold text-red-900"}>Attenzione:</span> per ricreare questo sottoprofilo servirà una nuova
+												abilitazione da parte dell’admin!
+											</span>
+										</>
+									)}
 								</AlertDialogDescription>
 							</AlertDialogHeader>
 							<AlertDialogFooter>
@@ -533,7 +622,7 @@ function InactiveProfileCard({
 				<p className="leading-6 text-muted-foreground">{option.description}</p>
 			</CardContent>
 			<CardFooter className="mt-auto flex-wrap justify-between gap-2">
-				{restricted ? <Badge variant="outline">Accesso limitato</Badge> : comingSoon ? <ComingSoonBadge /> : <Badge variant="outline">Non attivo</Badge>}
+				{restricted ? <Badge variant="outline"><LockIcon /> Accesso limitato</Badge> : comingSoon ? <ComingSoonBadge /> : <Badge variant="outline">Non attivo</Badge>}
 				{!comingSoon && (!restricted || authorized) && (
 					<Button type="button" variant="outline" size="sm" onClick={onEnable} disabled={disabled} aria-label={`Abilita il profilo ${option.label}`}>
 						<PlusIcon data-icon="inline-start" aria-hidden="true" />

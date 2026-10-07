@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-import {MegaphoneIcon, ShirtIcon, UserRoundPlusIcon} from "lucide-react";
+import {MegaphoneIcon, ShirtIcon} from "lucide-react";
 import type {GenericProfileDetail} from "../../profile-detail-model";
 import ProfileDetailsLayout from "../ProfileDetailsLayout";
 import type {ProfileDetailPresentation} from "../profile-detail-presentation";
@@ -8,10 +8,10 @@ import {formatProfileFactCount, getProfileDetailFieldValue} from "../profile-det
 const PRESENTATION = {
 	facts: [
 		{label: "Tipologia calcio", fieldLabel: "Tipologie sportive", icon: ShirtIcon, getValue: profile => getProfileDetailFieldValue(profile, "Tipologie sportive")},
-		{label: "Follower", icon: UserRoundPlusIcon, getValue: profile => formatProfileFactCount(profile.followerCount)},
 		{label: "Eventi pubblicati", icon: MegaphoneIcon, getValue: profile => formatProfileFactCount(profile.announcementCount)},
 	],
 	narrativeFieldLabels: [],
+	presentationLabel: "Presentazione",
 	announcementsLabel: "Eventi pubblicati",
 } satisfies ProfileDetailPresentation;
 

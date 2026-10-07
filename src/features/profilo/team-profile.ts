@@ -10,8 +10,28 @@ export interface TeamProfileReference {
 }
 
 export interface PublicTeamProfile extends TeamProfileReference {
+	anonymousName: boolean;
 	imageUrl: string | null;
 	location: string | null;
+}
+
+/** Replace saved team-name copies before building public career/announcement DTOs. */
+export function publicTeamExperienceNames(value: unknown, teams: ReadonlyMap<string, PublicTeamProfile>, nameField: "ente" | "titolo") {
+	if (!Array.isArray(value)) return value;
+	return value.map((entry: unknown) => {
+		if (!isRecord(entry)) return entry;
+		const id = cleanText(entry.squadraProfiloId)?.toLocaleLowerCase("en-US");
+		if (!id || !UUID_PATTERN.test(id)) return entry;
+		const team = teams.get(id);
+		if (team && !team.anonymousName) return {...entry, [nameField]: team.name};
+		const name = team?.name ?? "Squadra";
+		return {
+			...entry,
+			[nameField]: name,
+			...(entry.ente === entry[nameField] ? {ente: name} : {}),
+			...(entry.titolo === entry[nameField] ? {titolo: name} : {}),
+		};
+	});
 }
 
 export function teamProfileHref(profileId: string) {

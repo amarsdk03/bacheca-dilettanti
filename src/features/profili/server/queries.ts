@@ -1,4 +1,6 @@
 import "server-only";
+import {publicProfileName} from "@/features/profilo/profile-public-name";
+import {teamCategoryLabel} from "@/features/profilo/team-category-catalog";
 
 import {availabilityLabel} from "@/features/profilo/public-profile-display";
 import {nationalityLabel} from "@/features/profilo/player-nationalities";
@@ -24,7 +26,6 @@ import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblica
 import {
 	categoryLabel,
 	categoryShortLabel,
-	normalizeCategories,
 	normalizeFigures
 } from "@/features/pubblica-annuncio/types/category-catalog";
 import {publicPlayerAge} from "@/features/dettagli-profilo/server/player-profile-data";
@@ -61,14 +62,14 @@ function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: numbe
 			verificato_il,
 			ultima_modifica_il,
 			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
-			profilo_giocatore(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categoria_attuale, categorie_ricercate, genere, nazionalita, altezza, peso, piede_principale, storico_carriera),
-			profilo_squadra(id, nascosto, nome_societa, presentazione, sport_principale, tipologie_sport, categoria_attuale),
-			profilo_staff_sportivo(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, figure_professionali, presentazione, sport_principale, lista_esperienze, qualifiche_licenze, storico_esperienze),
-			profilo_servizi_consulenze(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, figure_professionali, presentazione, presentazione_servizi, specializzazioni, sport_principale, tipologie_sport, automunito, lista_esperienze, qualifiche_licenze),
-			profilo_arbitro(id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, sport_principale, lista_esperienze, qualifiche_licenze),
+			profilo_giocatore(nominativo_anonimo, id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categoria_attuale, genere, nazionalita, altezza, peso, piede_principale, storico_carriera),
+			profilo_squadra(nominativo_anonimo, id, nascosto, nome_societa, presentazione, sport_principale, tipologie_sport, categoria_attuale),
+			profilo_staff_sportivo(nominativo_anonimo, id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, figure_professionali, presentazione, sport_principale, lista_esperienze, qualifiche_licenze),
+			profilo_servizi_consulenze(id, nascosto, nome, disponibilita, presentazione, presentazione_servizi, specializzazioni, sede_professionista, sport_principale, tipologie_sport),
+			profilo_arbitro(nominativo_anonimo, id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, sport_principale, lista_esperienze, qualifiche_licenze),
 			profilo_creator(id, nascosto, nome_creator, presentazione, sport_principale, tipologia_contenuti),
 			profilo_torneo_evento(id, nascosto, nome_organizzazione, presentazione, sport_principale, tipologie_sport),
-			profilo_campi_impianti(id, nascosto, nome_organizzazione, presentazione, sede_principale, indirizzo, sport_principale, tipologie_sport, costo_partenza, servizi_inclusi, info_aggiuntive)
+			profilo_campi_impianti(id, nascosto, nome_organizzazione, presentazione, indirizzo, sport_principale, tipologie_sport, info_aggiuntive)
 		`, {count: "exact"})
 		.eq("nascosto", false)
 		.not("uuid_utente", "is", null)
@@ -97,7 +98,6 @@ interface ProfileContent {
 		roles?: string[];
 		category?: string | null;
 		gender?: string | null;
-		services?: string | null;
 		specializations?: string | null;
 	};
 }
@@ -184,7 +184,7 @@ function buildProfileFacts(
 		return [
 			profileFact("types", "Tipologie", types),
 			profileFact("location", "Località", location),
-			profileFact("category", "Categoria attuale", highlight),
+			profileFact("category", "Categoria attuale Prima Squadra", highlight),
 		];
 	}
 	if (type === "staff-sportivo") {
@@ -196,8 +196,7 @@ function buildProfileFacts(
 	}
 	if (type === "servizi-consulenze") {
 		return [
-			profileFact("figures", "Figure", figures),
-			profileFact("specializations", "Specializzazioni", factData?.specializations ?? null),
+			profileFact("specializations", "Tipo di azienda / professione", factData?.specializations ?? null),
 			profileFact("location", "Località", location),
 			profileFact("availability", "Disponibilità", availability),
 		];
@@ -223,12 +222,6 @@ function buildProfileFacts(
 	return [
 		profileFact("types", "Tipologia campi disponibili", types),
 		profileFact("location", "Località", location),
-		profileFact(
-			"price",
-			"Costo",
-			filterData.costo === null ? null : `Da ${formatEuro(filterData.costo)}`,
-		),
-		profileFact("services", "Servizi", factData?.services ?? null),
 	];
 }
 
@@ -308,15 +301,14 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		const primaryRoles = normalizePlayerPrimaryRoles(jsonStringArray(player.ruoli_sport, "principali"));
 		const specificRoles = normalizePlayerSpecificRoles(jsonStringArray(player.ruoli_sport, "specifici"));
 		const sportTypes = ordinaTipologieCalcio(cleanStringArray(player.tipologie_sport));
-		const categories = normalizeCategories(cleanStringArray(player.categorie_ricercate)).map(categoryLabel);
 		const currentCategory = cleanText(player.categoria_attuale);
 		profiles.push(createDirectoryProfile(row, "giocatore", player.id, {
-			title: fullName(player.nome, player.cognome),
+			title: publicProfileName("giocatore", player.nominativo_anonimo, fullName(player.nome, player.cognome)),
 			presentation: player.presentazione,
 			sport: cleanText(player.sport_principale) ?? sportTypes[0],
 			highlight: primaryRoles[0] ?? sportTypes[0] ?? null,
 			availability: player.disponibilita,
-			searchValues: [...specificRoles, ...categories, currentCategory ? categoryLabel(currentCategory) : null, player.genere, nationalityLabel(player.nazionalita)],
+			searchValues: [...specificRoles, currentCategory ? categoryLabel(currentCategory) : null, player.genere, nationalityLabel(player.nazionalita)],
 			filterData: {tipologie: sportTypes, ruoli: primaryRoles},
 		factData: {
 			age: publicPlayerAge({day: player.giorno_nascita, month: player.mese_nascita, year: player.anno_nascita}),
@@ -330,12 +322,12 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		if (team.nascosto !== false) continue;
 		const sportTypes = ordinaTipologieCalcio(cleanStringArray(team.tipologie_sport));
 		profiles.push(createDirectoryProfile(row, "squadra", team.id, {
-			title: team.nome_societa,
+			title: publicProfileName("squadra", team.nominativo_anonimo, team.nome_societa),
 			presentation: team.presentazione,
 			sport: cleanText(team.sport_principale) ?? sportTypes[0],
-			highlight: team.categoria_attuale ? categoryLabel(team.categoria_attuale) : null,
+			highlight: teamCategoryLabel(team.categoria_attuale) || null,
 			availability: null,
-			searchValues: [team.categoria_attuale ? categoryLabel(team.categoria_attuale) : null, ...sportTypes],
+			searchValues: [teamCategoryLabel(team.categoria_attuale) || null, ...sportTypes],
 			filterData: {tipologie: sportTypes},
 		}, profileImages));
 	}
@@ -344,7 +336,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		if (staff.nascosto !== false) continue;
 		const figures = normalizeFigures(cleanStringArray(staff.figure_professionali));
 		profiles.push(createDirectoryProfile(row, "staff-sportivo", staff.id, {
-			title: fullName(staff.nome, staff.cognome),
+			title: publicProfileName("staff-sportivo", staff.nominativo_anonimo, fullName(staff.nome, staff.cognome)),
 			presentation: staff.presentazione,
 			sport: staff.sport_principale,
 			highlight: figures[0] ?? null,
@@ -355,22 +347,19 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 
 	for (const professional of row.profilo_servizi_consulenze ?? []) {
 		if (professional.nascosto !== false) continue;
-		const figures = normalizeFigures(cleanStringArray(professional.figure_professionali));
 		const sportTypes = ordinaTipologieCalcio(cleanStringArray(professional.tipologie_sport));
 		profiles.push(createDirectoryProfile(row, "servizi-consulenze", professional.id, {
-			title: fullName(professional.nome, professional.cognome),
+			title: cleanText(professional.nome),
 			presentation: professional.presentazione,
 			sport: cleanText(professional.sport_principale) ?? sportTypes[0],
-			highlight: figures[0] ?? cleanText(professional.specializzazioni),
+			highlight: cleanText(professional.specializzazioni),
 			availability: professional.disponibilita,
 			searchValues: [
 				professional.specializzazioni,
 				professional.presentazione_servizi,
 			],
 			filterData: {
-				figure: figures,
 				tipologie: sportTypes,
-				automunito: cleanText(professional.automunito),
 			},
 			factData: {specializations: cleanText(professional.specializzazioni)},
 		}, profileImages));
@@ -379,7 +368,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 	for (const referee of row.profilo_arbitro ?? []) {
 		if (referee.nascosto !== false) continue;
 		profiles.push(createDirectoryProfile(row, "arbitro", referee.id, {
-			title: fullName(referee.nome, referee.cognome),
+			title: publicProfileName("arbitro", referee.nominativo_anonimo, fullName(referee.nome, referee.cognome)),
 			presentation: referee.presentazione,
 			sport: referee.sport_principale,
 			highlight: availabilityLabel(referee.disponibilita) ?? "Attività arbitrale",
@@ -416,29 +405,20 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 	for (const facility of row.profilo_campi_impianti ?? []) {
 		if (facility.nascosto !== false) continue;
 		const sportTypes = ordinaTipologieCalcio(cleanStringArray(facility.tipologie_sport));
-		const price = facility.costo_partenza;
 		profiles.push(createDirectoryProfile(row, "campi-impianti-sportivi", facility.id, {
 			title: facility.nome_organizzazione,
 			presentation: facility.presentazione,
 			sport: cleanText(facility.sport_principale) ?? sportTypes[0],
-			highlight: cleanText(facility.indirizzo) ?? (price === null ? cleanText(facility.servizi_inclusi) : `Da ${formatEuro(price)}`),
+			highlight: cleanText(facility.indirizzo),
 			availability: null,
-			searchValues: [facility.indirizzo, facility.sede_principale, facility.servizi_inclusi],
-			filterData: {tipologie: sportTypes, costo: price},
-			factData: {services: cleanText(facility.servizi_inclusi)},
+			searchValues: [facility.indirizzo, facility.info_aggiuntive],
+			filterData: {tipologie: sportTypes},
 		}, profileImages));
 	}
 
 	return profiles;
 }
 
-function formatEuro(value: number) {
-	return new Intl.NumberFormat("it-IT", {
-		style: "currency",
-		currency: "EUR",
-		maximumFractionDigits: 2,
-	}).format(value);
-}
 
 function includesValue(values: string[], selected: string) {
 	const normalizedSelected = normalizeDirectorySearchText(selected);
@@ -476,7 +456,7 @@ function profileCompletionPercentage(row: ProfileDirectoryQueryRow, profile: Dir
 		drafts.giocatore.video_highlights = highlights.get(profile.id) ?? "";
 		if (drafts.giocatore.disponibilita === "svincolato" || drafts.giocatore.disponibilita === "disponibile-subito") drafts.giocatore.categoria_attuale = "";
 	}
-	return getProfileCompletion(profile.type, drafts, locations).percentage;
+	return getProfileCompletion(profile.type, drafts, locations, {includePrivateContacts: false}).percentage;
 }
 
 async function loadDirectoryHighlights(supabase: SupabaseClient<Database>, ids: readonly string[]) {
@@ -498,24 +478,31 @@ async function loadDirectoryHighlights(supabase: SupabaseClient<Database>, ids: 
 	return highlights;
 }
 
-async function loadDirectoryFollowerCounts(supabase: SupabaseClient<Database>, ids: readonly string[]) {
-	const counts = new Map<string, number>();
-	for (let index = 0; index < ids.length; index += 200) {
-		const chunk = ids.slice(index, index + 200);
-		for (let offset = 0; ; offset += 1000) {
-			const {data, error} = await supabase.from("profilo_follow")
-				.select("uuid_profilo_seguito, creato_il, uuid_profilo_follower")
-				.in("uuid_profilo_seguito", chunk)
-				.order("uuid_profilo_seguito", {ascending: true})
-				.order("creato_il", {ascending: false})
-				.order("uuid_profilo_follower", {ascending: true})
-				.range(offset, offset + 999);
-			if (error) throw new Error(`PROFILE_FOLLOWERS_UNAVAILABLE:${error.code}`);
-			for (const row of data ?? []) counts.set(row.uuid_profilo_seguito, (counts.get(row.uuid_profilo_seguito) ?? 0) + 1);
-			if ((data?.length ?? 0) < 1000) break;
-		}
+async function loadDirectoryActivity(supabase: SupabaseClient<Database>, ids: readonly string[]) {
+	const activity = new Map<string, string>();
+	for (let offset = 0; offset < ids.length; offset += 200) {
+		const {data, error} = await supabase.rpc("get_profile_activity_v1", {p_ids: ids.slice(offset, offset + 200)});
+		if (error) throw new Error(`PROFILE_ACTIVITY_UNAVAILABLE:${error.code}`);
+		for (const row of data ?? []) activity.set(`${row.profile_id}:${row.profile_type}`, row.last_activity);
 	}
-	return counts;
+	return activity;
+}
+
+/** Resolve all public subprofiles, retaining their exact identity. */
+export async function loadPublicSubprofiles(ids: readonly string[]): Promise<DirectoryProfile[]> {
+	const supabase = createAdminClient();
+	const profiles: DirectoryProfile[] = [];
+	const uniqueIds = [...new Set(ids)];
+	for (let offset = 0; offset < uniqueIds.length; offset += 200) {
+		const chunk = uniqueIds.slice(offset, offset + 200);
+		const [{data, error}, images] = await Promise.all([
+			profileDirectoryQuery(supabase, 0).in("uuid", chunk),
+			loadProfileImageUrlMap(supabase, chunk),
+		]);
+		if (error) throw new Error("PUBLIC_SUBPROFILES_UNAVAILABLE");
+		for (const row of data ?? []) profiles.push(...mapProfileRow(row, images));
+	}
+	return profiles;
 }
 
 function emptyDirectoryResult(error = false): ProfileDirectoryResult {
@@ -603,14 +590,14 @@ export async function getProfileDirectory(query: ProfileDirectoryQuery): Promise
 			.map(profile => ({row, profile})));
 		const ids = [...new Set(candidates.map(({profile}) => profile.id))];
 		const playerIds = [...new Set(candidates.filter(({profile}) => profile.type === "giocatore").map(({profile}) => profile.id))];
-		const [highlights, followers] = await Promise.all([
+		const [highlights, activity] = await Promise.all([
 			loadDirectoryHighlights(supabase, playerIds),
-			loadDirectoryFollowerCounts(supabase, ids),
+			loadDirectoryActivity(supabase, ids),
 		]);
 		const filteredProfiles = sortRankedDirectoryProfiles(candidates.map(({row, profile}) => ({
 			profile,
 			completionPercentage: profileCompletionPercentage(row, profile, highlights),
-			followerCount: followers.get(profile.id) ?? 0,
+			lastActivityAt: activity.get(`${profile.id}:${profile.type}`) ?? profile.updatedAt,
 		})), query.sortSeed ?? randomUUID()).map(({profile}) => profile);
 		const total = filteredProfiles.length;
 		const totalPages = Math.max(1, Math.ceil(total / PROFILE_DIRECTORY_PAGE_SIZE));

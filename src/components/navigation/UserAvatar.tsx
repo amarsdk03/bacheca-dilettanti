@@ -2,7 +2,7 @@
 
 import {useFormStatus} from "react-dom";
 import Link from "next/link";
-import {HeartIcon, ListChecksIcon, LoaderCircleIcon, LogOutIcon, SettingsIcon, UserIcon} from "lucide-react";
+import {BellIcon, HeartIcon, ListChecksIcon, LoaderCircleIcon, LogOutIcon, SettingsIcon, UserIcon} from "lucide-react";
 
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Button} from "@/components/ui/button";

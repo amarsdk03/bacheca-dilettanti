@@ -81,7 +81,7 @@ function Bubble() {
 		>
 			<motion.div
 				layout
-				className="relative bg-lime-300 text-black shadow-lg ring-1 ring-lime-500 transition-colors duration-300 hover:bg-lime-400 hover:shadow-xl motion-reduce:transition-none"
+				className="relative bg-lime-300 text-black shadow-lg ring-1 ring-lime-500 transition-colors duration-300 hover:bg-lime-300 hover:shadow-xl motion-reduce:transition-none"
 				style={{
 					width: expanded ? 320 : 56,
 					maxWidth: "calc(100vw - 2rem - env(safe-area-inset-left) - env(safe-area-inset-right))",

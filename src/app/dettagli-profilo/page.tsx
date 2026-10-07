@@ -16,6 +16,7 @@ import {dynamicMetadata} from "@/server/metadata";
 import {profileMetadataDescription, profileStructuredData, profileTypeLabel,} from "@/server/structured-data";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {createClient} from "@/lib/supabase/server";
+import {getProfileContacts} from "@/features/dettagli-profilo/server/profile-contacts-query";
 
 interface DettagliProfiloPageProps {
 	searchParams: Promise<RawProfileDetailSearchParams>;
@@ -78,6 +79,9 @@ export default async function DettagliProfiloPage({searchParams}: DettagliProfil
 	const path = profilePath(params.id, params.type);
 	const account = await getAuthenticatedViewer();
 	const authenticated = Boolean(account);
+	const displayResult = result.status === "ok" && authenticated
+		? {...result, profile: {...result.profile, contacts: await getProfileContacts(params.id, params.type)}}
+		: result;
 	let isOwner = false;
 	if (result.status === "ok" && account?.utenteId) {
 		const supabase = await createClient();
@@ -94,7 +98,7 @@ export default async function DettagliProfiloPage({searchParams}: DettagliProfil
 		<ExternalNavigationProvider key={`${params.id}:${params.type}`}>
 			{result.status === "ok" && <JsonLd data={profileStructuredData(result.profile, path, authenticated)} />}
 			<Navbar />
-			<DettagliProfilo result={result} authenticated={authenticated} isOwner={isOwner} returnTo={path} />
+			<DettagliProfilo result={displayResult} authenticated={authenticated} isOwner={isOwner} returnTo={path} />
 			<Footer />
 		</ExternalNavigationProvider>
 	);

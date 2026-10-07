@@ -13,7 +13,6 @@ import {
 	type LucideIcon,
 	MapPinIcon,
 	TagsIcon,
-	UserRoundPlusIcon,
 	UserSearchIcon,
 	UsersIcon,
 	WrenchIcon
@@ -45,6 +44,5 @@ export function getAnnouncementDetailFacts(announcement: AnnouncementDetail, pre
 				: isSpecifiedAnnouncementValue(fact.value) ? fact.value : null};
 		}),
 		{label: "Num. salvataggi", icon: HeartIcon, value: announcement.saveCount == null ? "Non disponibile" : String(announcement.saveCount)},
-		{label: "Num. follower profilo", icon: UserRoundPlusIcon, value: announcement.authorFollowerCount == null ? "Non disponibile" : String(announcement.authorFollowerCount)},
 	];
 }
