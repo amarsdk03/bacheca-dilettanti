@@ -97,6 +97,7 @@ export interface DirectoryProfileFact {
 }
 
 export interface DirectoryProfile {
+	nationalityCode?: string | null;
 	id: string;
 	type: ProfileType;
 	title: string;

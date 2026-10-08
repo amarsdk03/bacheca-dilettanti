@@ -10,7 +10,7 @@ export default function PlayerRolesCard({sportTypes, primaryRoles}: Pick<PlayerP
 	];
 
 	return (
-		<Card className="min-w-0">
+		<Card className="min-w-0" hidden>
 			<CardHeader>
 				<CardTitle>
 					<h2 className="flex items-center gap-2 font-home-display text-2xl uppercase">

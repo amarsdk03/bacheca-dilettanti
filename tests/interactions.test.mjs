@@ -285,20 +285,24 @@ test("Follow state and dashboard resolve exact sender/recipient identities", asy
 });
 
 test("announcement visibility authenticates ownership through RLS before its server mutation", async () => {
-	for (const owned of [false, true]) {
+	for (const {owned, viewer} of [
+		{owned: false, viewer: registered},
+		{owned: true, viewer: registered},
+		{owned: true, viewer: {...registered, utenteId: null}},
+	]) {
 		const writes = [];
 		const query = {select() {return this;}, eq() {return this;}, maybeSingle: async () => ({data: owned ? {uuid: targetId} : null, error: null})};
 		const load = loader({
 			"next/cache": {revalidatePath() {}},
-			"@/features/auth/server/queries": {getAuthenticatedViewer: async () => registered},
+			"@/features/auth/server/queries": {getAuthenticatedViewer: async () => viewer},
 			"@/features/profilo/server/profile-image-processing": {},
 			"@/features/registrati/server/registration": {},
 			"@/lib/supabase/server": {createClient: async () => ({from: () => query})},
 			"@/lib/supabase/admin": {createAdminClient: () => ({from: () => ({...query, update(payload) {writes.push(payload); return this;}})})},
 		});
 		const result = await load("src/features/profilo/server/actions.ts").setAnnouncementVisibility(targetId, true);
-		assert.equal(result.status, owned ? "success" : "error");
-		assert.deepEqual(writes, owned ? [{nascosto: true, ultima_modifica_da: authUser}] : []);
+		assert.equal(result.status, owned && viewer.utenteId ? "success" : "error");
+		assert.deepEqual(writes, owned && viewer.utenteId ? [{nascosto: true, ultima_modifica_da: internalUser}] : []);
 	}
 });
 

@@ -18,7 +18,7 @@ export default function ProfileFactsGrid({facts, layout = "default"}: {
 	const hasThreeColumns = balanced && (facts.length === 3 || facts.length === 6 || facts.length === 9);
 
 	return (
-		<dl className={cn("grid min-w-0 grid-cols-2 gap-3", hasThreeColumns ? "sm:grid-cols-3" : "sm:grid-cols-4")}>
+		<dl className={cn("grid min-w-0 grid-cols-2 gap-3", balanced && facts.length === 2 ? "sm:grid-cols-2" : hasThreeColumns ? "sm:grid-cols-3" : "sm:grid-cols-4")}>
 			{facts.map(({label, icon: Icon, value, content, wide}, index) => (
 				<div key={label} className={cn(
 					"flex min-h-22 min-w-0 flex-col gap-2 rounded-xl border border-border bg-muted/40 p-3 sm:p-4",

@@ -1,7 +1,7 @@
 import {MegaphoneIcon, TriangleAlertIcon} from "lucide-react";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
-import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
+import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import type {AnnouncementDirectoryItem} from "@/features/annunci/announcement-model";
 import ProfileAnnouncementCard from "./ProfileAnnouncementCard";
 import Link from "next/link";
@@ -19,7 +19,6 @@ export default function LatestProfileAnnouncements({announcements, announcements
 				<h2 className="font-home-display text-2xl font-medium uppercase">
 					{contentMode ? "Contenuti / promozioni" : "Ultimi annunci pubblicati"}
 				</h2>
-				{isOwner && <Link href="/pubblica-annuncio" className={buttonVariants({size: "sm"})}>{contentMode ? "Crea contenuto / promozione" : "Crea nuovo annuncio"}</Link>}
 				{!announcementsUnavailable && (
 					<Badge variant="secondary">
 						{announcements.length === 1
@@ -44,6 +43,9 @@ export default function LatestProfileAnnouncements({announcements, announcements
 							{contentMode ? "Questo profilo non ha ancora contenuti / promozioni pubblici." : "Questo profilo non ha ancora annunci pubblici per la tipologia selezionata."}
 						</EmptyDescription>
 					</EmptyHeader>
+					{isOwner && <EmptyContent>
+						<Link href="/pubblica-annuncio" className={buttonVariants({size: "sm"})}>{contentMode ? "Crea contenuto / promozione" : "Crea nuovo annuncio"}</Link>
+					</EmptyContent>}
 				</Empty>
 			) : (
 				<ul className="grid gap-4 md:grid-cols-2">

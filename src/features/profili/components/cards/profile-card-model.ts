@@ -7,6 +7,7 @@ export type ProfileCardData<Type extends ProfileType = ProfileType> = Pick<Direc
 
 export type PlayerCardData = ProfileCardData<"giocatore"> & {
 	roles: string[];
+	nationalityCode?: string | null;
 };
 
 export function toPlayerCardData(profile: DirectoryProfile): PlayerCardData {
@@ -20,6 +21,7 @@ export function toPlayerCardData(profile: DirectoryProfile): PlayerCardData {
 		officialVerified: profile.officialVerified,
 		facts: profile.facts,
 		roles: profile.filterData.ruoli,
+		nationalityCode: profile.nationalityCode ?? null,
 	};
 }
 

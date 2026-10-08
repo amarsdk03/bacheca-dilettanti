@@ -83,6 +83,7 @@ export type PlayerProfileDetail = ProfileDetailBase & {
 };
 
 export type GenericProfileDetail<Type extends NonPlayerProfileType = NonPlayerProfileType> = ProfileDetailBase & {
+	followerCount: number | null;
 	type: Type;
 	locations: PublicProfileLocation[];
 	primaryFields: ProfileDetailField[];

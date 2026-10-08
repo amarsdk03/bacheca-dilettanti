@@ -31,6 +31,7 @@ import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {isLinkAnnuncioValid} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {loadRecentSimilarProfiles} from "@/features/profili/server/queries";
+import {loadProfileFollowerCount} from "./profile-follower-count";
 
 const NOT_SPECIFIED = "Non specificato";
 
@@ -198,7 +199,7 @@ async function loadProfileContent(
 	if (type === "staff-sportivo") {
 		const {data, error} = await supabase
 			.from("profilo_staff_sportivo")
-			.select("nominativo_anonimo, id, nome, cognome, sport_principale, tipologie_sport, figure_professionali, disponibilita, disponibile_remoto, presentazione, lista_esperienze, qualifiche_licenze")
+			.select("nominativo_anonimo, id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, sport_principale, tipologie_sport, figure_professionali, disponibilita, disponibile_remoto, presentazione, lista_esperienze, qualifiche_licenze")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -214,6 +215,10 @@ async function loadProfileContent(
 				fields: [
 					detailListField("Tipologie calcio", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
 					detailListField("Figure professionali", normalizeFigures(cleanStringArray(data.figure_professionali))),
+					detailField("Età", (() => {
+						const age = publicPlayerAge({day: data.giorno_nascita, month: data.mese_nascita, year: data.anno_nascita});
+						return age === null ? null : `${age} (${data.anno_nascita})`;
+					})()),
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Disponibile anche da remoto", data.disponibile_remoto ? "Sì" : "No"),
 					detailField("Presentazione", data.presentazione, true),
@@ -409,13 +414,15 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 		const contentPromise = loadProfileContent(supabase, id, type);
 		const announcementsPromise = loadPublicProfileAnnouncements(supabase, id, type);
 		const profileImagesPromise = loadProfileImageUrlMap(supabase, [id]);
-		const [baseResult, locationsResult, socialLinksResult, contentResult, announcementsResult, profileImages] = await Promise.all([
+		const followerCountPromise = type === "giocatore" ? Promise.resolve(null) : loadProfileFollowerCount(supabase, id, type);
+		const [baseResult, locationsResult, socialLinksResult, contentResult, announcementsResult, profileImages, followerCount] = await Promise.all([
 			baseProfilePromise,
 			locationsPromise,
 			socialLinksPromise,
 			contentPromise,
 			announcementsPromise,
 			profileImagesPromise,
+			followerCountPromise,
 		]);
 
 		if (baseResult.error || locationsResult.error || socialLinksResult.error || contentResult.status === "error") {
@@ -499,7 +506,7 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 
 		const experiences = enrichedExperiences.slice(0, content.experiences?.length ?? 0);
 		const qualifications = enrichedExperiences.slice(content.experiences?.length ?? 0);
-		const profile: ProfileDetail = {...common, type, locations, ...splitFields, experiences, qualifications};
+		const profile: ProfileDetail = {...common, type, followerCount, locations, ...splitFields, experiences, qualifications};
 		return {status: "ok", profile};
 	} catch (error) {
 		console.error("[dettagli-profilo] Profile lookup unavailable", {

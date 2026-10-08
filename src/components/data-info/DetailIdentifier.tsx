@@ -8,9 +8,10 @@ import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {toast} from "@/components/ui/toast";
 import {copyText} from "@/lib/utils";
 
-export default function DetailIdentifier({id, entity}: {
+export default function DetailIdentifier({id, entity, entityLabel}: {
 	id: string;
 	entity: "profilo" | "annuncio";
+	entityLabel?: string;
 }) {
 	const [copying, setCopying] = useState(false);
 	const copyLabel = entity === "profilo" ? "Copia UUID del profilo" : "Copia UUID dell’annuncio";
@@ -33,7 +34,7 @@ export default function DetailIdentifier({id, entity}: {
 				<div className={"flex flex-row items-center justify-between gap-3"}>
 					<div className={"flex flex-col justify-start gap-1"}>
 						<p className={"font-medium tracking-wide"}>
-							UUID {entity}:
+							UUID {entityLabel ?? entity}:
 						</p>
 						<code className="block text-xs text-muted-foreground select-all break-all">{id}</code>
 					</div>

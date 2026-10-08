@@ -20,8 +20,7 @@ import {INVITATION_CODE_PATTERN, normalizeInvitationCode} from "@/features/invit
 import {isLinkAnnuncioValid, MAX_LINK_ANNUNCIO_LENGTH,} from "@/features/pubblica-annuncio/types/announcementExtras";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 import {
-	CATEGORIE_CALCIO_GROUPS,
-	categoryKey,
+	isPlayerCurrentCategory,
 	normalizeCategories,
 	normalizeFigures
 } from "@/features/pubblica-annuncio/types/category-catalog";
@@ -343,7 +342,7 @@ function normalizeDraft(
 		const normalizedBirthDate = birthDate(value, type);
 		const availability = value.disponibilita === "disponibile-subito" ? "svincolato" : enumText(value.disponibilita, new Set(["svincolato", "sotto-contratto"]), type);
 		const category = textValue(value.categoria_attuale, 120, type);
-		if (category && !CATEGORIE_CALCIO_GROUPS.some(({gruppo, opzioni}) => opzioni.some((item) => categoryKey(gruppo, item) === category))) fail("La categoria attuale non è valida.", 3, type);
+		if (category && !isPlayerCurrentCategory(category)) fail("La categoria attuale non è valida.", 3, type);
 		const gender = enumText(value.genere, new Set(["Uomo", "Donna"]), type);
 		const nationality = enumText(value.nazionalita, NATIONALITIES, type);
 		const highlightsUploadRequested = value.richiede_caricamento_highlights ?? false;

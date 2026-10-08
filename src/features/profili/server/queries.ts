@@ -3,7 +3,7 @@ import {publicProfileName} from "@/features/profilo/profile-public-name";
 import {teamCategoryLabel} from "@/features/profilo/team-category-catalog";
 
 import {availabilityLabel} from "@/features/profilo/public-profile-display";
-import {nationalityLabel} from "@/features/profilo/player-nationalities";
+import {isPlayerNationalityCode, nationalityLabel} from "@/features/profilo/player-nationalities";
 
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
@@ -86,6 +86,7 @@ interface ProfileLocation {
 }
 
 interface ProfileContent {
+	nationalityCode?: string | null;
 	title: string | null;
 	presentation: string | null;
 	sport: string | null;
@@ -276,6 +277,7 @@ function createDirectoryProfile(
 
 	return {
 		id: row.uuid,
+		...(type === "giocatore" ? {nationalityCode: content.nationalityCode ?? null} : {}),
 		type,
 		title,
 		presentation,
@@ -303,6 +305,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		const sportTypes = ordinaTipologieCalcio(cleanStringArray(player.tipologie_sport));
 		const currentCategory = cleanText(player.categoria_attuale);
 		profiles.push(createDirectoryProfile(row, "giocatore", player.id, {
+			nationalityCode: isPlayerNationalityCode(player.nazionalita) ? player.nazionalita : null,
 			title: publicProfileName("giocatore", player.nominativo_anonimo, fullName(player.nome, player.cognome)),
 			presentation: player.presentazione,
 			sport: cleanText(player.sport_principale) ?? sportTypes[0],

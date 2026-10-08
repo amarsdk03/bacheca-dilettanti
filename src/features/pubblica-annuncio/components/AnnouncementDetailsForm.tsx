@@ -250,6 +250,7 @@ export default function AnnouncementDetailsForm({
 								value={drafts.giocatore.categorie_ricercate}
 								onValueChangeAction={(value) => updateDraft("giocatore", "categorie_ricercate", value)}
 								includeAny
+								groupAnyExclusive
 								className={"pb-2"}
 							/>
 							<FieldDescription>Se non trovi la tua categoria specifica, scrivila nelle informazioni aggiuntive dell’annuncio.</FieldDescription>

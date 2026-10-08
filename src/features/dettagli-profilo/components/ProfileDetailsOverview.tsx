@@ -1,4 +1,4 @@
-import ProfileContactsCard from "./ProfileContactsCard";
+import Image from "next/image";
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import type {ReactNode} from "react";
 import {ExternalLinkIcon, EyeOff, StarIcon} from "lucide-react";
@@ -12,6 +12,7 @@ import {profileInitials} from "@/features/profilo/public-profile-display";
 import {OfficialVerificationIcon, RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
 import {
 	getProfileDetailFacts,
+	getProfileDetailBadgeValues,
 	getProfileDetailFields,
 	type ProfileDetailPresentation
 } from "./profile-detail-presentation";
@@ -20,6 +21,8 @@ import ProfileIdentifier from "./ProfileIdentifier";
 import ProfileLocationsCard from "./ProfileLocationsCard";
 import ProfileSocialLinksCard from "./ProfileSocialLinks";
 import StructuredFieldList from "@/components/data-info/StructuredFieldList";
+import ProfileSectionHeading from "./ProfileSectionHeading";
+import {cn} from "@/lib/utils";
 
 function ProfileFieldValue({field}: {field: PublicProfile["fields"][number]}) {
 	if (field.items?.length) return <StructuredFieldList items={field.items} style={field.listStyle} />;
@@ -39,6 +42,7 @@ export function ProfileDetailsHeader({profile, presentation, actions}: {
 	actions?: ReactNode;
 }) {
 	const option = PROFILE_OPTIONS.find(({value}) => value === profile.type)!;
+	const badges = getProfileDetailBadgeValues(profile, presentation);
 
 	return (
 		<header aria-label={`Profilo ${option.label}`}>
@@ -53,6 +57,11 @@ export function ProfileDetailsHeader({profile, presentation, actions}: {
 							<h1 className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">
 								{profile.title} <OfficialVerificationIcon officialVerified={profile.officialVerified} className={"size-7 align-[0.16em]"} />
 							</h1>
+							{badges.length > 0 && <div role="group" aria-label="Caratteristiche del profilo" className="flex min-w-0 flex-wrap items-center gap-2">
+								{badges.map(value => <Badge key={value} title={value} className="h-auto min-h-5 max-w-full min-w-0 shrink whitespace-normal">
+									<span className="line-clamp-2 max-w-xs wrap-anywhere">{value}</span>
+								</Badge>)}
+							</div>}
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge variant="secondary" className="public-profile-type-badge"><ProfilePngIcon type={profile.type} color="currentColor" className="size-3" />{option.label}</Badge>
 								<RegisteredUserBadge emailConfirmed={profile.emailConfirmed} />
@@ -63,7 +72,7 @@ export function ProfileDetailsHeader({profile, presentation, actions}: {
 					</div>
 					{actions && <div className="w-full min-w-0 xl:w-auto xl:shrink-0">{actions}</div>}
 				</CardHeader>
-				<CardContent><ProfileFactsGrid facts={getProfileDetailFacts(profile, presentation)} /></CardContent>
+				<CardContent><ProfileFactsGrid facts={getProfileDetailFacts(profile, presentation)} layout="balanced" /></CardContent>
 			</Card>
 		</header>
 	);
@@ -76,54 +85,43 @@ export default function ProfileDetailsOverview({profile, presentation, authentic
 	returnTo: string;
 }) {
 	const fields = getProfileDetailFields(profile);
-	const description = fields.find(field => field.label === "Presentazione");
-	const narrativeFields = presentation.narrativeFieldLabels.flatMap(label => {
-		const field = fields.find(candidate => candidate.label === label);
-		return field ? [field] : [];
-	});
-	const usedLabels = new Set([
-		"Presentazione",
-		...presentation.narrativeFieldLabels,
-		...presentation.facts.flatMap(({label, fieldLabel, sourceFieldLabels = []}) => [label, fieldLabel, ...sourceFieldLabels].filter((value): value is string => Boolean(value))),
-	]);
-	const supportingFields = fields.filter(({label}) => !usedLabels.has(label) && profile.type !== "campi-impianti-sportivi");
-	const expandedFactFields = fields.filter(field => field.items && field.items.length > 2 && presentation.facts.some(fact => (fact.fieldLabel ?? fact.label) === field.label));
+	const renderField = (title: string, fieldLabel: string, centered = false) => {
+		const field = fields.find(candidate => candidate.label === fieldLabel);
+		return <Card key={title} className="min-w-0">
+			<CardHeader><CardTitle><ProfileSectionHeading>{title}</ProfileSectionHeading></CardTitle></CardHeader>
+			<CardContent>
+				<div className={cn("text-base leading-7 whitespace-pre-wrap wrap-anywhere", centered && "flex flex-col items-center text-center [&>ul]:justify-center")}>
+					{field && field.value !== "Non specificato" ? <ProfileFieldValue field={field} /> : <p className="text-sm text-muted-foreground">{title} non disponibile</p>}
+				</div>
+			</CardContent>
+		</Card>;
+	};
+	const renderFooter = () => <>
+		<Card className="min-w-0">
+			<CardHeader><CardTitle><ProfileSectionHeading>Ecosistema {presentation.ecosystemName}</ProfileSectionHeading></CardTitle></CardHeader>
+			<CardContent className="flex flex-col items-center gap-4">
+				<p className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground">Powered by</p>
+				<Image src="/banner-pubblicita/placeholder.png" width={384} height={108} alt="Spazio pubblicitario per sponsor" className="h-auto w-full max-w-md rounded-xl object-contain" />
+			</CardContent>
+		</Card>
+		<ProfileIdentifier profileId={profile.id} name={presentation.identifierName} />
+	</>;
+	const hasTopCards = Boolean(presentation.sidebarFields?.length);
 
 	return (
 		<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-			<aside aria-label="Informazioni del profilo" className="order-1 flex min-w-0 flex-col gap-5 lg:order-2 lg:col-start-2 lg:row-start-1">
-				{supportingFields.length > 0 && <Card className="min-w-0">
-					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Altre informazioni</h2></CardTitle></CardHeader>
-					<CardContent><dl className="flex flex-col gap-5">
-						{supportingFields.map(field => <div key={field.label} className="flex min-w-0 flex-col gap-2">
-							<dt className="text-sm font-semibold">{field.label}</dt>
-							<dd className="text-sm leading-6 whitespace-pre-wrap wrap-anywhere"><ProfileFieldValue field={field} /></dd>
-						</div>)}
-					</dl></CardContent>
-				</Card>}
-				<ProfileLocationsCard locations={profile.locations} />
+			<aside aria-label="Ecosistema e identificativo del profilo" className={cn("min-w-0 flex-col gap-5 lg:col-start-2 lg:row-start-1 lg:flex", hasTopCards ? "order-1 flex lg:order-2" : "order-2 hidden")}>
+				{presentation.sidebarFields?.map(({title, fieldLabel}) => renderField(title, fieldLabel, true))}
+				<div className="hidden flex-col gap-5 lg:flex">{renderFooter()}</div>
 			</aside>
-			<div className="order-2 flex min-w-0 flex-col gap-5 lg:order-1 lg:col-start-1 lg:row-span-2 lg:row-start-1">
-				{expandedFactFields.map(field => <Card key={field.label} className="min-w-0">
-					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{field.label}</h2></CardTitle></CardHeader>
-					<CardContent><ProfileFieldValue field={field} /></CardContent>
-				</Card>)}
-				<Card>
-					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{presentation.presentationLabel ?? "Descrizione"}</h2></CardTitle></CardHeader>
-					<CardContent><div className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{description && description.value !== "Non specificato" ? <ProfileFieldValue field={description} /> : `${presentation.presentationLabel ?? "Descrizione"} non disponibile`}</div></CardContent>
-				</Card>
-				{narrativeFields.map(field => (
-					<Card key={field.label}>
-						<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">{field.label}</h2></CardTitle></CardHeader>
-						<CardContent><div className="text-base leading-7 whitespace-pre-wrap wrap-anywhere"><ProfileFieldValue field={field} /></div></CardContent>
-					</Card>
-				))}
-			</div>
-			<aside aria-label="Contatti e identificativo" className="order-3 flex min-w-0 flex-col gap-5 lg:col-start-2 lg:row-start-2">
-				<ProfileContactsCard profile={profile} authenticated={authenticated} returnTo={returnTo} />
-				<ProfileSocialLinksCard socialLinks={profile.socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />
-				<ProfileIdentifier profileId={profile.id} />
-			</aside>
+			<section aria-label="Panoramica del profilo" className="order-2 flex min-w-0 flex-col gap-5 lg:order-1 lg:col-start-1 lg:row-start-1">
+				{presentation.sections.map((section, index) => {
+					if (section.kind === "locations") return <ProfileLocationsCard key={section.title} locations={profile.locations} title={section.title} presentation="player" />;
+					if (section.kind === "social") return <ProfileSocialLinksCard key={"social-" + index} socialLinks={profile.socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />;
+					return renderField(section.title, section.fieldLabel, section.centered);
+				})}
+			</section>
+			<div className="order-3 flex min-w-0 flex-col gap-5 lg:hidden">{renderFooter()}</div>
 		</div>
 	);
 }

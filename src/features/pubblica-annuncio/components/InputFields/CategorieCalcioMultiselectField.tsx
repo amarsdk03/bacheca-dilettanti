@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/combobox";
 import {Field, FieldError, FieldLabel} from "@/components/ui/field";
 import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
-import {ANY_CATEGORY, categoryKey, categoryLabel} from "@/features/pubblica-annuncio/types/category-catalog";
+import {ANY_CATEGORY, categoryKey, categoryLabel, updatePlayerCategories} from "@/features/pubblica-annuncio/types/category-catalog";
 
 type CategorieCalcioMultiselectFieldProps = {
 	label: string;
@@ -34,6 +34,7 @@ type CategorieCalcioMultiselectFieldProps = {
 	emptyText?: string;
 	includeAny?: boolean;
 	anyExclusive?: boolean;
+	groupAnyExclusive?: boolean;
 };
 
 export default function CategorieCalcioMultiselectField({
@@ -50,6 +51,7 @@ export default function CategorieCalcioMultiselectField({
 	emptyText = "Nessuna categoria trovata.",
 	includeAny = false,
 	anyExclusive = includeAny,
+	groupAnyExclusive = false,
 }: CategorieCalcioMultiselectFieldProps) {
 	const anchor = useComboboxAnchor();
 	const groupedItems = [
@@ -60,6 +62,7 @@ export default function CategorieCalcioMultiselectField({
 		})),
 	];
 	const updateValue = (nextValue: string[]) => {
+		if (groupAnyExclusive) return onValueChangeAction(updatePlayerCategories(value, nextValue));
 		if (!anyExclusive) return onValueChangeAction(nextValue);
 		if (nextValue.includes(ANY_CATEGORY) && !value.includes(ANY_CATEGORY)) return onValueChangeAction([ANY_CATEGORY]);
 		onValueChangeAction(nextValue.filter((item) => item !== ANY_CATEGORY));
@@ -93,7 +96,7 @@ export default function CategorieCalcioMultiselectField({
 							<ComboboxGroup key={group.gruppo} items={group.opzioni}>
 								<ComboboxLabel>{group.gruppo}</ComboboxLabel>
 								<ComboboxCollection>
-									{(item) => <ComboboxItem key={item} value={item}>{formatValueAction(item).replace(`${group.gruppo} · `, "")}</ComboboxItem>}
+									{(item) => <ComboboxItem key={item} value={item}>{formatValueAction(item).replace(`${group.gruppo} · `, "").replace(`${group.gruppo} — `, "")}</ComboboxItem>}
 								</ComboboxCollection>
 								{index < groupedItems.length - 1 && <ComboboxSeparator />}
 							</ComboboxGroup>

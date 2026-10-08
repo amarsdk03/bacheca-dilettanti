@@ -16,6 +16,7 @@ import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import type {PlayerProfileDetail} from "../../profile-detail-model";
 import ProfilePngIcon from "@/features/profilo/ProfilePngIcon";
 import {profileInitials} from "@/features/profilo/public-profile-display";
+import {nationalityLabel} from "@/features/profilo/player-nationalities";
 import {OfficialVerificationIcon, RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
 import ProfileFactsGrid, {type ProfileFact} from "../ProfileFactsGrid";
 import PlayerRolePitch from "./PlayerRolePitch";
@@ -27,18 +28,19 @@ type PlayerHeaderProps = Pick<PlayerProfileDetail, "anonymousName" | "title" | "
 
 export default function PlayerHeader({anonymousName, title, imageUrl, emailConfirmed, officialVerified, primary, availabilityLabel, player, actions}: PlayerHeaderProps) {
 	const {age, primaryRoles, specificRoles, gender, nationalityCode, preferredFoot, height} = player;
+	const countryName = nationalityLabel(nationalityCode);
 	const hasRolePitch = getPlayerRolePitchMarkers(primaryRoles, specificRoles).length > 0;
 	const facts: ProfileFact[] = [
-		{label: "Età", icon: CalendarDaysIcon, value: age !== null && player.birthYear ? `${age} (${player.birthYear})` : null},
+		{label: "Anno", icon: CalendarDaysIcon, value: age !== null && player.birthYear ? `${age} (${player.birthYear})` : null},
 		{label: "Genere", icon: ShirtIcon, value: gender},
 		{label: "Altezza", icon: RulerIcon, value: height ? `${height} cm` : null},
-		{label: "Piede", icon: FootprintsIcon, value: preferredFoot},
+		{label: "Disponibilità", icon: CircleCheckBigIcon, value: availabilityLabel},
 		{
 			label: "Categoria attuale",
 			icon: TagsIcon,
 			value: player.currentCategory,
 		},
-		{label: "Disponibilità", icon: CircleCheckBigIcon, value: availabilityLabel},
+		{label: "Piede", icon: FootprintsIcon, value: preferredFoot},
 	];
 
 	return (
@@ -57,7 +59,9 @@ export default function PlayerHeader({anonymousName, title, imageUrl, emailConfi
 							{(primaryRoles.length > 0 || nationalityCode) && (
 								<div role="group" className="flex flex-wrap items-center gap-2" aria-label="Ruoli principali e nazionalità">
 									{primaryRoles.map(role => <Badge key={role} variant="default">{role}</Badge>)}
-									{nationalityCode && <DynamicReactFlag code={nationalityCode} className="h-4 w-6 rounded-xs ring-1 ring-border" />}
+									{nationalityCode && countryName && <span role="img" aria-label={`Nazionalità: ${countryName}`} title={countryName} className="inline-flex">
+										<DynamicReactFlag code={nationalityCode} className="h-4 w-6 rounded-xs ring-1 ring-border" />
+									</span>}
 								</div>
 							)}
 							<div className="flex flex-wrap items-center gap-2">

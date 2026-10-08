@@ -42,7 +42,7 @@ export default function DettagliProfilo({result, authenticated, isOwner = false,
 		/>
 	) : null;
 	const content = (
-		<main className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+		<main className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
 			<div className="flex items-center justify-between gap-3">
 				<ProfileHistoryBackButton />
 			</div>
@@ -56,7 +56,7 @@ export default function DettagliProfilo({result, authenticated, isOwner = false,
 			<div className="flex justify-center pt-2">
 				<ProfileHistoryBackButton label="Torna indietro" variant="outline" size="lg" />
 			</div>
-			{hasProfile && <aside aria-label="Sponsor" className="mx-auto flex w-full max-w-md flex-col items-center gap-4 pt-4 pb-2">
+			{result.status === "ok" && result.profile.type === "giocatore" && <aside aria-label="Sponsor" className="mx-auto flex w-full max-w-md flex-col items-center gap-4 pt-4 pb-2">
 				<p className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground">Powered by</p>
 				<Image src="/banner-pubblicita/placeholder.png" width={384} height={108} alt="Spazio pubblicitario per sponsor" className="h-auto w-full rounded-xl object-contain" />
 			</aside>}

@@ -1,7 +1,7 @@
 "use client";
 
 import {useDisabledFieldset} from "@/components/ui/disabled-fieldset";
-import type {ComponentProps, Dispatch, SetStateAction} from "react";
+import type {ComponentProps, Dispatch, ReactNode, SetStateAction} from "react";
 import {CircleHelpIcon, PlusIcon, Trash2Icon} from "lucide-react";
 
 import {Button} from "@/components/ui/button";
@@ -62,7 +62,6 @@ import TipologiaCalcioMultiselectField
 	from "@/features/pubblica-annuncio/components/InputFields/TipologiaCalcioMultiselectField";
 import type {ProfileValidationErrors} from "@/features/profilo/profile-required-fields";
 import {
-	CATEGORIE_CALCIO_GROUPS,
 	type DisponibilitaProfilo,
 	RUOLI_SPECIFICI_PER_RUOLO,
 	TIPOLOGIA_CALCIO_OPTIONS,
@@ -77,7 +76,11 @@ import {
 	normalizePlayerRoleSelection,
 } from "@/features/profilo/player-roles";
 import {TEAM_CATEGORY_GROUPS} from "@/features/profilo/team-category-catalog";
-import {categoryKey} from "@/features/pubblica-annuncio/types/category-catalog";
+import {
+	categoryKey,
+	categoryLabel,
+	PLAYER_CURRENT_CATEGORY_GROUPS
+} from "@/features/pubblica-annuncio/types/category-catalog";
 
 interface ProfileDetailsFormProps {
 	disabled?: boolean;
@@ -142,21 +145,21 @@ interface ProfileTextFieldProps {
 }
 
 function ProfileTextField({
-	id,
-	label,
-	value,
-	onChange,
-	placeholder,
-	type = "text",
-	min,
-	step,
-	maxLength = 160,
-	required = false,
-	error,
-}: ProfileTextFieldProps) {
+	                          id,
+	                          label,
+	                          value,
+	                          onChange,
+	                          placeholder,
+	                          type = "text",
+	                          min,
+	                          step,
+	                          maxLength = 160,
+	                          required = false,
+	                          error,
+                          }: ProfileTextFieldProps) {
 	return (
 		<Field data-invalid={Boolean(error)}>
-			<FieldLabel htmlFor={id}>{label} {required ? <RequiredMark /> : <OptionalLabel />}</FieldLabel>
+			<FieldLabel htmlFor={id}>{label} {required ? <RequiredMark/> : <OptionalLabel/>}</FieldLabel>
 			<Input
 				id={id}
 				type={type}
@@ -185,19 +188,19 @@ interface ProfileTextareaFieldProps {
 }
 
 function ProfileTextareaField({
-	id,
-	label,
-	value,
-	onChange,
-	placeholder,
-	maxLength = 5000,
-}: ProfileTextareaFieldProps) {
+	                              id,
+	                              label,
+	                              value,
+	                              onChange,
+	                              placeholder,
+	                              maxLength = 5000,
+                              }: ProfileTextareaFieldProps) {
 	const resolvedValue = value ?? "";
 
 	return (
 		<Field>
 			<div className="flex items-center justify-between gap-3">
-				<FieldLabel htmlFor={id}>{label} <OptionalLabel /></FieldLabel>
+				<FieldLabel htmlFor={id}>{label} <OptionalLabel/></FieldLabel>
 				<span className="text-xs text-muted-foreground">{resolvedValue.length}/{maxLength}</span>
 			</div>
 			<Textarea
@@ -212,8 +215,8 @@ function ProfileTextareaField({
 	);
 }
 
-type SelectOption = {value: string; label: string};
-type SelectOptionGroup = {label: string; options: readonly SelectOption[]};
+type SelectOption = { value: string; label: string };
+type SelectOptionGroup = { label: string; options: readonly SelectOption[] };
 
 interface ProfileSelectFieldProps {
 	id: string;
@@ -229,33 +232,36 @@ interface ProfileSelectFieldProps {
 }
 
 function ProfileSelectField({
-	id,
-	label,
-	value,
-	onChange,
-	options,
-	groups,
-	placeholder = "Non specificare",
-	required = false,
-	error,
-	disabled = false,
-}: ProfileSelectFieldProps) {
+	                            id,
+	                            label,
+	                            value,
+	                            onChange,
+	                            options,
+	                            groups,
+	                            placeholder = "Non specificare",
+	                            required = false,
+	                            error,
+	                            disabled = false,
+                            }: ProfileSelectFieldProps) {
 	const availableOptions = groups?.flatMap(group => group.options) ?? options ?? [];
 	const items = required ? availableOptions : [{value: null, label: placeholder}, ...availableOptions];
 
 	return (
 		<Field data-invalid={Boolean(error)} data-disabled={disabled}>
-			<FieldLabel htmlFor={id}>{label} {required ? <RequiredMark /> : <OptionalLabel />}</FieldLabel>
+			<FieldLabel htmlFor={id}>{label} {required ? <RequiredMark/> : <OptionalLabel/>}</FieldLabel>
 			<Select items={items} value={value || null} onValueChange={(nextValue) => onChange(nextValue ?? "")}>
-				<SelectTrigger id={id} className="w-full" disabled={disabled} aria-required={required} aria-invalid={Boolean(error)}>
-					{ required ? <SelectValue placeholder={placeholder} /> : <SelectValue />}
+				<SelectTrigger id={id} className="w-full" disabled={disabled} aria-required={required}
+				               aria-invalid={Boolean(error)}>
+					{required ? <SelectValue placeholder={placeholder}/> : <SelectValue/>}
 				</SelectTrigger>
 				<SelectContent>
 					{!required && <SelectGroup><SelectItem value={null}>{placeholder}</SelectItem></SelectGroup>}
 					{groups ? groups.map(group => <SelectGroup key={group.label}>
 						<SelectLabel>{group.label}</SelectLabel>
-						{group.options.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
-					</SelectGroup>) : <SelectGroup>{availableOptions.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectGroup>}
+						{group.options.map(item => <SelectItem key={item.value}
+						                                       value={item.value}>{item.label}</SelectItem>)}
+					</SelectGroup>) : <SelectGroup>{availableOptions.map(item => <SelectItem key={item.value}
+					                                                                         value={item.value}>{item.label}</SelectItem>)}</SelectGroup>}
 				</SelectContent>
 			</Select>
 			{error && <FieldError>{error}</FieldError>}
@@ -325,17 +331,18 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 		<FieldSet>
 			<div className="flex items-center justify-between gap-3">
 				<div className="flex flex-col items-start">
-					<FieldLegend variant="label" className="field-legend-title mb-0">{staff ? "Lista esperienze" : "Storico carriera"} <OptionalLabel /></FieldLegend>
+					<FieldLegend variant="label"
+					             className="field-legend-title mb-0">{staff ? "Lista esperienze" : "Storico carriera"}
+						<OptionalLabel /></FieldLegend>
 					<FieldDescription>{staff ? "Inserisci le società e i ruoli svolti." : "Inserisci le stagioni, le squadre e le categorie più rilevanti."}</FieldDescription>
 				</div>
 				<Button type="button" variant="outline" size="sm" onClick={addEsperienza}>
-					<PlusIcon data-icon="inline-start" />
+					<PlusIcon data-icon="inline-start"/>
 					Aggiungi
 				</Button>
 			</div>
 
 			<FieldGroup className="gap-4">
-
 				{esperienze.length === 0 ? (
 					<div className="rounded-lg border border-dashed bg-background p-4 text-sm text-muted-foreground">
 						{staff ? "Nessuna esperienza inserita." : "Nessun storico carriera inserito."}
@@ -356,13 +363,14 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 									onClick={() => removeEsperienza(esperienza.id)}
 									aria-label={`Rimuovi esperienza ${index + 1}`}
 								>
-									<Trash2Icon />
+									<Trash2Icon/>
 								</Button>
 							</div>
 
 							<FieldGroup className="grid gap-4 sm:grid-cols-2">
 								<Field>
-									<FieldLabel htmlFor={`${idPrefix}-dal-${esperienza.id}`}>Stagione: dal <OptionalLabel /></FieldLabel>
+									<FieldLabel htmlFor={`${idPrefix}-dal-${esperienza.id}`}>Stagione:
+										dal <OptionalLabel/></FieldLabel>
 									<Select
 										value={esperienza.periodoDa || null}
 										onValueChange={(value) => {
@@ -370,13 +378,13 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 											const periodoA = !periodoDa
 												? ""
 												: esperienza.periodoA && esperienza.periodoA !== "oggi" && Number(esperienza.periodoA) < Number(periodoDa)
-												? ""
-												: esperienza.periodoA;
+													? ""
+													: esperienza.periodoA;
 											updateEsperienza(esperienza.id, {periodoDa, periodoA});
 										}}
 									>
 										<SelectTrigger id={`${idPrefix}-dal-${esperienza.id}`} className="w-full">
-											<SelectValue placeholder="Dal" />
+											<SelectValue placeholder="Dal"/>
 										</SelectTrigger>
 										<SelectContent>
 											<SelectGroup>
@@ -390,14 +398,16 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 								</Field>
 
 								<Field data-disabled={!esperienza.periodoDa}>
-									<FieldLabel htmlFor={`${idPrefix}-al-${esperienza.id}`}>Stagione: al <OptionalLabel /></FieldLabel>
+									<FieldLabel htmlFor={`${idPrefix}-al-${esperienza.id}`}>Stagione:
+										al <OptionalLabel/></FieldLabel>
 									<Select
 										value={esperienza.periodoA || null}
 										onValueChange={(value) => updateEsperienza(esperienza.id, {periodoA: value ?? ""})}
 										disabled={!esperienza.periodoDa}
 									>
-										<SelectTrigger id={`${idPrefix}-al-${esperienza.id}`} className="w-full" disabled={!esperienza.periodoDa}>
-											<SelectValue placeholder="Al" />
+										<SelectTrigger id={`${idPrefix}-al-${esperienza.id}`} className="w-full"
+										               disabled={!esperienza.periodoDa}>
+											<SelectValue placeholder="Al"/>
 										</SelectTrigger>
 										<SelectContent>
 											<SelectGroup>
@@ -412,7 +422,9 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 								</Field>
 
 								<Field>
-									<FieldLabel htmlFor={`${idPrefix}-squadra-${esperienza.id}`}>{staff ? "Società / ente" : "Squadra"} <OptionalLabel /></FieldLabel>
+									<FieldLabel
+										htmlFor={`${idPrefix}-squadra-${esperienza.id}`}>{staff ? "Società / ente" : "Squadra"}
+										<OptionalLabel/></FieldLabel>
 									<TeamProfileComboboxField
 										id={`${idPrefix}-squadra-${esperienza.id}`}
 										value={esperienza.titolo}
@@ -486,7 +498,7 @@ export function OpeningHoursField({idPrefix, value, onChange, error}: OpeningHou
 
 	return (
 		<FieldSet data-invalid={Boolean(error)}>
-			<FieldLegend variant="label">Orari <OptionalLabel /></FieldLegend>
+			<FieldLegend variant="label">Orari <OptionalLabel/></FieldLegend>
 			<FieldDescription>Seleziona i giorni di apertura e indica l’orario di disponibilità.</FieldDescription>
 			<FieldGroup className="gap-3">
 				{openingHours.map((entry) => {
@@ -504,7 +516,8 @@ export function OpeningHoursField({idPrefix, value, onChange, error}: OpeningHou
 								updateDay(entry.giorno, {attivo: !entry.attivo});
 							}}
 						>
-							<FieldGroup className="grid items-end gap-3 sm:grid-cols-[minmax(9rem,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+							<FieldGroup
+								className="grid items-end gap-3 sm:grid-cols-[minmax(9rem,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
 								<Field orientation="horizontal" className="min-h-8">
 									<Checkbox
 										id={`${idPrefix}-${entry.giorno}-attivo`}
@@ -517,7 +530,8 @@ export function OpeningHoursField({idPrefix, value, onChange, error}: OpeningHou
 									</FieldLabel>
 								</Field>
 								<Field data-disabled={!entry.attivo}>
-									<FieldLabel htmlFor={`${idPrefix}-${entry.giorno}-dalle`}>Dalle <OptionalLabel /></FieldLabel>
+									<FieldLabel
+										htmlFor={`${idPrefix}-${entry.giorno}-dalle`}>Dalle <OptionalLabel/></FieldLabel>
 									<Input
 										id={`${idPrefix}-${entry.giorno}-dalle`}
 										type="text"
@@ -531,7 +545,8 @@ export function OpeningHoursField({idPrefix, value, onChange, error}: OpeningHou
 									/>
 								</Field>
 								<Field data-disabled={!entry.attivo}>
-									<FieldLabel htmlFor={`${idPrefix}-${entry.giorno}-alle`}>Alle <OptionalLabel /></FieldLabel>
+									<FieldLabel
+										htmlFor={`${idPrefix}-${entry.giorno}-alle`}>Alle <OptionalLabel/></FieldLabel>
 									<Input
 										id={`${idPrefix}-${entry.giorno}-alle`}
 										type="text"
@@ -554,7 +569,7 @@ export function OpeningHoursField({idPrefix, value, onChange, error}: OpeningHou
 	);
 }
 
-type SportsRoles = {principali: string[]; specifici: string[]};
+type SportsRoles = { principali: string[]; specifici: string[] };
 
 function toSportsRoles(value: Json | null): SportsRoles {
 	if (!value || Array.isArray(value) || typeof value !== "object") {
@@ -587,25 +602,27 @@ interface PersonalDataFieldsProps {
 	nameError?: string;
 	yearRequired?: boolean;
 	yearError?: string;
+	afterName?: ReactNode;
 }
 
 function PersonalDataFields({
-	prefix,
-	nome,
-	cognome,
-	giornoNascita,
-	meseNascita,
-	annoNascita,
-	onNomeChange,
-	onCognomeChange,
-	onGiornoNascitaChange,
-	onMeseNascitaChange,
-	onAnnoNascitaChange,
-	nameRequired = false,
-	nameError,
-	yearRequired = false,
-	yearError,
-}: PersonalDataFieldsProps) {
+	                            prefix,
+	                            nome,
+	                            cognome,
+	                            giornoNascita,
+	                            meseNascita,
+	                            annoNascita,
+	                            onNomeChange,
+	                            onCognomeChange,
+	                            onGiornoNascitaChange,
+	                            onMeseNascitaChange,
+	                            onAnnoNascitaChange,
+	                            nameRequired = false,
+	                            nameError,
+	                            yearRequired = false,
+	                            yearError,
+	                            afterName,
+                            }: PersonalDataFieldsProps) {
 	return (
 		<>
 			<FieldGroup className="grid gap-4 sm:grid-cols-2">
@@ -618,7 +635,8 @@ function PersonalDataFields({
 					required={nameRequired}
 					error={nameError}
 				/>
-				<ProfileTextField id={`${prefix}-cognome`} label="Cognome" value={cognome} onChange={onCognomeChange} placeholder="Rossi" />
+				<ProfileTextField id={`${prefix}-cognome`} label="Cognome" value={cognome} onChange={onCognomeChange}
+				                  placeholder="Rossi"/>
 			</FieldGroup>
 			<DataNascitaFields
 				idPrefix={prefix}
@@ -645,7 +663,15 @@ interface LocationsFieldProps {
 	error?: string | null;
 }
 
-function LocationsField({type, prefix, locations, onLocationsChange, required = false, error, allowedRegions}: LocationsFieldProps) {
+function LocationsField({
+	                        type,
+	                        prefix,
+	                        locations,
+	                        onLocationsChange,
+	                        required = false,
+	                        error,
+	                        allowedRegions
+                        }: LocationsFieldProps) {
 	const single = type !== "torneo-evento" && type !== "campi-impianti-sportivi" && type !== "creators" && type !== "servizi-consulenze";
 	const label = type === "torneo-evento"
 		? "Zona di svolgimento manifestazione"
@@ -665,13 +691,13 @@ function LocationsField({type, prefix, locations, onLocationsChange, required = 
 }
 
 function FacilityLocationField({
-	prefix,
-	locations,
-	onLocationsChange,
-	address,
-	onAddressChange,
-	error,
-}: {
+	                               prefix,
+	                               locations,
+	                               onLocationsChange,
+	                               address,
+	                               onAddressChange,
+	                               error,
+                               }: {
 	prefix: string;
 	locations: ProfileLocationDraft[];
 	onLocationsChange: (value: ProfileLocationDraft[]) => void;
@@ -686,49 +712,66 @@ function FacilityLocationField({
 			<FieldLegend variant="label" className="field-legend-title">Sede dell’impianto/struttura</FieldLegend>
 			<FieldGroup className="grid gap-4 sm:grid-cols-2">
 				<Field data-invalid={Boolean(error && !region)}>
-					<FieldLabel htmlFor={`${prefix}-facility-region`}>Regione <RequiredMark /></FieldLabel>
-					<Select value={region || null} onValueChange={(value) => onLocationsChange(value ? [{regione: value, citta: null}] : [])}>
-						<SelectTrigger id={`${prefix}-facility-region`} className="w-full" aria-required="true" aria-invalid={Boolean(error && !region)}><SelectValue placeholder="Seleziona una regione" /></SelectTrigger>
-						<SelectContent><SelectItem value={null}>Seleziona una regione</SelectItem>{REGIONI_ITALIANE.map(({nome}) => <SelectItem key={nome} value={nome}>{nome}</SelectItem>)}</SelectContent>
+					<FieldLabel htmlFor={`${prefix}-facility-region`}>Regione <RequiredMark/></FieldLabel>
+					<Select value={region || null}
+					        onValueChange={(value) => onLocationsChange(value ? [{regione: value, citta: null}] : [])}>
+						<SelectTrigger id={`${prefix}-facility-region`} className="w-full" aria-required="true"
+						               aria-invalid={Boolean(error && !region)}><SelectValue
+							placeholder="Seleziona una regione"/></SelectTrigger>
+						<SelectContent><SelectItem value={null}>Seleziona una
+							regione</SelectItem>{REGIONI_ITALIANE.map(({nome}) => <SelectItem key={nome}
+						                                                                      value={nome}>{nome}</SelectItem>)}
+						</SelectContent>
 					</Select>
 				</Field>
 				<Field data-invalid={Boolean(error && region && !selected?.citta)}>
-					<FieldLabel htmlFor={`${prefix}-facility-city`}>Città/comune <RequiredMark /></FieldLabel>
-					<Input id={`${prefix}-facility-city`} value={selected?.citta ?? ""} onChange={(event) => onLocationsChange([{regione: region, citta: event.target.value || null}])} disabled={!region} maxLength={120} required aria-required="true" aria-invalid={Boolean(error && region && !selected?.citta)} placeholder="Es. Roma" />
+					<FieldLabel htmlFor={`${prefix}-facility-city`}>Città/comune <RequiredMark/></FieldLabel>
+					<Input id={`${prefix}-facility-city`} value={selected?.citta ?? ""}
+					       onChange={(event) => onLocationsChange([{
+						       regione: region,
+						       citta: event.target.value || null
+					       }])} disabled={!region} maxLength={120} required aria-required="true"
+					       aria-invalid={Boolean(error && region && !selected?.citta)} placeholder="Es. Roma"/>
 				</Field>
 				<Field className="sm:col-span-2">
-					<FieldLabel htmlFor={`${prefix}-facility-address`}>Indirizzo <OptionalLabel /></FieldLabel>
-					<Input id={`${prefix}-facility-address`} value={address ?? ""} onChange={(event) => onAddressChange(event.target.value)} maxLength={160} placeholder="Via Roma 1" />
+					<FieldLabel htmlFor={`${prefix}-facility-address`}>Indirizzo <OptionalLabel/></FieldLabel>
+					<Input id={`${prefix}-facility-address`} value={address ?? ""}
+					       onChange={(event) => onAddressChange(event.target.value)} maxLength={160}
+					       placeholder="Via Roma 1"/>
 				</Field>
 			</FieldGroup>
 			{error && <FieldError>{error}</FieldError>}
-			{locations.length > 1 && <FieldDescription>Seleziona nuovamente la sede per sostituire le località storiche con una sola Regione e Città/comune.</FieldDescription>}
+			{locations.length > 1 &&
+                <FieldDescription>Seleziona nuovamente la sede per sostituire le località storiche con una sola Regione
+                    e Città/comune.</FieldDescription>}
 		</FieldSet>
 	);
 }
 
 function AnonymousNameField({type, prefix, checked, onChange}: {
- type: AnonymousNameProfileType;
- prefix: string;
- checked: boolean;
- onChange: ProfileDraftUpdater;
+	type: AnonymousNameProfileType;
+	prefix: string;
+	checked: boolean;
+	onChange: ProfileDraftUpdater;
 }) {
- return <Field orientation="horizontal">
-  <Checkbox id={`${prefix}-nominativo-anonimo`} checked={checked} onCheckedChange={(value) => onChange(type, "nominativo_anonimo", value === true)} />
-  <FieldContent>
-   <FieldLabel htmlFor={`${prefix}-nominativo-anonimo`}>Mantieni anonimo il mio nominativo</FieldLabel>
-   <FieldDescription>Il nominativo non sarà mostrato pubblicamente negli annunci e nella pagina del profilo.</FieldDescription>
-  </FieldContent>
- </Field>;
+	return <Field orientation="horizontal">
+		<Checkbox id={`${prefix}-nominativo-anonimo`} checked={checked}
+		          onCheckedChange={(value) => onChange(type, "nominativo_anonimo", value)}/>
+		<FieldContent className={"gap-px"}>
+			<FieldLabel htmlFor={`${prefix}-nominativo-anonimo`}>Mantieni anonimo il mio nominativo</FieldLabel>
+			<FieldDescription>Il nominativo non sarà mostrato pubblicamente negli annunci e nella pagina del
+				profilo.</FieldDescription>
+		</FieldContent>
+	</Field>;
 }
 
 function GiocatoreFields({
-	draft,
-	prefix,
-	onChange,
-	requiredFields,
-	errors,
-}: {
+	                         draft,
+	                         prefix,
+	                         onChange,
+	                         requiredFields,
+	                         errors,
+                         }: {
 	draft: ProfileDrafts["giocatore"];
 	prefix: string;
 	onChange: ProfileDraftUpdater;
@@ -757,11 +800,17 @@ function GiocatoreFields({
 				nameError={errors.name}
 				yearRequired
 				yearError={errors.birthYear}
+				afterName={<AnonymousNameField type="giocatore" prefix={prefix}
+				                               checked={draft.nominativo_anonimo} onChange={onChange}/>}
 			/>
-			<AnonymousNameField type="giocatore" prefix={prefix} checked={draft.nominativo_anonimo} onChange={onChange} />
 			<FieldGroup className="grid gap-4 sm:grid-cols-2">
-				<ProfileSelectField id={`${prefix}-genere`} label="Genere" value={draft.genere} onChange={(value) => onChange("giocatore", "genere", value)} options={[{value: "Uomo", label: "Uomo"}, {value: "Donna", label: "Donna"}]} placeholder="Seleziona il genere" required={requiredFields} error={errors.gender} />
-				<PlayerNationalityField id={`${prefix}-nazionalita`} value={draft.nazionalita} onChangeAction={(value) => onChange("giocatore", "nazionalita", value)} error={errors.nationality} />
+				<ProfileSelectField id={`${prefix}-genere`} label="Genere" value={draft.genere}
+				                    onChange={(value) => onChange("giocatore", "genere", value)}
+				                    options={[{value: "Uomo", label: "Uomo"}, {value: "Donna", label: "Donna"}]}
+				                    placeholder="Seleziona il genere" required={requiredFields} error={errors.gender}/>
+				<PlayerNationalityField id={`${prefix}-nazionalita`} value={draft.nazionalita}
+				                        onChangeAction={(value) => onChange("giocatore", "nazionalita", value)}
+				                        error={errors.nationality}/>
 			</FieldGroup>
 			<FieldGroup className="grid gap-4 sm:grid-cols-2">
 				<TipologiaCalcioMultiselectField
@@ -770,17 +819,24 @@ function GiocatoreFields({
 					required={requiredFields}
 					error={errors.sports}
 				/>
-				<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)} onValueChange={(value) => {
-					onChange("giocatore", "disponibilita", value);
-					if (value === "svincolato") onChange("giocatore", "categoria_attuale", "");
-				}} player required={requiredFields} error={errors.availability} />
+				<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)}
+				                            onValueChange={(value) => {
+					                            onChange("giocatore", "disponibilita", value);
+					                            if (value === "svincolato") onChange("giocatore", "categoria_attuale", "");
+				                            }} player required={requiredFields} error={errors.availability}/>
 			</FieldGroup>
 			<ProfileSelectField
 				id={`${prefix}-categoria-attuale`}
 				label="Categoria attuale"
 				value={draft.categoria_attuale}
 				onChange={(value) => onChange("giocatore", "categoria_attuale", value)}
-				groups={CATEGORIE_CALCIO_GROUPS.map(({gruppo, opzioni}) => ({label: gruppo, options: opzioni.map(categoria => ({value: categoryKey(gruppo, categoria), label: categoria}))}))}
+				groups={PLAYER_CURRENT_CATEGORY_GROUPS.map(({gruppo, opzioni}) => ({
+					label: gruppo,
+					options: opzioni.map(categoria => ({
+						value: categoryKey(gruppo, categoria),
+						label: categoryLabel(categoryKey(gruppo, categoria))
+					}))
+				}))}
 				placeholder={draft.disponibilita === "svincolato" ? "Non applicabile per giocatore svincolato" : "Non specificare"}
 				disabled={draft.disponibilita === "svincolato"}
 			/>
@@ -803,69 +859,80 @@ function GiocatoreFields({
 				placeholder={roles.principali.length > 0 ? "Seleziona i ruoli specifici..." : "Seleziona prima uno o più ruoli principali"}
 			/>
 			<FieldGroup className="grid gap-4 sm:grid-cols-3">
-				<ProfileTextField id={`${prefix}-altezza`} label="Altezza (in cm)" value={draft.altezza} onChange={(value) => onChange("giocatore", "altezza", value)} placeholder="Es. 180" />
-				<ProfileTextField id={`${prefix}-peso`} label="Peso (in kg)" value={draft.peso} onChange={(value) => onChange("giocatore", "peso", value)} placeholder="Es. 75" />
-				<ProfileSelectField id={`${prefix}-piede`} label="Piede principale" value={draft.piede_principale} onChange={(value) => onChange("giocatore", "piede_principale", value)} options={MAIN_FOOT_OPTIONS} />
+				<ProfileTextField id={`${prefix}-altezza`} label="Altezza (in cm)" value={draft.altezza}
+				                  onChange={(value) => onChange("giocatore", "altezza", value)} placeholder="Es. 180"/>
+				<ProfileTextField id={`${prefix}-peso`} label="Peso (in kg)" value={draft.peso}
+				                  onChange={(value) => onChange("giocatore", "peso", value)} placeholder="Es. 75"/>
+				<ProfileSelectField id={`${prefix}-piede`} label="Piede principale" value={draft.piede_principale}
+				                    onChange={(value) => onChange("giocatore", "piede_principale", value)}
+				                    options={MAIN_FOOT_OPTIONS}/>
 			</FieldGroup>
-			<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange("giocatore", "presentazione", value)} placeholder="Esperienze, caratteristiche tecniche, disponibilità e obiettivi..." />
-			<LinkAnnuncioField
-				idPrefix={`${prefix}-video-highlights`}
-				label="Link video highlights"
-				placeholder={draft.richiede_caricamento_highlights || draft.highlights_privati ? "" : "https://youtu.be/dQEemdsoLDM"}
-				description="Inserisci il link pubblico a un video con le tue azioni migliori"
-				value={draft.video_highlights}
-				onValueChange={(value) => onChange("giocatore", "video_highlights", value)}
-				disabled={draft.richiede_caricamento_highlights || draft.highlights_privati}
-				labelAddon={(
-					<Tooltip>
-						<TooltipTrigger render={<button type="button" className="inline-flex size-5 items-center justify-center rounded-full text-brand-indigo outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo/40" aria-label="Informazioni sul link video highlights" />}>
-							<CircleHelpIcon className="size-4" />
-						</TooltipTrigger>
-						<TooltipContent className={"block"}>
-							Possiedi il video nella tua galleria ma non hai modo di caricare un link?
-							<Link href="/contatti" className="text-fuchsia-200 font-medium"> Contattaci e lo caricheremo noi su YouTube per te!</Link>
-						</TooltipContent>
-					</Tooltip>
-				)}
-			/>
-			<Field orientation="horizontal">
-				<Checkbox
-					id={`${prefix}-richiede-caricamento-highlights`}
-					checked={draft.richiede_caricamento_highlights}
-					onCheckedChange={(checked) => {
-						const requested = Boolean(checked);
-						onChange("giocatore", "richiede_caricamento_highlights", requested);
-						if (requested) {
-							onChange("giocatore", "highlights_privati", false);
-							onChange("giocatore", "video_highlights", "");
-						}
-					}}
+			<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione}
+			                      onChange={(value) => onChange("giocatore", "presentazione", value)}
+			                      placeholder="Esperienze, caratteristiche tecniche, disponibilità e obiettivi..."/>
+			<FieldGroup className="grid gap-1.5">
+				<LinkAnnuncioField
+					idPrefix={`${prefix}-video-highlights`}
+					label="Link video highlights"
+					placeholder={draft.richiede_caricamento_highlights || draft.highlights_privati ? "" : "https://youtu.be/dQEemdsoLDM"}
+					description="Inserisci il link pubblico a un video con le tue azioni migliori"
+					value={draft.video_highlights}
+					onValueChange={(value) => onChange("giocatore", "video_highlights", value)}
+					disabled={draft.richiede_caricamento_highlights || draft.highlights_privati}
+					labelAddon={(
+						<Tooltip>
+							<TooltipTrigger render={<button type="button"
+							                                className="inline-flex size-5 items-center justify-center rounded-full text-brand-indigo outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo/40"
+							                                aria-label="Informazioni sul link video highlights"/>}>
+								<CircleHelpIcon className="size-4"/>
+							</TooltipTrigger>
+							<TooltipContent className={"block"}>
+								Possiedi il video nella tua galleria ma non hai modo di caricare un link?
+								<Link href="/contatti" className="text-fuchsia-200 font-medium"> Contattaci e lo
+									caricheremo noi su YouTube per te!</Link>
+							</TooltipContent>
+						</Tooltip>
+					)}
 				/>
-				<FieldContent>
-					<FieldLabel htmlFor={`${prefix}-richiede-caricamento-highlights`} className="font-normal">
-						Possiedo dei video ma non ho possibilità di caricarli online (ti contatteremo noi!)
-					</FieldLabel>
-				</FieldContent>
-			</Field>
-			<Field orientation="horizontal">
-				<Checkbox
-					id={`${prefix}-highlights-privati`}
-					checked={draft.highlights_privati}
-					onCheckedChange={(checked) => {
-						const privateHighlights = checked === true;
-						onChange("giocatore", "highlights_privati", privateHighlights);
-						if (privateHighlights) {
-							onChange("giocatore", "richiede_caricamento_highlights", false);
-							onChange("giocatore", "video_highlights", "");
-						}
-					}}
-				/>
-				<FieldContent>
-					<FieldLabel htmlFor={`${prefix}-highlights-privati`} className="font-normal">
-						Possiedo dei video ma voglio renderli disponibili solamente privatamente
-					</FieldLabel>
-				</FieldContent>
-			</Field>
+				<Field orientation="horizontal" className={"mt-1"}>
+					<Checkbox
+						id={`${prefix}-richiede-caricamento-highlights`}
+						checked={draft.richiede_caricamento_highlights}
+						onCheckedChange={(checked) => {
+							const requested = Boolean(checked);
+							onChange("giocatore", "richiede_caricamento_highlights", requested);
+							if (requested) {
+								onChange("giocatore", "highlights_privati", false);
+								onChange("giocatore", "video_highlights", "");
+							}
+						}}
+					/>
+					<FieldContent>
+						<FieldLabel htmlFor={`${prefix}-richiede-caricamento-highlights`} className="font-normal">
+							Possiedo dei video, ma non ho possibilità di caricarli online (ti contatteremo noi!)
+						</FieldLabel>
+					</FieldContent>
+				</Field>
+				<Field orientation="horizontal">
+					<Checkbox
+						id={`${prefix}-highlights-privati`}
+						checked={draft.highlights_privati}
+						onCheckedChange={(checked) => {
+							const privateHighlights = checked;
+							onChange("giocatore", "highlights_privati", privateHighlights);
+							if (privateHighlights) {
+								onChange("giocatore", "richiede_caricamento_highlights", false);
+								onChange("giocatore", "video_highlights", "");
+							}
+						}}
+					/>
+					<FieldContent>
+						<FieldLabel htmlFor={`${prefix}-highlights-privati`} className="font-normal">
+							Possiedo dei video, ma voglio renderli disponibili solamente privatamente
+						</FieldLabel>
+					</FieldContent>
+				</Field>
+			</FieldGroup>
 			<CareerHistoryFields
 				idPrefix={`${prefix}-storico-carriera`}
 				esperienze={toExperiences(draft.storico_carriera)}
@@ -876,9 +943,9 @@ function GiocatoreFields({
 }
 
 function ProfileSocialLinksFields({
-	socialLinks,
-	onSocialLinksChange,
-}: {
+	                                  socialLinks,
+	                                  onSocialLinksChange,
+                                  }: {
 	socialLinks: ProfileSocialLinks;
 	onSocialLinksChange: (platform: ProfileSocialPlatform, value: string) => void;
 }) {
@@ -892,18 +959,19 @@ function ProfileSocialLinksFields({
 				{PROFILE_SOCIAL_LINK_OPTIONS.map(({platform, label, placeholder}) => {
 					const Icon = PROFILE_SOCIAL_ICONS[platform];
 					return (
-					<div key={platform} className={platform === "website" ? "sm:col-span-2" : undefined}>
-					<LinkAnnuncioField
-						idPrefix={`profile-social-${platform}`}
-						label={<>
-							<Icon className="size-4 shrink-0" aria-hidden="true" data-social-brand={platform} />{label}
-						</>}
-						placeholder={placeholder}
-						description={`Inserisci il link completo del tuo profilo ${label}.`}
-						value={socialLinks[platform]}
-						onValueChange={(value) => onSocialLinksChange(platform, value)}
-					/>
-					</div>
+						<div key={platform} className={platform === "website" ? "sm:col-span-2" : undefined}>
+							<LinkAnnuncioField
+								idPrefix={`profile-social-${platform}`}
+								label={<>
+									<Icon className="size-4 shrink-0" aria-hidden="true"
+									      data-social-brand={platform}/>{label}
+								</>}
+								placeholder={placeholder}
+								description={`Inserisci il link completo del tuo profilo ${label}.`}
+								value={socialLinks[platform]}
+								onValueChange={(value) => onSocialLinksChange(platform, value)}
+							/>
+						</div>
 					);
 				})}
 			</FieldGroup>
@@ -912,15 +980,15 @@ function ProfileSocialLinksFields({
 }
 
 function ProfileFields({
-	type,
-	drafts,
-	prefix,
-	onChange,
-	locations,
-	onLocationsChange,
-	requiredFields,
-	errors,
-}: {
+	                       type,
+	                       drafts,
+	                       prefix,
+	                       onChange,
+	                       locations,
+	                       onLocationsChange,
+	                       requiredFields,
+	                       errors,
+                       }: {
 	type: ProfileType;
 	drafts: ProfileDrafts;
 	prefix: string;
@@ -946,11 +1014,31 @@ function ProfileFields({
 		const draft = drafts.squadra;
 		return (
 			<>
-				<ProfileTextField id={`${prefix}-nome-societa`} label="Nome società" value={draft.nome_societa} onChange={(value) => onChange(type, "nome_societa", value)} placeholder="A.S.D. Esempio Calcio" required={requiredFields} error={errors.name} />
-				<AnonymousNameField type="squadra" prefix={prefix} checked={draft.nominativo_anonimo} onChange={onChange} />
-                <ProfileSelectField id={`${prefix}-tipologia`} label="Tipologia calcio" value={draft.tipologie_sport?.length === 1 ? draft.tipologie_sport[0] : ""} onChange={(value) => onChange(type, "tipologie_sport", value ? [value] : [])} options={TIPOLOGIA_CALCIO_OPTIONS.map((value) => ({value, label: value}))} placeholder="Seleziona una tipologia" required={requiredFields} error={errors.sports} />
-                <ProfileSelectField id={`${prefix}-categoria-attuale`} label="Categoria attuale Prima Squadra" value={draft.categoria_attuale} onChange={(value) => onChange(type, "categoria_attuale", value)} groups={TEAM_CATEGORY_GROUPS.map(({gruppo, opzioni}) => ({label: gruppo, options: opzioni.map(item => ({value: categoryKey(gruppo, item), label: `${gruppo} — ${item}`}))}))} placeholder="Seleziona una categoria" required={requiredFields} error={errors.category} />
-				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange(type, "presentazione", value)} placeholder="Ambiente, obiettivi, gruppi squadra... fai capire perché il tuo club è quello giusto in cui giocare o lavorare!" />
+				<ProfileTextField id={`${prefix}-nome-societa`} label="Nome società" value={draft.nome_societa}
+				                  onChange={(value) => onChange(type, "nome_societa", value)}
+				                  placeholder="A.S.D. Esempio Calcio" required={requiredFields} error={errors.name}/>
+				<AnonymousNameField type="squadra" prefix={prefix} checked={draft.nominativo_anonimo}
+				                    onChange={onChange}/>
+				<ProfileSelectField id={`${prefix}-tipologia`} label="Tipologia calcio"
+				                    value={draft.tipologie_sport?.length === 1 ? draft.tipologie_sport[0] : ""}
+				                    onChange={(value) => onChange(type, "tipologie_sport", value ? [value] : [])}
+				                    options={TIPOLOGIA_CALCIO_OPTIONS.map((value) => ({value, label: value}))}
+				                    placeholder="Seleziona una tipologia" required={requiredFields}
+				                    error={errors.sports}/>
+				<ProfileSelectField id={`${prefix}-categoria-attuale`} label="Categoria attuale Prima Squadra"
+				                    value={draft.categoria_attuale}
+				                    onChange={(value) => onChange(type, "categoria_attuale", value)}
+				                    groups={TEAM_CATEGORY_GROUPS.map(({gruppo, opzioni}) => ({
+					                    label: gruppo,
+					                    options: opzioni.map(item => ({
+						                    value: categoryKey(gruppo, item),
+						                    label: `${gruppo} — ${item}`
+					                    }))
+				                    }))} placeholder="Seleziona una categoria" required={requiredFields}
+				                    error={errors.category}/>
+				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione}
+				                      onChange={(value) => onChange(type, "presentazione", value)}
+				                      placeholder="Ambiente, obiettivi, gruppi squadra... fai capire perché il tuo club è quello giusto in cui giocare o lavorare!"/>
 			</>
 		);
 	}
@@ -976,46 +1064,81 @@ function ProfileFields({
 					yearRequired
 					yearError={errors.birthYear}
 				/>
-				<AnonymousNameField type="staff-sportivo" prefix={prefix} checked={draft.nominativo_anonimo} onChange={onChange} />
+				<AnonymousNameField type="staff-sportivo" prefix={prefix} checked={draft.nominativo_anonimo}
+				                    onChange={onChange}/>
 				<FieldGroup className="grid gap-4 sm:grid-cols-2">
-					<div className="sm:col-span-2"><FiguraProfessionaleMultiselectField label="Figure professionali" value={draft.figure_professionali ?? []} onValueChange={(value) => onChange(type, "figure_professionali", value)} required={requiredFields} error={errors.professionalRole} /></div>
-					<TipologiaCalcioMultiselectField label="Tipologie calcio" value={draft.tipologie_sport ?? []} onValueChange={(value) => onChange(type, "tipologie_sport", value)} />
-					<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)} onValueChange={(value) => onChange(type, "disponibilita", value)} />
+					<div className="sm:col-span-2"><FiguraProfessionaleMultiselectField label="Figure professionali"
+					                                                                    value={draft.figure_professionali ?? []}
+					                                                                    onValueChange={(value) => onChange(type, "figure_professionali", value)}
+					                                                                    required={requiredFields}
+					                                                                    error={errors.professionalRole}/>
+					</div>
+					<TipologiaCalcioMultiselectField label="Tipologie calcio" value={draft.tipologie_sport ?? []}
+					                                 onValueChange={(value) => onChange(type, "tipologie_sport", value)}/>
+					<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`}
+					                            value={toAvailability(draft.disponibilita)}
+					                            onValueChange={(value) => onChange(type, "disponibilita", value)}/>
 				</FieldGroup>
 				<Field orientation="horizontal">
-					<Checkbox id={`${prefix}-disponibile-remoto`} checked={draft.disponibile_remoto} onCheckedChange={(checked) => onChange(type, "disponibile_remoto", checked === true)} />
+					<Checkbox id={`${prefix}-disponibile-remoto`} checked={draft.disponibile_remoto}
+					          onCheckedChange={(checked) => onChange(type, "disponibile_remoto", checked)}/>
 					<FieldLabel htmlFor={`${prefix}-disponibile-remoto`}>Disponibile anche da remoto</FieldLabel>
 				</Field>
-				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange(type, "presentazione", value)} placeholder="Esperienze, competenze, disponibilità e metodo di lavoro..." />
-				<CareerHistoryFields idPrefix={`${prefix}-lista-esperienze`} staff esperienze={toExperiences(draft.lista_esperienze)} setEsperienze={experienceSetter(draft.lista_esperienze, (value) => onChange(type, "lista_esperienze", value))} />
-				<EsperienzeAnnuncioFields idPrefix={`${prefix}-qualifiche`} titolo="Qualifiche / Licenze" requireState freeTextOrganization error={errors.qualificationState} esperienze={toExperiences(draft.qualifiche_licenze)} setEsperienze={experienceSetter(draft.qualifiche_licenze, (value) => onChange(type, "qualifiche_licenze", value))} />
+				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione}
+				                      onChange={(value) => onChange(type, "presentazione", value)}
+				                      placeholder="Esperienze, competenze, disponibilità e metodo di lavoro..."/>
+				<CareerHistoryFields idPrefix={`${prefix}-lista-esperienze`} staff
+				                     esperienze={toExperiences(draft.lista_esperienze)}
+				                     setEsperienze={experienceSetter(draft.lista_esperienze, (value) => onChange(type, "lista_esperienze", value))}/>
+				<EsperienzeAnnuncioFields idPrefix={`${prefix}-qualifiche`} titolo="Qualifiche / Licenze" requireState
+				                          freeTextOrganization error={errors.qualificationState}
+				                          esperienze={toExperiences(draft.qualifiche_licenze)}
+				                          setEsperienze={experienceSetter(draft.qualifiche_licenze, (value) => onChange(type, "qualifiche_licenze", value))}/>
 			</>
 		);
 	}
 
 	if (type === "servizi-consulenze") {
-  const draft = drafts["servizi-consulenze"];
-  return <>
-   <ProfileTextField id={`${prefix}-nome`} label="Nome, Cognome o Ragione Sociale" value={draft.nome} onChange={value => onChange(type, "nome", value)} required={requiredFields} error={errors.name} />
-   <ProfileTextField id={`${prefix}-specializzazioni`} label="Tipo di azienda / professione" value={draft.specializzazioni} onChange={value => onChange(type, "specializzazioni", value)} maxLength={5000} />
-   <ProfileTextField id={`${prefix}-sede`} label="Sede Azienda / Professionista" value={draft.sede_professionista} onChange={value => onChange(type, "sede_professionista", value)} />
-   <FieldSet>
-    <FieldLegend variant="label">Contatti <RequiredMark /></FieldLegend>
-    <FieldDescription>Inserisci almeno un recapito tra email e telefono. Sono visibili agli utenti autenticati.</FieldDescription>
-    <FieldGroup className="grid gap-4 sm:grid-cols-2">
-     <ProfileTextField id={`${prefix}-email`} label="Contatto email" type="email" value={draft.contatto_email} onChange={value => onChange(type, "contatto_email", value)} maxLength={254} error={errors.email} />
-     <ProfileTextField id={`${prefix}-telefono`} label="Contatto telefonico" type="tel" value={draft.contatto_telefono} onChange={value => onChange(type, "contatto_telefono", value)} maxLength={40} error={errors.phone} />
-    </FieldGroup>
-    {errors.contacts && <FieldError>{errors.contacts}</FieldError>}
-   </FieldSet>
-   <FieldGroup className="grid gap-4 sm:grid-cols-2">
-    <TipologiaCalcioMultiselectField value={draft.tipologie_sport ?? []} onValueChange={value => onChange(type, "tipologie_sport", value)} />
-    <DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)} onValueChange={value => onChange(type, "disponibilita", value)} />
-   </FieldGroup>
-   <ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={value => onChange(type, "presentazione", value)} />
-   <ProfileTextareaField id={`${prefix}-presentazione-servizi`} label="Presentazione servizi" value={draft.presentazione_servizi} onChange={value => onChange(type, "presentazione_servizi", value)} />
-  </>;
- }
+		const draft = drafts["servizi-consulenze"];
+		return <>
+			<ProfileTextField id={`${prefix}-nome`} label="Nome, Cognome o Ragione Sociale" value={draft.nome}
+			                  onChange={value => onChange(type, "nome", value)} required={requiredFields}
+			                  error={errors.name}/>
+			<ProfileTextField id={`${prefix}-specializzazioni`} label="Tipo di azienda / professione"
+			                  value={draft.specializzazioni}
+			                  onChange={value => onChange(type, "specializzazioni", value)} maxLength={5000}/>
+			<ProfileTextField id={`${prefix}-sede`} label="Sede Azienda / Professionista"
+			                  value={draft.sede_professionista}
+			                  onChange={value => onChange(type, "sede_professionista", value)}/>
+			<FieldSet>
+				<FieldLegend variant="label">Contatti <RequiredMark/></FieldLegend>
+				<FieldDescription>Inserisci almeno un recapito tra email e telefono. Sono visibili agli utenti
+					autenticati.</FieldDescription>
+				<FieldGroup className="grid gap-4 sm:grid-cols-2">
+					<ProfileTextField id={`${prefix}-email`} label="Contatto email" type="email"
+					                  value={draft.contatto_email}
+					                  onChange={value => onChange(type, "contatto_email", value)} maxLength={254}
+					                  error={errors.email}/>
+					<ProfileTextField id={`${prefix}-telefono`} label="Contatto telefonico" type="tel"
+					                  value={draft.contatto_telefono}
+					                  onChange={value => onChange(type, "contatto_telefono", value)} maxLength={40}
+					                  error={errors.phone}/>
+				</FieldGroup>
+				{errors.contacts && <FieldError>{errors.contacts}</FieldError>}
+			</FieldSet>
+			<FieldGroup className="grid gap-4 sm:grid-cols-2">
+				<TipologiaCalcioMultiselectField value={draft.tipologie_sport ?? []}
+				                                 onValueChange={value => onChange(type, "tipologie_sport", value)}/>
+				<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)}
+				                            onValueChange={value => onChange(type, "disponibilita", value)}/>
+			</FieldGroup>
+			<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione}
+			                      onChange={value => onChange(type, "presentazione", value)}/>
+			<ProfileTextareaField id={`${prefix}-presentazione-servizi`} label="Presentazione servizi"
+			                      value={draft.presentazione_servizi}
+			                      onChange={value => onChange(type, "presentazione_servizi", value)}/>
+		</>;
+	}
 
 	if (type === "arbitro") {
 		const draft = drafts.arbitro;
@@ -1038,12 +1161,23 @@ function ProfileFields({
 					yearRequired
 					yearError={errors.birthYear}
 				/>
-				<AnonymousNameField type="arbitro" prefix={prefix} checked={draft.nominativo_anonimo} onChange={onChange} />
-				<TipologiaCalcioMultiselectField label="Tipologie calcio" value={draft.tipologie_sport ?? []} onValueChange={(value) => onChange(type, "tipologie_sport", value)} />
-				<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)} onValueChange={(value) => onChange(type, "disponibilita", value)} hideContract />
-				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange(type, "presentazione", value)} placeholder="Esperienza arbitrale, categorie seguite e disponibilità..." />
-				<CareerHistoryFields idPrefix={`${prefix}-lista-esperienze`} staff esperienze={toExperiences(draft.lista_esperienze)} setEsperienze={experienceSetter(draft.lista_esperienze, (value) => onChange(type, "lista_esperienze", value))} />
-				<EsperienzeAnnuncioFields idPrefix={`${prefix}-qualifiche`} titolo="Qualifiche / Licenze" requireState freeTextOrganization error={errors.qualificationState} esperienze={toExperiences(draft.qualifiche_licenze)} setEsperienze={experienceSetter(draft.qualifiche_licenze, (value) => onChange(type, "qualifiche_licenze", value))} />
+				<AnonymousNameField type="arbitro" prefix={prefix} checked={draft.nominativo_anonimo}
+				                    onChange={onChange}/>
+				<TipologiaCalcioMultiselectField label="Tipologie calcio" value={draft.tipologie_sport ?? []}
+				                                 onValueChange={(value) => onChange(type, "tipologie_sport", value)}/>
+				<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)}
+				                            onValueChange={(value) => onChange(type, "disponibilita", value)}
+				                            hideContract/>
+				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione}
+				                      onChange={(value) => onChange(type, "presentazione", value)}
+				                      placeholder="Esperienza arbitrale, categorie seguite e disponibilità..."/>
+				<CareerHistoryFields idPrefix={`${prefix}-lista-esperienze`} staff
+				                     esperienze={toExperiences(draft.lista_esperienze)}
+				                     setEsperienze={experienceSetter(draft.lista_esperienze, (value) => onChange(type, "lista_esperienze", value))}/>
+				<EsperienzeAnnuncioFields idPrefix={`${prefix}-qualifiche`} titolo="Qualifiche / Licenze" requireState
+				                          freeTextOrganization error={errors.qualificationState}
+				                          esperienze={toExperiences(draft.qualifiche_licenze)}
+				                          setEsperienze={experienceSetter(draft.qualifiche_licenze, (value) => onChange(type, "qualifiche_licenze", value))}/>
 			</>
 		);
 	}
@@ -1052,10 +1186,21 @@ function ProfileFields({
 		const draft = drafts.creators;
 		return (
 			<>
-				<ProfileTextField id={`${prefix}-nome-creator`} label="Nome creator" value={draft.nome_creator} onChange={(value) => onChange(type, "nome_creator", value)} placeholder="Nome del creator o del progetto" required={requiredFields} error={errors.name} />
-				<ProfileTextField id={`${prefix}-tipologia-contenuti`} label="Tipologia contenuti" value={draft.tipologia_contenuti} onChange={(value) => onChange(type, "tipologia_contenuti", value)} placeholder="Video, podcast, analisi, interviste..." />
-				<ProfileTextField id={`${prefix}-email`} label="Contatto email" type="email" value={draft.contatto_email} onChange={value => onChange(type, "contatto_email", value)} maxLength={254} error={errors.email} />
-				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange(type, "presentazione", value)} placeholder="Racconta chi sei e quali contenuti sportivi condividi..." />
+				<ProfileTextField id={`${prefix}-nome-creator`} label="Nome creator" value={draft.nome_creator}
+				                  onChange={(value) => onChange(type, "nome_creator", value)}
+				                  placeholder="Nome del creator o del progetto" required={requiredFields}
+				                  error={errors.name}/>
+				<ProfileTextField id={`${prefix}-tipologia-contenuti`} label="Tipologia contenuti"
+				                  value={draft.tipologia_contenuti}
+				                  onChange={(value) => onChange(type, "tipologia_contenuti", value)}
+				                  placeholder="Video, podcast, analisi, interviste..."/>
+				<ProfileTextField id={`${prefix}-email`} label="Contatto email" type="email"
+				                  value={draft.contatto_email}
+				                  onChange={value => onChange(type, "contatto_email", value)} maxLength={254}
+				                  error={errors.email}/>
+				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione}
+				                      onChange={(value) => onChange(type, "presentazione", value)}
+				                      placeholder="Racconta chi sei e quali contenuti sportivi condividi..."/>
 			</>
 		);
 	}
@@ -1064,9 +1209,18 @@ function ProfileFields({
 		const draft = drafts["torneo-evento"];
 		return (
 			<>
-				<ProfileTextField id={`${prefix}-nome-organizzazione`} label="Nome organizzazione" value={draft.nome_organizzazione} onChange={(value) => onChange(type, "nome_organizzazione", value)} placeholder="A.S.D. o ente organizzatore" required={requiredFields} error={errors.name} />
-                <TipologiaCalcioMultiselectField value={draft.tipologie_sport ?? []} onValueChange={(value) => onChange(type, "tipologie_sport", value)} required={requiredFields} error={errors.sports} />
-				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione torneo" value={draft.presentazione} onChange={(value) => onChange(type, "presentazione", value)} placeholder="Descrivi l'organizzazione e le sue attività..." />
+				<ProfileTextField id={`${prefix}-nome-organizzazione`} label="Nome organizzazione"
+				                  value={draft.nome_organizzazione}
+				                  onChange={(value) => onChange(type, "nome_organizzazione", value)}
+				                  placeholder="A.S.D. o ente organizzatore" required={requiredFields}
+				                  error={errors.name}/>
+				<TipologiaCalcioMultiselectField value={draft.tipologie_sport ?? []}
+				                                 onValueChange={(value) => onChange(type, "tipologie_sport", value)}
+				                                 required={requiredFields} error={errors.sports}/>
+				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione torneo"
+				                      value={draft.presentazione}
+				                      onChange={(value) => onChange(type, "presentazione", value)}
+				                      placeholder="Descrivi l'organizzazione e le sue attività..."/>
 			</>
 		);
 	}
@@ -1074,48 +1228,71 @@ function ProfileFields({
 	const draft = drafts["campi-impianti-sportivi"];
 	return (
 		<>
-			<ProfileTextField id={`${prefix}-nome-organizzazione`} label="Nome campo/struttura" value={draft.nome_organizzazione} onChange={(value) => onChange("campi-impianti-sportivi", "nome_organizzazione", value)} placeholder="Centro Sportivo Esempio" required={requiredFields} error={errors.name} />
-			<TipologiaCalcioMultiselectField label="Tipologia campi disponibili" value={draft.tipologie_sport ?? []} onValueChange={(value) => onChange("campi-impianti-sportivi", "tipologie_sport", value)} required={requiredFields} error={errors.sports} />
-			<FacilityLocationField prefix={prefix} locations={locations["campi-impianti-sportivi"]} onLocationsChange={(value) => onLocationsChange("campi-impianti-sportivi", value)} address={draft.indirizzo} onAddressChange={(value) => onChange("campi-impianti-sportivi", "indirizzo", value)} error={errors.locations} />
-			<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione} onChange={(value) => onChange("campi-impianti-sportivi", "presentazione", value)} placeholder="Descrivi la tua organizzazione, gli obiettivi, le modalità operative..." />
-			<ProfileTextareaField id={`${prefix}-info-aggiuntive`} label="Informazioni aggiuntive" value={draft.info_aggiuntive} onChange={(value) => onChange("campi-impianti-sportivi", "info_aggiuntive", value)} placeholder="Modalità di prenotazione, regolamenti..." />
+			<ProfileTextField id={`${prefix}-nome-organizzazione`} label="Nome campo/struttura"
+			                  value={draft.nome_organizzazione}
+			                  onChange={(value) => onChange("campi-impianti-sportivi", "nome_organizzazione", value)}
+			                  placeholder="Centro Sportivo Esempio" required={requiredFields} error={errors.name}/>
+			<TipologiaCalcioMultiselectField label="Tipologia campi disponibili" value={draft.tipologie_sport ?? []}
+			                                 onValueChange={(value) => onChange("campi-impianti-sportivi", "tipologie_sport", value)}
+			                                 required={requiredFields} error={errors.sports}/>
+			<FacilityLocationField prefix={prefix} locations={locations["campi-impianti-sportivi"]}
+			                       onLocationsChange={(value) => onLocationsChange("campi-impianti-sportivi", value)}
+			                       address={draft.indirizzo}
+			                       onAddressChange={(value) => onChange("campi-impianti-sportivi", "indirizzo", value)}
+			                       error={errors.locations}/>
+			<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione}
+			                      onChange={(value) => onChange("campi-impianti-sportivi", "presentazione", value)}
+			                      placeholder="Descrivi la tua organizzazione, gli obiettivi, le modalità operative..."/>
+			<ProfileTextareaField id={`${prefix}-info-aggiuntive`} label="Informazioni aggiuntive"
+			                      value={draft.info_aggiuntive}
+			                      onChange={(value) => onChange("campi-impianti-sportivi", "info_aggiuntive", value)}
+			                      placeholder="Modalità di prenotazione, regolamenti..."/>
 		</>
 	);
 }
 
 export default function ProfileDetailsForm({
-	disabled = false,
-	type,
-	drafts,
-	locations,
-	onChange,
-	onLocationsChange,
-	socialLinks,
-	onSocialLinksChange,
-	errors = {},
-	professionalRegions,
-}: ProfileDetailsFormProps) {
+	                                           disabled = false,
+	                                           type,
+	                                           drafts,
+	                                           locations,
+	                                           onChange,
+	                                           onLocationsChange,
+	                                           socialLinks,
+	                                           onSocialLinksChange,
+	                                           errors = {},
+	                                           professionalRegions,
+                                           }: ProfileDetailsFormProps) {
 	const prefix = `registration-profile-${type}`;
 	const locked = useDisabledFieldset(disabled);
-	const changeProfile: ProfileDraftUpdater = (...args) => {if (!locked) onChange(...args);};
-	const changeLocations: ProfileDetailsFormProps["onLocationsChange"] = (...args) => {if (!locked) onLocationsChange(...args);};
-	const changeSocialLinks: ProfileDetailsFormProps["onSocialLinksChange"] = (...args) => {if (!locked) onSocialLinksChange(...args);};
+	const changeProfile: ProfileDraftUpdater = (...args) => {
+		if (!locked) onChange(...args);
+	};
+	const changeLocations: ProfileDetailsFormProps["onLocationsChange"] = (...args) => {
+		if (!locked) onLocationsChange(...args);
+	};
+	const changeSocialLinks: ProfileDetailsFormProps["onSocialLinksChange"] = (...args) => {
+		if (!locked) onSocialLinksChange(...args);
+	};
 
 	return (
 		<FieldSet disabled={locked} className="[&_input::placeholder]:text-sm [&_textarea::placeholder]:text-sm">
-			<FieldLegend variant="label" className="field-legend-title mb-2">Inserisci i dati del tuo profilo:</FieldLegend>
+			<FieldLegend variant="label" className="field-legend-title mb-2">Inserisci i dati del tuo
+				profilo:</FieldLegend>
 			<FieldGroup spacing="mixed" className="mt-2">
-				<ProfileFields type={type} drafts={drafts} prefix={prefix} onChange={changeProfile} locations={locations} onLocationsChange={changeLocations} requiredFields={true} errors={errors} />
-				<ProfileSocialLinksFields socialLinks={socialLinks} onSocialLinksChange={changeSocialLinks} />
+				<ProfileFields type={type} drafts={drafts} prefix={prefix} onChange={changeProfile}
+				               locations={locations} onLocationsChange={changeLocations} requiredFields={true}
+				               errors={errors}/>
+				<ProfileSocialLinksFields socialLinks={socialLinks} onSocialLinksChange={changeSocialLinks}/>
 				{type !== "campi-impianti-sportivi" && <LocationsField
-					type={type}
-					allowedRegions={type === "servizi-consulenze" ? professionalRegions ?? [] : undefined}
-					prefix={prefix}
-					locations={locations}
-					onLocationsChange={changeLocations}
-					required={true}
-					error={errors.locations ?? null}
-				/>}
+                    type={type}
+                    allowedRegions={type === "servizi-consulenze" ? professionalRegions ?? [] : undefined}
+                    prefix={prefix}
+                    locations={locations}
+                    onLocationsChange={changeLocations}
+                    required={true}
+                    error={errors.locations ?? null}
+                />}
 			</FieldGroup>
 		</FieldSet>
 	);

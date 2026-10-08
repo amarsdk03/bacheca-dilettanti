@@ -6,6 +6,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import ContactAccessPrompt from "@/components/data-info/ContactAccessPrompt";
 import {PROFILE_SOCIAL_LINK_OPTIONS, type ProfileSocialLinks,} from "@/features/profilo/profile-social-links";
 import {PROFILE_SOCIAL_ICONS} from "@/features/profilo/profile-social-icons";
+import ProfileSectionHeading from "./ProfileSectionHeading";
 
 export default function ProfileSocialLinksCard({socialLinks, presentation = "default", authenticated = true, returnTo = "/"}: {socialLinks: ProfileSocialLinks; presentation?: "default" | "profile"; authenticated?: boolean; returnTo?: string}) {
 	const links = PROFILE_SOCIAL_LINK_OPTIONS.flatMap(({platform, label}) => {
@@ -19,7 +20,7 @@ export default function ProfileSocialLinksCard({socialLinks, presentation = "def
 	if (presentation === "profile") return (
 		<Card className="min-w-0">
 			<CardHeader>
-				<CardTitle><h2 className="flex items-center gap-2 font-home-display text-2xl uppercase"><LinkIcon className="profile-detail-accent size-5" aria-hidden="true" />Social</h2></CardTitle>
+				<CardTitle><ProfileSectionHeading className="flex items-center justify-center gap-2"><LinkIcon className="profile-detail-accent size-5" aria-hidden="true" />Social</ProfileSectionHeading></CardTitle>
 			</CardHeader>
 			<CardContent>
 				<ul className="flex flex-col gap-1">

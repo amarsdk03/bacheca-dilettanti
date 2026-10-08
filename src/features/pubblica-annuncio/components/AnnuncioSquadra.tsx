@@ -34,7 +34,7 @@ import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFiel
 import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
 import OrarioIndicativoFields from "@/features/pubblica-annuncio/components/InputFields/OrarioIndicativoFields";
 import {
-	CATEGORIE_CALCIO_GROUPS,
+	OTHER_CATEGORY_GROUPS,
 	DISPONIBILITA_TRASFERTA_OPTIONS,
 	FIGURA_PROFESSIONALE_GROUPS,
 	RUOLI_SPECIFICI_PER_RUOLO,
@@ -447,7 +447,7 @@ export default function AnnuncioSquadra({sottotipologia}: {sottotipologia: strin
 					<CategorieCalcioMultiselectField
 						label="Categoria avversario"
 						className="sm:col-span-3"
-						items={CATEGORIE_CALCIO_GROUPS}
+						items={OTHER_CATEGORY_GROUPS}
 						value={cercaAmichevoli.categorieAvversario}
 						onValueChangeAction={(value) =>
 								setCercaAmichevoli((prev) => ({ ...prev, categorieAvversario: value }))

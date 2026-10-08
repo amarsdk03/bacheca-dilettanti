@@ -2,6 +2,7 @@ import {MailIcon, PhoneIcon} from "lucide-react";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import ContactAccessPrompt from "@/components/data-info/ContactAccessPrompt";
 import type {GenericProfileDetail} from "../profile-detail-model";
+import ProfileSectionHeading from "./ProfileSectionHeading";
 
 export default function ProfileContactsCard({profile, authenticated, returnTo}: {
 	profile: GenericProfileDetail;
@@ -13,7 +14,7 @@ export default function ProfileContactsCard({profile, authenticated, returnTo}: 
 	const {email, phone} = profile.contacts ?? {email: null, phone: null};
 	if (!email && !phone) return null;
 	return <Card>
-		<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Contatti</h2></CardTitle></CardHeader>
+		<CardHeader><CardTitle><ProfileSectionHeading>Contatti</ProfileSectionHeading></CardTitle></CardHeader>
 		<CardContent className="flex flex-col gap-3">
 			{email && <a href={`mailto:${email}`} className="flex items-start gap-2 text-sm underline underline-offset-4 wrap-anywhere"><MailIcon className="size-4 shrink-0" aria-hidden="true" />{email}</a>}
 			{phone && <a href={`tel:${phone.replace(/[^+\d]/g, "")}`} className="flex items-start gap-2 text-sm underline underline-offset-4 wrap-anywhere"><PhoneIcon className="size-4 shrink-0" aria-hidden="true" />{phone}</a>}

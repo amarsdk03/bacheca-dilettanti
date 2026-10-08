@@ -19,7 +19,7 @@ import ContattiAnnuncioFields from "@/features/pubblica-annuncio/components/Inpu
 import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
 import CategorieCalcioMultiselectField
 	from "@/features/pubblica-annuncio/components/InputFields/CategorieCalcioMultiselectField";
-import {CATEGORIE_CALCIO_GROUPS} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {OTHER_CATEGORY_GROUPS} from "@/features/pubblica-annuncio/types/category-catalog";
 import DisponibilitaProfiloSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaProfiloSelect";
 
 export default function AnnuncioStaff() {
@@ -103,7 +103,7 @@ export default function AnnuncioStaff() {
 
 					<CategorieCalcioMultiselectField
 						label="Categorie ricercate"
-						items={CATEGORIE_CALCIO_GROUPS}
+						items={OTHER_CATEGORY_GROUPS}
 						value={categorieRicercate}
 						onValueChangeAction={(value) => setField("categorieRicercate", value)}
 					/>

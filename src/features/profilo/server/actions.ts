@@ -478,9 +478,12 @@ export async function setAnnouncementVisibility(
 		return {status: "error", message: "L’annuncio selezionato non è valido."};
 	}
 
-	const userId = await authenticatedUserId();
-	if (!userId) {
+	const viewer = await getAuthenticatedViewer();
+	if (!viewer) {
 		return {status: "error", message: "La sessione non è più valida. Accedi di nuovo."};
+	}
+	if (!viewer.utenteId) {
+		return {status: "error", message: "Il profilo utente non è disponibile. Accedi di nuovo."};
 	}
 	const supabase = await createClient();
 	// Verify ownership through the session's RLS before using the server writer.
@@ -494,7 +497,7 @@ export async function setAnnouncementVisibility(
 	}
 	const {data, error} = await createAdminClient()
 		.from("annuncio")
-		.update({nascosto: hidden, ultima_modifica_da: userId})
+		.update({nascosto: hidden, ultima_modifica_da: viewer.utenteId})
 		.eq("uuid", announcementId)
 		.select("uuid")
 		.maybeSingle();

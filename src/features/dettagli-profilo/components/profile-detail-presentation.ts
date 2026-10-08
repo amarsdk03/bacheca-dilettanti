@@ -3,6 +3,11 @@ import type {GenericProfileDetail, ProfileDetailField} from "../profile-detail-m
 import type {ProfileFact} from "./ProfileFactsGrid";
 
 export interface ProfileDetailPresentation {
+	badges: readonly {fieldLabel?: string; getValues?: (profile: GenericProfileDetail) => readonly string[]}[];
+	sections: readonly ProfileOverviewSection[];
+	sidebarFields?: readonly {title: string; fieldLabel: string}[];
+	ecosystemName: string;
+	identifierName: string;
 	facts: readonly {
 		label: string;
 		icon: LucideIcon;
@@ -10,11 +15,23 @@ export interface ProfileDetailPresentation {
 		sourceFieldLabels?: readonly string[];
 		getValue?: (profile: GenericProfileDetail) => string | null;
 	}[];
-	narrativeFieldLabels: readonly string[];
 	announcementsLabel?: string;
 	hasExperiences?: boolean;
-	presentationLabel?: string;
 	careerLabel?: string;
+}
+
+export type ProfileOverviewSection =
+	| {kind: "locations"; title: string}
+	| {kind: "social"}
+	| {kind: "field"; title: string; fieldLabel: string; centered?: boolean};
+
+export function getProfileDetailBadgeValues(profile: GenericProfileDetail, presentation: ProfileDetailPresentation): string[] {
+	const fields = getProfileDetailFields(profile);
+	return [...new Set(presentation.badges.flatMap(({fieldLabel, getValues}) => {
+		if (getValues) return getValues(profile);
+		const field = fields.find(candidate => candidate.label === fieldLabel);
+		return field?.items?.length ? field.items : field ? [field.value] : [];
+	}).map(value => value.trim()).filter(value => value && value !== "Non specificato"))];
 }
 
 export function getProfileDetailFields(profile: GenericProfileDetail): ProfileDetailField[] {
@@ -38,7 +55,7 @@ export function getProfileDetailFieldValue(profile: GenericProfileDetail, label:
 }
 
 export function formatProfileFactCount(value: number | null): string | null {
-	return value === null ? null : value.toLocaleString("it-IT");
+	return value == null ? "Non disponibile" : value.toLocaleString("it-IT");
 }
 
 export function getProfileDetailFacts(profile: GenericProfileDetail, presentation: ProfileDetailPresentation): ProfileFact[] {

@@ -438,10 +438,12 @@ test("player overview shows grouped locations, visible social URLs and highlight
 		socialLinks: {instagram: href, facebook: "", youtube: "", linkedin: ""},
 	}));
 	assert.match(html, /youtube-nocookie\.com\/embed\/abcdefghijk/);
-	assert.ok(html.indexOf("Descrizione del giocatore") < html.indexOf(">Highlights<"));
-	assert.ok(html.indexOf(">Lazio<") < html.indexOf(">Toscana<"));
-	assert.match(html, /: Roma, Viterbo/);
-	assert.doesNotMatch(html, /Tutta la regione/);
+	assert.ok(html.indexOf("Descrizione del giocatore") < html.indexOf("Video Highlights"));
+	assert.match(html, /Vive a/);
+	assert.ok(html.indexOf(">Lazio</span>") < html.indexOf(">Toscana</span>"));
+	assert.ok(html.indexOf(">Roma</span>") < html.indexOf(">Lazio</span>"));
+	assert.ok(html.indexOf(">Viterbo</span>") < html.lastIndexOf(">Lazio</span>"));
+	assert.match(html, /Intera regione/);
 	assert.ok(html.includes(`href="${href}"`));
 	assert.match(html, />instagram\.com\/mario\.rossi\?ref=profilo</);
 	assert.match(html, /target="_blank" rel="noopener noreferrer"/);
@@ -450,12 +452,14 @@ test("player overview shows grouped locations, visible social URLs and highlight
 	assert.doesNotMatch(html, /campo\.png/);
 	assert.doesNotMatch(sidebar, /campo\.png|grid-cols-3 grid-rows-7|Principale:/);
 	for (const value of ["Tipologie calcio", "Calcio 11", "Calcio 5", "Ruoli principali", "Difensore", "Social", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]) assert.ok(sidebar.includes(value), value);
-	assert.match(html, /<h2[^>]*>Informazioni<\/h2>[\s\S]*Ruoli specifici[\s\S]*Terzino destro[\s\S]*Descrizione del giocatore/);
-	assert.ok(html.indexOf('aria-label="Informazioni sportive"') < html.indexOf('>Descrizione</h2>'));
-	assert.ok(html.indexOf('aria-label="Contatti e identificativo"') > html.indexOf('>Descrizione</h2>'));
+	assert.match(html, /<h2[^>]*>Informazioni<\/h2>[\s\S]*Terzino destro[\s\S]*Descrizione del giocatore/);
+	assert.ok(html.indexOf('aria-label="Informazioni sportive, località e contatti"') < html.indexOf('>Descrizione giocatore</h2>'));
 	assert.ok(sidebar.indexOf(">Tipologie calcio<") < sidebar.indexOf(">Ruoli principali<"));
-	assert.ok(sidebar.indexOf("Categorie ricercate") < sidebar.indexOf(">Località<"));
+	assert.ok(sidebar.indexOf(">Vive a<") >= 0);
 	assert.ok(sidebar.indexOf(">Social<") < sidebar.indexOf("UUID profilo"));
+	assert.ok(sidebar.indexOf(">Vive a<") >= 0);
+	assert.match(sidebar, /class="hidden flex-col gap-5 lg:flex"/);
+	assert.ok(html.indexOf('class="order-3 flex flex-col gap-5 lg:hidden"') > html.indexOf("Video Highlights"));
 	assert.match(sidebar, /data-social-brand="instagram"/);
 	assert.match(sidebar, /aria-label="Copia UUID del profilo"/);
 	assert.doesNotMatch(html, /Una presentazione|Guarda il giocatore|Scheda sportiva|Facebook|role="dialog"/);
@@ -656,13 +660,13 @@ test("an announcement failure leaves player details available", async (t) => {
 });
 
 const nonPlayerCases = [
-	["squadra", "Squadra", ["Tipologia calcio", "Categoria attuale Prima Squadra", "Annunci pubblicati"]],
-	["staff-sportivo", "StaffSportivo", ["Mansioni", "Tipologie calcio", "Disponibilità", "Disponibile da remoto"]],
-	["servizi-consulenze", "ServiziConsulenze", ["Tipo di azienda / professione", "Tipologia calcio", "Disponibilità", "Sede Azienda / Professionista"]],
-	["arbitro", "Arbitro", ["Età", "Tipologie calcio", "Disponibilità", "Zona di residenza"]],
-	["creators", "Creator", ["Tipologia contenuti", "Numero annunci pubblicati"]],
-	["torneo-evento", "TorneoEvento", ["Tipologia calcio", "Eventi pubblicati"]],
-	["campi-impianti-sportivi", "CampiImpianti", ["Tipologia campi disponibili", "Sede dell’impianto / struttura", "Numero campi pubblicati"]],
+	["squadra", "Squadra", ["Follower", "Annunci pubblicati"]],
+	["staff-sportivo", "StaffSportivo", ["Età", "Tipologie calcio", "Disponibilità", "Disponibile da remoto"]],
+	["servizi-consulenze", "ServiziConsulenze", ["Sede azienda / professionista", "Disponibilità", "Num. follower", "Contenuti pubblicati"]],
+	["arbitro", "Arbitro", ["Età", "Disponibilità"]],
+	["creators", "Creator", ["Num. follower", "Num. annunci pubblicati"]],
+	["torneo-evento", "TorneoEvento", ["Num. follower", "Eventi pubblicati"]],
+	["campi-impianti-sportivi", "CampiImpianti", ["Sede dell’impianto", "Num. follower", "Campi pubblicati"]],
 ];
 
 function genericProfile(type, overrides = {}) {
@@ -685,58 +689,78 @@ function renderedFacts(html) {
 		.map(([, label, value]) => [label.replace(/<[^>]*>/g, ""), value.replace(/<\/span><span\b[^>]*>/g, "\n").replace(/<[^>]*>/g, "")]);
 }
 
-test("all seven non-player profiles show ordered facts, integrated actions and sidebar contacts", () => {
+test("all seven non-player profiles show configured badges, facts, central sections and responsive ecosystem cards", () => {
 	const values = {
-		"Tipologie sportive": ["Calcio 11", "Calcio 5", "Calcio 8"],
-		"Tipologia campi disponibili": ["Calcio 11", "Calcio 5", "Calcio 8"], "Indirizzo del campo": "Via Roma 1",
-		"Tipologia calcio": ["Calcio 11", "Calcio 5"], "Tipologie calcio": ["Calcio 11", "Calcio 5", "Calcio 8"], "Categoria attuale Prima Squadra": "Calcio a 11 maschile — FIGC-LND — Eccellenza", "Tipo di azienda / professione": "Fisioterapia", "Sede Azienda / Professionista": "Via Roma 2",
-		"Figure professionali": ["Allenatore", "Preparatore atletico", "Match analyst"], "Disponibilità": "Disponibile subito",
-		"Disponibile anche da remoto": "No", "Automunito": "Sì", "Tipologia di contenuti": ["Video", "Podcast"], "Età": "35 anni",
+		"Tipologie sportive": ["Calcio 11", "Calcio 8", "Calcio 5"],
+		"Tipologia campi disponibili": ["Calcio 11", "Calcio 8", "Calcio 5"], "Indirizzo del campo": "Via Roma 1",
+		"Tipologie calcio": ["Calcio 11", "Calcio 8", "Calcio 5"],
+		"Categoria attuale Prima Squadra": "Calcio a 11 maschile — FIGC-LND — Eccellenza",
+		"Tipo di azienda / professione": "Fisioterapia", "Sede Azienda / Professionista": "Via Roma 2",
+		"Figure professionali": ["Allenatore", "Preparatore atletico", "Match analyst"],
+		"Disponibile anche da remoto": "No", "Tipologia di contenuti": "Video, podcast e interviste", "Età": "35 (1991)",
+		"Informazioni aggiuntive": "Accesso facilitato", "Servizi offerti": "Valutazioni e trattamenti",
 	};
+	const sections = {
+		squadra: ["Località", "Descrizione", "Social"],
+		"staff-sportivo": ["Località", "Descrizione", "Social"],
+		arbitro: ["Località", "Descrizione", "Social"],
+		"torneo-evento": ["Località", "Presentazione", "Social"],
+		"campi-impianti-sportivi": ["Località", "Tipologia campi disponibili", "Descrizione", "Informazioni aggiuntive", "Social"],
+		"servizi-consulenze": ["Presentazione", "Presentazione servizi", "Social"],
+		creators: ["Tipologia contenuti", "Presentazione", "Zona/e di competenza", "Social"],
+	};
+	const badges = {
+		squadra: [values["Categoria attuale Prima Squadra"]],
+		"staff-sportivo": values["Figure professionali"],
+		arbitro: values["Tipologie calcio"],
+		"torneo-evento": ["Torneo calcio 11", "Torneo calcio 8", "Torneo calcio 5"],
+		"campi-impianti-sportivi": values["Tipologia campi disponibili"],
+		"servizi-consulenze": ["Fisioterapia", "Lazio"],
+		creators: [values["Tipologia di contenuti"]],
+	};
+	const expectedValues = {
+		squadra: ["1234", "7"],
+		"staff-sportivo": ["35 (1991)", "Calcio 11\nCalcio 8\n+1", "Disponibile subito", "No"],
+		"servizi-consulenze": ["Via Roma 2", "Disponibile subito", "1234", "7"],
+		arbitro: ["35 (1991)", "Disponibile subito"],
+		creators: ["1234", "7"], "torneo-evento": ["1234", "7"],
+		"campi-impianti-sportivi": ["Via Roma 1, Roma, Lazio, Viterbo, Lazio", "1234", "7"],
+	};
+	const {NON_PLAYER_PRESENTATIONS} = load("src/features/dettagli-profilo/components/non-player-presentations.ts");
+	const Overview = load("src/features/dettagli-profilo/components/ProfileDetailsOverview.tsx").default;
 	for (const [type, name, labels] of nonPlayerCases) {
-		const Component = load(`src/features/dettagli-profilo/components/types/DettagliProfilo${name}.tsx`).default;
-		const fieldLabels = new Set(["Tipologie sportive", "Tipologia campi disponibili", "Tipologia calcio", "Tipologie calcio", "Figure professionali", "Tipologia di contenuti"]);
-		const primaryFields = Object.entries(values).map(([label, value]) => ({label, value: Array.isArray(value) ? value.join(", ") : value, ...(fieldLabels.has(label) ? {items: value} : {})}));
-		const profile = genericProfile(type, {primaryFields});
-		const html = renderToStaticMarkup(React.createElement(Component, {profile, authenticated: true, returnTo: "/dettagli-profilo", actions: React.createElement("button", null, "Condividi") }));
-		const expectedValues = {
-			squadra: ["Calcio 11\nCalcio 5", "Calcio a 11 maschile — FIGC-LND — Eccellenza", "7"],
-			"staff-sportivo": ["Allenatore\nPreparatore atletico\n+1", "Calcio 11\nCalcio 5\n+1", "Disponibile subito", "No"],
-			"servizi-consulenze": ["Fisioterapia", "Calcio 11\nCalcio 5\n+1", "Disponibile subito", "Via Roma 2"],
-			arbitro: ["35 anni", "Calcio 11\nCalcio 5\n+1", "Disponibile subito", "Lazio"],
-			creators: ["Video\nPodcast", "7"],
-			"torneo-evento": ["Calcio 11\nCalcio 5\n+1", "7"],
-			"campi-impianti-sportivi": ["Calcio 11\nCalcio 5\n+1", "Via Roma 1, Roma, Lazio, Viterbo, Lazio", "7"],
-		}[type];
-		assert.deepEqual(renderedFacts(html), labels.map((label, index) => [label, expectedValues[index]]), type);
+		const primaryFields = Object.entries(values).map(([label, value]) => ({label, value: Array.isArray(value) ? value.join(", ") : value, ...(Array.isArray(value) ? {items: value} : {})}));
+		const profile = genericProfile(type, {primaryFields, contacts: {email: "private@example.test", phone: "123456789"}});
+		const Component = load("src/features/dettagli-profilo/components/types/DettagliProfilo" + name + ".tsx").default;
+		const html = renderToStaticMarkup(React.createElement(Component, {profile, authenticated: true, returnTo: "/dettagli-profilo", actions: React.createElement("button", null, "Condividi")}));
+		assert.deepEqual(renderedFacts(html), labels.map((label, index) => [label, expectedValues[type][index]]), type);
+		const badgeGroup = html.match(/<div role="group" aria-label="Caratteristiche del profilo"[^>]*>([\s\S]*?)<\/div>/)?.[1];
+		assert.ok(badgeGroup, type);
+		for (const value of badges[type]) assert.ok(badgeGroup.includes('title="' + value + '"'), type + ": " + value);
+		assert.equal((badgeGroup.match(/data-slot="badge"/g) ?? []).length, badges[type].length, type);
 		assert.match(html, /<header\b[\s\S]*Condividi[\s\S]*<\/header>/);
-		assert.match(html, /public-profile-hero/);
 		assert.match(html, /Utente registrato/);
 		assert.match(html, /Profilo verificato ufficialmente/);
-		assert.match(html, /profile-section-navigation/);
-		assert.match(html, /aria-label="Informazioni del profilo"/);
-		assert.match(html, type === "campi-impianti-sportivi" ? /<span>Campi disponibili<\/span>/ : type === "torneo-evento" ? /<span>Eventi pubblicati<\/span>/ : type === "servizi-consulenze" ? /<span>Contenuti \/ promozioni<\/span>/ : /<span>Annunci<\/span>/);
 		assert.match(html, /Profili simili/);
-		assert.match(html, /Descrizione dimostrativa/);
-		assert.ok(html.indexOf('aria-label="Informazioni del profilo"') < html.indexOf(["staff-sportivo", "torneo-evento"].includes(type) ? ">Presentazione</h2>" : ">Descrizione</h2>"), type);
-		assert.ok(html.indexOf('aria-label="Contatti e identificativo"') > html.indexOf(["staff-sportivo", "torneo-evento"].includes(type) ? ">Presentazione</h2>" : ">Descrizione</h2>"), type);
-		const sidebar = [...html.matchAll(/<aside\b[\s\S]*?<\/aside>/g)].map(([value]) => value).join("");
-		for (const content of ["Lazio", "Roma", "Viterbo", "instagram.com/profilo", "youtube.com/@profilo", "Copia UUID del profilo"]) assert.ok(sidebar.includes(content), `${type}: ${content}`);
-		const overview = html.slice(html.indexOf("</header>"));
-		for (const label of labels.filter(label => !["Tipologia calcio", "Tipologie calcio", "Tipologia campi disponibili", "Mansioni", "Eventi pubblicati"].includes(label))) assert.ok(!overview.includes(`>${label}<`), `${type}: duplicated ${label}`);
-		const sourceLabels = {
-			"staff-sportivo": ["Figure professionali", "Disponibile anche da remoto"],
-			"servizi-consulenze": ["Figure professionali", "Tipologie sportive"],
-			creators: ["Tipologia di contenuti"],
-			"campi-impianti-sportivi": ["Indirizzo del campo"],
-		}[type] ?? [];
-		for (const label of sourceLabels) if (!["Figure professionali", "Tipologie sportive"].includes(label)) assert.ok(!overview.includes(`>${label}<`), `${type}: duplicated source ${label}`);
-		for (const item of type === "staff-sportivo" ? ["Match analyst"] : ["servizi-consulenze", "torneo-evento", "campi-impianti-sportivi"].includes(type) ? ["Calcio 8"] : []) {
-			assert.ok(overview.indexOf(item) >= 0 && overview.indexOf(item) < overview.indexOf("Descrizione dimostrativa"), `${type}: ${item}`);
-		}
-		const hasExperiences = ["staff-sportivo", "arbitro"].includes(type);
-		assert.equal(/role="tab"[^>]*>[\s\S]*?<span>Esperienze(?: e qualifiche)?<\/span>/.test(html), hasExperiences, type);
-		assert.doesNotMatch(html, /Esperienza dimostrativa|campo\.png|undefined|null/);
+		const overview = renderToStaticMarkup(React.createElement(Overview, {profile, presentation: NON_PLAYER_PRESENTATIONS[type], authenticated: true, returnTo: "/dettagli-profilo"}));
+		const center = overview.match(/<section aria-label="Panoramica del profilo"[^>]*>([\s\S]*?)<\/section>/)?.[1];
+		assert.ok(center, type);
+		const headings = [...center.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map(([,value]) => value.replace(/<[^>]+>/g, ""));
+		assert.deepEqual(headings, sections[type], type);
+		assert.match(center, /instagram.com\/profilo/);
+		assert.match(center, /Descrizione dimostrativa/);
+		const sidebar = overview.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1];
+		assert.ok(sidebar);
+		assert.match(sidebar, /Ecosistema[\s\S]*Powered by[\s\S]*placeholder[\s\S]*UUID/);
+		assert.doesNotMatch(sidebar, /instagram.com\/profilo/);
+		assert.doesNotMatch(overview, /private@example.test|123456789|Altre informazioni/);
+		assert.ok(overview.indexOf('class="order-3 flex min-w-0 flex-col gap-5 lg:hidden"') > overview.indexOf("</section>"));
+		if (type === "servizi-consulenze") {
+			assert.ok(sidebar.indexOf("Tipo di azienda / professione") < sidebar.indexOf("Sede azienda / professionista"));
+			assert.ok(sidebar.indexOf("Sede azienda / professionista") < sidebar.indexOf("Ecosistema"));
+			assert.match(overview, /lg:flex order-1 flex lg:order-2/);
+		} else assert.match(overview, /lg:flex order-2 hidden/);
+		assert.equal((overview.match(/Powered by/g) ?? []).length, 2, type);
 	}
 });
 
@@ -751,21 +775,24 @@ test("non-player facts retain expected cells with missing data and distinguish u
 		const html = renderToStaticMarkup(React.createElement(Component, {profile, authenticated: false, returnTo: "/dettagli-profilo"}));
 		const facts = renderedFacts(html);
 		assert.equal(facts.length, labels.length, type);
-		assert.deepEqual(facts, labels.map((label) => [label, ["Follower"].includes(label) ? "0" : "Non specificato"]));
+		assert.deepEqual(facts, labels.map(label => [label, label.toLowerCase().includes("follower") ? "0" : /pubblicati/.test(label) ? "Non disponibile" : "Non specificato"]));
 		assert.match(html, /(?:Descrizione|Presentazione) non disponibile/);
-		assert.match(html, /Nessuna località indicata/);
+		if (type !== "servizi-consulenze") assert.match(html, /Nessuna località indicata/);
 		assert.doesNotMatch(html, /undefined|null|data-social-brand/);
 	}
 });
 
 test("the detail page places one profile action group inside every non-player header", () => {
 	const Page = sourceLoader({
+		"@/features/interessi/ProfileInterestDialog": ({children}) => children,
 		"@/features/interazioni/DetailActions": props => React.createElement("button", {"data-presentation": props.presentation, "data-target": props.target.id}, "Azioni profilo"),
 		"./components/ProfileHistoryBackButton": () => React.createElement("button", null, "Indietro"),
 	})("src/features/dettagli-profilo/DettagliProfilo.tsx").default;
 	for (const [type] of nonPlayerCases) {
 		const html = renderToStaticMarkup(React.createElement(Page, {result: {status: "ok", profile: genericProfile(type)}}));
 		assert.match(html, /public-profile-page/);
+		assert.equal((html.match(/Powered by/g) ?? []).length, 2);
+		assert.doesNotMatch(html, /aria-label="Sponsor"/);
 		assert.match(html, /<header\b[\s\S]*data-presentation="profile"[\s\S]*Azioni profilo[\s\S]*<\/header>/);
 		assert.equal(html.split("Azioni profilo").length - 1, 1, type);
 		assert.match(html, /Powered by[\s\S]*placeholder\.png/);
@@ -775,7 +802,7 @@ test("the detail page places one profile action group inside every non-player he
 	assert.doesNotMatch(error, /Azioni profilo|public-profile-hero/);
 });
 
-test("long-form primary fields remain in dedicated overview cards without duplication", () => {
+test("long-form fields remain in dedicated overview cards without duplication", () => {
 	for (const [type, name, narrativeFields] of [
 		["servizi-consulenze", "ServiziConsulenze", [
 			{label: "Servizi offerti", value: "Valutazioni e trattamenti"},
@@ -788,7 +815,7 @@ test("long-form primary fields remain in dedicated overview cards without duplic
 		const profile = genericProfile(type, {primaryFields: narrativeFields, fields: [{label: "Presentazione", value: "Descrizione dimostrativa"}, ...narrativeFields.slice(0, 1)]});
 		const html = renderToStaticMarkup(React.createElement(Component, {profile, authenticated: false, returnTo: "/dettagli-profilo"}));
 		for (const {label, value} of narrativeFields) {
-			assert.ok(html.includes(`>${label}</h2>`), label);
+			assert.ok(html.includes(`>${label === "Servizi offerti" ? "Presentazione servizi" : label}</h2>`), label);
 			assert.equal(html.split(value).length - 1, 1, value);
 			assert.ok(html.indexOf("Descrizione dimostrativa") < html.indexOf(value));
 		}
@@ -922,4 +949,83 @@ test("linked team names are resolved publicly and stale identifying copies never
  assert.equal(concealed[0].periodoDa, "2024");
  assert.doesNotMatch(JSON.stringify(publicTeamExperienceNames(source, new Map(), "titolo")), /Società riservata/);
  assert.equal(source[0].titolo, "Società riservata");
+});
+
+test("follower count is aggregated for the exact target subprofile and tolerates lookup errors", async (t) => {
+	t.mock.method(console, "error", () => {});
+	const {loadProfileFollowerCount} = load("src/features/dettagli-profilo/server/profile-follower-count.ts");
+	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+	for (const count of [0, 42]) {
+		const client = fixtureClient({profilo_follow: call => {
+			assert.deepEqual(call.operations, [
+				["select", "uuid_profilo_seguito", {count: "exact", head: true}],
+				["eq", "uuid_profilo_seguito", id], ["eq", "sottoprofilo_seguito", "squadra"],
+			]);
+			return {data: null, count, error: null};
+		}});
+		assert.equal(await loadProfileFollowerCount(client, id, "squadra"), count);
+	}
+	const failed = fixtureClient({profilo_follow: {data: null, count: null, error: {code: "TEST_UNAVAILABLE"}}});
+	assert.equal(await loadProfileFollowerCount(failed, id, "squadra"), null);
+});
+
+test("staff details load public age and subprofile follower count without exposing birth parts", async (t) => {
+	t.mock.method(console, "error", () => {});
+	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+	for (const unavailable of [false, true]) {
+		const client = fixtureClient({
+			profilo: {data: {uuid: id, tipologia_principale: "staff-sportivo"}, error: null},
+			profilo_staff_sportivo: call => call.operations.some(([method]) => method === "maybeSingle")
+				? {data: {...player, lista_esperienze: [], qualifiche_licenze: [], disponibile_remoto: true, figure_professionali: ["Allenatore"]}, error: null}
+				: {data: [], error: null},
+			profilo_follow: {data: null, count: unavailable ? null : 12, error: unavailable ? {code: "TEST_UNAVAILABLE"} : null},
+		});
+		const {getProfileDetail} = sourceLoader({
+			"@/lib/supabase/admin": {createAdminClient: () => client},
+			"@/features/annunci/server/queries": {loadPublicProfileAnnouncements: async () => ({announcements: [], announcementCount: 0, unavailable: false})},
+		})("src/features/dettagli-profilo/server/profile-detail-query.ts");
+		const result = await getProfileDetail(id, "staff-sportivo");
+		assert.equal(result.status, "ok");
+		assert.equal(result.profile.followerCount, unavailable ? null : 12);
+		assert.equal(result.profile.announcementCount, 0);
+		assert.ok(result.profile.fields.some(field => field.label === "Età" && /^\d+ \(2000\)$/.test(field.value)));
+		assert.doesNotMatch(JSON.stringify(result.profile), /giorno_nascita|mese_nascita|anno_nascita|Settembre/);
+		assert.ok(client.calls.find(call => call.table === "profilo_follow").operations.some(operation => JSON.stringify(operation) === JSON.stringify(["eq", "sottoprofilo_seguito", "staff-sportivo"])));
+	}
+});
+
+test("player result cards carry nationality through the directory mapper and display it beside roles", async () => {
+	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+	const {loadRecentSimilarProfiles} = load("src/features/profili/server/queries.ts");
+	const Card = load("src/features/profili/components/cards/ProfileCard.tsx").default;
+	for (const nationality of ["IT", null, "ZZ"]) {
+		const client = fixtureClient({
+			profilo_giocatore: {data: [{id: 7, uuid_profilo: id}], error: null},
+			profilo: {data: [{uuid: id, ultima_modifica_il: "2026-10-01", profilo_giocatore: [{...player, nascosto: false, nazionalita: nationality}]}], error: null},
+		});
+		const [profile] = await loadRecentSimilarProfiles(client, "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", "giocatore");
+		assert.equal(profile.nationalityCode, nationality === "IT" ? "IT" : null);
+		const html = renderToStaticMarkup(React.createElement(Card, {profile}));
+		if (nationality === "IT") {
+			assert.match(html, /aria-label="Nazionalità: Italia" title="Italia"/);
+			assert.match(html, /<svg[^>]*aria-hidden="true"/);
+			assert.ok(html.indexOf(">Difensore</span>") < html.indexOf('aria-label="Nazionalità: Italia"'));
+		} else assert.doesNotMatch(html, /aria-label="Nazionalità:/);
+		assert.equal((html.match(/<a /g) ?? []).length, 1);
+	}
+});
+
+test("free-text badges stay compact while overview cards preserve their complete content", () => {
+	const {NON_PLAYER_PRESENTATIONS} = load("src/features/dettagli-profilo/components/non-player-presentations.ts");
+	const {ProfileDetailsHeader, default: Overview} = load("src/features/dettagli-profilo/components/ProfileDetailsOverview.tsx");
+	for (const [type, label] of [["servizi-consulenze", "Tipo di azienda / professione"], ["creators", "Tipologia di contenuti"]]) {
+		const content = "Descrizione lunga con virgole, e contenuto integrale. ".repeat(30);
+		const profile = genericProfile(type, {primaryFields: [{label, value: content}]});
+		const presentation = NON_PLAYER_PRESENTATIONS[type];
+		const header = renderToStaticMarkup(React.createElement(ProfileDetailsHeader, {profile, presentation}));
+		assert.match(header, /line-clamp-2/);
+		assert.ok(header.includes('title="' + content.trim() + '"'));
+		const overview = renderToStaticMarkup(React.createElement(Overview, {profile, presentation, authenticated: true, returnTo: "/dettagli-profilo"}));
+		assert.equal(overview.split(content).length - 1, 1);
+	}
 });

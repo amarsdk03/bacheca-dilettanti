@@ -70,7 +70,7 @@ import {TIPOLOGIA_CALCIO_OPTIONS} from "./tipologie-calcio";
 import {PLAYER_PRIMARY_ROLES, PLAYER_SPECIFIC_ROLES_BY_PRIMARY,} from "@/features/profilo/player-roles";
 
 export {TIPOLOGIA_CALCIO_OPTIONS, ordinaTipologieCalcio} from "./tipologie-calcio";
-export {CATEGORIE_CALCIO_GROUPS, FIGURA_PROFESSIONALE_GROUPS, FIGURA_PROFESSIONALE_OPTIONS} from "./category-catalog";
+export {CATEGORIE_CALCIO_GROUPS, OTHER_CATEGORY_GROUPS, FIGURA_PROFESSIONALE_GROUPS, FIGURA_PROFESSIONALE_OPTIONS} from "./category-catalog";
 
 export type DisponibilitaProfilo = "non-specificare" | "disponibile-subito" | "svincolato" | "sotto-contratto";
 export const DISPONIBILITA_PROFILO_OPTIONS: readonly {

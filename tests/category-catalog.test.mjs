@@ -30,13 +30,13 @@ test("category pairs keep homonymous labels separate in the catalogue, filters a
 	const catalog = source("src/features/pubblica-annuncio/types/category-catalog.ts");
 	const {announcementContent} = source("src/features/annunci/announcement-content.ts");
 	const {parseAnnouncementDirectoryQuery, getAnnouncementFiltersForDirectoryType} = source("src/features/annunci/announcement-model.ts");
-	assert.equal(catalog.CATEGORY_FILTER_OPTIONS.length, 73);
-	assert.equal(new Set(catalog.CATEGORY_FILTER_OPTIONS.map(option => option.value)).size, 73);
+	assert.equal(catalog.CATEGORY_FILTER_OPTIONS.length, 147);
+	assert.equal(new Set(catalog.CATEGORY_FILTER_OPTIONS.map(option => option.value)).size, 147);
 	assert.equal(catalog.FIGURA_PROFESSIONALE_OPTIONS.length, 22);
 	assert.ok(catalog.FIGURA_PROFESSIONALE_GROUPS.find(group => group.gruppo === "Direzione e organizzazione").opzioni.includes("Commerciale / Business"));
 	assert.ok(catalog.FIGURA_PROFESSIONALE_GROUPS.some(group => group.gruppo === "Staff medico"));
-	const male = catalog.categoryKey("Calcio 5 (Maschile)", "Serie A");
-	const female = catalog.categoryKey("Calcio 5 (Femminile)", "Serie A");
+	const male = catalog.categoryKey("Calcio a 5 maschile", "FIGC-LND — Serie A — Nazionale");
+	const female = catalog.categoryKey("Calcio a 5 femminile", "FIGC-LND — Serie A — Nazionale");
 	assert.notEqual(male, female);
 	assert.ok(catalog.CATEGORY_FILTER_OPTIONS.some(option => option.value === male));
 	assert.ok(catalog.CATEGORY_FILTER_OPTIONS.some(option => option.value === female));
@@ -52,8 +52,44 @@ test("category pairs keep homonymous labels separate in the catalogue, filters a
 	const content = announcementContent("annuncio_giocatore", {categorie_ricercate: [male, female, "Under 15"]}, [], true);
 	assert.deepEqual(content.filters.categories, [male, female, "Under 15"]);
 	assert.deepEqual(content.fields.find(field => field.label === "Categorie ricercate").items, [
-		"Calcio 5 (Maschile) · Serie A", "Calcio 5 (Femminile) · Serie A", "Under 15",
+		"Calcio a 5 maschile — FIGC-LND — Serie A — Nazionale", "Calcio a 5 femminile — FIGC-LND — Serie A — Nazionale", "Under 15",
 	]);
+});
+
+test("player catalogue preserves group order, youth labels and the women's nine-a-side exception", () => {
+	const catalog = source("src/features/pubblica-annuncio/types/category-catalog.ts");
+	assert.deepEqual(catalog.CATEGORIE_CALCIO_GROUPS.map(({gruppo}) => gruppo), [
+		"Calcio a 11 maschile", "Calcio a 8 maschile", "Calcio a 7 maschile", "Calcio a 5 maschile",
+		"Calcio a 11 femminile", "Calcio a 8 femminile", "Calcio a 7 femminile", "Calcio a 5 femminile",
+	]);
+	assert.deepEqual(catalog.CATEGORIE_CALCIO_GROUPS.map(({opzioni}) => opzioni.length), [46, 15, 24, 21, 16, 5, 11, 9]);
+	for (const {gruppo, opzioni} of catalog.CATEGORIE_CALCIO_GROUPS) {
+		assert.equal(opzioni[0], "Qualsiasi");
+		assert.equal(opzioni.at(-1), "Altra categoria");
+		assert.deepEqual(catalog.PLAYER_CURRENT_CATEGORY_GROUPS.find(group => group.gruppo === gruppo).opzioni, opzioni.slice(1));
+		assert.equal(catalog.isPlayerCurrentCategory(catalog.categoryKey(gruppo, "Qualsiasi")), false);
+		for (const category of opzioni.slice(1)) assert.equal(catalog.isPlayerCurrentCategory(catalog.categoryKey(gruppo, category)), true);
+	}
+	assert.equal(catalog.isPlayerCurrentCategory("Qualsiasi"), false);
+	const exceptional = catalog.categoryKey("Calcio a 11 femminile", "FIGC — Under 15 fase regionale a 9");
+	assert.equal(catalog.categoryLabel(exceptional), "Calcio femminile — FIGC — Under 15 fase regionale a 9");
+	assert.ok(catalog.CATEGORY_FILTER_OPTIONS.some(({value, label}) => value === exceptional && label === catalog.categoryLabel(exceptional)));
+	assert.equal(catalog.categoryShortLabel(exceptional), "FIGC — Under 15 fase regionale a 9");
+});
+
+test("player any selections are exclusive globally or within their group, including server normalization", () => {
+	const {categoryKey, normalizeCategories, updatePlayerCategories} = source("src/features/pubblica-annuncio/types/category-catalog.ts");
+	const any = categoryKey("Calcio a 11 maschile", "Qualsiasi");
+	const specific = categoryKey("Calcio a 11 maschile", "FIGC — Under 15 regionale");
+	const other = categoryKey("Calcio a 8 maschile", "AiCS — Pro League Youth Under 15");
+	assert.deepEqual(updatePlayerCategories([specific, other], [specific, other, any]), [other, any]);
+	assert.deepEqual(updatePlayerCategories([any, other], [any, other, specific]), [other, specific]);
+	assert.deepEqual(updatePlayerCategories([any, other], [any, other, "Qualsiasi"]), ["Qualsiasi"]);
+	assert.deepEqual(updatePlayerCategories(["Qualsiasi"], ["Qualsiasi", specific]), [specific]);
+	assert.deepEqual(updatePlayerCategories(["Qualsiasi"], []), []);
+	assert.deepEqual(updatePlayerCategories([any, other], [other]), [other]);
+	assert.deepEqual(normalizeCategories([specific, any, other, any]), [any, other]);
+	assert.deepEqual(normalizeCategories([any, other, "Qualsiasi"]), ["Qualsiasi"]);
 });
 
 const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);

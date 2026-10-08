@@ -1,16 +1,16 @@
 import {InterestDialogTrigger} from "@/features/interessi/InterestDialog";
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
-import {ArrowUpRightIcon, VideoIcon} from "lucide-react";
+import {ArrowUpRightIcon, RulerIcon, VideoIcon, WeightIcon} from "lucide-react";
 import {buttonVariants} from "@/components/ui/button-variants";
-import DynamicReactFlag from "@/components/dynamic/DynamicReactFlag";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import type {PlayerProfileData, PlayerProfileDetail} from "../../profile-detail-model";
 import ProfileLocationsCard from "../ProfileLocationsCard";
 import ProfileSocialLinksCard from "../ProfileSocialLinks";
 import ProfileIdentifier from "../ProfileIdentifier";
 import PlayerRolesCard from "./PlayerRolesCard";
+import ProfileSectionHeading from "../ProfileSectionHeading";
 
-type PlayerOverviewProps = Pick<PlayerProfileData, "presentation" | "highlightsUrl" | "privateHighlights" | "sportTypes" | "primaryRoles" | "specificRoles" | "height" | "weight" | "nationality" | "nationalityCode"> & Pick<PlayerProfileDetail, "locations" | "socialLinks"> & {profileId: string; authenticated: boolean; returnTo: string};
+type PlayerOverviewProps = Pick<PlayerProfileData, "presentation" | "highlightsUrl" | "privateHighlights" | "sportTypes" | "primaryRoles" | "specificRoles" | "height" | "weight"> & Pick<PlayerProfileDetail, "locations" | "socialLinks"> & {profileId: string; authenticated: boolean; returnTo: string};
 
 function youtubeEmbedUrl(value: string) {
 	try {
@@ -37,43 +37,55 @@ function youtubeEmbedUrl(value: string) {
 	}
 }
 
-export default function PlayerOverview({presentation, highlightsUrl, privateHighlights, locations, socialLinks, sportTypes, primaryRoles, specificRoles, height, weight, nationality, nationalityCode, profileId, authenticated, returnTo}: PlayerOverviewProps) {
+export default function PlayerOverview({presentation, highlightsUrl, privateHighlights, locations, socialLinks, sportTypes, primaryRoles, specificRoles, height, weight, profileId, authenticated, returnTo}: PlayerOverviewProps) {
 	const embedUrl = highlightsUrl ? youtubeEmbedUrl(highlightsUrl) : null;
 	const information = [
-		{label: "Altezza", value: height ? `${height} cm` : null},
-		{label: "Peso", value: weight ? `${weight} kg` : null},
-		{label: "Nazionalità", value: nationality},
-		{label: "Ruoli specifici", value: specificRoles.length ? specificRoles.join(", ") : null},
+		{label: "Altezza", icon: RulerIcon, value: height ? `${height} cm` : null},
+		{label: "Peso", icon: WeightIcon, value: weight ? `${weight} kg` : null},
+		{label: null, value: specificRoles.length ? specificRoles : ["Non specificato"]},
 	];
 
 	return (
 		<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-			<aside aria-label="Informazioni sportive" className="order-1 flex min-w-0 flex-col gap-5 lg:order-2 lg:col-start-2 lg:row-start-1">
+			<aside aria-label="Informazioni sportive, località e contatti" className="order-1 flex min-w-0 flex-col gap-5 lg:order-2 lg:col-start-2 lg:row-start-1">
 				<PlayerRolesCard sportTypes={sportTypes} primaryRoles={primaryRoles} />
-				<ProfileLocationsCard locations={locations} />
+				<ProfileLocationsCard locations={locations} title="Vive a" presentation="player" />
+				<div className="hidden flex-col gap-5 lg:flex">
+					<ProfileSocialLinksCard socialLinks={socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />
+					<ProfileIdentifier profileId={profileId} />
+				</div>
 			</aside>
-			<div className="order-2 flex min-w-0 flex-col gap-5 lg:order-1 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+			<div className="order-2 flex min-w-0 flex-col gap-5 lg:order-1 lg:col-start-1 lg:row-start-1">
 				<Card>
-					<CardHeader><CardTitle><h2 className="font-home-display text-2xl uppercase">Informazioni</h2></CardTitle></CardHeader>
-					<CardContent><dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-						{information.map(({label, value}) => <div key={label} className="flex min-w-0 flex-col gap-2">
-							<dt className="text-sm font-semibold">{label}</dt>
-							<dd className="text-sm leading-6 wrap-anywhere">{label === "Nazionalità" && value ? <span className="inline-flex items-center gap-2">{value}{nationalityCode && <DynamicReactFlag code={nationalityCode} className="h-4 w-6 rounded-xs ring-1 ring-border" />}</span> : value ?? "Non specificato"}</dd>
-						</div>)}
+					<CardHeader><CardTitle><ProfileSectionHeading>Informazioni</ProfileSectionHeading></CardTitle></CardHeader>
+					<CardContent><dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+						{information.map(({label, icon: Icon, value}, index) => (
+							<div key={label ?? `specific-roles-${index}`} className="flex min-w-0 flex-col items-center gap-2 rounded-xl p-4 text-center">
+								{label && <dt className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{Icon && <Icon className="size-4" aria-hidden="true" />}{label}</dt>}
+								<dd className="text-center text-base leading-6 font-semibold wrap-anywhere">{Array.isArray(value) ? <ul className="flex flex-col items-center gap-1">{value.map((role, roleIndex) => <li key={role + roleIndex} className="rounded-md bg-background/70 px-3">{role}</li>)}</ul> : value ?? <span className="font-normal text-muted-foreground">Non specificato</span>}</dd>
+							</div>
+						))}
 					</dl></CardContent>
 				</Card>
 				<Card>
 					<CardHeader>
-						<CardTitle><h2 className="font-home-display text-2xl uppercase">Descrizione</h2></CardTitle>
+						<CardTitle><ProfileSectionHeading>Descrizione giocatore</ProfileSectionHeading></CardTitle>
 					</CardHeader>
 					<CardContent><p className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{presentation ?? "Descrizione non disponibile"}</p></CardContent>
 				</Card>
 				{(highlightsUrl || privateHighlights) && <Card>
 					<CardHeader>
-						<CardTitle><h2 className="flex items-center gap-2 font-home-display text-2xl uppercase"><VideoIcon className="profile-detail-accent size-5" aria-hidden="true" />Highlights</h2></CardTitle>
+						<CardTitle>
+							<ProfileSectionHeading className="flex items-center justify-center gap-2">
+								<VideoIcon className="profile-detail-accent size-5" aria-hidden="true" />
+								Video Highlights
+							</ProfileSectionHeading>
+						</CardTitle>
 					</CardHeader>
 					<CardContent className="flex flex-col gap-3">
-						{privateHighlights ? <p className="text-base leading-7">Highlights disponibili ma inviabili privatamente a chi è interessato. <InterestDialogTrigger inline /> per riceverlo!</p> : embedUrl ? (
+						{privateHighlights ? <div className="flex min-h-48 w-full flex-col items-center justify-center gap-4 px-4 sm:px-32 py-6 sm:py-12 text-center">
+							<p className="text-base leading-7 text-muted-foreground">Highlights disponibili ma inviabili privatamente a chi è interessato. <InterestDialogTrigger inline /> per riceverlo!</p>
+						</div> : embedUrl ? (
 							<div className="aspect-video overflow-hidden rounded-lg bg-muted">
 								<iframe
 									className="size-full"
@@ -93,10 +105,10 @@ export default function PlayerOverview({presentation, highlightsUrl, privateHigh
 					</CardContent>
 				</Card>}
 			</div>
-			<aside aria-label="Contatti e identificativo" className="order-3 flex min-w-0 flex-col gap-5 lg:col-start-2 lg:row-start-2">
+			<div className="order-3 flex flex-col gap-5 lg:hidden">
 				<ProfileSocialLinksCard socialLinks={socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />
 				<ProfileIdentifier profileId={profileId} />
-			</aside>
+			</div>
 		</div>
 	);
 }
