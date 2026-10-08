@@ -1,7 +1,6 @@
-import Image from "next/image";
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import type {ReactNode} from "react";
-import {ExternalLinkIcon, EyeOff, StarIcon} from "lucide-react";
+import {ExternalLinkIcon, EyeOff, StarIcon, type LucideIcon} from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -18,6 +17,7 @@ import {
 } from "./profile-detail-presentation";
 import ProfileFactsGrid from "./ProfileFactsGrid";
 import ProfileIdentifier from "./ProfileIdentifier";
+import ProfileEcosystemCard from "./ProfileEcosystemCard";
 import ProfileLocationsCard from "./ProfileLocationsCard";
 import ProfileSocialLinksCard from "./ProfileSocialLinks";
 import StructuredFieldList from "@/components/data-info/StructuredFieldList";
@@ -85,10 +85,10 @@ export default function ProfileDetailsOverview({profile, presentation, authentic
 	returnTo: string;
 }) {
 	const fields = getProfileDetailFields(profile);
-	const renderField = (title: string, fieldLabel: string, centered = false) => {
+	const renderField = (title: string, fieldLabel: string, icon: LucideIcon, centered = false) => {
 		const field = fields.find(candidate => candidate.label === fieldLabel);
 		return <Card key={title} className="min-w-0">
-			<CardHeader><CardTitle><ProfileSectionHeading>{title}</ProfileSectionHeading></CardTitle></CardHeader>
+			<CardHeader><CardTitle><ProfileSectionHeading icon={icon}>{title}</ProfileSectionHeading></CardTitle></CardHeader>
 			<CardContent>
 				<div className={cn("text-base leading-7 whitespace-pre-wrap wrap-anywhere", centered && "flex flex-col items-center text-center [&>ul]:justify-center")}>
 					{field && field.value !== "Non specificato" ? <ProfileFieldValue field={field} /> : <p className="text-sm text-muted-foreground">{title} non disponibile</p>}
@@ -97,13 +97,7 @@ export default function ProfileDetailsOverview({profile, presentation, authentic
 		</Card>;
 	};
 	const renderFooter = () => <>
-		<Card className="min-w-0">
-			<CardHeader><CardTitle><ProfileSectionHeading>Ecosistema {presentation.ecosystemName}</ProfileSectionHeading></CardTitle></CardHeader>
-			<CardContent className="flex flex-col items-center gap-4">
-				<p className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground">Powered by</p>
-				<Image src="/banner-pubblicita/placeholder.png" width={384} height={108} alt="Spazio pubblicitario per sponsor" className="h-auto w-full max-w-md rounded-xl object-contain" />
-			</CardContent>
-		</Card>
+		<ProfileEcosystemCard name={presentation.ecosystemName} />
 		<ProfileIdentifier profileId={profile.id} name={presentation.identifierName} />
 	</>;
 	const hasTopCards = Boolean(presentation.sidebarFields?.length);
@@ -111,14 +105,14 @@ export default function ProfileDetailsOverview({profile, presentation, authentic
 	return (
 		<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
 			<aside aria-label="Ecosistema e identificativo del profilo" className={cn("min-w-0 flex-col gap-5 lg:col-start-2 lg:row-start-1 lg:flex", hasTopCards ? "order-1 flex lg:order-2" : "order-2 hidden")}>
-				{presentation.sidebarFields?.map(({title, fieldLabel}) => renderField(title, fieldLabel, true))}
+				{presentation.sidebarFields?.map(({title, fieldLabel, icon}) => renderField(title, fieldLabel, icon, true))}
 				<div className="hidden flex-col gap-5 lg:flex">{renderFooter()}</div>
 			</aside>
 			<section aria-label="Panoramica del profilo" className="order-2 flex min-w-0 flex-col gap-5 lg:order-1 lg:col-start-1 lg:row-start-1">
 				{presentation.sections.map((section, index) => {
 					if (section.kind === "locations") return <ProfileLocationsCard key={section.title} locations={profile.locations} title={section.title} presentation="player" />;
 					if (section.kind === "social") return <ProfileSocialLinksCard key={"social-" + index} socialLinks={profile.socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />;
-					return renderField(section.title, section.fieldLabel, section.centered);
+					return renderField(section.title, section.fieldLabel, section.icon, section.centered);
 				})}
 			</section>
 			<div className="order-3 flex min-w-0 flex-col gap-5 lg:hidden">{renderFooter()}</div>

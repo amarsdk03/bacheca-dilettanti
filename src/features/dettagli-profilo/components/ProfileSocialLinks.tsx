@@ -20,7 +20,7 @@ export default function ProfileSocialLinksCard({socialLinks, presentation = "def
 	if (presentation === "profile") return (
 		<Card className="min-w-0">
 			<CardHeader>
-				<CardTitle><ProfileSectionHeading className="flex items-center justify-center gap-2"><LinkIcon className="profile-detail-accent size-5" aria-hidden="true" />Social</ProfileSectionHeading></CardTitle>
+				<CardTitle><ProfileSectionHeading icon={LinkIcon}>Social</ProfileSectionHeading></CardTitle>
 			</CardHeader>
 			<CardContent>
 				<ul className="flex flex-col gap-1">

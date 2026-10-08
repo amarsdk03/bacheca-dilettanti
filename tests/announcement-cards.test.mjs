@@ -44,6 +44,7 @@ function sourceLoader() {
 const load = sourceLoader();
 const AnnouncementCard = load("src/features/annunci/components/cards/AnnouncementCard.tsx").default;
 const {getAnnouncementFacts} = load("src/features/annunci/components/cards/announcement-card-model.ts");
+const {buildAnnouncementCardRows} = load("src/features/annunci/announcement-card-rows.ts");
 
 const FACTS = [
 	{kind: "roles", label: "Ruoli principali", value: "Difensore"},
@@ -99,6 +100,7 @@ function fixtureAnnouncement(type, facts = FACTS, linkedTeams = [], isPriority =
 		isPriority,
 		location: "Roma, Lazio",
 		facts,
+		cardRows: [{key: `${type}:0`, label: "Zona/e di ricerca", value: "Roma + altre"}],
 		linkedTeams,
 		author: {
 			kind: "registered",
@@ -126,16 +128,18 @@ function factLabelIndex(html, label) {
 	return html.indexOf(`>${label}</span>`);
 }
 
-test("the dispatcher preserves the compact card layout for every announcement type", () => {
+test("the dispatcher shows compact metadata rows for every announcement type without description", () => {
 	for (const type of Object.keys(PROFILE_TYPE_BY_ANNOUNCEMENT)) {
 		const html = renderAnnouncement(type);
 		assert.match(html, /Titolo annuncio dimostrativo/);
-		assert.match(html, /Descrizione dimostrativa/);
+		assert.doesNotMatch(html, /Descrizione dimostrativa/);
 		assert.match(html, /<time /);
 		assert.match(html, /Apri annuncio/);
 		assert.match(html, /data-icon="inline-start"/);
 		assert.doesNotMatch(html, /data-profile-icon=/);
-		assert.doesNotMatch(html, /<dl\b/);
+		assert.match(html, /<dl\b/);
+		assert.match(html, /Zona\/e di ricerca:/);
+		assert.match(html, />\.\.\.<\/p>/);
 	}
 });
 
@@ -146,6 +150,25 @@ test("service and creator result cards have a subtle theme without overriding pr
 		assert.match(priority, /priority-announcement-card/, type);
 		assert.doesNotMatch(priority, /announcement-themed-card/, type);
 	}
+});
+
+test("card row mappings compact locations and translate player roles", () => {
+	const rows = buildAnnouncementCardRows({
+		type: "annuncio_giocatore",
+		fields: [
+			{label: "Tipologie", items: ["Calcio a 11"], value: "Selezionate"},
+			{label: "Ruoli principali", items: ["Difensore", "Attaccante"], value: "Selezionati"},
+			{label: "Ruoli specifici", items: ["Terzino destro"], value: "Selezionati"},
+		],
+		locations: [{region: "Lazio", city: "Roma"}, {region: "Lombardia", city: "Milano"}],
+		previousCategories: ["Eccellenza"],
+	});
+	assert.deepEqual(rows.map(({label, value}) => [label, value]), [
+		["Zona/e di ricerca", "Lazio, Roma + altre"],
+		["Calcio", "Calcio a 11"],
+		["Ruolo/i", "DIF, ATT"],
+		["Categorie precedenti", "Eccellenza"],
+	]);
 });
 
 test("recent profile announcements show the same saved title and meaningful facts as public cards", () => {
@@ -235,7 +258,7 @@ test("anonymous authors have no registration or official verification marks", ()
 	assert.doesNotMatch(html, /Utente registrato|Profilo verificato ufficialmente/);
 });
 
-test("announcement cards render at most two independent linked-team profiles", () => {
+test("announcement result cards do not show team references", () => {
 	const linkedTeams = [1, 2, 3].map((index) => ({
 		profileId: `00000000-0000-4000-8000-00000000000${index}`,
 		name: `Squadra ${index}`,
@@ -246,9 +269,6 @@ test("announcement cards render at most two independent linked-team profiles", (
 		announcement: fixtureAnnouncement("annuncio_staff_sportivo", FACTS, linkedTeams),
 	}));
 
-	assert.match(html, /Squadra 1/);
-	assert.match(html, /Squadra 2/);
-	assert.doesNotMatch(html, /Squadra 3/);
-	assert.match(html, />\+1</);
+	assert.doesNotMatch(html, /Squadra [123]/);
 	assert.equal(/<a\b[^>]*>(?:(?!<\/a>).)*<a\b/s.test(html), false);
 });

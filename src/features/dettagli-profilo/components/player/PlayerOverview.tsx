@@ -1,12 +1,13 @@
 import {InterestDialogTrigger} from "@/features/interessi/InterestDialog";
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
-import {ArrowUpRightIcon, RulerIcon, VideoIcon, WeightIcon} from "lucide-react";
+import {ArrowUpRightIcon, FileTextIcon, InfoIcon, RulerIcon, VideoIcon, WeightIcon} from "lucide-react";
 import {buttonVariants} from "@/components/ui/button-variants";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import type {PlayerProfileData, PlayerProfileDetail} from "../../profile-detail-model";
 import ProfileLocationsCard from "../ProfileLocationsCard";
 import ProfileSocialLinksCard from "../ProfileSocialLinks";
 import ProfileIdentifier from "../ProfileIdentifier";
+import ProfileEcosystemCard from "../ProfileEcosystemCard";
 import PlayerRolesCard from "./PlayerRolesCard";
 import ProfileSectionHeading from "../ProfileSectionHeading";
 
@@ -47,17 +48,17 @@ export default function PlayerOverview({presentation, highlightsUrl, privateHigh
 
 	return (
 		<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-			<aside aria-label="Informazioni sportive, località e contatti" className="order-1 flex min-w-0 flex-col gap-5 lg:order-2 lg:col-start-2 lg:row-start-1">
+			<aside aria-label="Località, ecosistema e identificativo del giocatore" className="order-1 flex min-w-0 flex-col gap-5 lg:order-2 lg:col-start-2 lg:row-start-1">
 				<PlayerRolesCard sportTypes={sportTypes} primaryRoles={primaryRoles} />
 				<ProfileLocationsCard locations={locations} title="Vive a" presentation="player" />
 				<div className="hidden flex-col gap-5 lg:flex">
-					<ProfileSocialLinksCard socialLinks={socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />
-					<ProfileIdentifier profileId={profileId} />
+					<ProfileEcosystemCard name="giocatori" />
+					<ProfileIdentifier profileId={profileId} name="giocatore" />
 				</div>
 			</aside>
 			<div className="order-2 flex min-w-0 flex-col gap-5 lg:order-1 lg:col-start-1 lg:row-start-1">
 				<Card>
-					<CardHeader><CardTitle><ProfileSectionHeading>Informazioni</ProfileSectionHeading></CardTitle></CardHeader>
+					<CardHeader><CardTitle><ProfileSectionHeading icon={InfoIcon}>Informazioni</ProfileSectionHeading></CardTitle></CardHeader>
 					<CardContent><dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 						{information.map(({label, icon: Icon, value}, index) => (
 							<div key={label ?? `specific-roles-${index}`} className="flex min-w-0 flex-col items-center gap-2 rounded-xl p-4 text-center">
@@ -69,15 +70,14 @@ export default function PlayerOverview({presentation, highlightsUrl, privateHigh
 				</Card>
 				<Card>
 					<CardHeader>
-						<CardTitle><ProfileSectionHeading>Descrizione giocatore</ProfileSectionHeading></CardTitle>
+						<CardTitle><ProfileSectionHeading icon={FileTextIcon}>Descrizione giocatore</ProfileSectionHeading></CardTitle>
 					</CardHeader>
 					<CardContent><p className="text-base leading-7 whitespace-pre-wrap wrap-anywhere">{presentation ?? "Descrizione non disponibile"}</p></CardContent>
 				</Card>
 				{(highlightsUrl || privateHighlights) && <Card>
 					<CardHeader>
 						<CardTitle>
-							<ProfileSectionHeading className="flex items-center justify-center gap-2">
-								<VideoIcon className="profile-detail-accent size-5" aria-hidden="true" />
+							<ProfileSectionHeading icon={VideoIcon}>
 								Video Highlights
 							</ProfileSectionHeading>
 						</CardTitle>
@@ -104,10 +104,11 @@ export default function PlayerOverview({presentation, highlightsUrl, privateHigh
 						)}
 					</CardContent>
 				</Card>}
+				<ProfileSocialLinksCard socialLinks={socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />
 			</div>
 			<div className="order-3 flex flex-col gap-5 lg:hidden">
-				<ProfileSocialLinksCard socialLinks={socialLinks} presentation="profile" authenticated={authenticated} returnTo={returnTo} />
-				<ProfileIdentifier profileId={profileId} />
+				<ProfileEcosystemCard name="giocatori" />
+				<ProfileIdentifier profileId={profileId} name="giocatore" />
 			</div>
 		</div>
 	);

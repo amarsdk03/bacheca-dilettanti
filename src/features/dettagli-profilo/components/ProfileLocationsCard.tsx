@@ -9,7 +9,7 @@ export default function ProfileLocationsCard({locations, title = "Località", pr
 	return (
 		<Card className="min-w-0">
 			<CardHeader>
-				<CardTitle><ProfileSectionHeading className="flex items-center justify-center gap-2"><MapPinIcon className="profile-detail-accent size-5" aria-hidden="true" />{title}</ProfileSectionHeading></CardTitle>
+				<CardTitle><ProfileSectionHeading icon={MapPinIcon}>{title}</ProfileSectionHeading></CardTitle>
 			</CardHeader>
 			<CardContent>
 				{groups.length === 0 ? <p className="text-sm text-muted-foreground">Nessuna località indicata</p> : presentation === "player" ? (

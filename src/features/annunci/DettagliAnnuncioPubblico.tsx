@@ -1,6 +1,5 @@
 import {TriangleAlertIcon} from "lucide-react";
 import type {CSSProperties} from "react";
-import Image from "next/image";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
@@ -18,7 +17,6 @@ import DettagliAnnuncioStaffSportivo from "@/features/annunci/components/details
 import DettagliAnnuncioTorneoEvento from "@/features/annunci/components/details/DettagliAnnuncioTorneoEvento";
 import AnnouncementHistoryBackButton from "@/features/annunci/AnnouncementHistoryBackButton";
 import AnnouncementDetailsLayout from "@/features/annunci/components/details/AnnouncementDetailsLayout";
-import {ANNOUNCEMENT_DETAIL_PRESENTATIONS} from "@/features/annunci/components/details/announcement-detail-presentation";
 import type {AnnouncementDetail, AnnouncementDetailResult,} from "@/features/annunci/announcement-model";
 
 interface DettagliAnnuncioPubblicoProps {
@@ -38,8 +36,8 @@ function AnnouncementContent({announcement, authenticated, returnTo}: {announcem
 		case "annuncio_arbitro": return <DettagliAnnuncioArbitro announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
 		case "annuncio_torneo_evento": return <DettagliAnnuncioTorneoEvento announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
 		case "annuncio_campo_impianto": return <DettagliAnnuncioCampoImpianto announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
-		case "annuncio_servizi_consulenze": return <AnnouncementDetailsLayout announcement={announcement} presentation={ANNOUNCEMENT_DETAIL_PRESENTATIONS.annuncio_servizi_consulenze} authenticated={authenticated} returnTo={returnTo} />;
-		case "annuncio_creators": return <AnnouncementDetailsLayout announcement={announcement} presentation={ANNOUNCEMENT_DETAIL_PRESENTATIONS.annuncio_creators} authenticated={authenticated} returnTo={returnTo} />;
+		case "annuncio_servizi_consulenze": return <AnnouncementDetailsLayout announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
+		case "annuncio_creators": return <AnnouncementDetailsLayout announcement={announcement} authenticated={authenticated} returnTo={returnTo} />;
 	}
 }
 
@@ -70,10 +68,6 @@ export default function DettagliAnnuncioPubblico({
 				<div className="flex justify-center pt-2">
 					<AnnouncementHistoryBackButton label="Torna indietro" variant="outline" size="lg" />
 				</div>
-				{result.status === "success" && <aside aria-label="Sponsor" className="mx-auto flex w-full max-w-md flex-col items-center gap-4 pt-4 pb-2">
-					<p className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground">Powered by</p>
-					<Image src="/banner-pubblicita/placeholder.png" width={384} height={108} alt="Spazio pubblicitario per sponsor" className="h-auto w-full rounded-xl object-contain" />
-				</aside>}
 			</main>
 		</div>
 	);

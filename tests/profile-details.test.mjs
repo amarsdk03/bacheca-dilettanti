@@ -63,6 +63,70 @@ const {
 	normalizePlayerSpecificRoles,
 } = load("src/features/profilo/player-roles.ts");
 const now = new Date("2026-09-14T12:00:00Z");
+
+test("directory cards always show their supported facts and distinguish missing values from supplied values", () => {
+	const {PROFILE_CARD_FACTS, getProfileFacts} = load("src/features/profili/components/cards/profile-card-model.ts");
+	const Card = load("src/features/profili/components/cards/ProfileCard.tsx").default;
+	for (const [type, definitions] of Object.entries(PROFILE_CARD_FACTS)) {
+		const profile = {id: "card-1", type, title: "Profilo", imageUrl: null, presentation: null,
+			emailConfirmed: false, officialVerified: false, facts: [], filterData: {ruoli: [], tipologie: [], figure: []}};
+		for (const missing of [undefined, null, "", "  \n ", "Non specificato", "non specificata", " Non specificate ", "Non specificati"]) {
+			profile.facts = missing === undefined ? [] : definitions.map(({kind, label}) => ({kind, label, value: missing}));
+			const html = renderToStaticMarkup(React.createElement(Card, {profile}));
+			const facts = [...html.matchAll(/<dd class="([^"]*)"[^>]*>(.*?)<\/dd>/g)];
+			assert.equal(facts.length, definitions.length, type);
+			assert.deepEqual(facts.map(([, , value]) => value), definitions.map(({emptyValue}) => emptyValue), type);
+			for (const [, className] of facts) assert.match(className, /font-normal text-muted-foreground/);
+			assert.doesNotMatch(html, /undefined|null|Informazioni non specificate/);
+		}
+		profile.facts = definitions.map(({kind, label}, index) => ({kind, label, value: index === 0 ? " 0 " : "Valore compilato"}));
+		assert.equal(getProfileFacts(profile)[0].value, "0");
+		assert.ok(getProfileFacts(profile).every(({unspecified}) => !unspecified));
+		const html = renderToStaticMarkup(React.createElement(Card, {profile}));
+		assert.equal((html.match(/<dd class="mt-1 font-medium"/g) ?? []).length, definitions.length);
+		assert.deepEqual([...html.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>/g)].map(([, value]) => value.replace(/<[^>]+>/g, "")), definitions.map(({label}) => label));
+	}
+});
+
+test("player overview puts Social last in the main column and Ecosystem above UUID in responsive footers", () => {
+	const Overview = load("src/features/dettagli-profilo/components/player/PlayerOverview.tsx").default;
+	const props = {presentation: "Descrizione", highlightsUrl: null, privateHighlights: false,
+		locations: [{city: "Roma", region: "Lazio"}], socialLinks: {instagram: "https://instagram.com/giocatore"},
+		sportTypes: [], primaryRoles: [], specificRoles: [], height: null, weight: null,
+		profileId: "player-id", authenticated: true, returnTo: "/dettagli-profilo"};
+	for (const highlightsUrl of [null, "https://youtu.be/dQw4w9WgXcQ"]) {
+		const html = renderToStaticMarkup(React.createElement(Overview, {...props, highlightsUrl}));
+		const sidebar = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)[1];
+		assert.match(sidebar, /Vive a[\s\S]*Ecosistema giocatori[\s\S]*Powered by[\s\S]*UUID giocatore/);
+		assert.doesNotMatch(sidebar, /instagram|>Social</);
+		assert.equal((html.match(/instagram.com\/giocatore/g) ?? []).length, 2); // href and visible label in a single card
+		assert.equal((html.match(/>Social<\/span>/g) ?? []).length, 1);
+		const main = html.indexOf('class="order-2 flex min-w-0 flex-col gap-5 lg:order-1');
+		const social = html.indexOf(">Social</span>", main);
+		const mobile = html.indexOf('class="order-3 flex flex-col gap-5 lg:hidden"');
+		assert.ok(main < social && social < mobile);
+		if (highlightsUrl) assert.ok(html.indexOf("Video Highlights", main) < social);
+		assert.match(html.slice(mobile), /Ecosistema giocatori[\s\S]*Powered by[\s\S]*UUID giocatore/);
+	}
+	const anonymous = renderToStaticMarkup(React.createElement(Overview, {...props, authenticated: false}));
+	assert.doesNotMatch(anonymous, /instagram.com/);
+	assert.match(anonymous, /Accedi/);
+});
+
+test("all profile overview sections expose one decorative icon and retain readable headings", () => {
+	const Overview = load("src/features/dettagli-profilo/components/ProfileDetailsOverview.tsx").default;
+	const {NON_PLAYER_PRESENTATIONS} = load("src/features/dettagli-profilo/components/non-player-presentations.ts");
+	for (const [type, presentation] of Object.entries(NON_PLAYER_PRESENTATIONS)) {
+		const html = renderToStaticMarkup(React.createElement(Overview, {profile: genericProfile(type), presentation, authenticated: true, returnTo: "/dettagli-profilo"}));
+		const headings = [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)];
+		assert.ok(headings.length > 0);
+		for (const [, heading] of headings) {
+			assert.equal((heading.match(/<svg /g) ?? []).length, 1, type);
+			assert.match(heading, /aria-hidden="true"/);
+			assert.match(heading, /<span[^>]*>[^<]+<\/span>/);
+		}
+	}
+});
 const player = {
 	id: 7, nome: "Mario", cognome: "Rossi", disponibilita: "disponibile-subito",
 	giorno_nascita: "14", mese_nascita: "Settembre", anno_nascita: "2000",
@@ -451,16 +515,18 @@ test("player overview shows grouped locations, visible social URLs and highlight
 	assert.ok(sidebar);
 	assert.doesNotMatch(html, /campo\.png/);
 	assert.doesNotMatch(sidebar, /campo\.png|grid-cols-3 grid-rows-7|Principale:/);
-	for (const value of ["Tipologie calcio", "Calcio 11", "Calcio 5", "Ruoli principali", "Difensore", "Social", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]) assert.ok(sidebar.includes(value), value);
-	assert.match(html, /<h2[^>]*>Informazioni<\/h2>[\s\S]*Terzino destro[\s\S]*Descrizione del giocatore/);
-	assert.ok(html.indexOf('aria-label="Informazioni sportive, località e contatti"') < html.indexOf('>Descrizione giocatore</h2>'));
+	for (const value of ["Tipologie calcio", "Calcio 11", "Calcio 5", "Ruoli principali", "Difensore", "Ecosistema giocatori", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]) assert.ok(sidebar.includes(value), value);
+	assert.match(html, /<h2[^>]*>[\s\S]*?Informazioni<\/span><\/h2>[\s\S]*Terzino destro[\s\S]*Descrizione del giocatore/);
+	assert.ok(html.indexOf('aria-label="Località, ecosistema e identificativo del giocatore"') < html.indexOf('>Descrizione giocatore</span>'));
 	assert.ok(sidebar.indexOf(">Tipologie calcio<") < sidebar.indexOf(">Ruoli principali<"));
 	assert.ok(sidebar.indexOf(">Vive a<") >= 0);
-	assert.ok(sidebar.indexOf(">Social<") < sidebar.indexOf("UUID profilo"));
+	assert.ok(sidebar.indexOf("Ecosistema giocatori") < sidebar.indexOf("UUID giocatore"));
+	assert.ok(html.indexOf("Video Highlights") < html.indexOf(">Social<"));
 	assert.ok(sidebar.indexOf(">Vive a<") >= 0);
 	assert.match(sidebar, /class="hidden flex-col gap-5 lg:flex"/);
 	assert.ok(html.indexOf('class="order-3 flex flex-col gap-5 lg:hidden"') > html.indexOf("Video Highlights"));
-	assert.match(sidebar, /data-social-brand="instagram"/);
+	assert.doesNotMatch(sidebar, /data-social-brand="instagram"/);
+	assert.match(html, /data-social-brand="instagram"/);
 	assert.match(sidebar, /aria-label="Copia UUID del profilo"/);
 	assert.doesNotMatch(html, /Una presentazione|Guarda il giocatore|Scheda sportiva|Facebook|role="dialog"/);
 });
@@ -815,7 +881,8 @@ test("long-form fields remain in dedicated overview cards without duplication", 
 		const profile = genericProfile(type, {primaryFields: narrativeFields, fields: [{label: "Presentazione", value: "Descrizione dimostrativa"}, ...narrativeFields.slice(0, 1)]});
 		const html = renderToStaticMarkup(React.createElement(Component, {profile, authenticated: false, returnTo: "/dettagli-profilo"}));
 		for (const {label, value} of narrativeFields) {
-			assert.ok(html.includes(`>${label === "Servizi offerti" ? "Presentazione servizi" : label}</h2>`), label);
+			const headings = [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map(([, value]) => value.replace(/<[^>]+>/g, ""));
+			assert.ok(headings.includes(label === "Servizi offerti" ? "Presentazione servizi" : label), label);
 			assert.equal(html.split(value).length - 1, 1, value);
 			assert.ok(html.indexOf("Descrizione dimostrativa") < html.indexOf(value));
 		}
@@ -879,13 +946,13 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 	];
 	const expectedLabels = {
 		giocatore: ["Età", "Genere", "Disponibilità", "Categoria attuale"],
-		squadra: ["Tipologie", "Sede", "Località"],
+		squadra: ["Tipologie", "Categoria attuale Prima Squadra", "Località"],
 		"staff-sportivo": ["Figure", "Disponibilità", "Località"],
-		"servizi-consulenze": ["Figure", "Specializzazioni", "Disponibilità", "Località"],
+		"servizi-consulenze": ["Tipo di azienda / professione", "Disponibilità", "Località"],
 		arbitro: ["Disponibilità", "Località"],
 		creators: ["Contenuti", "Località"],
 		"torneo-evento": ["Tipologie", "Località"],
-		"campi-impianti-sportivi": ["Tipologie", "Costo", "Servizi", "Località"],
+		"campi-impianti-sportivi": ["Tipologia campi disponibili", "Località"],
 	};
 	for (const [type, labels] of Object.entries(expectedLabels)) {
 		const html = renderToStaticMarkup(React.createElement(Card, {profile: {

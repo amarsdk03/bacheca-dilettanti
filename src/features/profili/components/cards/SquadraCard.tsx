@@ -7,7 +7,7 @@ export default function SquadraCard({profile}: {profile: ProfileCardData<"squadr
 			profile={profile}
 			summary={profile.summary ?? "Società e opportunità sportive"}
 			emptyPresentation="Questa squadra non ha ancora aggiunto una presentazione."
-			facts={getProfileFacts(profile, ["types", "headquarters", "location"])}
+			facts={getProfileFacts(profile)}
 		/>
 	);
 }

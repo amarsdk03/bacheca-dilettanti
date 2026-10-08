@@ -5,7 +5,7 @@ import type {ProfileFact} from "./ProfileFactsGrid";
 export interface ProfileDetailPresentation {
 	badges: readonly {fieldLabel?: string; getValues?: (profile: GenericProfileDetail) => readonly string[]}[];
 	sections: readonly ProfileOverviewSection[];
-	sidebarFields?: readonly {title: string; fieldLabel: string}[];
+	sidebarFields?: readonly {title: string; fieldLabel: string; icon: LucideIcon}[];
 	ecosystemName: string;
 	identifierName: string;
 	facts: readonly {
@@ -23,7 +23,7 @@ export interface ProfileDetailPresentation {
 export type ProfileOverviewSection =
 	| {kind: "locations"; title: string}
 	| {kind: "social"}
-	| {kind: "field"; title: string; fieldLabel: string; centered?: boolean};
+	| {kind: "field"; title: string; fieldLabel: string; icon: LucideIcon; centered?: boolean};
 
 export function getProfileDetailBadgeValues(profile: GenericProfileDetail, presentation: ProfileDetailPresentation): string[] {
 	const fields = getProfileDetailFields(profile);

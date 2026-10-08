@@ -1,10 +1,10 @@
-import {CalendarDaysIcon, CircleCheckBigIcon, MapPinIcon, MegaphoneIcon, ShirtIcon, UsersIcon, WifiIcon} from "lucide-react";
+import {BriefcaseBusinessIcon, Building2Icon, CalendarDaysIcon, CircleCheckBigIcon, ClapperboardIcon, FileTextIcon, GoalIcon, InfoIcon, ListChecksIcon, MapPinIcon, MegaphoneIcon, ShirtIcon, UsersIcon, WifiIcon} from "lucide-react";
 import type {GenericProfileDetail, NonPlayerProfileType} from "../profile-detail-model";
 import {formatProfileFactCount, getProfileDetailFields, getProfileDetailFieldValue, type ProfileDetailPresentation, type ProfileOverviewSection} from "./profile-detail-presentation";
 
 const locations = {kind: "locations", title: "Località"} as const;
 const social = {kind: "social"} as const;
-const description = {kind: "field", title: "Descrizione", fieldLabel: "Presentazione"} as const;
+const description = {kind: "field", title: "Descrizione", fieldLabel: "Presentazione", icon: FileTextIcon} as const;
 const introduction = {...description, title: "Presentazione"} as const;
 const standardSections: readonly ProfileOverviewSection[] = [locations, description, social];
 const availability = {label: "Disponibilità", icon: CircleCheckBigIcon, getValue: (profile: GenericProfileDetail) => profile.availabilityLabel};
@@ -49,23 +49,23 @@ export const NON_PLAYER_PRESENTATIONS = {
 			const places = profile.locations.map(({city, region}) => [city, region].filter(Boolean).join(", "));
 			return [...new Set([address, ...places].filter(Boolean))].join(", ") || null;
 		}}, followers("Num. follower"), announcements("Campi pubblicati")],
-		sections: [locations, {kind: "field", title: "Tipologia campi disponibili", fieldLabel: "Tipologia campi disponibili", centered: true},
-			description, {kind: "field", title: "Informazioni aggiuntive", fieldLabel: "Informazioni aggiuntive"}, social],
+		sections: [locations, {kind: "field", title: "Tipologia campi disponibili", fieldLabel: "Tipologia campi disponibili", icon: GoalIcon, centered: true},
+			description, {kind: "field", title: "Informazioni aggiuntive", fieldLabel: "Informazioni aggiuntive", icon: InfoIcon}, social],
 		ecosystemName: "campi", identifierName: "campo / impianto", announcementsLabel: "Campi disponibili",
 	},
 	"servizi-consulenze": {
 		badges: [{fieldLabel: "Tipo di azienda / professione"}, {getValues: profile => profile.locations.map(({region}) => region)}],
 		facts: [{label: "Sede azienda / professionista", fieldLabel: "Sede Azienda / Professionista", icon: MapPinIcon}, availability,
 			followers("Num. follower"), announcements("Contenuti pubblicati")],
-		sections: [introduction, {kind: "field", title: "Presentazione servizi", fieldLabel: "Servizi offerti"}, social],
-		sidebarFields: [{title: "Tipo di azienda / professione", fieldLabel: "Tipo di azienda / professione"},
-			{title: "Sede azienda / professionista", fieldLabel: "Sede Azienda / Professionista"}],
+		sections: [introduction, {kind: "field", title: "Presentazione servizi", fieldLabel: "Servizi offerti", icon: ListChecksIcon}, social],
+		sidebarFields: [{title: "Tipo di azienda / professione", fieldLabel: "Tipo di azienda / professione", icon: BriefcaseBusinessIcon},
+			{title: "Sede azienda / professionista", fieldLabel: "Sede Azienda / Professionista", icon: Building2Icon}],
 		ecosystemName: "servizi e professionisti", identifierName: "servizi e professionisti", announcementsLabel: "Contenuti / promozioni",
 	},
 	creators: {
 		badges: [{fieldLabel: "Tipologia di contenuti"}],
 		facts: [followers("Num. follower"), announcements("Num. annunci pubblicati")],
-		sections: [{kind: "field", title: "Tipologia contenuti", fieldLabel: "Tipologia di contenuti", centered: true},
+		sections: [{kind: "field", title: "Tipologia contenuti", fieldLabel: "Tipologia di contenuti", icon: ClapperboardIcon, centered: true},
 			introduction, {kind: "locations", title: "Zona/e di competenza"}, social],
 		ecosystemName: "creators", identifierName: "creator",
 	},

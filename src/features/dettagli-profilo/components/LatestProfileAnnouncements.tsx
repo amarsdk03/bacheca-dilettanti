@@ -6,6 +6,7 @@ import type {AnnouncementDirectoryItem} from "@/features/annunci/announcement-mo
 import ProfileAnnouncementCard from "./ProfileAnnouncementCard";
 import Link from "next/link";
 import {buttonVariants} from "@/components/ui/button-variants";
+import ProfileSectionHeading from "./ProfileSectionHeading";
 
 export default function LatestProfileAnnouncements({announcements, announcementsUnavailable, isOwner = false, contentMode = false}: {
 	announcements: AnnouncementDirectoryItem[];
@@ -16,9 +17,9 @@ export default function LatestProfileAnnouncements({announcements, announcements
 	return (
 		<section aria-labelledby="latest-profile-announcements" className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h2 className="font-home-display text-2xl font-medium uppercase">
+				<ProfileSectionHeading id="latest-profile-announcements" icon={MegaphoneIcon} className="font-medium">
 					{contentMode ? "Contenuti / promozioni" : "Ultimi annunci pubblicati"}
-				</h2>
+				</ProfileSectionHeading>
 				{!announcementsUnavailable && (
 					<Badge variant="secondary">
 						{announcements.length === 1

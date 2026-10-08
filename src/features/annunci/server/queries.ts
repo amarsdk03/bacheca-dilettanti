@@ -1,6 +1,9 @@
 import {publicTeamExperienceNames} from "@/features/profilo/team-profile";
 import "server-only";
+import {loadAnnouncementAuthorProfile} from "./announcement-author-profile";
+import {buildAnnouncementDetailSections} from "../announcement-detail-sections";
 import {publicProfileName} from "@/features/profilo/profile-public-name";
+import {teamCategoryLabel} from "@/features/profilo/team-category-catalog";
 
 import {isAnnouncementListed} from "@/features/annunci/announcement-visibility";
 import {
@@ -45,6 +48,7 @@ import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database} from "@/server/supabase";
+import {buildAnnouncementCardRows} from "../announcement-card-rows";
 
 const ANNOUNCEMENT_BATCH_SIZE = 500;
 const AUTHOR_BATCH_SIZE = 100;
@@ -190,6 +194,9 @@ interface MappedAnnouncement {
 	hasCustomTitle: boolean;
 	authorId: string | null;
 	teamReferences: TeamProfileReference[];
+	previousCategories: string[];
+	cardProfile: {teamCategory: string | null; serviceType: string | null; creatorTypes: string[]; sportTypes: string[]; locations: AnnouncementLocation[]};
+	locations: AnnouncementLocation[];
 }
 
 interface AuthorLoadResult {
@@ -333,6 +340,9 @@ function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 		hasCustomTitle: Boolean(cleanText(row.titolo_annuncio, 50)),
 		authorId: isValidAnnouncementId(row.autore_annuncio) ? row.autore_annuncio : null,
 		teamReferences,
+		previousCategories: [],
+		cardProfile: {teamCategory: null, serviceType: null, creatorTypes: [], sportTypes: [], locations: []},
+		locations,
 	};
 }
 
@@ -581,6 +591,7 @@ export async function loadPublicAnnouncementsByIds(ids: readonly string[]): Prom
 		const [authors, teams] = await Promise.all([
 			loadOfficialAuthors(supabase, mapped),
 			loadAnnouncementTeams(supabase, mapped),
+			loadAnnouncementCardProfiles(supabase, mapped),
 		]);
 		announcements.push(...mapped.map((item) => withLoadedRelations(item, authors.authors, teams, authors.error)));
 	}
@@ -645,9 +656,15 @@ async function loadAnnouncementTeams(
 				profile.uuid_profilo,
 				experienceTeamReferences(profile.storico_carriera, "titolo"),
 			]));
+			const categoriesByAuthor = new Map((data ?? []).map(profile => [profile.uuid_profilo, (Array.isArray(profile.storico_carriera) ? profile.storico_carriera : []).flatMap(entry => {
+				if (!isRecord(entry)) return [];
+				const name = cleanText(entry.ente, 120);
+				return name ? [name] : [];
+			})]));
 			for (const announcement of announcements) {
 				if (announcement.item.type !== "annuncio_giocatore" || !announcement.authorId) continue;
 				announcement.teamReferences = referencesByAuthor.get(announcement.authorId) ?? [];
+				announcement.previousCategories = [...new Set(categoriesByAuthor.get(announcement.authorId) ?? [])];
 			}
 		}
 	}
@@ -661,6 +678,41 @@ async function loadAnnouncementTeams(
 	}
 }
 
+async function loadAnnouncementCardProfiles(supabase: SupabaseClient<Database>, announcements: readonly MappedAnnouncement[]) {
+	const ids = [...new Set(announcements.flatMap(({authorId}) => authorId ? [authorId] : []))];
+	for (let offset = 0; offset < ids.length; offset += AUTHOR_BATCH_SIZE) {
+		const {data, error} = await supabase.from("profilo").select(`
+			uuid,
+			profilo_squadra(nascosto, categoria_attuale, tipologie_sport),
+			profilo_servizi_consulenze(nascosto, specializzazioni),
+			profilo_creator(nascosto, tipologia_contenuti),
+			localita_profilo(sottoprofilo, regione, citta)
+		`).eq("nascosto", false).in("uuid", ids.slice(offset, offset + AUTHOR_BATCH_SIZE));
+		if (error) { logQueryError("announcement-card-profiles", error); continue; }
+		for (const raw of data ?? []) {
+			const row = raw as unknown as Record<string, unknown>;
+			const team = firstRelation(row.profilo_squadra);
+			const service = firstRelation(row.profilo_servizi_consulenze);
+			const creator = firstRelation(row.profilo_creator);
+			const profileLocations = relationRecords(row.localita_profilo).flatMap(location => {
+				const region = cleanText(location.regione, 100);
+				return region && typeof location.sottoprofilo === "string" ? [{region, city: cleanText(location.citta, 100), sottoprofilo: location.sottoprofilo}] : [];
+			});
+			for (const announcement of announcements) {
+				if (announcement.authorId !== row.uuid) continue;
+				const profileType = announcement.item.profileType;
+				announcement.cardProfile = {
+					teamCategory: profileType === "squadra" && team?.nascosto === false ? teamCategoryLabel(cleanText(team.categoria_attuale, 160)) : null,
+					serviceType: profileType === "servizi-consulenze" && service?.nascosto === false ? cleanText(service.specializzazioni, 160) : null,
+					creatorTypes: profileType === "creators" && creator?.nascosto === false ? (cleanText(creator.tipologia_contenuti, 300)?.split(/[,;|]/).map(value => value.trim()).filter(Boolean) ?? []) : [],
+					sportTypes: profileType === "squadra" && team?.nascosto === false && Array.isArray(team.tipologie_sport) ? team.tipologie_sport.flatMap(value => typeof value === "string" ? [value] : []) : [],
+					locations: profileLocations.filter(location => location.sottoprofilo === profileType).map(({region, city}) => ({region, city})),
+				};
+			}
+		}
+	}
+}
+
 function withLoadedRelations(
 	announcement: MappedAnnouncement,
 	authors: Map<string, AnnouncementAuthor>,
@@ -670,6 +722,13 @@ function withLoadedRelations(
 	return {
 		...withLoadedAuthor(announcement, authors, authorsUnavailable),
 		linkedTeams: announcement.teamReferences.map((reference) => teams.get(reference.profileId) ?? {profileId: reference.profileId, name: "Squadra"}),
+		cardRows: buildAnnouncementCardRows({
+			type: announcement.item.type,
+			fields: announcement.fields,
+			locations: ["annuncio_squadra_cerca_sponsor", "annuncio_servizi_consulenze"].includes(announcement.item.type) && announcement.locations.length === 0 ? announcement.cardProfile.locations : announcement.locations,
+			profile: announcement.cardProfile,
+			previousCategories: announcement.previousCategories,
+		}),
 	};
 }
 
@@ -721,6 +780,7 @@ export async function loadRelatedPublicAnnouncements(
 		const [authorResult, teams] = await Promise.all([
 			loadOfficialAuthors(supabase, mapped),
 			loadAnnouncementTeams(supabase, mapped),
+			loadAnnouncementCardProfiles(supabase, mapped),
 		]);
 		return mapped.map((item) => withLoadedRelations(item, authorResult.authors, teams, authorResult.error));
 	} catch (error) {
@@ -774,6 +834,7 @@ export async function loadPublicAnnouncementDirectory(
 			const [authorResult, teams] = await Promise.all([
 				loadOfficialAuthors(supabase, page),
 				loadAnnouncementTeams(supabase, page),
+				loadAnnouncementCardProfiles(supabase, page),
 			]);
 
 			return {
@@ -827,6 +888,7 @@ export async function loadPublicAnnouncementDirectory(
 		const [authorResult, teams] = await Promise.all([
 			loadOfficialAuthors(supabase, page),
 			loadAnnouncementTeams(supabase, page),
+			loadAnnouncementCardProfiles(supabase, page),
 		]);
 
 		return {
@@ -857,6 +919,7 @@ async function loadSimilarPublicAnnouncements(supabase: SupabaseClient<Database>
 		const mapped = (await sanitizeAnnouncementTeamNames(supabase, data ?? [])).map(mapAnnouncement).filter((item): item is MappedAnnouncement => Boolean(item));
 		const [authorResult, teams] = await Promise.all([
 			loadOfficialAuthors(supabase, mapped), loadAnnouncementTeams(supabase, mapped),
+			loadAnnouncementCardProfiles(supabase, mapped),
 		]);
 		return {announcements: mapped.map(item => withLoadedRelations(item, authorResult.authors, teams, authorResult.error)), unavailable: false};
 	} catch (error) {
@@ -888,6 +951,7 @@ export async function loadPublicProfileAnnouncements(
 		const [authorResult, teams] = await Promise.all([
 			loadOfficialAuthors(supabase, mapped),
 			loadAnnouncementTeams(supabase, mapped),
+			loadAnnouncementCardProfiles(supabase, mapped),
 		]);
 		return {
 			announcements: mapped.map(item => withLoadedRelations(item, authorResult.authors, teams, authorResult.error)),
@@ -991,10 +1055,17 @@ export async function loadPublicAnnouncementDetail(
 		const anonymousAuthorInfo = announcement.author.kind === "anonymous"
 			? await loadAnonymousAuthorInfo(supabase, mapped.authorId, announcement.profileType)
 			: null;
+		const authorProfile = await loadAnnouncementAuthorProfile(supabase, mapped.authorId, announcement.author);
+		const sections = buildAnnouncementDetailSections({
+			type: announcement.type, fields: content.fields, facts: content.facts,
+			locations: content.locations, authorProfile, raw: detailForType(data, announcement.type),
+		});
 		return {
 			status: "success",
 			announcement: {
 				...announcement,
+				authorProfile,
+				sections,
 				anonymousAuthorInfo,
 				moderationStatus: data.stato_annuncio,
 				isListed,

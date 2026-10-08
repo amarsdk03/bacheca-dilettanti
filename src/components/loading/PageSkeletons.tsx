@@ -52,6 +52,22 @@ export function DirectoryPageSkeleton({kind}: {kind: "annunci" | "profili"}) {
 }
 
 function DetailHeroSkeleton({kind}: {kind: "annuncio" | "profilo"}) {
+	if (kind === "annuncio") return <div aria-hidden="true" className="flex flex-col gap-6 rounded-2xl border bg-card p-5 sm:p-6">
+		<div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+			<div className="flex min-w-0 flex-1 flex-col gap-6">
+				<Block className="h-10 w-4/5 max-w-2xl sm:h-12" />
+				<div className="flex items-center gap-4">
+					<Block className="size-16 shrink-0 rounded-full sm:size-20" />
+					<div className="flex min-w-0 flex-1 flex-col gap-3">
+						<Block className="h-8 w-3/4 max-w-md" />
+						<div className="flex flex-wrap gap-2"><Block className="h-6 w-24 rounded-full" /><Block className="h-6 w-28 rounded-full" /></div>
+					</div>
+				</div>
+			</div>
+			<Block className="h-11 w-full rounded-md xl:w-36" />
+		</div>
+		<Block className="h-3 w-44" />
+	</div>;
 	return <div aria-hidden="true" className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
 		<div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
 			<div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-center">
@@ -66,7 +82,7 @@ function DetailHeroSkeleton({kind}: {kind: "annuncio" | "profilo"}) {
 
 function DetailSideSkeleton({kind}: {kind: "annuncio" | "profilo"}) {
 	return <aside aria-hidden="true" className={`flex min-w-0 flex-col gap-5 ${kind === "profilo" ? "order-1 lg:order-2 lg:col-start-2 lg:row-start-1" : "order-2"}`}>
-		{Array.from({length: kind === "annuncio" ? 5 : 3}, (_, index) => <div key={index} className="rounded-xl border bg-card p-5"><Block className="mb-5 h-6 w-2/3" /><div className="space-y-3"><Block className="h-4 w-full" /><Block className="h-4 w-4/5" />{index === 0 && <Block className="mt-4 h-10 w-full rounded-md" />}</div></div>)}
+		{Array.from({length: kind === "annuncio" ? 4 : 3}, (_, index) => <div key={index} className="rounded-xl border bg-card p-5"><Block className="mb-5 h-6 w-2/3" /><div className="space-y-3"><Block className="h-4 w-full" /><Block className="h-4 w-4/5" />{index === 0 && <Block className="mt-4 h-10 w-full rounded-md" />}</div></div>)}
 	</aside>;
 }
 

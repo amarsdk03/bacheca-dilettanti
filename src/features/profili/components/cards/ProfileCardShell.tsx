@@ -20,12 +20,12 @@ import {
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
-import type {DirectoryProfileFact, DirectoryProfileFactKind} from "@/features/profili/profile-directory-model";
+import type {DirectoryProfileFactKind} from "@/features/profili/profile-directory-model";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
 import {profileInitials} from "@/features/profilo/public-profile-display";
 import {OfficialVerificationIcon, RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
-import type {ProfileCardData} from "./profile-card-model";
+import type {ProfileCardData, ProfileCardFact} from "./profile-card-model";
 
 const PROFILE_FACT_ICONS: Record<DirectoryProfileFactKind, LucideIcon> = {
 	availability: CalendarCheckIcon,
@@ -43,14 +43,14 @@ const PROFILE_FACT_ICONS: Record<DirectoryProfileFactKind, LucideIcon> = {
 	types: TagsIcon,
 };
 
-function ProfileFactGrid({facts, accent}: {facts: readonly DirectoryProfileFact[], accent: string}) {
+function ProfileFactGrid({facts, accent}: {facts: readonly ProfileCardFact[], accent: string}) {
 	if (facts.length === 0) {
 		return <p className="rounded-xl bg-muted/55 p-3 text-sm text-muted-foreground">Informazioni non specificate.</p>;
 	}
 
 	return (
 		<dl className="grid grid-cols-1 gap-x-2 gap-y-4 sm:grid-cols-2 py-3 px-1">
-			{facts.map(({kind, label, value}) => {
+			{facts.map(({kind, label, value, unspecified}) => {
 				const Icon = PROFILE_FACT_ICONS[kind];
 				return (
 					<div key={kind} className="min-w-0 rounded-xl">
@@ -61,7 +61,7 @@ function ProfileFactGrid({facts, accent}: {facts: readonly DirectoryProfileFact[
 							<Icon className="size-3.5 shrink-0" aria-hidden="true" />
 							<span className="text-xs truncate uppercase">{label}</span>
 						</dt>
-						<dd className="mt-1 font-medium" title={value}>{value}</dd>
+						<dd className={unspecified ? "mt-1 font-normal text-muted-foreground" : "mt-1 font-medium"} title={value}>{value}</dd>
 					</div>
 				);
 			})}
@@ -77,7 +77,7 @@ export default function ProfileCardShell({
 	profile: ProfileCardData;
 	summary: ReactNode;
 	emptyPresentation: string;
-	facts: readonly DirectoryProfileFact[];
+	facts: readonly ProfileCardFact[];
 }) {
 	const option = PROFILE_OPTIONS.find(({value}) => value === profile.type) ?? PROFILE_OPTIONS[0];
 	const accent = getProfileAccent(profile.type);

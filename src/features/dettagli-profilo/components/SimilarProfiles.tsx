@@ -3,11 +3,12 @@ import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import ProfileCard from "@/features/profili/components/cards/ProfileCard";
 import type {DirectoryProfile} from "@/features/profili/profile-directory-model";
+import ProfileSectionHeading from "./ProfileSectionHeading";
 
 export default function SimilarProfiles({profiles, unavailable}: {profiles: DirectoryProfile[]; unavailable: boolean}) {
 	return (
 		<section aria-labelledby="similar-profiles-title" className="flex flex-col gap-4">
-			<h2 id="similar-profiles-title" className="font-home-display text-2xl font-medium uppercase">Profili simili</h2>
+			<ProfileSectionHeading id="similar-profiles-title" icon={UsersIcon} className="self-start font-medium">Profili simili</ProfileSectionHeading>
 			{unavailable ? (
 				<Alert variant="destructive">
 					<TriangleAlertIcon aria-hidden="true" />

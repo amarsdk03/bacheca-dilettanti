@@ -1,7 +1,7 @@
 "use client";
 
 import {useState} from "react";
-import {CopyIcon} from "lucide-react";
+import {CopyIcon, FingerprintIcon} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent} from "@/components/ui/card";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
@@ -33,7 +33,8 @@ export default function DetailIdentifier({id, entity, entityLabel}: {
 			<CardContent>
 				<div className={"flex flex-row items-center justify-between gap-3"}>
 					<div className={"flex flex-col justify-start gap-1"}>
-						<p className={"font-medium tracking-wide"}>
+						<p className={"flex items-center gap-2 font-medium tracking-wide"}>
+							{entity === "profilo" && <FingerprintIcon className="profile-detail-accent size-4 shrink-0" aria-hidden="true" />}
 							UUID {entityLabel ?? entity}:
 						</p>
 						<code className="block text-xs text-muted-foreground select-all break-all">{id}</code>

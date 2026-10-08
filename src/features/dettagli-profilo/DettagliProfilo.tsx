@@ -5,7 +5,6 @@ import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import DetailActions from "@/features/interazioni/DetailActions";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {cn} from "@/lib/utils";
-import Image from "next/image";
 import type {ProfileDetail, ProfileDetailResult} from "./profile-detail-model";
 import ProfileHistoryBackButton from "./components/ProfileHistoryBackButton";
 import DettagliProfiloGiocatore from "./components/types/DettagliProfiloGiocatore";
@@ -56,10 +55,6 @@ export default function DettagliProfilo({result, authenticated, isOwner = false,
 			<div className="flex justify-center pt-2">
 				<ProfileHistoryBackButton label="Torna indietro" variant="outline" size="lg" />
 			</div>
-			{result.status === "ok" && result.profile.type === "giocatore" && <aside aria-label="Sponsor" className="mx-auto flex w-full max-w-md flex-col items-center gap-4 pt-4 pb-2">
-				<p className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground">Powered by</p>
-				<Image src="/banner-pubblicita/placeholder.png" width={384} height={108} alt="Spazio pubblicitario per sponsor" className="h-auto w-full rounded-xl object-contain" />
-			</aside>}
 		</main>
 	);
 	const page = <div className={cn("min-h-[calc(100vh-4rem)] bg-brand-paper", hasProfile && "public-profile-page")} style={hasProfile ? {"--profile-accent": getProfileAccent(result.profile.type)} as CSSProperties : undefined}>{content}</div>;

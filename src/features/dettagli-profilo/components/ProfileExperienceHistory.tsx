@@ -1,16 +1,17 @@
-import {Building2Icon, CalendarDaysIcon, RouteIcon} from "lucide-react";
+import {Building2Icon, CalendarDaysIcon, RouteIcon, type LucideIcon} from "lucide-react";
 
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Empty, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import type {PublicProfileExperience} from "@/features/dettagli-profilo/profile-detail-model";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
+import ProfileSectionHeading from "./ProfileSectionHeading";
 
-export default function ProfileExperienceHistory({experiences, title = "Esperienze", concludedLabel = "Conseguito"}: {experiences: PublicProfileExperience[]; title?: string; concludedLabel?: string}) {
+export default function ProfileExperienceHistory({experiences, title = "Esperienze", concludedLabel = "Conseguito", icon = RouteIcon}: {experiences: PublicProfileExperience[]; title?: string; concludedLabel?: string; icon?: LucideIcon}) {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle><h2 className="font-home-display text-2xl uppercase">{title}</h2></CardTitle>
+				<CardTitle><ProfileSectionHeading icon={icon}>{title}</ProfileSectionHeading></CardTitle>
 			</CardHeader>
 			<CardContent>
 				{experiences.length === 0 ? (

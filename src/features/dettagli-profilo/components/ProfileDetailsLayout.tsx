@@ -1,4 +1,5 @@
 import type {CSSProperties, ReactNode} from "react";
+import {AwardIcon} from "lucide-react";
 import type {GenericProfileDetail, NonPlayerProfileType} from "../profile-detail-model";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import LatestProfileAnnouncements from "./LatestProfileAnnouncements";
@@ -34,7 +35,7 @@ export default function ProfileDetailsLayout<Type extends NonPlayerProfileType>(
 				label="Informazioni del profilo"
 				presentation="profile"
 				overview={<ProfileDetailsOverview profile={profile} presentation={presentation} authenticated={authenticated} returnTo={returnTo} />}
-				career={presentation.hasExperiences ? profile.qualifications ? <div className="grid gap-6"><ProfileExperienceHistory title="Lista esperienze" experiences={profile.experiences} /><ProfileExperienceHistory title="Qualifiche / patentini / licenze" concludedLabel="Conseguito" experiences={profile.qualifications} /></div> : <ProfileExperienceHistory experiences={profile.experiences} /> : undefined}
+				career={presentation.hasExperiences ? profile.qualifications ? <div className="grid gap-6"><ProfileExperienceHistory title="Lista esperienze" experiences={profile.experiences} /><ProfileExperienceHistory title="Qualifiche / patentini / licenze" icon={AwardIcon} concludedLabel="Conseguito" experiences={profile.qualifications} /></div> : <ProfileExperienceHistory experiences={profile.experiences} /> : undefined}
 				careerLabel={presentation.careerLabel ?? "Esperienze"}
 				announcementsLabel={presentation.announcementsLabel}
 				announcements={<LatestProfileAnnouncements announcements={profile.announcements} announcementsUnavailable={profile.announcementsUnavailable} contentMode={profile.type === "servizi-consulenze"} isOwner={isOwner} />}

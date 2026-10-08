@@ -10,6 +10,29 @@ export type PlayerCardData = ProfileCardData<"giocatore"> & {
 	nationalityCode?: string | null;
 };
 
+export type ProfileCardFact = DirectoryProfileFact & {unspecified: boolean};
+
+type CardFactDefinition = {kind: DirectoryProfileFactKind; label: string; emptyValue: string};
+const location: CardFactDefinition = {kind: "location", label: "Località", emptyValue: "Non specificata"};
+const availability: CardFactDefinition = {kind: "availability", label: "Disponibilità", emptyValue: "Non specificata"};
+const types: CardFactDefinition = {kind: "types", label: "Tipologie", emptyValue: "Non specificate"};
+
+export const PROFILE_CARD_FACTS: Record<ProfileType, readonly CardFactDefinition[]> = {
+	giocatore: [
+		{kind: "age", label: "Età", emptyValue: "Non specificata"},
+		{kind: "gender", label: "Genere", emptyValue: "Non specificato"},
+		availability,
+		{kind: "category", label: "Categoria attuale", emptyValue: "Non specificata"},
+	],
+	squadra: [types, {kind: "category", label: "Categoria attuale Prima Squadra", emptyValue: "Non specificata"}, location],
+	"staff-sportivo": [{kind: "figures", label: "Figure", emptyValue: "Non specificate"}, availability, location],
+	arbitro: [availability, location],
+	"torneo-evento": [types, location],
+	"campi-impianti-sportivi": [{...types, label: "Tipologia campi disponibili", emptyValue: "Non specificata"}, location],
+	"servizi-consulenze": [{kind: "specializations", label: "Tipo di azienda / professione", emptyValue: "Non specificato"}, availability, location],
+	creators: [{kind: "content", label: "Contenuti", emptyValue: "Non specificati"}, location],
+};
+
 export function toPlayerCardData(profile: DirectoryProfile): PlayerCardData {
 	return {
 		id: profile.id,
@@ -26,7 +49,8 @@ export function toPlayerCardData(profile: DirectoryProfile): PlayerCardData {
 }
 
 function isSpecifiedFact(fact: DirectoryProfileFact | undefined): fact is DirectoryProfileFact {
-	return Boolean(fact && fact.value.trim() && fact.value !== "Non specificato");
+	const value = typeof fact?.value === "string" ? fact.value.trim() : "";
+	return Boolean(value && !/^non specificat[oaie]$/i.test(value));
 }
 
 export function getProfileFact(
@@ -45,12 +69,13 @@ export function getProfileFactValue(
 }
 
 export function getProfileFacts(
-	profile: Pick<DirectoryProfile, "facts">,
-	kinds: readonly DirectoryProfileFactKind[],
-) {
-	return kinds
-		.map((kind) => getProfileFact(profile, kind))
-		.filter(isSpecifiedFact);
+	profile: Pick<DirectoryProfile, "type" | "facts">,
+): ProfileCardFact[] {
+	return PROFILE_CARD_FACTS[profile.type].map(({kind, label, emptyValue}) => {
+		const fact = getProfileFact(profile, kind);
+		const unspecified = !isSpecifiedFact(fact);
+		return {kind, label, value: !unspecified && fact ? fact.value.trim() : emptyValue, unspecified};
+	});
 }
 
 export function summarizeProfileValues(values: readonly string[], fallback: string) {

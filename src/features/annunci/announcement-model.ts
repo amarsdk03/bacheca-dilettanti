@@ -333,6 +333,12 @@ export interface AnnouncementFact {
 	value: string;
 }
 
+export interface AnnouncementCardRow {
+	key: string;
+	label: string;
+	value: string | null;
+}
+
 export type AnnouncementAuthor =
 	| {
 		kind: "registered";
@@ -367,6 +373,7 @@ export interface AnnouncementDirectoryItem {
 	isPriority: boolean;
 	location: string;
 	facts: AnnouncementFact[];
+	cardRows?: AnnouncementCardRow[];
 	author: AnnouncementAuthor;
 	linkedTeams: TeamProfileReference[];
 }
@@ -422,7 +429,52 @@ export interface AnonymousAnnouncementAuthorInfo {
 	presentation: string | null;
 }
 
+// Detail-only public projection; never include account IDs or full birth dates.
+export interface AnnouncementAuthorProfileData {
+	age: number | null;
+	birthYear: string | null;
+	sportTypes: string[];
+	primaryRoles: string[];
+	currentCategory: string | null;
+	previousCategories: string[];
+	figures: string[];
+	companyType: string | null;
+	headquarters: string | null;
+	availabilityLabel: string | null;
+	contentTypes: string[];
+	locations: PublicProfileLocation[];
+}
+
+export type AnnouncementSectionPresentation =
+	| {kind: "choices" | "categories" | "locations" | "prose" | "offer"}
+	| {kind: "scalar"; value?: string; secondary?: string}
+	| {kind: "metric"; amount: string; unit?: string; qualifier?: string}
+	| {kind: "checklist"; items: string[]}
+	| {kind: "schedule"; rows: {day: string; from: string | null; to: string | null}[]}
+	| {kind: "prizes"; rows: {place: string | null; title: string}[]}
+	| {kind: "history"; rows: {
+		title: string;
+		organization: string | null;
+		period: string | null;
+		description: string | null;
+		status: "in-corso" | "conseguito" | null;
+	}[]};
+
+export interface AnnouncementDetailSection {
+	id: string;
+	title: string;
+	emoji: string | null;
+	flagCode?: string;
+	value: string | null;
+	items?: string[];
+	locations?: PublicProfileLocation[];
+	emptyLabel: string;
+	presentation?: AnnouncementSectionPresentation;
+}
+
 export interface AnnouncementDetail extends AnnouncementDirectoryItem {
+	authorProfile: AnnouncementAuthorProfileData | null;
+	sections: AnnouncementDetailSection[];
 	anonymousAuthorInfo: AnonymousAnnouncementAuthorInfo | null;
 	moderationStatus: string | null;
 	isListed: boolean;

@@ -21,7 +21,7 @@ export default function AnnouncementDetailsContacts({
 		<section aria-labelledby="announcement-contacts-title" className="min-w-0">
 			<Card>
 				<CardHeader>
-					<CardTitle><h2 id="announcement-contacts-title" className="font-home-display text-2xl uppercase">Contatta l’autore</h2></CardTitle>
+					<CardTitle><h2 id="announcement-contacts-title" className="text-center font-home-display text-2xl uppercase lg:text-3xl">Contatta</h2></CardTitle>
 					<CardDescription>{authenticated ? "Usa uno dei recapiti pubblicati per questo annuncio." : "Accedi per visualizzare i recapiti pubblicati per questo annuncio."}</CardDescription>
 				</CardHeader>
 				<CardContent>

@@ -38,7 +38,7 @@ export function ExternalNavigationProvider({children}: {children: ReactNode}) {
 					</AlertDialogTitle>
 					<AlertDialogDescription>
 						Sarai reindirizzato a <span className="font-semibold wrap-anywhere">{pending?.host}</span>, sei sicuro di voler procedere?
-						<div className={"my-1"} />
+						<span className="my-1 block" aria-hidden="true" />
 						Questo link non è affiliato o verificato da parte di Bacheca Dilettanti: procedi con cautela.
 					</AlertDialogDescription>
 				</AlertDialogHeader>

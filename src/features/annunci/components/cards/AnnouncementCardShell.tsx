@@ -1,40 +1,23 @@
 import type {CSSProperties} from "react";
 import Link from "next/link";
-import type {LucideIcon} from "lucide-react";
 import {
 	ArrowUpRightIcon,
-	BadgeEuroIcon,
-	BriefcaseBusinessIcon,
-	Building2Icon,
-	CalendarCheckIcon,
 	CalendarDaysIcon,
-	CalendarRangeIcon,
-	CarIcon,
-	CircleDollarSignIcon,
-	ClapperboardIcon,
-	ClockIcon,
-	GraduationCapIcon,
-	MapPinIcon,
 	PinIcon,
 	SparklesIcon,
-	TagsIcon,
-	UserSearchIcon,
-	UsersIcon,
-	WrenchIcon,
 } from "lucide-react";
 
 import {Badge} from "@/components/ui/badge";
-import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import AnnouncementAuthorHoverCard from "@/features/annunci/AnnouncementAuthorHoverCard";
 import {
 	type AnnouncementFact,
-	type AnnouncementFactKind,
 	announcementOption,
 } from "@/features/annunci/announcement-model";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import type {AnnouncementCardData} from "./announcement-card-model";
-import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
 import {cn} from "@/lib/utils";
+import {MISSING_ANNOUNCEMENT_CARD_VALUE} from "@/features/annunci/announcement-card-rows";
 
 const ANNOUNCEMENT_DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {
 	day: "numeric",
@@ -42,28 +25,6 @@ const ANNOUNCEMENT_DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {
 	timeZone: "Europe/Rome",
 	year: "numeric",
 });
-
-const ANNOUNCEMENT_FACT_ICONS: Record<AnnouncementFactKind, LucideIcon> = {
-	availability: CalendarCheckIcon,
-	car: CarIcon,
-	categories: TagsIcon,
-	content: ClapperboardIcon,
-	compensation: BadgeEuroIcon,
-	figures: BriefcaseBusinessIcon,
-	headquarters: Building2Icon,
-	location: MapPinIcon,
-	participation: UsersIcon,
-	period: CalendarRangeIcon,
-	price: CircleDollarSignIcon,
-	registration: CalendarCheckIcon,
-	roles: UserSearchIcon,
-	season: CalendarRangeIcon,
-	sector: Building2Icon,
-	services: WrenchIcon,
-	specializations: GraduationCapIcon,
-	time: ClockIcon,
-	types: TagsIcon,
-};
 
 function formatAnnouncementDate(value: string | null) {
 	if (!value) return "Data non disponibile";
@@ -80,39 +41,13 @@ function humanizeValue(value: string) {
 		: value;
 }
 
-function AnnouncementFactGrid({facts}: {facts: readonly AnnouncementFact[]}) {
-	if (facts.length === 0) {
-		return <p className="rounded-xl bg-muted/55 p-3 text-sm text-muted-foreground">Informazioni non specificate.</p>;
-	}
-
-	return (
-		<dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-			{facts.map(({kind, label, value}) => {
-				const Icon = ANNOUNCEMENT_FACT_ICONS[kind];
-				return (
-					<div key={`${kind}:${label}`} className="min-w-0 rounded-xl bg-muted/55 p-3">
-						<dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
-							<Icon className="size-3.5 shrink-0" aria-hidden="true" />
-							<span className="truncate">{label}</span>
-						</dt>
-						<dd className="mt-1 truncate font-medium" title={value}>{value}</dd>
-					</div>
-				);
-			})}
-		</dl>
-	);
-}
-
 export default function AnnouncementCardShell({
 	announcement,
-	summary,
-	emptyDescription,
-	facts,
 }: {
 	announcement: AnnouncementCardData;
-	summary: string;
-	emptyDescription: string;
-	facts: readonly AnnouncementFact[];
+	summary?: string;
+	emptyDescription?: string;
+	facts?: readonly AnnouncementFact[];
 }) {
 	const accent = getProfileAccent(announcement.profileType);
 	const TypeIcon = announcementOption(announcement.type).icon;
@@ -166,15 +101,18 @@ export default function AnnouncementCardShell({
 						)}
 					</p>
 				</div>
-				<CardDescription className="text-md line-clamp-3 wrap-anywhere mb-1">
-					{announcement.description ?? emptyDescription}
-				</CardDescription>
 			</CardHeader>
-			{(announcement.linkedTeams?.length ?? 0) > 0 && (
-				<CardContent className="pointer-events-none relative z-10 mt-auto">
-						<TeamProfileLinks teams={announcement.linkedTeams ?? []} limit={2} className="pointer-events-auto mt-3" />
-				</CardContent>
-			)}
+			<CardContent className="pointer-events-none relative z-10 mt-auto pt-0">
+				<dl className="flex flex-col gap-2 text-sm">
+					{(announcement.cardRows ?? []).map(({key,label,value}) => (
+						<div key={key} className="flex min-w-0 gap-1.5">
+							<dt className="shrink-0 font-semibold">{label}:</dt>
+							<dd className={cn("min-w-0 line-clamp-2 wrap-anywhere", !value && "text-muted-foreground")} title={value ?? undefined}>{value ?? MISSING_ANNOUNCEMENT_CARD_VALUE}</dd>
+						</div>
+					))}
+				</dl>
+				<p className="pt-1 text-center text-muted-foreground" aria-hidden="true">...</p>
+			</CardContent>
 			<CardFooter className="pointer-events-none mt-auto relative z-10 justify-between gap-3">
 				<div className="pointer-events-auto min-w-0 flex-1">
 					<AnnouncementAuthorHoverCard author={announcement.author} />

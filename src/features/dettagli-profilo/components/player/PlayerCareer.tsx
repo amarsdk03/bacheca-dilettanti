@@ -4,12 +4,13 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Empty, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import type {PlayerCareerEntry} from "../../profile-detail-model";
 import TeamProfileLinks from "@/features/profilo/TeamProfileLinks";
+import ProfileSectionHeading from "../ProfileSectionHeading";
 
 export default function PlayerCareer({entries}: {entries: PlayerCareerEntry[]}) {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle><h2 className="font-home-display text-2xl uppercase">Carriera</h2></CardTitle>
+				<CardTitle><ProfileSectionHeading icon={RouteIcon}>Carriera</ProfileSectionHeading></CardTitle>
 			</CardHeader>
 			<CardContent>
 				{entries.length === 0 ? (
