@@ -1,3 +1,4 @@
+import {currentCategoryLabel, currentPlayerCareer} from "@/features/profilo/current-team";
 import "server-only";
 
 import {
@@ -12,11 +13,10 @@ import type {PlayerCareerEntry, PlayerProfileData} from "../profile-detail-model
 import {UUID_PATTERN} from "@/features/profilo/team-profile";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
-import {categoryLabel} from "@/features/pubblica-annuncio/types/category-catalog";
 import {nationalityLabel} from "@/features/profilo/player-nationalities";
 
 type PlayerRow = Pick<Tables<"profilo_giocatore">,
-	"giorno_nascita" | "mese_nascita" | "anno_nascita" | "tipologie_sport" | "ruoli_sport" |
+	"squadra_attuale_id" | "squadra_attuale_profilo_id" | "squadra_attuale_nome" | "squadra_attuale_categoria" | "squadra_attuale_torneo" | "squadra_attuale_dal" | "disponibilita" | "giorno_nascita" | "mese_nascita" | "anno_nascita" | "tipologie_sport" | "ruoli_sport" |
 	"highlights_privati" | "richiede_caricamento_highlights" | "categoria_attuale" | "piede_principale" | "genere" | "nazionalita" | "altezza" | "peso" | "presentazione" | "storico_carriera"
 >;
 
@@ -66,6 +66,7 @@ export function parsePlayerCareer(value: unknown): PlayerCareerEntry[] {
 			status,
 			description,
 			teamProfileId: teamProfileId && UUID_PATTERN.test(teamProfileId) ? teamProfileId : null,
+			...(typeof entry.squadraIstanzaId === "number" && Number.isSafeInteger(entry.squadraIstanzaId) && entry.squadraIstanzaId > 0 ? {teamSubprofileId: entry.squadraIstanzaId} : {}),
 			linkedTeam: null,
 		}];
 	});
@@ -84,7 +85,7 @@ export function toPublicPlayerData(data: PlayerRow, highlights: unknown, now = n
 		sportTypes: ordinaTipologieCalcio(strings(data.tipologie_sport)),
 		primaryRoles: normalizePlayerPrimaryRoles(strings(roles?.principali)),
 		specificRoles: normalizePlayerSpecificRoles(strings(roles?.specifici)),
-		currentCategory: category ? categoryLabel(category) : null,
+		currentCategory: category ? currentCategoryLabel(category, data.squadra_attuale_torneo) : null,
 		preferredFoot: data.piede_principale === "Ambipiede" ? "Ambidestro" : cleanText(data.piede_principale),
 		gender: cleanText(data.genere),
 		nationality,
@@ -92,7 +93,7 @@ export function toPublicPlayerData(data: PlayerRow, highlights: unknown, now = n
 		height: cleanText(data.altezza),
 		weight: cleanText(data.peso),
 		presentation: cleanText(data.presentazione),
-		career: parsePlayerCareer(data.storico_carriera),
+		career: parsePlayerCareer(currentPlayerCareer(data)),
 		privateHighlights: data.highlights_privati,
 		highlightsUrl: !data.highlights_privati && !data.richiede_caricamento_highlights && url && isLinkAnnuncioValid(url) ? url : null,
 	};

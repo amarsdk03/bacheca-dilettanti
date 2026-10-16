@@ -3,7 +3,7 @@ import "server-only";
 import {loadAnnouncementAuthorProfile} from "./announcement-author-profile";
 import {buildAnnouncementDetailSections} from "../announcement-detail-sections";
 import {publicProfileName} from "@/features/profilo/profile-public-name";
-import {teamCategoryLabel} from "@/features/profilo/team-category-catalog";
+import {currentCategoryLabel, currentPlayerCareer} from "@/features/profilo/current-team";
 
 import {isAnnouncementListed} from "@/features/annunci/announcement-visibility";
 import {
@@ -406,6 +406,7 @@ function registeredAuthor(
 	if (!title) return null;
 	return {
 		kind: "registered",
+		anonymousName: child.nominativo_anonimo === true,
 		profileId: row.uuid,
 		profileType,
 		title,
@@ -492,6 +493,7 @@ async function loadAnonymousAuthorInfo(supabase: SupabaseClient<Database>, profi
 		const firstLocation = locations?.[0];
 		return {
 			name: publicProfileName(profileType, child.nominativo_anonimo, name),
+			anonymousName: child.nominativo_anonimo === true,
 			location: [cleanText(firstLocation?.citta, 120), cleanText(firstLocation?.regione, 80)].filter(Boolean).join(", ") || null,
 			presentation: cleanText(child.presentazione),
 		};
@@ -647,16 +649,16 @@ async function loadAnnouncementTeams(
 	if (playerAuthorIds.length > 0) {
 		const {data, error} = await supabase
 			.from("profilo_giocatore")
-			.select("uuid_profilo, storico_carriera")
+			.select("uuid_profilo, disponibilita, categoria_attuale, squadra_attuale_id, squadra_attuale_profilo_id, squadra_attuale_nome, squadra_attuale_categoria, squadra_attuale_torneo, squadra_attuale_dal, storico_carriera")
 			.in("uuid_profilo", playerAuthorIds);
 		if (error) {
 			logQueryError("player-linked-teams", error);
 		} else {
 			const referencesByAuthor = new Map((data ?? []).map((profile) => [
 				profile.uuid_profilo,
-				experienceTeamReferences(profile.storico_carriera, "titolo"),
+				experienceTeamReferences(currentPlayerCareer(profile), "titolo"),
 			]));
-			const categoriesByAuthor = new Map((data ?? []).map(profile => [profile.uuid_profilo, (Array.isArray(profile.storico_carriera) ? profile.storico_carriera : []).flatMap(entry => {
+			const categoriesByAuthor = new Map((data ?? []).map(profile => [profile.uuid_profilo, currentPlayerCareer(profile).flatMap(entry => {
 				if (!isRecord(entry)) return [];
 				const name = cleanText(entry.ente, 120);
 				return name ? [name] : [];
@@ -683,7 +685,7 @@ async function loadAnnouncementCardProfiles(supabase: SupabaseClient<Database>, 
 	for (let offset = 0; offset < ids.length; offset += AUTHOR_BATCH_SIZE) {
 		const {data, error} = await supabase.from("profilo").select(`
 			uuid,
-			profilo_squadra(nascosto, categoria_attuale, tipologie_sport),
+			profilo_squadra(nascosto, categoria_attuale, torneo_attuale_nome, tipologie_sport),
 			profilo_servizi_consulenze(nascosto, specializzazioni),
 			profilo_creator(nascosto, tipologia_contenuti),
 			localita_profilo(sottoprofilo, regione, citta)
@@ -702,7 +704,7 @@ async function loadAnnouncementCardProfiles(supabase: SupabaseClient<Database>, 
 				if (announcement.authorId !== row.uuid) continue;
 				const profileType = announcement.item.profileType;
 				announcement.cardProfile = {
-					teamCategory: profileType === "squadra" && team?.nascosto === false ? teamCategoryLabel(cleanText(team.categoria_attuale, 160)) : null,
+					teamCategory: profileType === "squadra" && team?.nascosto === false ? currentCategoryLabel(cleanText(team.categoria_attuale, 160), cleanText(team.torneo_attuale_nome, 120)) : null,
 					serviceType: profileType === "servizi-consulenze" && service?.nascosto === false ? cleanText(service.specializzazioni, 160) : null,
 					creatorTypes: profileType === "creators" && creator?.nascosto === false ? (cleanText(creator.tipologia_contenuti, 300)?.split(/[,;|]/).map(value => value.trim()).filter(Boolean) ?? []) : [],
 					sportTypes: profileType === "squadra" && team?.nascosto === false && Array.isArray(team.tipologie_sport) ? team.tipologie_sport.flatMap(value => typeof value === "string" ? [value] : []) : [],

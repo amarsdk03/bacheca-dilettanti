@@ -4,7 +4,8 @@ import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {PROFESSIONAL_REGIONS_EMPTY_MESSAGE} from "@/features/profilo/professional-regions";
 import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {FOREIGN_PROFILE_REGION} from "@/features/profilo/profile-location-regions";
 import type {ProfileLocationDraft} from "@/features/profilo/profile-model";
 import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
@@ -21,6 +22,7 @@ interface ProfileLocationsFieldProps {
 	mode?: "single" | "multiple";
 	label?: string;
 	allowedRegions?: readonly string[];
+	allowForeignRegion?: boolean;
 }
 
 function locationsToRegions(value: readonly ProfileLocationDraft[]) {
@@ -62,6 +64,7 @@ export default function ProfileLocationsField({
 	mode = "multiple",
 	label = "Regioni interessate",
 	allowedRegions,
+	allowForeignRegion = false,
 }: ProfileLocationsFieldProps) {
 	const regions = locationsToRegions(value);
 	const citiesByRegion = locationsToCities(value);
@@ -90,7 +93,12 @@ export default function ProfileLocationsField({
 						<Select value={region || null} onValueChange={(selected) => onValueChange(selected ? [{regione: selected, citta: null}] : [])}>
 							<SelectTrigger id={`${idPrefix}-regione`} className="w-full" aria-required={required} aria-invalid={Boolean(error)}><SelectValue placeholder="Seleziona una regione" /></SelectTrigger>
 							<SelectContent>
+								{allowForeignRegion && <SelectGroup>
+									<SelectLabel>Estero</SelectLabel>
+									<SelectItem value={FOREIGN_PROFILE_REGION}>{FOREIGN_PROFILE_REGION}</SelectItem>
+								</SelectGroup>}
 								<SelectGroup>
+									{allowForeignRegion && <SelectLabel>Italia</SelectLabel>}
 									{REGIONI_ITALIANE.filter(({nome}) => allowedRegions === undefined || allowedRegions.includes(nome)).map(({nome}) => <SelectItem key={nome} value={nome}>{nome}</SelectItem>)}
 								</SelectGroup>
 							</SelectContent>

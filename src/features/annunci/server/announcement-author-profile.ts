@@ -1,3 +1,6 @@
+import {currentCategoryLabel, currentPlayerCareer} from "@/features/profilo/current-team";
+import {experienceTeamReferences, publicTeamExperienceNames} from "@/features/profilo/team-profile";
+import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
 import "server-only";
 
 import type {SupabaseClient} from "@supabase/supabase-js";
@@ -5,7 +8,6 @@ import type {Database} from "@/server/supabase";
 import type {AnnouncementAuthor, AnnouncementAuthorProfileData} from "../announcement-model";
 import {publicPlayerAge} from "@/features/dettagli-profilo/server/player-profile-data";
 import {normalizePlayerPrimaryRoles} from "@/features/profilo/player-roles";
-import {teamCategoryLabel} from "@/features/profilo/team-category-catalog";
 import {availabilityLabel} from "@/features/profilo/public-profile-display";
 import {normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
@@ -15,8 +17,8 @@ export function announcementAuthorProfileQuery(supabase: SupabaseClient<Database
 	// this module. Keep this select out of directory and similar-announcement queries.
 	return supabase.from("profilo").select(`
 		uuid,
-		profilo_giocatore(id, nascosto, giorno_nascita, mese_nascita, anno_nascita, tipologie_sport, ruoli_sport, storico_carriera),
-		profilo_squadra(id, nascosto, tipologie_sport, categoria_attuale),
+		profilo_giocatore(squadra_attuale_id, squadra_attuale_profilo_id, squadra_attuale_nome, squadra_attuale_categoria, squadra_attuale_torneo, squadra_attuale_dal, categoria_attuale, disponibilita, id, nascosto, giorno_nascita, mese_nascita, anno_nascita, tipologie_sport, ruoli_sport, storico_carriera),
+		profilo_squadra(torneo_attuale_nome, id, nascosto, tipologie_sport, categoria_attuale),
 		profilo_staff_sportivo(id, nascosto, tipologie_sport, figure_professionali),
 		profilo_arbitro(id, nascosto, tipologie_sport),
 		profilo_torneo_evento(id, nascosto, tipologie_sport),
@@ -65,12 +67,24 @@ export async function loadAnnouncementAuthorProfile(
 			&& Number(child.anno_nascita) >= 1900 && Number(child.anno_nascita) <= new Date().getFullYear()
 			? text(child.anno_nascita) : null;
 		const roles = record(child.ruoli_sport);
+		const rawCareer = player ? currentPlayerCareer(child as Parameters<typeof currentPlayerCareer>[0]) : [];
+		const teamIds = experienceTeamReferences(rawCareer, "titolo").map(team => team.profileId);
+		const teams = await loadPublicTeamProfiles(supabase, teamIds);
+		const career = publicTeamExperienceNames(rawCareer, new Map(teams.map(team => [team.profileId, team])), "titolo");
 		return {
 			age, birthYear,
 			sportTypes: ordinaTipologieCalcio(strings(child.tipologie_sport)),
 			primaryRoles: player ? normalizePlayerPrimaryRoles(strings(roles?.principali)) : [],
-			currentCategory: author.profileType === "squadra" ? teamCategoryLabel(text(child.categoria_attuale)) : null,
-			previousCategories: player ? [...new Set(records(child.storico_carriera).map(item => text(item.ente)).filter((item): item is string => Boolean(item)))] : [],
+			currentCategory: author.profileType === "squadra" ? currentCategoryLabel(text(child.categoria_attuale), text(child.torneo_attuale_nome)) : null,
+			previousCategories: player ? [...new Set(records(career).map(item => text(item.ente)).filter((item): item is string => Boolean(item)))] : [],
+			previousCareer: player ? records(career).flatMap(item => {
+				const category = text(item.ente), team = text(item.titolo);
+				const from = text(item.periodoDa), to = text(item.periodoA);
+				const period = from
+					? `Dal ${from}${to === "oggi" ? " ad oggi" : to ? ` al ${to}` : ""}`
+					: to === "oggi" ? "Ad oggi" : to ? `Al ${to}` : null;
+				return category || team || period ? [{category, team, period}] : [];
+			}) : [],
 			figures: normalizeFigures(strings(child.figure_professionali)),
 			companyType: text(child.specializzazioni), headquarters: text(child.sede_professionista),
 			availabilityLabel: availabilityLabel(text(child.disponibilita)),

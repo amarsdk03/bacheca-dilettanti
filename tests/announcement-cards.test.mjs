@@ -255,7 +255,17 @@ test("anonymous authors have no registration or official verification marks", ()
 	const announcement = fixtureAnnouncement("annuncio_giocatore", FACTS);
 	announcement.author = {kind: "anonymous", profileType: "giocatore", label: "Autore anonimo"};
 	const html = renderToStaticMarkup(React.createElement(AnnouncementCard, {announcement}));
-	assert.doesNotMatch(html, /Utente registrato|Profilo verificato ufficialmente/);
+	assert.doesNotMatch(html, /Utente registrato|Profilo verificato ufficialmente|lucide-eye-off/);
+});
+
+test("announcement result cards keep anonymity indicators inside the hover card", () => {
+	const announcement = fixtureAnnouncement("annuncio_giocatore", FACTS);
+	announcement.author.anonymousName = true;
+	announcement.author.title = "Giocatore";
+	const html = renderToStaticMarkup(React.createElement(AnnouncementCard, {announcement}));
+	assert.doesNotMatch(html, /lucide-eye-off/);
+	assert.doesNotMatch(html, /Questo profilo mantiene il proprio nominativo anonimo/);
+	assert.doesNotMatch(html, /Nome nascosto/);
 });
 
 test("announcement result cards do not show team references", () => {

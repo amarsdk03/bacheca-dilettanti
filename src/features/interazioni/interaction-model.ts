@@ -6,6 +6,7 @@ export interface FollowProfile {
 	id: string;
 	type: ProfileType;
 	title: string;
+	imageUrl: string | null;
 	isPrimary: boolean;
 }
 export type InteractionState =

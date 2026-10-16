@@ -20,6 +20,7 @@ export type EsperienzaAnnuncio = {
 	descrizione: string;
 	stato: StatoEsperienza;
 	squadraProfiloId: string | null;
+	squadraIstanzaId?: number | null;
 };
 
 export function createEsperienzaAnnuncio(): EsperienzaAnnuncio {

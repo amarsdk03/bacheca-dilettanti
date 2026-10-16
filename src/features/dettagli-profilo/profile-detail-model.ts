@@ -52,6 +52,7 @@ export interface PlayerCareerEntry {
 	status: "in-corso" | "conseguito" | null;
 	description: string | null;
 	teamProfileId: string | null;
+	teamSubprofileId?: number;
 	linkedTeam: PublicTeamProfile | null;
 }
 

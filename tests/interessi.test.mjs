@@ -121,6 +121,7 @@ test("server action derives app identity from the session and persists only vali
 
 function contextFixture({viewer = account, recipientUser = "recipient", registeredAt = "2026-01-01", sender = true, active = ["giocatore", "squadra"], primary = "squadra", listed = true} = {}) {
 	const load = loader({
+		"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => new Map()},
 		"@/features/auth/server/queries": {getAuthenticatedViewer: async () => viewer},
 		"@/lib/supabase/admin": {createAdminClient: () => ({from(table) {
 			return {select() {return this;}, eq() {return this;}, async maybeSingle() {
@@ -133,7 +134,7 @@ function contextFixture({viewer = account, recipientUser = "recipient", register
 			return {select() {return this;}, eq() {return this;}, async maybeSingle() {
 				const tables = {giocatore: "profilo_giocatore", squadra: "profilo_squadra", "staff-sportivo": "profilo_staff_sportivo"};
 				return {error: null, data: table === "profilo" ? (sender ? {uuid: userId, tipologia_principale: primary} : null)
-					: active.some((type) => tables[type] === table) ? {id: 1} : null};
+					: active.some((type) => tables[type] === table) ? {id: 1, nome: "Goncalo", cognome: "Ramos", nome_societa: "Squadra Test"} : null};
 			}};
 		}})},
 	});
@@ -188,7 +189,7 @@ function dialogFixture() {
 
 test("dialog defaults to the main subprofile, blank contacts and two unchecked mandatory consents", () => {
 	const render = dialogFixture();
-	const profiles = [{type: "giocatore", label: "Giocatore", isPrimary: false}, {type: "squadra", label: "Squadra", isPrimary: true}];
+	const profiles = [{type: "giocatore", label: "Giocatore", title: "Goncalo Ramos", imageUrl: null, isPrimary: false}, {type: "squadra", label: "Squadra", title: "Squadra Test", imageUrl: null, isPrimary: true}];
 	const html = render({status: "ready", profiles});
 	assert.match(html, /name="profileType" value="squadra"/);
 	assert.match(html, /name="email"[^>]*value=""/);
@@ -211,4 +212,60 @@ test("guest dialog explains login and returns to the current details; own target
 	assert.match(html, /href="\/accedi\?next=%2Fdettagli-profilo/);
 	assert.doesNotMatch(html, /<form/);
 	assert.equal(render({status: "unavailable"}), "");
+});
+
+test("private subprofile identities require ownership and resolve real names and subprofile photo fallbacks", async () => {
+	for (const authorized of [false, true]) {
+		const calls = [];
+		let imageReads = 0;
+		const client = {from(table) {
+			const filters = [];
+			calls.push({table, filters});
+			return {select() {return this;}, eq(...args) {filters.push(args); return this;}, async maybeSingle() {
+				const rows = {
+					profilo: authorized ? {uuid: userId, link_foto_profilo: "/main.webp"} : null,
+					profilo_giocatore: {id: 1, nome: "Goncalo", cognome: "Ramos"},
+					profilo_squadra: {id: 2, nome_societa: "Squadra Test"},
+					profilo_arbitro: {id: 3, nome: "Ada", cognome: "Rossi"},
+				};
+				return {data: rows[table] ?? null, error: null};
+			}};
+		}};
+		const load = loader({"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => {
+			imageReads++;
+			return new Map([[`${userId}:giocatore`, "/player.webp"], [`${userId}:squadra`, ""]]);
+		}}});
+		const {loadOwnedSubprofileIdentities} = load("src/features/profilo/server/owned-subprofile-identities.ts");
+		const result = await loadOwnedSubprofileIdentities(client, "authenticated-owner", userId);
+		assert.ok(calls[0].filters.some(([key, value]) => key === "uuid_utente" && value === "authenticated-owner"));
+		if (!authorized) {
+			assert.deepEqual(result, []);
+			assert.equal(calls.length, 1);
+			assert.equal(imageReads, 0);
+		} else {
+			assert.deepEqual(result, [
+				{type: "giocatore", title: "Goncalo Ramos", imageUrl: "/player.webp"},
+				{type: "squadra", title: "Squadra Test", imageUrl: null},
+				{type: "arbitro", title: "Ada Rossi", imageUrl: "/main.webp"},
+			]);
+			assert.ok(calls.slice(1).every(call => call.filters.some(([key, value]) => key === "uuid_profilo" && value === userId)
+				&& call.filters.some(([key, value]) => key === "nascosto" && value === false)));
+		}
+	}
+});
+
+test("subprofile selectors show two text lines and a right-hand avatar in both trigger and options", () => {
+	const wrap = (slot) => function SelectPart({children, ...props}) {
+		return React.createElement("div", {"data-test": slot, "aria-disabled": props.disabled, "data-value": props.value}, children);
+	};
+	const select = Object.fromEntries(["Select", "SelectContent", "SelectGroup", "SelectItem", "SelectTrigger", "SelectValue"].map(name => [name, wrap(name)]));
+	const load = loader({"@/components/ui/select": select});
+	const Selector = load("src/features/profilo/SubprofileSelect.tsx").default;
+	const profiles = [{type: "giocatore", title: "Goncalo Ramos", imageUrl: null}, {type: "squadra", title: "Squadra Test", imageUrl: null}];
+	const html = renderToStaticMarkup(React.createElement(Selector, {profiles, value: "giocatore", onValueChange() {}, disabled: true, label: "Scegli profilo"}));
+	assert.equal((html.match(/font-bold">Goncalo Ramos/g) ?? []).length, 2);
+	assert.equal((html.match(/data-profile-icon="giocatore"/g) ?? []).length, 2);
+	assert.match(html, /Goncalo Ramos<\/span><span[^>]*>Giocatore<\/span><\/span><span[^>]*data-slot="avatar"/);
+	assert.match(html, /aria-disabled="true"/);
+	assert.match(html, /data-test="SelectGroup"/);
 });

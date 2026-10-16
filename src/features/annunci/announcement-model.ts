@@ -342,6 +342,7 @@ export interface AnnouncementCardRow {
 export type AnnouncementAuthor =
 	| {
 		kind: "registered";
+		anonymousName?: boolean;
 		profileId: string;
 		profileType: ProfileType;
 		title: string;
@@ -424,12 +425,19 @@ export interface AnnouncementPlayerRoles {
 }
 
 export interface AnonymousAnnouncementAuthorInfo {
+	anonymousName?: boolean;
 	name: string | null;
 	location: string | null;
 	presentation: string | null;
 }
 
 // Detail-only public projection; never include account IDs or full birth dates.
+export interface AnnouncementPlayerCareerEntry {
+	category: string | null;
+	team: string | null;
+	period: string | null;
+}
+
 export interface AnnouncementAuthorProfileData {
 	age: number | null;
 	birthYear: string | null;
@@ -437,6 +445,7 @@ export interface AnnouncementAuthorProfileData {
 	primaryRoles: string[];
 	currentCategory: string | null;
 	previousCategories: string[];
+	previousCareer?: AnnouncementPlayerCareerEntry[];
 	figures: string[];
 	companyType: string | null;
 	headquarters: string | null;
@@ -447,6 +456,7 @@ export interface AnnouncementAuthorProfileData {
 
 export type AnnouncementSectionPresentation =
 	| {kind: "choices" | "categories" | "locations" | "prose" | "offer"}
+	| {kind: "player-career"; rows: AnnouncementPlayerCareerEntry[]}
 	| {kind: "scalar"; value?: string; secondary?: string}
 	| {kind: "metric"; amount: string; unit?: string; qualifier?: string}
 	| {kind: "checklist"; items: string[]}

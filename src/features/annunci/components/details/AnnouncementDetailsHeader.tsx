@@ -5,8 +5,8 @@ import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import type {AnnouncementDetail} from "@/features/annunci/announcement-model";
 import {announcementAuthorBadges} from "@/features/annunci/announcement-detail-sections";
 import {profileInitials} from "@/features/profilo/public-profile-display";
-import {OfficialVerificationIcon} from "@/features/profilo/ProfileVerificationStatus";
 import {cn} from "@/lib/utils";
+import ProfileNameWithIndicators from "@/features/profilo/ProfileNameWithIndicators";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", {day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Rome"});
 
@@ -32,7 +32,7 @@ export default function AnnouncementDetailsHeader({announcement, actions}: {
 						</Avatar>
 						<div className="flex min-w-0 flex-1 flex-col gap-2">
 							<p className="font-home-display text-2xl leading-tight font-medium uppercase wrap-anywhere sm:text-3xl lg:text-4xl">
-								{name} <OfficialVerificationIcon officialVerified={author.kind === "registered" && author.officialVerified} className="size-5 align-[0.16em]" />
+								<ProfileNameWithIndicators name={name} officialVerified={author.kind === "registered" && author.officialVerified} anonymousName={author.kind === "registered" ? author.anonymousName : announcement.anonymousAuthorInfo?.anonymousName} verificationClassName="size-5 align-[0.16em]" anonymityClassName="align-[0.16em]" />
 							</p>
 							{badges.length > 0 && <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Caratteristiche del profilo autore">
 								{badges.map(badge => <Badge key={badge.label} variant="default" title={badge.title} className="h-auto max-w-full whitespace-normal wrap-anywhere">{badge.label}</Badge>)}

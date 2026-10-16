@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {existsSync, readFileSync} from "node:fs";
+import {createRequire} from "node:module";
+import {fileURLToPath} from "node:url";
+import path from "node:path";
 import {test} from "node:test";
-import vm from "node:vm";
 import ts from "typescript";
 
 const source = readFileSync(new URL("../src/features/pubblica-annuncio/publish-field-validation.ts", import.meta.url), "utf8");
@@ -10,50 +12,27 @@ const javascript = ts.transpileModule(source, {
 }).outputText;
 const {isValidIsoDate, isValidPhone, isValidTime, normalizeFacilityOpeningHours, FACILITY_WEEKDAYS, parseOptionalMoney} = await import(`data:text/javascript;base64,${Buffer.from(javascript).toString("base64")}`);
 
-const modelSource = readFileSync(new URL("../src/features/pubblica-annuncio/publish-model.ts", import.meta.url), "utf8");
-const modelJavaScript = ts.transpileModule(modelSource, {
-	compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022},
-}).outputText;
-const modelModule = {exports: {}};
-const fieldValidators = {isValidIsoDate, isValidPhone, isValidTime, normalizeFacilityOpeningHours, parseOptionalMoney};
-const birthSource = readFileSync(new URL("../src/features/profilo/birth-date.ts", import.meta.url), "utf8");
-const birthJavaScript = ts.transpileModule(birthSource, {compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022}}).outputText;
-const birthValidators = await import(`data:text/javascript;base64,${Buffer.from(birthJavaScript).toString("base64")}`);
-vm.runInNewContext(modelJavaScript, {
-	module: modelModule,
-	exports: modelModule.exports,
-		require(specifier) {
-		if (specifier.endsWith("profile-required-fields")) return {getProfileRequiredFieldErrors: () => ({})};
-		if (specifier.endsWith("publish-field-validation")) return fieldValidators;
-		if (specifier.endsWith("pubblicaAnnuncio")) return {EMAIL_PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, ANNATE_OPTIONS: Array.from({length: new Date().getFullYear() - 1900 + 1}, (_, index) => String(new Date().getFullYear() - index)), FIGURA_PROFESSIONALE_OPTIONS: ["Allenatore", "Preparatore atletico"]};
-		if (specifier.endsWith("announcementExtras")) return {isLinkAnnuncioValid: (value) => value === "" || /^https?:\/\//.test(value)};
-		if (specifier.endsWith("staff-category-catalog")) return {isStaffCategory: (value) => value === "Calcio 11 (Maschile)::Serie C"};
-		if (specifier.endsWith("category-catalog")) return {ANY_CATEGORY: "Qualsiasi"};
-		if (specifier.endsWith("tipologie-calcio")) return {TIPOLOGIA_CALCIO_OPTIONS: ["Calcio 11", "Calcio 8", "Calcio 7", "Calcio 5"]};
-		if (specifier.endsWith("player-nationalities")) return {isPlayerNationalityCode: (value) => value === "IT"};
-		throw new Error(`Unexpected import: ${specifier}`);
-	},
-	Date,
-	structuredClone,
-	});
-const {createAnnouncementDetailsDrafts, getAnnouncementValidationErrors} = modelModule.exports;
-
-const profileSource = readFileSync(new URL("../src/features/profilo/profile-required-fields.ts", import.meta.url), "utf8");
-const profileJavaScript = ts.transpileModule(profileSource, {
-	compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022},
-}).outputText;
-const profileModule = {exports: {}};
-vm.runInNewContext(profileJavaScript, {
-	module: profileModule,
-	exports: profileModule.exports,
-	require(specifier) {
-		if (specifier.endsWith("publish-field-validation")) return fieldValidators;
-		if (specifier.endsWith("birth-date")) return birthValidators;
-		if (specifier.endsWith("player-nationalities")) return {isPlayerNationalityCode: (value) => value === "IT"};
-		throw new Error(`Unexpected import: ${specifier}`);
-	},
-});
-const {getProfileRequiredFieldErrors} = profileModule.exports;
+// Exercise the real catalogs and validators so dependency changes cannot drift from the form.
+const require = createRequire(import.meta.url);
+const root = fileURLToPath(new URL("../", import.meta.url));
+const cache = new Map();
+function load(relative) {
+ const file = path.resolve(root, relative);
+ if (cache.has(file)) return cache.get(file).exports;
+ const loaded = {exports: {}};
+ cache.set(file, loaded);
+ const {outputText} = ts.transpileModule(readFileSync(file, "utf8"), {
+  compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true}, fileName: file,
+ });
+ new Function("require", "module", "exports", outputText)(specifier => {
+  if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
+  const base = specifier.startsWith("@/") ? path.join(root, "src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+  return load([base, `${base}.ts`, `${base}.tsx`].find(existsSync));
+ }, loaded, loaded.exports);
+ return loaded.exports;
+}
+const {createAnnouncementDetailsDrafts, getAnnouncementValidationErrors} = load("src/features/pubblica-annuncio/publish-model.ts");
+const {getProfileRequiredFieldErrors} = load("src/features/profilo/profile-required-fields.ts");
 
 test("player requires a complete birth date, gender and availability while current category stays optional", () => {
 	const draft = {nome: "Mario", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"]}, genere: "", anno_nascita: "", disponibilita: ""};

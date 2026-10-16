@@ -271,6 +271,7 @@ test("Follow state and dashboard resolve exact sender/recipient identities", asy
 		"@/features/auth/server/queries": {getAuthenticatedViewer: async () => registered},
 		"@/lib/supabase/server": {createClient: async () => client},
 		"@/features/profili/server/queries": {loadPublicSubprofiles: async ids => identities.filter(profile => ids.includes(profile.id))},
+		"@/features/profilo/server/owned-subprofile-identities": {loadOwnedSubprofileIdentities: async () => identities.filter(profile => profile.id === ownProfile).map(profile => ({...profile, title: `Private ${profile.title}`, imageUrl: "/own-photo.webp"}))},
 		"@/features/annunci/server/queries": {loadPublicAnnouncementsByIds: async () => []},
 	});
 	const queries = load("src/features/interazioni/server/queries.ts");
@@ -278,6 +279,8 @@ test("Follow state and dashboard resolve exact sender/recipient identities", asy
 	assert.equal(state.active, true);
 	assert.equal(state.sourceType, "giocatore");
 	assert.equal(state.profiles.find(profile => profile.isPrimary).type, "squadra");
+	assert.equal(state.profiles[0].title, "Private Own Player");
+	assert.equal(state.profiles[0].imageUrl, "/own-photo.webp");
 	assert.ok(filters.some(([key,value]) => key === "sottoprofilo_seguito" && value === "squadra"));
 	const result = await queries.getDashboardInteractions(client, internalUser, ownProfile);
 	assert.equal(result.following.items[0].title, "Target Team");

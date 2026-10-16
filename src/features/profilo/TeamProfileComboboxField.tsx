@@ -18,8 +18,11 @@ interface TeamProfileComboboxFieldProps {
 	id: string;
 	value: string;
 	profileId?: string | null;
-	onValueChange: (value: string, profileId: string | null) => void;
+	onValueChange: (value: string, profileId: string | null, item?: PublicTeamProfile) => void;
 	placeholder?: string;
+	kind?: "squadra" | "torneo-evento";
+	disabled?: boolean;
+	maxLength?: number;
 }
 
 const EMPTY_TEAM_PROFILES: PublicTeamProfile[] = [];
@@ -34,6 +37,9 @@ export default function TeamProfileComboboxField({
 	profileId = null,
 	onValueChange,
 	placeholder = "Cerca o inserisci il nome della squadra",
+	kind = "squadra",
+	disabled = false,
+	maxLength = 120,
 }: TeamProfileComboboxFieldProps) {
 	const query = value.replace(/\s+/g, " ").trim();
 	const [result, setResult] = useState<{query: string; items: PublicTeamProfile[]; failed: boolean}>({
@@ -56,7 +62,7 @@ export default function TeamProfileComboboxField({
 	}, [items, profileId, value]);
 
 	useEffect(() => {
-		if (query.length < TEAM_PROFILE_SEARCH_MIN_LENGTH) {
+		if (disabled || query.length < TEAM_PROFILE_SEARCH_MIN_LENGTH) {
 			return;
 		}
 
@@ -64,7 +70,7 @@ export default function TeamProfileComboboxField({
 		const timeoutId = window.setTimeout(async () => {
 			setLoading(true);
 			try {
-				const response = await fetch(`/api/profili/squadre?q=${encodeURIComponent(query)}`, {
+				const response = await fetch(`/api/profili/${kind === "squadra" ? "squadre" : "tornei"}?q=${encodeURIComponent(query)}`, {
 					signal: controller.signal,
 					cache: "no-store",
 				});
@@ -84,16 +90,17 @@ export default function TeamProfileComboboxField({
 			window.clearTimeout(timeoutId);
 			controller.abort();
 		};
-	}, [query]);
+	}, [query, kind, disabled]);
 
 	const emptyText = value.trim().length < TEAM_PROFILE_SEARCH_MIN_LENGTH
 		? "Scrivi almeno 2 caratteri."
 		: loading || result.query !== query ? "Ricerca in corso..."
 			: failed ? "Ricerca non disponibile. Puoi comunque inserire il nome."
-				: "Nessuna squadra trovata. Il nome verrà salvato come testo.";
+				: "Nessun profilo trovato. Il nome verrà salvato come testo.";
 
 	return (
 		<Combobox
+			disabled={disabled}
 			items={query.length >= TEAM_PROFILE_SEARCH_MIN_LENGTH ? items : []}
 			filteredItems={query.length >= TEAM_PROFILE_SEARCH_MIN_LENGTH ? items : []}
 			filter={null}
@@ -107,10 +114,10 @@ export default function TeamProfileComboboxField({
 				// Base UI clears the search query when an unselected combobox closes.
 				// Keep free text and only propagate edits or an explicit clear action.
 				if (details.reason !== "input-change" && details.reason !== "clear-press") return;
-				onValueChange(nextValue.slice(0, 120), null);
+				onValueChange(nextValue.slice(0, maxLength), null);
 			}}
 			onValueChange={(item) => {
-				if (item) onValueChange(item.name, item.profileId);
+				if (item) onValueChange(item.name, item.profileId, item);
 			}}
 		>
 			<ComboboxInput
@@ -118,7 +125,7 @@ export default function TeamProfileComboboxField({
 				className="w-full"
 				placeholder={placeholder}
 				showClear={value.length > 0}
-				maxLength={120}
+				maxLength={maxLength}
 			/>
 			<ComboboxContent>
 				<ComboboxEmpty>

@@ -1,6 +1,7 @@
 import "server-only";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
+import {loadOwnedSubprofileIdentities} from "@/features/profilo/server/owned-subprofile-identities";
 import type {InterestContext, InterestTarget} from "@/features/interessi/interest-model";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
@@ -44,13 +45,8 @@ export async function getInterestContext(target: InterestTarget): Promise<Intere
 			.eq("uuid_utente", account.utenteId).eq("nascosto", false).maybeSingle();
 		if (error) throw new Error("INTEREST_PROFILES_UNAVAILABLE");
 		if (!profile) return {status: "profile-required"};
-		const profiles = await Promise.all(PROFILE_OPTIONS.map(async ({value, label}) => {
-			const {data, error} = await client.from(INTEREST_PROFILE_TABLES[value]).select("id")
-				.eq("uuid_profilo", profile.uuid).eq("nascosto", false).maybeSingle();
-			if (error) throw new Error("INTEREST_PROFILES_UNAVAILABLE");
-			return data ? {type: value, label, isPrimary: value === profile.tipologia_principale} : null;
-		}));
-		const options = profiles.filter((option) => option !== null);
+		const profiles = await loadOwnedSubprofileIdentities(client, account.utenteId, profile.uuid);
+		const options = profiles.map(option => ({...option, label: PROFILE_OPTIONS.find(profile => profile.value === option.type)!.label, isPrimary: option.type === profile.tipologia_principale}));
 		return options.length ? {status: "ready", profiles: options} : {status: "profile-required"};
 	} catch (error) {
 		console.error("[interests] Context lookup failed", {cause: error instanceof Error ? error.message : "unknown"});

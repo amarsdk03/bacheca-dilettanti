@@ -8,7 +8,6 @@ import {
 	RulerIcon,
 	ShirtIcon,
 	StarIcon,
-	EyeOff,
 } from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
@@ -17,10 +16,12 @@ import type {PlayerProfileDetail} from "../../profile-detail-model";
 import ProfilePngIcon from "@/features/profilo/ProfilePngIcon";
 import {profileInitials} from "@/features/profilo/public-profile-display";
 import {nationalityLabel} from "@/features/profilo/player-nationalities";
-import {OfficialVerificationIcon, RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
+import {RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
+import ProfileNameWithIndicators from "@/features/profilo/ProfileNameWithIndicators";
 import ProfileFactsGrid, {type ProfileFact} from "../ProfileFactsGrid";
 import PlayerRolePitch from "./PlayerRolePitch";
 import {getPlayerRolePitchMarkers} from "@/features/profilo/player-roles";
+import ProfileAnonymityIndicator from "@/features/profilo/ProfileAnonymityIndicator";
 
 type PlayerHeaderProps = Pick<PlayerProfileDetail, "anonymousName" | "title" | "imageUrl" | "emailConfirmed" | "officialVerified" | "primary" | "availabilityLabel" | "player"> & {
 	actions?: ReactNode;
@@ -54,7 +55,7 @@ export default function PlayerHeader({anonymousName, title, imageUrl, emailConfi
 						</Avatar>
 						<div className="flex min-w-0 flex-1 flex-col gap-3">
 							<h1 className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">
-								{title} <OfficialVerificationIcon officialVerified={officialVerified} className={"size-7 align-[0.16em]"} />
+								<ProfileNameWithIndicators name={title} officialVerified={officialVerified} anonymousName={anonymousName} verificationClassName="size-7 align-[0.16em]" anonymityClassName="size-7 align-[0.16em]" white />
 							</h1>
 							{(primaryRoles.length > 0 || nationalityCode) && (
 								<div role="group" className="flex flex-wrap items-center gap-2" aria-label="Ruoli principali e nazionalità">
@@ -67,7 +68,7 @@ export default function PlayerHeader({anonymousName, title, imageUrl, emailConfi
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge variant="secondary" className="public-profile-type-badge"><ProfilePngIcon type="giocatore" color="currentColor" className="size-3" />Giocatore</Badge>
 								<RegisteredUserBadge emailConfirmed={emailConfirmed} />
-								{anonymousName && <Badge variant="outline"><EyeOff data-icon="inline-start" aria-hidden="true" />Nome nascosto</Badge>}
+								<ProfileAnonymityIndicator anonymousName={anonymousName} badge />
 								{primary && <Badge variant="outline"><StarIcon data-icon="inline-start" aria-hidden="true" />Profilo principale</Badge>}
 							</div>
 						</div>

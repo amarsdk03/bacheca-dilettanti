@@ -1262,6 +1262,12 @@ export type Database = {
       }
       profilo_giocatore: {
         Row: {
+          squadra_attuale_id: number | null
+          squadra_attuale_profilo_id: string | null
+          squadra_attuale_nome: string | null
+          squadra_attuale_categoria: string | null
+          squadra_attuale_torneo: string | null
+          squadra_attuale_dal: string | null
           nominativo_anonimo: boolean
           altezza: string | null
           anno_nascita: string | null
@@ -1288,6 +1294,12 @@ export type Database = {
           uuid_profilo: string
         }
         Insert: {
+          squadra_attuale_id?: number | null
+          squadra_attuale_profilo_id?: string | null
+          squadra_attuale_nome?: string | null
+          squadra_attuale_categoria?: string | null
+          squadra_attuale_torneo?: string | null
+          squadra_attuale_dal?: string | null
           nominativo_anonimo?: boolean
           altezza?: string | null
           anno_nascita?: string | null
@@ -1314,6 +1326,12 @@ export type Database = {
           uuid_profilo: string
         }
         Update: {
+          squadra_attuale_id?: number | null
+          squadra_attuale_profilo_id?: string | null
+          squadra_attuale_nome?: string | null
+          squadra_attuale_categoria?: string | null
+          squadra_attuale_torneo?: string | null
+          squadra_attuale_dal?: string | null
           nominativo_anonimo?: boolean
           altezza?: string | null
           anno_nascita?: string | null
@@ -1451,6 +1469,8 @@ export type Database = {
       }
       profilo_squadra: {
         Row: {
+          torneo_attuale_id: number | null
+          torneo_attuale_nome: string | null
           nominativo_anonimo: boolean
 		  categoria_attuale: string | null
           id: number
@@ -1463,6 +1483,8 @@ export type Database = {
           uuid_profilo: string
         }
         Insert: {
+          torneo_attuale_id?: number | null
+          torneo_attuale_nome?: string | null
           nominativo_anonimo?: boolean
 		  categoria_attuale?: string | null
           id?: number
@@ -1475,6 +1497,8 @@ export type Database = {
           uuid_profilo: string
         }
         Update: {
+          torneo_attuale_id?: number | null
+          torneo_attuale_nome?: string | null
           nominativo_anonimo?: boolean
 		  categoria_attuale?: string | null
           id?: number
@@ -1751,6 +1775,10 @@ export type Database = {
       }
       get_notifications_v1: {
         Args: { p_user: string; p_limit?: number; p_cursor_date?: string | null; p_cursor_id?: string | null }
+        Returns: Json
+      }
+      get_notifications_v2: {
+        Args: { p_user: string; p_limit?: number; p_cursor_date?: string | null; p_cursor_id?: string | null; p_type?: string | null }
         Returns: Json
       }
       mark_notifications_read_v1: {

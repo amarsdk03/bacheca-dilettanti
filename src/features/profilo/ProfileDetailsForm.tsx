@@ -30,8 +30,11 @@ import {
 } from "@/components/ui/select";
 import {Textarea} from "@/components/ui/textarea";
 import ProfileLocationsField from "@/features/profilo/ProfileLocationsField";
+import {allowsForeignProfileRegion} from "@/features/profilo/profile-location-regions";
 import PlayerNationalityField from "@/features/profilo/PlayerNationalityField";
 import TeamProfileComboboxField from "@/features/profilo/TeamProfileComboboxField";
+import {CurrentPlayerTeamSelect, CurrentPlayerCareerFields} from "@/features/profilo/CurrentPlayerTeamFields";
+import {currentCategoryLabel, isTournamentCategory} from "@/features/profilo/current-team";
 import type {
 	ProfileDrafts,
 	ProfileDraftUpdater,
@@ -47,6 +50,7 @@ import {
 import {PROFILE_SOCIAL_ICONS} from "@/features/profilo/profile-social-icons";
 import DataNascitaFields from "@/features/pubblica-annuncio/components/InputFields/DataNascitaFields";
 import DisponibilitaProfiloSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaProfiloSelect";
+import {normalizeProfessionalAvailability, PROFESSIONAL_AVAILABILITY_OPTIONS} from "@/features/profilo/professional-availability";
 import EsperienzeAnnuncioFields, {
 	createEsperienzaAnnuncio,
 	type EsperienzaAnnuncio,
@@ -79,6 +83,7 @@ import {TEAM_CATEGORY_GROUPS} from "@/features/profilo/team-category-catalog";
 import {
 	categoryKey,
 	categoryLabel,
+	isPlayerCurrentCategory,
 	PLAYER_CURRENT_CATEGORY_GROUPS
 } from "@/features/pubblica-annuncio/types/category-catalog";
 
@@ -303,13 +308,14 @@ function experienceSetter(
 }
 
 interface CareerHistoryFieldsProps {
+	current?: ReactNode;
 	idPrefix: string;
 	esperienze: EsperienzaAnnuncio[];
 	setEsperienze: Dispatch<SetStateAction<EsperienzaAnnuncio[]>>;
 	staff?: boolean;
 }
 
-function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false}: CareerHistoryFieldsProps) {
+function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false, current}: CareerHistoryFieldsProps) {
 	const addEsperienza = () => {
 		setEsperienze((previous) => [...previous, createEsperienzaAnnuncio()]);
 	};
@@ -343,6 +349,7 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 			</div>
 
 			<FieldGroup className="gap-4">
+				{current}
 				{esperienze.length === 0 ? (
 					<div className="rounded-lg border border-dashed bg-background p-4 text-sm text-muted-foreground">
 						{staff ? "Nessuna esperienza inserita." : "Nessun storico carriera inserito."}
@@ -376,7 +383,7 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 										onValueChange={(value) => {
 											const periodoDa = value ?? "";
 											const periodoA = !periodoDa
-												? ""
+												? (staff ? "" : esperienza.periodoA)
 												: esperienza.periodoA && esperienza.periodoA !== "oggi" && Number(esperienza.periodoA) < Number(periodoDa)
 													? ""
 													: esperienza.periodoA;
@@ -397,16 +404,16 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 									</Select>
 								</Field>
 
-								<Field data-disabled={!esperienza.periodoDa}>
+								<Field data-disabled={staff && !esperienza.periodoDa}>
 									<FieldLabel htmlFor={`${idPrefix}-al-${esperienza.id}`}>Stagione:
 										al <OptionalLabel/></FieldLabel>
 									<Select
 										value={esperienza.periodoA || null}
 										onValueChange={(value) => updateEsperienza(esperienza.id, {periodoA: value ?? ""})}
-										disabled={!esperienza.periodoDa}
+										disabled={staff && !esperienza.periodoDa}
 									>
 										<SelectTrigger id={`${idPrefix}-al-${esperienza.id}`} className="w-full"
-										               disabled={!esperienza.periodoDa}>
+										               disabled={staff && !esperienza.periodoDa}>
 											<SelectValue placeholder="Al"/>
 										</SelectTrigger>
 										<SelectContent>
@@ -429,9 +436,10 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 										id={`${idPrefix}-squadra-${esperienza.id}`}
 										value={esperienza.titolo}
 										profileId={esperienza.squadraProfiloId}
-										onValueChange={(value, profileId) => updateEsperienza(esperienza.id, {
+										onValueChange={(value, profileId, item) => updateEsperienza(esperienza.id, {
 											titolo: value,
 											squadraProfiloId: profileId,
+											squadraIstanzaId: item?.subprofileId ?? null,
 										})}
 									/>
 								</Field>
@@ -638,6 +646,7 @@ function PersonalDataFields({
 				<ProfileTextField id={`${prefix}-cognome`} label="Cognome" value={cognome} onChange={onCognomeChange}
 				                  placeholder="Rossi"/>
 			</FieldGroup>
+			{afterName}
 			<DataNascitaFields
 				idPrefix={prefix}
 				giornoNascita={giornoNascita ?? ""}
@@ -678,6 +687,7 @@ function LocationsField({
 		: type === "squadra" ? "Dove ha sede la società?" : type === "creators" ? "Di che zona/e ti occupi" : type === "servizi-consulenze" ? "Aree di interesse per la tua attività" : single ? "In che zona vivi?" : "Regioni interessate";
 	return (
 		<ProfileLocationsField
+			allowForeignRegion={allowsForeignProfileRegion(type)}
 			allowedRegions={allowedRegions}
 			idPrefix={`${prefix}-regions`}
 			mode={single ? "single" : "multiple"}
@@ -822,24 +832,38 @@ function GiocatoreFields({
 				<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)}
 				                            onValueChange={(value) => {
 					                            onChange("giocatore", "disponibilita", value);
-					                            if (value === "svincolato") onChange("giocatore", "categoria_attuale", "");
+					                            if (value === "svincolato") {
+					                            onChange("giocatore", "categoria_attuale", "");
+					                            onChange("giocatore", "squadra_attuale_id", null);
+					                            onChange("giocatore", "squadra_attuale_profilo_id", null);
+					                            onChange("giocatore", "squadra_attuale_nome", "");
+					                            onChange("giocatore", "squadra_attuale_categoria", "");
+					                            onChange("giocatore", "squadra_attuale_torneo", "");
+					                            onChange("giocatore", "squadra_attuale_dal", "");
+					                            }
 				                            }} player required={requiredFields} error={errors.availability}/>
 			</FieldGroup>
-			<ProfileSelectField
+			<FieldGroup className="grid gap-4 sm:grid-cols-2">
+			<CurrentPlayerTeamSelect prefix={prefix} draft={draft} onChange={onChange} />
+			{draft.squadra_attuale_id ? <Field data-disabled><FieldLabel htmlFor={`${prefix}-categoria-ereditata`}>Categoria attuale</FieldLabel><Input id={`${prefix}-categoria-ereditata`} disabled value={currentCategoryLabel(draft.categoria_attuale, draft.squadra_attuale_torneo)} /></Field> : <ProfileSelectField
 				id={`${prefix}-categoria-attuale`}
 				label="Categoria attuale"
 				value={draft.categoria_attuale}
-				onChange={(value) => onChange("giocatore", "categoria_attuale", value)}
-				groups={PLAYER_CURRENT_CATEGORY_GROUPS.map(({gruppo, opzioni}) => ({
+				onChange={(value) => {
+					onChange("giocatore", "categoria_attuale", value);
+					if (!isTournamentCategory(value)) onChange("giocatore", "squadra_attuale_torneo", "");
+				}}
+				groups={[...(draft.categoria_attuale && !isPlayerCurrentCategory(draft.categoria_attuale) ? [{label: "Categoria salvata", options: [{value: draft.categoria_attuale, label: currentCategoryLabel(draft.categoria_attuale, draft.squadra_attuale_torneo)}]}] : []), ...PLAYER_CURRENT_CATEGORY_GROUPS.map(({gruppo, opzioni}) => ({
 					label: gruppo,
 					options: opzioni.map(categoria => ({
 						value: categoryKey(gruppo, categoria),
 						label: categoryLabel(categoryKey(gruppo, categoria))
 					}))
-				}))}
+				}))]}
 				placeholder={draft.disponibilita === "svincolato" ? "Non applicabile per giocatore svincolato" : "Non specificare"}
 				disabled={draft.disponibilita === "svincolato"}
-			/>
+			/>}
+			</FieldGroup>
 			<RuoloPrincipaleMultiselectField
 				label="Ruoli principali"
 				value={roles.principali}
@@ -934,6 +958,7 @@ function GiocatoreFields({
 				</Field>
 			</FieldGroup>
 			<CareerHistoryFields
+				current={<CurrentPlayerCareerFields prefix={prefix} draft={draft} onFromChange={value => onChange("giocatore", "squadra_attuale_dal", value)} />}
 				idPrefix={`${prefix}-storico-carriera`}
 				esperienze={toExperiences(draft.storico_carriera)}
 				setEsperienze={experienceSetter(draft.storico_carriera, (value) => onChange("giocatore", "storico_carriera", value))}
@@ -1027,15 +1052,30 @@ function ProfileFields({
 				                    error={errors.sports}/>
 				<ProfileSelectField id={`${prefix}-categoria-attuale`} label="Categoria attuale Prima Squadra"
 				                    value={draft.categoria_attuale}
-				                    onChange={(value) => onChange(type, "categoria_attuale", value)}
+				                    onChange={(value) => {
+					                    onChange(type, "categoria_attuale", value);
+					                    if (!isTournamentCategory(value)) {
+					                    onChange(type, "torneo_attuale_nome", "");
+					                    onChange(type, "torneo_attuale_id", null);
+					                    }
+				                    }}
 				                    groups={TEAM_CATEGORY_GROUPS.map(({gruppo, opzioni}) => ({
 					                    label: gruppo,
-					                    options: opzioni.map(item => ({
+					                    options: [...opzioni, "Tornei"].map(item => ({
 						                    value: categoryKey(gruppo, item),
-						                    label: `${gruppo} — ${item}`
+						                    label: item === "Tornei" ? `${gruppo} - Tornei` : `${gruppo} — ${item}`
 					                    }))
 				                    }))} placeholder="Seleziona una categoria" required={requiredFields}
 				                    error={errors.category}/>
+				{isTournamentCategory(draft.categoria_attuale) && <Field>
+					<FieldLabel htmlFor={`${prefix}-nome-torneo`}>Nome torneo <OptionalLabel /></FieldLabel>
+					<TeamProfileComboboxField id={`${prefix}-nome-torneo`} kind="torneo-evento" maxLength={160}
+						value={draft.torneo_attuale_nome ?? ""} placeholder="Cerca o inserisci il nome del torneo"
+						onValueChange={(name, _profileId, item) => {
+							onChange(type, "torneo_attuale_nome", name);
+							onChange(type, "torneo_attuale_id", item?.subprofileId ?? null);
+						}} />
+				</Field>}
 				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione}
 				                      onChange={(value) => onChange(type, "presentazione", value)}
 				                      placeholder="Ambiente, obiettivi, gruppi squadra... fai capire perché il tuo club è quello giusto in cui giocare o lavorare!"/>
@@ -1129,8 +1169,10 @@ function ProfileFields({
 			<FieldGroup className="grid gap-4 sm:grid-cols-2">
 				<TipologiaCalcioMultiselectField value={draft.tipologie_sport ?? []}
 				                                 onValueChange={value => onChange(type, "tipologie_sport", value)}/>
-				<DisponibilitaProfiloSelect id={`${prefix}-disponibilita`} value={toAvailability(draft.disponibilita)}
-				                            onValueChange={value => onChange(type, "disponibilita", value)}/>
+				<ProfileSelectField id={`${prefix}-disponibilita`} label="Disponibilità"
+				                    value={normalizeProfessionalAvailability(draft.disponibilita) === "non-specificare" ? null : draft.disponibilita}
+				                    options={PROFESSIONAL_AVAILABILITY_OPTIONS.slice(1)}
+				                    onChange={value => onChange(type, "disponibilita", value || "non-specificare")}/>
 			</FieldGroup>
 			<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione}
 			                      onChange={value => onChange(type, "presentazione", value)}/>

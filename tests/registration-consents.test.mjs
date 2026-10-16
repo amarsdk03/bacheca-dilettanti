@@ -42,6 +42,7 @@ function validRegistrationPayload(legalAccepted = true, newsletterSubscribed = f
 	const locations = createProfileLocations();
 	drafts.squadra.nome_societa = "Squadra Test";
 	drafts.squadra.tipologie_sport = ["Calcio 11"];
+	drafts.squadra.categoria_attuale = load("src/features/profilo/team-category-catalog.ts").TEAM_CATEGORY_OPTIONS[0].value;
 	locations.squadra = [{regione: "Lazio", citta: "Roma"}];
 	return createRegistrationPayload(
 		["squadra"],
@@ -61,12 +62,79 @@ function validPlayerPayload() {
 	const {createRegistrationPayload} = load("src/features/registrati/registration-payload.ts");
 	const drafts = createProfileDrafts();
 	const locations = createProfileLocations();
-	Object.assign(drafts.giocatore, {nome: "Mario", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"], specifici: []}, genere: "Uomo", anno_nascita: "2000", mese_nascita: "Gennaio", giorno_nascita: "01", disponibilita: "sotto-contratto", categoria_attuale: "Calcio 11 (Maschile)::Eccellenza", nazionalita: "IT", piede_principale: "Ambipiede", categorie_ricercate: ["Eccellenza"]});
+	Object.assign(drafts.giocatore, {nome: "Mario", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"], specifici: []}, genere: "Uomo", anno_nascita: "2000", mese_nascita: "Gennaio", giorno_nascita: "01", disponibilita: "sotto-contratto", categoria_attuale: "Calcio a 11 maschile::FIGC-LND — Eccellenza", nazionalita: "IT", piede_principale: "Ambipiede", categorie_ricercate: ["Calcio a 11 maschile::FIGC-LND — Eccellenza"]});
 	locations.giocatore = [{regione: "Lazio", citta: null}];
 	return createRegistrationPayload(["giocatore"], "giocatore", drafts, locations, createProfileSocialLinks(), true, false);
 }
 
-test("staff qualifications require a state while historical entries retain an unknown state", () => {
+test("foreign residence and team headquarters round-trip through registration and profile editing only for the four eligible profiles", () => {
+	const load = sourceLoader();
+	const {PROFILE_TYPES, createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
+	const {createRegistrationPayload, isRegistrableProfileType} = load("src/features/registrati/registration-payload.ts");
+	const {parseRegistrationPayload, parseProfileEditorPayload, RegistrationPayloadError} = load("src/features/registrati/server/registration.ts");
+	const {TEAM_CATEGORY_OPTIONS} = load("src/features/profilo/team-category-catalog.ts");
+	const drafts = createProfileDrafts();
+	Object.assign(drafts.giocatore, validPlayerPayload().profiles[0].draft);
+	Object.assign(drafts.giocatore, {disponibilita: "svincolato", categoria_attuale: "", categorie_ricercate: []});
+	Object.assign(drafts.squadra, {nome_societa: "Squadra Test", tipologie_sport: ["Calcio 11"], categoria_attuale: TEAM_CATEGORY_OPTIONS[0].value});
+	for (const type of ["staff-sportivo", "arbitro"]) {
+		Object.assign(drafts[type], {nome: "Ada", anno_nascita: "1990", mese_nascita: "Marzo", giorno_nascita: "15"});
+	}
+	drafts["staff-sportivo"].figure_professionali = ["Allenatore"];
+	Object.assign(drafts["torneo-evento"], {nome_organizzazione: "Torneo Test", tipologie_sport: ["Calcio 11"]});
+	Object.assign(drafts["campi-impianti-sportivi"], {nome_organizzazione: "Campo Test", tipologie_sport: ["Calcio 11"]});
+	Object.assign(drafts["servizi-consulenze"], {nome: "Studio Test", contatto_email: "studio@example.com"});
+	drafts.creators.nome_creator = "Creator Test";
+	const locations = createProfileLocations();
+	const socialLinks = createProfileSocialLinks();
+	const eligible = new Set(["giocatore", "staff-sportivo", "arbitro", "squadra"]);
+	for (const type of PROFILE_TYPES) {
+		const editor = (regione, citta) => ({type, draft: drafts[type], locations: [{regione, citta}], socialLinks: socialLinks[type]});
+		assert.deepEqual(parseProfileEditorPayload(editor("Lazio", "Roma")).locations, [{regione: "Lazio", citta: "Roma"}], type);
+		for (const citta of [null, "Parigi"]) {
+			locations[type] = [{regione: "Estero", citta}];
+			const parseEditor = () => parseProfileEditorPayload(editor("Estero", citta));
+			const parseRegistration = () => parseRegistrationPayload(JSON.stringify(createRegistrationPayload([type], type, drafts, locations, socialLinks, true, false)));
+			if (eligible.has(type)) {
+				assert.deepEqual(parseEditor().locations, locations[type], type);
+				assert.deepEqual(parseRegistration().profiles[0].locations, locations[type], type);
+			} else {
+				const invalidRegion = (error) => error instanceof RegistrationPayloadError && /regione italiana valida/.test(error.message);
+				assert.throws(parseEditor, invalidRegion, type);
+				if (isRegistrableProfileType(type)) assert.throws(parseRegistration, invalidRegion, type);
+			}
+		}
+		assert.throws(() => parseProfileEditorPayload(editor("Regione inesistente", null)), RegistrationPayloadError, type);
+	}
+});
+
+test("professional availability accepts presence, online and both without changing staff availability", () => {
+	const load = sourceLoader();
+	const {createProfileDrafts} = load("src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
+	const {parseProfileEditorPayload, RegistrationPayloadError} = load("src/features/registrati/server/registration.ts");
+	const {availabilityLabel} = load("src/features/profilo/public-profile-display.ts");
+	const {normalizeProfessionalAvailability} = load("src/features/profilo/professional-availability.ts");
+	const drafts = createProfileDrafts();
+	const draft = {...drafts["servizi-consulenze"], nome: "Studio Test", contatto_email: "studio@example.com"};
+	const parse = (disponibilita) => parseProfileEditorPayload({type: "servizi-consulenze", draft: {...draft, disponibilita}, locations: [{regione: "Lazio", citta: "Roma"}], socialLinks: createProfileSocialLinks()["servizi-consulenze"]});
+	for (const [value, label] of [["non-specificare", null], ["in-presenza", "In presenza"], ["online", "Online"], ["entrambe", "In presenza e online"]]) {
+		assert.equal(parse(value).draft.disponibilita, value === "non-specificare" ? null : value);
+		assert.equal(availabilityLabel(value), label);
+	}
+	for (const value of ["disponibile-subito", "sotto-contratto", "invalid"]) {
+		assert.equal(normalizeProfessionalAvailability(value), "non-specificare");
+		assert.throws(() => parse(value), RegistrationPayloadError);
+	}
+	const staff = {...drafts["staff-sportivo"], nome: "Ada", anno_nascita: "1990", mese_nascita: "Marzo", giorno_nascita: "15", figure_professionali: ["Allenatore"], disponibilita: "disponibile-subito"};
+	const parseStaff = () => parseProfileEditorPayload({type: "staff-sportivo", draft: staff, locations: [{regione: "Lazio", citta: "Roma"}], socialLinks: createProfileSocialLinks()["staff-sportivo"]});
+	assert.equal(parseStaff().draft.disponibilita, "disponibile-subito");
+	staff.disponibilita = "online";
+	assert.throws(parseStaff, RegistrationPayloadError);
+});
+
+test("staff qualifications require a state and discard obsolete historical free text", () => {
 	const load = sourceLoader();
 	const {createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
 	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
@@ -88,9 +156,8 @@ test("staff qualifications require a state while historical entries retain an un
 	drafts["staff-sportivo"].qualifiche_licenze[0].stato = "conseguito";
 	const saved = parseRegistrationPayload(JSON.stringify(payload())).profiles[0].draft;
 	assert.equal(saved.disponibile_remoto, true);
-	assert.equal(saved.storico_esperienze[0].descrizione, "Testo originale");
-	assert.equal(saved.storico_esperienze[0].stato, "non-specificare");
-	assert.equal(saved.storico_esperienze[1], "testo libero precedente");
+	assert.deepEqual(saved.storico_esperienze, []);
+	assert.doesNotMatch(JSON.stringify(saved), /Testo originale|testo libero precedente/);
 	assert.equal(saved.qualifiche_licenze[0].stato, "conseguito");
 });
 
@@ -98,8 +165,8 @@ test("player profile requires a complete birth date and normalizes current field
 	const {parseRegistrationPayload, RegistrationPayloadError} = sourceLoader()("src/features/registrati/server/registration.ts");
 	const payload = validPlayerPayload();
 	const profile = parseRegistrationPayload(JSON.stringify(payload)).profiles[0].draft;
-	assert.equal(profile.categoria_attuale, "Calcio 11 (Maschile)::Eccellenza");
-	assert.deepEqual(profile.categorie_ricercate, ["Calcio 11 (Maschile)::Eccellenza"]);
+	assert.equal(profile.categoria_attuale, "Calcio a 11 maschile::FIGC-LND — Eccellenza");
+	assert.deepEqual(profile.categorie_ricercate, ["Calcio a 11 maschile::FIGC-LND — Eccellenza"]);
 	assert.equal(profile.piede_principale, "Ambidestro");
 	assert.equal(profile.nazionalita, "IT");
 	assert.equal(profile.anno_nascita, "2000");

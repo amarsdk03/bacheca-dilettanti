@@ -63,8 +63,8 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		supabase.from("profilo_campi_impianti").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_servizi_consulenze").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
-		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
-		supabase.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
+		supabase.from("localita_profilo").select("id, id_sottoprofilo, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
+		supabase.from("link_social_profilo").select("id_sottoprofilo, sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
 	]);
 
 	queryFailed(player.error, "profilo_giocatore");
@@ -81,7 +81,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 
 	const drafts = createProfileDrafts();
 	drafts.giocatore = hydrateDraft(drafts.giocatore, player.data);
-	drafts.giocatore.video_highlights = drafts.giocatore.highlights_privati || drafts.giocatore.richiede_caricamento_highlights ? "" : playerMedia.data?.link_media ?? "";
+	drafts.giocatore.video_highlights = !player.data || drafts.giocatore.highlights_privati || drafts.giocatore.richiede_caricamento_highlights ? "" : playerMedia.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, team.data);
 	drafts.squadra.categoria_attuale = normalizeTeamCategory(drafts.squadra.categoria_attuale);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staff.data);
@@ -93,14 +93,17 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 
 	const locations = createProfileLocations();
 	const socialLinks = createProfileSocialLinks();
+	const activeInstanceIds: Partial<Record<ProfileType, number>> = {"giocatore": player.data?.id, "squadra": team.data?.id, "staff-sportivo": staff.data?.id, "arbitro": referee.data?.id, "torneo-evento": tournament.data?.id, "campi-impianti-sportivi": facility.data?.id, "servizi-consulenze": professional.data?.id, "creators": creator.data?.id};
+
 	for (const location of locationResult.data ?? []) {
-		if (!location.sottoprofilo || !isProfileType(location.sottoprofilo)) continue;
+		if (!location.sottoprofilo || !isProfileType(location.sottoprofilo) || !activeInstanceIds[location.sottoprofilo]
+			|| (location.id_sottoprofilo != null && location.id_sottoprofilo !== activeInstanceIds[location.sottoprofilo])) continue;
 		locations[location.sottoprofilo].push({regione: location.regione, citta: location.citta});
 	}
 
 	for (const type of PROFILE_TYPES) {
 		socialLinks[type] = profileSocialLinksFromRows(
-			(socialLinksResult.data ?? []).filter((link) => link.sottoprofilo === type),
+			(socialLinksResult.data ?? []).filter((link) => link.sottoprofilo === type && activeInstanceIds[type] && (link.id_sottoprofilo == null || link.id_sottoprofilo === activeInstanceIds[type])),
 		);
 	}
 

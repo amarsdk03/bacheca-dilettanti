@@ -171,6 +171,7 @@ test("changing profile or team subtype discards unsaved social and announcement 
 		const {createProfileSocialLinks} = profileLoader("src/features/profilo/profile-social-links.ts");
 		const context = {profileId: "saved-profile", enabledProfileTypes: ["squadra", "creators", "servizi-consulenze"], authorizedRestrictedProfileTypes: ["creators", "servizi-consulenze"], drafts: createProfileDrafts(), locations: createProfileLocations(), socialLinks: createProfileSocialLinks()};
 		context.socialLinks.squadra.instagram = "saved-team";
+		context.professionalRegions = ["Lombardia", "Campania"];
 		context.locations["servizi-consulenze"] = [{regione: "Lombardia", citta: null}, {regione: "Campania", citta: null}];
 		const wrapper = harness.session(harness.Wrapper, {registered: true, authenticated: true, initialEmail: "saved@example.com", profileContext: context});
 		const element = wrapper.render();
@@ -198,7 +199,8 @@ test("changing profile or team subtype discards unsaved social and announcement 
 		assert.deepEqual(component(harness.Details).props.allowedRegions, ["Lombardia", "Campania"]);
 		component(harness.Details).props.onLocationsChange([{regione: "Lombardia", citta: null}, {regione: "Campania", citta: null}]);
 		component(harness.ProfileStep).props.onLocationsChange("servizi-consulenze", [{regione: "Campania", citta: null}]);
-		assert.deepEqual(component(harness.Details).props.locations, [{regione: "Campania", citta: null}]);
+		assert.deepEqual(component(harness.Details).props.locations, [{regione: "Lombardia", citta: null}, {regione: "Campania", citta: null}], "announcement areas stay independent of profile areas within the admin-authorized regions");
+		assert.deepEqual(component(harness.Details).props.allowedRegions, ["Lombardia", "Campania"]);
 		assert.deepEqual(context.locations["servizi-consulenze"].map(({regione}) => regione), ["Lombardia", "Campania"], "discarding changes never mutates saved context");
 		events.get("pageshow")({persisted: true});
 		assert.notEqual(wrapper.render().key, element.key, "browser cache restore remounts the whole wizard");

@@ -177,6 +177,12 @@ export function isProfileType(value: string): value is ProfileType {
 export function createProfileDrafts(): ProfileDrafts {
 	return {
 		giocatore: {
+			squadra_attuale_id: null,
+			squadra_attuale_profilo_id: null,
+			squadra_attuale_nome: "",
+			squadra_attuale_categoria: "",
+			squadra_attuale_torneo: "",
+			squadra_attuale_dal: "",
 			nominativo_anonimo: false,
 			altezza: "",
 			anno_nascita: "",
@@ -201,6 +207,8 @@ export function createProfileDrafts(): ProfileDrafts {
 			highlights_privati: false,
 		},
 		squadra: {
+			torneo_attuale_id: null,
+			torneo_attuale_nome: "",
 			nominativo_anonimo: false,
 			nome_societa: "",
 			presentazione: "",

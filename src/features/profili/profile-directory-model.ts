@@ -97,6 +97,7 @@ export interface DirectoryProfileFact {
 }
 
 export interface DirectoryProfile {
+	anonymousName?: boolean;
 	nationalityCode?: string | null;
 	id: string;
 	type: ProfileType;

@@ -94,10 +94,6 @@ export function buildAnnouncementSectionPresentation(section: AnnouncementDetail
 		if (from || to) return {kind: "scalar", value: [from && `Dalle ${from}`, to && `alle ${to}`].filter(Boolean).join(" ")};
 	}
 	if (SCALARS.has(id) || id === "hours" || id === "price" || id === "cost" || id === "team-count") {
-		if (id === "birth-years" && section.value?.includes(" · ")) {
-			const [value, secondary] = section.value.split(" · ");
-			return {kind: "scalar", value, secondary};
-		}
 		return {kind: "scalar"};
 	}
 	if (id === "services" && section.value) {

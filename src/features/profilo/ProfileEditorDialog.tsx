@@ -20,13 +20,15 @@ import {toast} from "@/components/ui/toast";
 import ProfileDetailsForm from "@/features/profilo/ProfileDetailsForm";
 import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
 import {
+	createProfileDrafts,
+	createProfileLocations,
 	PROFILE_OPTIONS,
 	type ProfileDrafts,
 	type ProfileLocationDraft,
 	type ProfileLocations,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
-import type {ProfileSocialLinksByType, ProfileSocialPlatform,} from "@/features/profilo/profile-social-links";
+import {createProfileSocialLinks, type ProfileSocialLinksByType, type ProfileSocialPlatform,} from "@/features/profilo/profile-social-links";
 import type {ProfileEditorSavePayload, ProfileMutationResult,} from "@/features/profilo/types";
 
 interface ProfileEditorDialogProps {
@@ -50,9 +52,9 @@ export default function ProfileEditorDialog({
 	onClose,
 	onSave,
 }: ProfileEditorDialogProps) {
-	const [workingDrafts, setWorkingDrafts] = useState<ProfileDrafts>(() => structuredClone(drafts));
-	const [workingLocations, setWorkingLocations] = useState<ProfileLocations>(() => ({...structuredClone(locations), "servizi-consulenze": locations["servizi-consulenze"].filter(({regione}) => professionalRegions.includes(regione))}));
-	const [workingSocialLinks, setWorkingSocialLinks] = useState<ProfileSocialLinksByType>(() => structuredClone(socialLinks));
+	const [workingDrafts, setWorkingDrafts] = useState<ProfileDrafts>(() => mode === "add" ? createProfileDrafts() : structuredClone(drafts));
+	const [workingLocations, setWorkingLocations] = useState<ProfileLocations>(() => mode === "add" ? createProfileLocations() : ({...structuredClone(locations), "servizi-consulenze": locations["servizi-consulenze"].filter(({regione}) => professionalRegions.includes(regione))}));
+	const [workingSocialLinks, setWorkingSocialLinks] = useState<ProfileSocialLinksByType>(() => mode === "add" ? createProfileSocialLinks() : structuredClone(socialLinks));
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [showValidationErrors, setShowValidationErrors] = useState(false);
 	const [pending, startTransition] = useTransition();

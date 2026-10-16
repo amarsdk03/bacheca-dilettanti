@@ -16,6 +16,7 @@ import {
 import {isProfileType} from "@/features/profilo/profile-model";
 import {createClient} from "@/lib/supabase/server";
 import type {Database, Tables} from "@/server/supabase";
+import {loadOwnedSubprofileIdentities} from "@/features/profilo/server/owned-subprofile-identities";
 
 const BATCH_SIZE = 250;
 
@@ -36,15 +37,19 @@ export async function getInteractionState(target: InteractionTarget): Promise<In
 			.eq("uuid_utente", account.utenteId).eq("nascosto", false).maybeSingle();
 		if (ownError || !own) throw new Error("OWN_PROFILE_UNAVAILABLE");
 		if (own.uuid === targetId) return {status: "own-profile"};
-		const [options, follow] = await Promise.all([
+		const [options, follow, identities] = await Promise.all([
 			loadPublicSubprofiles([own.uuid]),
 			supabase.from("profilo_follow").select("sottoprofilo_follower")
 				.eq("uuid_profilo_follower", own.uuid).eq("uuid_profilo_seguito", targetId)
 				.eq("sottoprofilo_seguito", target.profileType).maybeSingle(),
+			loadOwnedSubprofileIdentities(supabase, account.utenteId, own.uuid),
 		]);
 		if (follow.error || !options.length) throw new Error("FOLLOW_STATE_UNAVAILABLE");
 		return {status: "ready", active: Boolean(follow.data),
-			profiles: options.map(({id, type, title}) => ({id, type, title, isPrimary: type === own.tipologia_principale})),
+			profiles: options.flatMap(({id, type}) => {
+				const identity = identities.find(option => option.type === type);
+				return identity ? [{id, ...identity, isPrimary: type === own.tipologia_principale}] : [];
+			}),
 			sourceType: follow.data && isProfileType(follow.data.sottoprofilo_follower) ? follow.data.sottoprofilo_follower : null,
 		};
 	} catch (error) {

@@ -87,3 +87,26 @@ test("enabledProfileTypes omit absent or hidden profiles and keep existing activ
 	assert.deepEqual(context.enabledProfileTypes, ["giocatore"]);
 	assert.deepEqual(context.authorizedRestrictedProfileTypes, []);
 });
+
+test("profile prefill discards residual social, locations and highlights from removed instances", async () => {
+	const context = await getEnabledProfileTypes({
+		profilo_squadra: [{id: 10, uuid_profilo: "profile-1", nascosto: false}],
+		localita_profilo: [
+			{uuid_profilo: "profile-1", sottoprofilo: "giocatore", id_sottoprofilo: 99, regione: "Lazio"},
+			{uuid_profilo: "profile-1", sottoprofilo: "squadra", id_sottoprofilo: 9, regione: "Lombardia"},
+			{uuid_profilo: "profile-1", sottoprofilo: "squadra", id_sottoprofilo: 10, regione: "Veneto"},
+		],
+		link_social_profilo: [
+			{uuid_profilo: "profile-1", sottoprofilo: "giocatore", piattaforma: "website", sublink: "https://old.example"},
+			{uuid_profilo: "profile-1", sottoprofilo: "squadra", id_sottoprofilo: 9, piattaforma: "instagram", sublink: "https://old.example"},
+			{uuid_profilo: "profile-1", sottoprofilo: "squadra", id_sottoprofilo: 10, piattaforma: "website", sublink: "https://current.example"},
+		],
+		media_profilo: [{uuid_profilo: "profile-1", formato_media: "video_highlights", link_media: "https://old-video.example"}],
+	});
+	assert.deepEqual(context.locations.giocatore, []);
+	assert.deepEqual(context.locations.squadra.map(row => row.regione), ["Veneto"]);
+	assert.equal(context.socialLinks.giocatore.website, "");
+	assert.equal(context.socialLinks.squadra.instagram, "");
+	assert.equal(context.socialLinks.squadra.website, "https://current.example");
+	assert.equal(context.drafts.giocatore.video_highlights, "");
+});

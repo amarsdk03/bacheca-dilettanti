@@ -4,7 +4,7 @@ import {isValidPhone} from "@/features/pubblica-annuncio/publish-field-validatio
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 
 export type InterestTarget = {kind: "annuncio"; id: string} | {kind: "profilo"; id: string; profileType: ProfileType};
-export interface InterestProfileOption {type: ProfileType; label: string; isPrimary: boolean}
+export interface InterestProfileOption {type: ProfileType; label: string; title: string; imageUrl: string | null; isPrimary: boolean}
 export type InterestContext =
 	| {status: "ready"; profiles: InterestProfileOption[]}
 	| {status: "guest" | "registration-required" | "profile-required" | "error" | "unavailable"};

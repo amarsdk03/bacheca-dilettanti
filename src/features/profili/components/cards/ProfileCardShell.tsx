@@ -24,8 +24,9 @@ import type {DirectoryProfileFactKind} from "@/features/profili/profile-director
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
 import {profileInitials} from "@/features/profilo/public-profile-display";
-import {OfficialVerificationIcon, RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
+import {RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
 import type {ProfileCardData, ProfileCardFact} from "./profile-card-model";
+import ProfileNameWithIndicators from "@/features/profilo/ProfileNameWithIndicators";
 
 const PROFILE_FACT_ICONS: Record<DirectoryProfileFactKind, LucideIcon> = {
 	availability: CalendarCheckIcon,
@@ -106,7 +107,7 @@ export default function ProfileCardShell({
 							<AvatarFallback>{profileInitials(profile.title)}</AvatarFallback>
 						</Avatar>
 						<div className="flex min-w-0 flex-1 flex-col">
-							<CardTitle><h3 className="font-home-display text-2xl uppercase wrap-anywhere">{profile.title} <OfficialVerificationIcon officialVerified={profile.officialVerified} className={"align-[-0.03em]"} /></h3></CardTitle>
+							<CardTitle><h3 className="font-home-display text-2xl uppercase wrap-anywhere"><ProfileNameWithIndicators name={profile.title} officialVerified={profile.officialVerified} anonymousName={profile.anonymousName} verificationClassName="align-[-0.03em]" anonymityClassName="size-4.5 align-[-0.03em]" /></h3></CardTitle>
 							<p className="text-sm font-semibold text-muted-foreground">{summary}</p>
 						</div>
 					</div>

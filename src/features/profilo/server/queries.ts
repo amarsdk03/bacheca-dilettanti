@@ -1,5 +1,6 @@
 import {professionalAllowedRegions} from "@/features/profilo/professional-regions";
 import "server-only";
+import {normalizeProfessionalAvailability} from "@/features/profilo/professional-availability";
 import {normalizeTeamCategory} from "@/features/profilo/team-category-catalog";
 
 import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
@@ -405,8 +406,8 @@ export async function getProfileDashboardData(
 		supabase.from("profilo_servizi_consulenze").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
 		admin.from("restricted_profile_access").select("profile_type, allowed_regions").eq("profile_id", baseProfile.uuid),
-		supabase.from("localita_profilo").select("id, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
-		admin.from("link_social_profilo").select("sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
+		supabase.from("localita_profilo").select("id, id_sottoprofilo, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
+		admin.from("link_social_profilo").select("id_sottoprofilo, sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
 		loadProfileImageUrlMap(admin, [baseProfile.uuid]),
 		loadAnnouncements(supabase, userId, baseProfile.uuid),
 		getDashboardInteractions(supabase, userId, baseProfile.uuid),
@@ -429,7 +430,7 @@ export async function getProfileDashboardData(
 	if (drafts.giocatore.piede_principale === "Ambipiede") drafts.giocatore.piede_principale = "Ambidestro";
 	if (drafts.giocatore.disponibilita === "disponibile-subito") drafts.giocatore.disponibilita = "svincolato";
 	if (drafts.giocatore.disponibilita === "svincolato") drafts.giocatore.categoria_attuale = "";
-	drafts.giocatore.video_highlights = drafts.giocatore.highlights_privati || drafts.giocatore.richiede_caricamento_highlights ? "" : playerMediaResult.data?.link_media ?? "";
+	drafts.giocatore.video_highlights = !playerResult.data || drafts.giocatore.highlights_privati || drafts.giocatore.richiede_caricamento_highlights ? "" : playerMediaResult.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, teamResult.data);
 	drafts.squadra.categoria_attuale = normalizeTeamCategory(drafts.squadra.categoria_attuale);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staffResult.data);
@@ -437,10 +438,14 @@ export async function getProfileDashboardData(
 	drafts["torneo-evento"] = hydrateDraft(drafts["torneo-evento"], tournamentResult.data);
 	drafts["campi-impianti-sportivi"] = hydrateDraft(drafts["campi-impianti-sportivi"], facilityResult.data);
 	drafts["servizi-consulenze"] = hydrateDraft(drafts["servizi-consulenze"], professionalResult.data);
+	drafts["servizi-consulenze"].disponibilita = normalizeProfessionalAvailability(drafts["servizi-consulenze"].disponibilita);
 	drafts.creators = hydrateDraft(drafts.creators, creatorResult.data);
 
+	const activeInstanceIds: Partial<Record<ProfileType, number>> = {"giocatore": playerResult.data?.id, "squadra": teamResult.data?.id, "staff-sportivo": staffResult.data?.id, "arbitro": refereeResult.data?.id, "torneo-evento": tournamentResult.data?.id, "campi-impianti-sportivi": facilityResult.data?.id, "servizi-consulenze": professionalResult.data?.id, "creators": creatorResult.data?.id};
+
 	for (const location of locationResult.data ?? []) {
-		if (!location.sottoprofilo || !isProfileType(location.sottoprofilo)) continue;
+		if (!location.sottoprofilo || !isProfileType(location.sottoprofilo) || !activeInstanceIds[location.sottoprofilo]
+			|| (location.id_sottoprofilo != null && location.id_sottoprofilo !== activeInstanceIds[location.sottoprofilo])) continue;
 		locations[location.sottoprofilo].push({
 			regione: location.regione,
 			citta: location.citta,
@@ -449,7 +454,7 @@ export async function getProfileDashboardData(
 
 	for (const type of PROFILE_OPTIONS.map(({value}) => value)) {
 		socialLinks[type] = profileSocialLinksFromRows(
-			(socialLinksResult.data ?? []).filter((link) => link.sottoprofilo === type),
+			(socialLinksResult.data ?? []).filter((link) => link.sottoprofilo === type && activeInstanceIds[type] && (link.id_sottoprofilo == null || link.id_sottoprofilo === activeInstanceIds[type])),
 		);
 	}
 

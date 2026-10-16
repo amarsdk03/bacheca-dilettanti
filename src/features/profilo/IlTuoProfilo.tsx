@@ -1,4 +1,5 @@
 "use client";
+import BrowserNotificationSettings from "@/features/notifiche/BrowserNotificationSettings";
 
 import {PROFESSIONAL_REGIONS_SUSPENDED_MESSAGE} from "@/features/profilo/professional-regions";
 
@@ -160,7 +161,32 @@ const FAQ_GROUPS = [
 			{
 				value: "profile-images-social",
 				question: "Posso personalizzare foto e link Social dei sottoprofili?",
-				answer: "Sì. Puoi impostare una foto per l’account e una foto dedicata per ciascun sottoprofilo, oppure scegliere l’avatar predefinito per quel sottoprofilo. Nel form di modifica puoi aggiungere sito web, Instagram, Facebook, YouTube e LinkedIn. Inserisci link completi dei canali che vuoi condividere.",
+				answer: "Sì. Puoi impostare una foto per l’account e una foto dedicata per ciascun sottoprofilo, oppure scegliere l’avatar predefinito per quel sottoprofilo. Un nuovo sottoprofilo parte con il proprio avatar predefinito e senza recuperare foto, Social o località di uno rimosso. Nel form di modifica puoi aggiungere sito web, Instagram, Facebook, YouTube e LinkedIn. Inserisci link completi dei canali che vuoi condividere.",
+			},
+			{
+				value: "profile-anonymous-name",
+				question: "Posso mantenere anonimo il mio nominativo?",
+				answer: "Nei sottoprofili Giocatore, Squadra, Staff sportivo e Arbitro puoi attivare Mantieni anonimo il mio nominativo. Nelle viste pubbliche viene mostrata la tipologia del sottoprofilo al posto del nome, con l’indicatore dell’occhio barrato. L’opzione riguarda il nominativo: controlla anche foto, presentazione, Social e recapiti che scegli di condividere.",
+			},
+			{
+				value: "profile-foreign-region",
+				question: "Come indico una nascita, residenza o sede all’estero?",
+				answer: "Nei campi di nascita e residenza di Giocatore, Staff sportivo e Arbitro e nella sede della Squadra puoi scegliere Estero, nel gruppo che precede le regioni italiane. Puoi mantenere o compilare la città associata. Le località di svolgimento delle attività mantengono le proprie opzioni.",
+			},
+			{
+				value: "player-current-team",
+				question: "Come gestisco squadra attuale e carriera del Giocatore?",
+				answer: "Cerca una Squadra attuale tra i profili pubblici oppure inserisci un nome libero. Se scegli una squadra presente sulla piattaforma, Categoria attuale viene assegnata dalla squadra e si aggiorna con essa, mostrando il nome del torneo quando indicato. In Esperienze compare una prima voce con squadra e categoria bloccate e Stagione al impostata su Ad oggi; puoi indicare la stagione iniziale. Cambiando o rimuovendo la squadra, oppure scegliendo Svincolato, la precedente esperienza viene archiviata con l’anno corrente e resta modificabile. Svincolato disabilita squadra e categoria attuali.",
+			},
+			{
+				value: "team-current-tournament",
+				question: "Come indico il torneo della Prima squadra?",
+				answer: "In Categoria attuale Prima squadra scegli la voce Tornei del gruppo relativo a calcio e genere. Compare Nome torneo, facoltativo: puoi cercare un torneo pubblico oppure scriverne il nome. Quando presente, il nome viene mostrato nelle viste pubbliche e nella carriera dei giocatori collegati alla squadra.",
+			},
+			{
+				value: "professional-availability",
+				question: "Come indico la disponibilità di Servizi e professionisti?",
+				answer: "Nel sottoprofilo puoi scegliere Non specificare, In presenza, Online oppure In presenza e online. Le zone di pubblicazione restano quelle abilitate dall’amministratore.",
 			},
 		],
 	},
@@ -197,7 +223,12 @@ const FAQ_GROUPS = [
 			{
 				value: "announcement-edit",
 				question: "Posso modificare un annuncio pubblicato?",
-				answer: "No. Puoi nasconderlo temporaneamente oppure eliminarlo. Per cambiare i contenuti devi pubblicare un nuovo annuncio. Le modifiche successive al sottoprofilo non sostituiscono i dati dell’annuncio già inviato.",
+				answer: "No. Puoi nasconderlo temporaneamente oppure eliminarlo. Per cambiare titolo, proposta e recapiti devi pubblicare un nuovo annuncio. I dati del sottoprofilo autore mostrati nel dettaglio, come squadra, categoria e carriera, riflettono invece il profilo aggiornato.",
+			},
+			{
+				value: "announcement-fresh-form",
+				question: "Quali dati ritrovo quando creo un nuovo annuncio?",
+				answer: "Se sei registrato, Dati profilo viene compilato con le informazioni salvate del sottoprofilo attivo selezionato. Titolo, dettagli e immagine di un annuncio precedente non vengono recuperati. Cambiare tipologia o sottotipologia scarta le modifiche non salvate della compilazione; passare fra le fasi dello stesso annuncio le conserva.",
 			},
 			{
 				value: "announcement-visibility",
@@ -229,12 +260,17 @@ const FAQ_GROUPS = [
 			{
 				value: "private-follower-count",
 				question: "Perché non vedo il numero di follower?",
-				answer: "Al lancio il conteggio resterà privato, anche se la funzione Follow sarà già attiva. Verrà reso pubblico più avanti, quando la community sarà sufficientemente ampia da rendere il dato significativo.",
+				answer: "Il conteggio pubblico dei follower non viene mostrato per i Giocatori. Negli altri dettagli profilo può comparire il totale dei follower del singolo sottoprofilo. Puoi consultare le tue relazioni dalla sezione Follower e seguiti dell’area personale.",
 			},
 			{
 				value: "contacts-author",
 				question: "Come contatto l’autore di un annuncio?",
-				answer: "Accedi al tuo account e consulta i recapiti nella sezione Contatti del dettaglio annuncio. Puoi usare l’email o il telefono indicati dall’autore. Apri profilo permette di conoscere il suo sottoprofilo; per gli annunci pubblicati come ospite trovi invece Info autore. Anche i link Social nei dettagli dei profili sono accessibili agli utenti autenticati.",
+				answer: "Accedi al tuo account e consulta i recapiti nella sezione Contatta del dettaglio annuncio. Puoi usare l’email o il telefono indicati dall’autore. Nella sezione Apri profilo, il pulsante Apri scheda seguito dalla tipologia apre il sottoprofilo dell’autore registrato. Per gli annunci pubblicati come ospite trovi invece Info autore. Anche i link Social nei dettagli dei profili sono accessibili agli utenti autenticati.",
+			},
+			{
+				value: "notification-center",
+				question: "Dove trovo e filtro le notifiche?",
+				answer: "Apri la campanella per vedere le ultime notifiche oppure Apri centro notifiche per consultare l’elenco. In alto puoi filtrare per tipologia tramite i pulsanti colorati, per esempio interessi, follower e nuovi annunci dei profili seguiti. Con Manifesta interesse invii una segnalazione di interesse: per parlare con l’autore usa i recapiti pubblicati.",
 			},
 		],
 	},
@@ -252,6 +288,11 @@ const FAQ_GROUPS = [
 				value: "newsletter-preferences",
 				question: "Come cambio la preferenza per newsletter e comunicazioni promozionali?",
 				answer: "Apri Impostazioni e usa la spunta nella card Notizie e comunicazioni. La scelta è facoltativa e viene salvata quando la modifichi. Puoi attivarla o disattivarla in qualsiasi momento.",
+			},
+			{
+				value: "browser-notifications",
+				question: "Come abilito le notifiche del browser?",
+				answer: "Usa Abilita notifiche browser nella card Notifiche del browser, nelle Impostazioni o nel Centro notifiche, e accetta il permesso richiesto dal browser. La preferenza vale per questo account su questo browser ed è distinta dalla newsletter. Gli avvisi riguardano le nuove notifiche mentre il sito rimane aperto, anche in una scheda in secondo piano; non vengono inviati a sito chiuso. Puoi disabilitarli dalla stessa card. Se il permesso è bloccato, modificalo nelle impostazioni del browser; se il browser non li supporta, puoi sempre usare il centro notifiche.",
 			},
 			{
 				value: "profile-verification",
@@ -1041,6 +1082,7 @@ function SettingsSection({viewer, passwordUpdated, initialNewsletterSubscribed}:
 						</Field>
 					</CardContent>
 				</Card>
+				<BrowserNotificationSettings account={viewer.email} variant="settings" />
 			</div>
 		</section>
 	);

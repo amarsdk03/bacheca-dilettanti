@@ -1,6 +1,6 @@
+import {currentCategoryLabel} from "@/features/profilo/current-team";
 import "server-only";
 import {publicProfileName} from "@/features/profilo/profile-public-name";
-import {teamCategoryLabel} from "@/features/profilo/team-category-catalog";
 
 import {availabilityLabel} from "@/features/profilo/public-profile-display";
 import {isPlayerNationalityCode, nationalityLabel} from "@/features/profilo/player-nationalities";
@@ -24,8 +24,6 @@ import type {Database, Json} from "@/server/supabase";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {
-	categoryLabel,
-	categoryShortLabel,
 	normalizeFigures
 } from "@/features/pubblica-annuncio/types/category-catalog";
 import {publicPlayerAge} from "@/features/dettagli-profilo/server/player-profile-data";
@@ -62,8 +60,8 @@ function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: numbe
 			verificato_il,
 			ultima_modifica_il,
 			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
-			profilo_giocatore(nominativo_anonimo, id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categoria_attuale, genere, nazionalita, altezza, peso, piede_principale, storico_carriera),
-			profilo_squadra(nominativo_anonimo, id, nascosto, nome_societa, presentazione, sport_principale, tipologie_sport, categoria_attuale),
+			profilo_giocatore(squadra_attuale_id, squadra_attuale_profilo_id, squadra_attuale_nome, squadra_attuale_categoria, squadra_attuale_torneo, squadra_attuale_dal, nominativo_anonimo, id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categoria_attuale, genere, nazionalita, altezza, peso, piede_principale, storico_carriera),
+			profilo_squadra(torneo_attuale_nome, nominativo_anonimo, id, nascosto, nome_societa, presentazione, sport_principale, tipologie_sport, categoria_attuale),
 			profilo_staff_sportivo(nominativo_anonimo, id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, figure_professionali, presentazione, sport_principale, lista_esperienze, qualifiche_licenze),
 			profilo_servizi_consulenze(id, nascosto, nome, disponibilita, presentazione, presentazione_servizi, specializzazioni, sede_professionista, sport_principale, tipologie_sport),
 			profilo_arbitro(nominativo_anonimo, id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, sport_principale, lista_esperienze, qualifiche_licenze),
@@ -86,6 +84,7 @@ interface ProfileLocation {
 }
 
 interface ProfileContent {
+	anonymousName?: boolean | null;
 	nationalityCode?: string | null;
 	title: string | null;
 	presentation: string | null;
@@ -277,6 +276,7 @@ function createDirectoryProfile(
 
 	return {
 		id: row.uuid,
+		anonymousName: content.anonymousName === true,
 		...(type === "giocatore" ? {nationalityCode: content.nationalityCode ?? null} : {}),
 		type,
 		title,
@@ -307,15 +307,16 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		profiles.push(createDirectoryProfile(row, "giocatore", player.id, {
 			nationalityCode: isPlayerNationalityCode(player.nazionalita) ? player.nazionalita : null,
 			title: publicProfileName("giocatore", player.nominativo_anonimo, fullName(player.nome, player.cognome)),
+			anonymousName: player.nominativo_anonimo,
 			presentation: player.presentazione,
 			sport: cleanText(player.sport_principale) ?? sportTypes[0],
 			highlight: primaryRoles[0] ?? sportTypes[0] ?? null,
 			availability: player.disponibilita,
-			searchValues: [...specificRoles, currentCategory ? categoryLabel(currentCategory) : null, player.genere, nationalityLabel(player.nazionalita)],
+			searchValues: [...specificRoles, currentCategory ? currentCategoryLabel(currentCategory, player.squadra_attuale_torneo) : null, player.genere, nationalityLabel(player.nazionalita)],
 			filterData: {tipologie: sportTypes, ruoli: primaryRoles},
 		factData: {
 			age: publicPlayerAge({day: player.giorno_nascita, month: player.mese_nascita, year: player.anno_nascita}),
-			category: currentCategory ? categoryShortLabel(currentCategory) : null,
+			category: currentCategory ? currentCategoryLabel(currentCategory, player.squadra_attuale_torneo) : null,
 			gender: cleanText(player.genere),
 		},
 		}, profileImages));
@@ -326,11 +327,12 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		const sportTypes = ordinaTipologieCalcio(cleanStringArray(team.tipologie_sport));
 		profiles.push(createDirectoryProfile(row, "squadra", team.id, {
 			title: publicProfileName("squadra", team.nominativo_anonimo, team.nome_societa),
+			anonymousName: team.nominativo_anonimo,
 			presentation: team.presentazione,
 			sport: cleanText(team.sport_principale) ?? sportTypes[0],
-			highlight: teamCategoryLabel(team.categoria_attuale) || null,
+			highlight: currentCategoryLabel(team.categoria_attuale, team.torneo_attuale_nome) || null,
 			availability: null,
-			searchValues: [teamCategoryLabel(team.categoria_attuale) || null, ...sportTypes],
+			searchValues: [currentCategoryLabel(team.categoria_attuale, team.torneo_attuale_nome) || null, ...sportTypes],
 			filterData: {tipologie: sportTypes},
 		}, profileImages));
 	}
@@ -340,6 +342,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		const figures = normalizeFigures(cleanStringArray(staff.figure_professionali));
 		profiles.push(createDirectoryProfile(row, "staff-sportivo", staff.id, {
 			title: publicProfileName("staff-sportivo", staff.nominativo_anonimo, fullName(staff.nome, staff.cognome)),
+			anonymousName: staff.nominativo_anonimo,
 			presentation: staff.presentazione,
 			sport: staff.sport_principale,
 			highlight: figures[0] ?? null,
@@ -373,6 +376,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		if (referee.nascosto !== false) continue;
 		profiles.push(createDirectoryProfile(row, "arbitro", referee.id, {
 			title: publicProfileName("arbitro", referee.nominativo_anonimo, fullName(referee.nome, referee.cognome)),
+			anonymousName: referee.nominativo_anonimo,
 			presentation: referee.presentazione,
 			sport: referee.sport_principale,
 			highlight: availabilityLabel(referee.disponibilita) ?? "Attività arbitrale",

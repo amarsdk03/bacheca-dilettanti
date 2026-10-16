@@ -10,7 +10,8 @@ import {Button} from "@/components/ui/button";
 import {Checkbox} from "@/components/ui/checkbox";
 import {Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import SubprofileSelect from "@/features/profilo/SubprofileSelect";
+import type {ProfileType} from "@/features/profilo/profile-model";
 import {toast} from "@/components/ui/toast";
 import {INTEREST_OWNERSHIP_CONSENT, INTEREST_SHARING_CONSENT, validateInterestForm, type InterestContext, type InterestField, type InterestResult, type InterestTarget} from "./interest-model";
 import {submitInterest} from "./server/actions";
@@ -22,7 +23,7 @@ export function InterestDialogTrigger({inline = false}: {inline?: boolean}) {
 	if (!available) return inline ? <span>Manifesta interesse</span> : null;
 	return (
 		<AlertDialogTrigger render={<Button type="button" variant={inline ? "link" : "default"} className={inline ? "h-auto p-0 align-baseline [font-size:inherit]" : "min-h-11 gap-2 px-4"} />}>
-			{!inline && <MessageCircleMore data-icon="inline-start" aria-hidden="true" />}Manifesta interesse
+			{!inline && <MessageCircleMore className="ms-1.5" data-icon="inline-start" aria-hidden="true" />}Manifesta interesse
 		</AlertDialogTrigger>
 	);
 }
@@ -35,7 +36,7 @@ export function InterestDialogProvider({target, context, href, children}: {targe
 	const inFlight = useRef(false);
 	const profiles = context.status === "ready" ? context.profiles : [];
 	const defaultProfile = profiles.find((profile) => profile.isPrimary)?.type ?? profiles[0]?.type ?? "";
-	const [profileType, setProfileType] = useState<string>(defaultProfile);
+	const [profileType, setProfileType] = useState<ProfileType | "">(defaultProfile);
 	const [email, setEmail] = useState("");
 	const [phone, setPhone] = useState("");
 	const [ownershipConsent, setOwnershipConsent] = useState(false);
@@ -100,10 +101,9 @@ export function InterestDialogProvider({target, context, href, children}: {targe
 							<Field data-disabled={pending || profiles.length === 1} data-invalid={Boolean(errors.profileType)}>
 								<FieldLabel htmlFor={inputId("profile")}>Con quale profilo vuoi manifestare interesse?</FieldLabel>
 								<input type="hidden" name="profileType" value={profileType} />
-								<Select items={profiles.map((profile) => ({value: profile.type, label: profile.label}))} value={profileType} onValueChange={(value) => setProfileType(value ?? "")} disabled={pending || profiles.length === 1}>
-									<SelectTrigger id={inputId("profile")} className="w-full" aria-invalid={Boolean(errors.profileType)} aria-describedby={errors.profileType ? inputId("profile-error") : undefined}><SelectValue /></SelectTrigger>
-									<SelectContent><SelectGroup>{profiles.map((profile) => <SelectItem key={profile.type} value={profile.type}>{profile.label}</SelectItem>)}</SelectGroup></SelectContent>
-								</Select>
+								<SubprofileSelect profiles={profiles} value={profileType} onValueChange={(value) => setProfileType(value ?? "")}
+									disabled={pending || profiles.length === 1} id={inputId("profile")} label="Con quale profilo vuoi manifestare interesse?"
+									invalid={Boolean(errors.profileType)} describedBy={errors.profileType ? inputId("profile-error") : undefined} />
 								<FieldError id={inputId("profile-error")}>{errors.profileType}</FieldError>
 							</Field>
 							<FieldSet disabled={pending}>

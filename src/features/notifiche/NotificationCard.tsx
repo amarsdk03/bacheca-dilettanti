@@ -2,16 +2,16 @@ import Link from "next/link";
 import {BadgeCheck, ClipboardCheck, Flag, Megaphone, MessageCircleMore, Newspaper, UserPlus} from "lucide-react";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Badge} from "@/components/ui/badge";
-import {notificationStateLabel, type NotificationItem, type NotificationReference} from "@/features/notifiche/notification-model";
+import {NOTIFICATION_LABELS, notificationStateLabel, type NotificationItem, type NotificationReference} from "@/features/notifiche/notification-model";
 
-const PRESENTATION = {
-	interesse: {icon: MessageCircleMore, label: "Manifestazione di interesse"},
-	follower: {icon: UserPlus, label: "Nuovo follower"},
-	annuncio_seguito: {icon: Newspaper, label: "Annuncio di un profilo seguito"},
-	stato_annuncio: {icon: ClipboardCheck, label: "Stato del tuo annuncio"},
-	segnalazione: {icon: Flag, label: "Segnalazione inviata"},
-	profilo_speciale: {icon: BadgeCheck, label: "Profilo speciale abilitato"},
-	novita: {icon: Megaphone, label: "Novità da Bacheca Dilettanti"},
+const ICONS = {
+	interesse: MessageCircleMore,
+	follower: UserPlus,
+	annuncio_seguito: Newspaper,
+	stato_annuncio: ClipboardCheck,
+	segnalazione: Flag,
+	profilo_speciale: BadgeCheck,
+	novita: Megaphone,
 };
 function Reference({value, fallback}: {value: NotificationReference | null; fallback: string}) {
 	return value?.href ? <Link className="notification-link" href={value.href}>{value.label}</Link> : <strong>{value?.label ?? fallback}</strong>;
@@ -21,7 +21,7 @@ function NotificationText({item}: {item: NotificationItem}) {
 	const target = <Reference value={item.target} fallback="contenuto non più disponibile" />;
 	switch (item.type) {
 		case "interesse": return <>{actor} ha manifestato interesse per il tuo {item.targetKind === "annuncio" ? "annuncio" : "profilo"} {target}.</>;
-		case "follower": return <>Profilo {actor} ha iniziato a seguire il tuo profilo {target}.</>;
+		case "follower": return <>{actor} ha iniziato a seguire il tuo profilo {target}.</>;
 		case "annuncio_seguito": return <>{actor} ha pubblicato un nuovo annuncio: {target}.</>;
 		case "stato_annuncio": return <>Il tuo annuncio {target} è stato <strong>{notificationStateLabel(item.state)}</strong>.</>;
 		case "segnalazione": return <>Abbiamo ricevuto la tua segnalazione per {target}. Il team la valuterà.</>;
@@ -30,7 +30,8 @@ function NotificationText({item}: {item: NotificationItem}) {
 	}
 }
 export default function NotificationCard({item, compact = false}: {item: NotificationItem; compact?: boolean}) {
-	const {icon: Icon, label} = PRESENTATION[item.type];
+	const Icon = ICONS[item.type];
+	const label = NOTIFICATION_LABELS[item.type];
 	const date = new Intl.DateTimeFormat("it-IT", {dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Rome"}).format(new Date(item.createdAt));
 	return (
 		<Card size={compact ? "sm" : "default"} className="notification-card rounded-md" data-notification-type={item.type} data-unread={!item.readAt || undefined}>
@@ -50,6 +51,7 @@ export default function NotificationCard({item, compact = false}: {item: Notific
 				<p className="leading-6"><NotificationText item={item} /></p>
 				{item.type === "interesse" && <p className="leading-6"><strong>Contatti forniti: </strong>{item.email || item.phone ? <>{item.email && <a className="notification-link" href={`mailto:${item.email}`}>{item.email}</a>}{item.email && item.phone && " · "}{item.phone && <a className="notification-link" href={`tel:${item.phone.replace(/[^+\d]/g, "")}`}>{item.phone}</a>}</> : "non più disponibili"}</p>}
 				{item.type === "stato_annuncio" && item.info && <p className="text-muted-foreground leading-6 whitespace-pre-line">{item.info}</p>}
+				{(item.type === "interesse" || item.type === "annuncio_seguito") && <p className="text-sm font-medium">Contattalo se sei interessato!</p>}
 			</CardContent>
 		</Card>
 	);

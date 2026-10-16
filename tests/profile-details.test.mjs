@@ -135,6 +135,7 @@ const player = {
 	categoria_attuale: "Calcio 11 (Maschile)::Eccellenza", categorie_ricercate: ["Eccellenza"],
 	genere: "Uomo", nazionalita: "IT", piede_principale: "Destro",
 	altezza: "180", peso: "75", presentazione: " Presentazione ",
+	highlights_privati: false,
 	storico_carriera: [{titolo: "Prima squadra", ente: "Società", periodoDa: "2024/25", stato: "in-corso"}],
 };
 
@@ -164,13 +165,14 @@ test("leap birthdays use March 1 in a non-leap year", () => {
 
 test("public projection contains only approved properties and safe highlights", () => {
 	const result = toPublicPlayerData({...player, email: "private@example.test", note: "private"}, "javascript:alert(1)", now);
-	assert.deepEqual(Object.keys(result).sort(), ["age", "birthYear", "sportTypes", "primaryRoles", "specificRoles", "currentCategory", "preferredFoot", "gender", "nationality", "nationalityCode", "height", "weight", "presentation", "career", "highlightsUrl"].sort());
+	assert.deepEqual(Object.keys(result).sort(), ["age", "birthYear", "sportTypes", "primaryRoles", "specificRoles", "currentCategory", "preferredFoot", "gender", "nationality", "nationalityCode", "height", "weight", "presentation", "career", "highlightsUrl", "privateHighlights"].sort());
+	assert.equal(result.privateHighlights, false);
 	assert.equal(result.age, 26);
 	assert.equal(result.birthYear, "2000");
 	assert.equal(result.highlightsUrl, null);
 	assert.deepEqual(result.sportTypes, ["Calcio 11", "Calcio 5", "Calcio storico"]);
 	assert.equal(result.presentation, "Presentazione");
-	assert.equal(result.currentCategory, "Calcio 11 (Maschile) · Eccellenza");
+	assert.equal(result.currentCategory, "Calcio a 11 maschile — FIGC-LND — Eccellenza");
 	assert.equal(result.gender, "Uomo");
 	assert.equal(result.nationality, "Italia");
 	assert.equal(result.nationalityCode, "IT");
@@ -363,6 +365,22 @@ test("player form disables current category when availability is Svincolato", ()
 	assert.match(html, /Nazionalità/);
 });
 
+test("player anonymity remains editable between the name and birth fields", () => {
+	const Form = load("src/features/profilo/ProfileDetailsForm.tsx").default;
+	const {createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
+	for (const anonymous of [false, true]) {
+		const drafts = createProfileDrafts();
+		drafts.giocatore.nominativo_anonimo = anonymous;
+		const html = renderToStaticMarkup(React.createElement(Form, {type: "giocatore", drafts, locations: createProfileLocations(), socialLinks: createProfileSocialLinks().giocatore, onChange() {}, onLocationsChange() {}, onSocialLinksChange() {}}));
+		assert.match(html, /Mantieni anonimo il mio nominativo/);
+		assert.match(html, new RegExp(`role="checkbox"[^>]*aria-checked="${anonymous}"`));
+		const control = html.indexOf('id="registration-profile-giocatore-nominativo-anonimo"');
+		assert.ok(control > html.indexOf('id="registration-profile-giocatore-cognome"'));
+		assert.ok(control < html.indexOf("Data di nascita"));
+	}
+});
+
 test("player role pitch uses the 3x7 grid and hides only specialized primary groups", () => {
 	assert.deepEqual(
 		getPlayerRolePitchMarkers(["Difensore", "Centrocampista", "Attaccante", "Portiere"], ["Terzino destro", "Centrale", "Ala sinistra"]),
@@ -405,9 +423,9 @@ test("player header renders the ordered public facts", () => {
 	assert.ok(roleBadge >= 0 && roleBadge < nationalityFlag && nationalityFlag < profileBadge);
 	const factLabels = [...html.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>/g)]
 		.map(match => match[1].replace(/<[^>]+>/g, ""));
-	assert.deepEqual(factLabels, ["Età", "Genere", "Altezza", "Piede", "Categoria attuale", "Disponibilità"]);
+	assert.deepEqual(factLabels, ["Anno", "Genere", "Altezza", "Disponibilità", "Categoria attuale", "Piede"]);
 	assert.doesNotMatch(html, /Principale:/);
-	for (const value of ["26 (2000)", "180 cm", "Destro", "Uomo", "Eccellenza", "Disponibile subito", "Difensore", "Condividi"]) assert.ok(html.includes(value), value);
+	for (const value of ["2000", "180 cm", "Destro", "Uomo", "Eccellenza", "Disponibile subito", "Difensore", "Condividi"]) assert.ok(html.includes(value), value);
 	assert.match(html, /<header[^>]*>[\s\S]*public-profile-hero[\s\S]*<dl[\s\S]*<\/header>/);
 	assert.doesNotMatch(html, /nascita|Una presentazione/);
 });
@@ -563,7 +581,7 @@ function fixtureClient(results) {
 			const call = {table, operations: []};
 			calls.push(call);
 			const query = {};
-			for (const method of ["select", "eq", "neq", "not", "in", "order", "limit", "range", "maybeSingle"]) {
+			for (const method of ["select", "eq", "neq", "not", "or", "in", "order", "limit", "range", "maybeSingle"]) {
 				query[method] = (...args) => {call.operations.push([method, ...args]); return query;};
 			}
 			query.then = (resolve, reject) => Promise.resolve(typeof results[table] === "function" ? results[table](call) : results[table] ?? {data: [], error: null, count: 0}).then(resolve, reject);
@@ -830,6 +848,83 @@ test("all seven non-player profiles show configured badges, facts, central secti
 	}
 });
 
+test("anonymity icons use contextual colors while the hidden-name badge has no tooltip", () => {
+	const {default: Indicator, PROFILE_ANONYMITY_MESSAGE} = load("src/features/profilo/ProfileAnonymityIndicator.tsx");
+	assert.equal(renderToStaticMarkup(React.createElement(Indicator, {anonymousName: false})), "");
+	const icon = renderToStaticMarkup(React.createElement(Indicator, {anonymousName: true}));
+	assert.match(icon, /lucide-eye-off/);
+	assert.match(icon, /opacity-50 text-black/);
+	const whiteIcon = renderToStaticMarkup(React.createElement(Indicator, {anonymousName: true, white: true}));
+	assert.match(whiteIcon, /opacity-50 text-white/);
+	assert.ok(icon.includes(PROFILE_ANONYMITY_MESSAGE));
+	assert.doesNotMatch(icon, /<button/);
+	const badge = renderToStaticMarkup(React.createElement(Indicator, {anonymousName: true, badge: true}));
+	assert.match(badge, /Nome nascosto/);
+	assert.ok(!badge.includes(PROFILE_ANONYMITY_MESSAGE));
+	const ProfileCard = load("src/features/profili/components/cards/ProfileCard.tsx").default;
+	for (const type of ["giocatore", "squadra", "staff-sportivo", "arbitro"]) {
+		const profile = {id: "test", type, title: "Profilo anonimo", anonymousName: true, imageUrl: null, emailConfirmed: false, officialVerified: true,
+			facts: [], presentation: null, filterData: {ruoli: [], tipologie: [], figure: []}};
+		const html = renderToStaticMarkup(React.createElement(ProfileCard, {profile}));
+		assert.match(html, /lucide-eye-off/, type);
+		assert.ok(html.indexOf("lucide-badge-check") < html.indexOf("lucide-eye-off"), type);
+		assert.doesNotMatch(html, /Nome nascosto/, type);
+		assert.doesNotMatch(renderToStaticMarkup(React.createElement(ProfileCard, {profile: {...profile, anonymousName: false}})), /lucide-eye-off/, type);
+	}
+});
+
+test("public directory forwards anonymity flags while concealing real profile names", async () => {
+	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+	for (const anonymousName of [true, false]) {
+		const child = {...player, id: 1, nascosto: false, nome: "Private Name", cognome: "Private Surname", nome_societa: "Private Team", nominativo_anonimo: anonymousName};
+		const row = {uuid: id, localita_profilo: [], link_foto_profilo: null, profilo_giocatore: [child], profilo_squadra: [child], profilo_staff_sportivo: [child], profilo_arbitro: [child]};
+		const client = fixtureClient({profilo: {data: [row], error: null}});
+		const {loadPublicSubprofiles} = sourceLoader({
+			"@/lib/supabase/admin": {createAdminClient: () => client},
+			"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => new Map()},
+		})("src/features/profili/server/queries.ts");
+		const profiles = await loadPublicSubprofiles([id]);
+		assert.equal(profiles.length, 4);
+		assert.ok(profiles.every(profile => profile.anonymousName === anonymousName));
+		if (anonymousName) assert.doesNotMatch(JSON.stringify(profiles), /Private Name|Private Surname|Private Team/);
+		else assert.match(JSON.stringify(profiles), /Private Name/);
+	}
+});
+
+test("profile forms group foreign and Italian regions only for residence and team headquarters", () => {
+	// Expose popup contents during server rendering so group order and options can be inspected.
+	const wrap = (slot) => function SelectPart({children}) { return React.createElement("div", {"data-test-slot": slot}, children); };
+	const selectUi = Object.fromEntries(["Select", "SelectContent", "SelectGroup", "SelectLabel", "SelectTrigger", "SelectValue"].map(name => [name, wrap(name)]));
+	selectUi.SelectItem = function SelectOption({value, children}) { return React.createElement("span", {"data-test-value": encodeURIComponent(value).replaceAll("'", "%27")}, children); };
+	const loadForm = sourceLoader({"@/components/ui/select": selectUi});
+	const Form = loadForm("src/features/profilo/ProfileDetailsForm.tsx").default;
+	const {PROFILE_TYPES, createProfileDrafts, createProfileLocations} = loadForm("src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = loadForm("src/features/profilo/profile-social-links.ts");
+	const {REGIONI_ITALIANE} = loadForm("src/const/defaultConstants.ts");
+	const drafts = createProfileDrafts();
+	const locations = createProfileLocations();
+	const socialLinks = createProfileSocialLinks();
+	for (const type of PROFILE_TYPES) {
+		const eligible = ["giocatore", "staff-sportivo", "arbitro", "squadra"].includes(type);
+		if (eligible) locations[type] = [{regione: "Estero", citta: "Parigi"}];
+		const html = renderToStaticMarkup(React.createElement(Form, {
+			type, drafts, locations, socialLinks: socialLinks[type], onChange: () => {}, onLocationsChange: () => {}, onSocialLinksChange: () => {},
+		}));
+		if (eligible) {
+			assert.match(html, /data-test-slot="SelectGroup"><div data-test-slot="SelectLabel">Estero<\/div><span data-test-value="Estero">Estero<\/span><\/div><div data-test-slot="SelectGroup"><div data-test-slot="SelectLabel">Italia<\/div>/, type);
+			const values = [...html.slice(html.indexOf('data-test-value="Estero"')).matchAll(/data-test-value="([^"]+)"/g)].map(match => decodeURIComponent(match[1]));
+			assert.deepEqual(values, ["Estero", ...REGIONI_ITALIANE.map(({nome}) => nome)], type);
+			assert.match(html, /value="Parigi"/, type);
+			assert.doesNotMatch(html.match(/<input[^>]*value="Parigi"[^>]*>/)[0], /\sdisabled(?:=|[\s>])/, type);
+		} else {
+			assert.doesNotMatch(html, /data-test-value="Estero"/, type);
+		}
+	}
+	const Field = loadForm("src/features/profilo/ProfileLocationsField.tsx").default;
+	const defaultHtml = renderToStaticMarkup(React.createElement(Field, {idPrefix: "default-region", mode: "single", value: [], onValueChange: () => {}}));
+	assert.doesNotMatch(defaultHtml, /data-test-value="Estero"/);
+});
+
 test("non-player facts retain expected cells with missing data and distinguish unknown counts from zero", () => {
 	for (const [type, name, labels] of nonPlayerCases) {
 		const Component = load(`src/features/dettagli-profilo/components/types/DettagliProfilo${name}.tsx`).default;
@@ -970,7 +1065,7 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 		for (const label of labels) assert.match(html, new RegExp(">" + label + "<"));
 		const badgeIndex = html.indexOf(`data-profile-icon="${type}"`);
 		const avatarIndex = html.indexOf('data-slot="avatar"');
-		const titleIndex = html.indexOf("Profilo dimostrativo", avatarIndex);
+		const titleIndex = html.indexOf("<h3", avatarIndex);
 		assert.ok(badgeIndex >= 0 && badgeIndex < avatarIndex);
 		assert.ok(avatarIndex < titleIndex);
 	}
@@ -980,10 +1075,10 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 test("public profiles conceal the nominative for every supported subprofile without losing current data", async () => {
  const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
  for (const [type, table, name] of [
-  ["giocatore", "profilo_giocatore", "Giocatore anonimo"],
-  ["squadra", "profilo_squadra", "Squadra anonima"],
-  ["staff-sportivo", "profilo_staff_sportivo", "Staff sportivo anonimo"],
-  ["arbitro", "profilo_arbitro", "Arbitro anonimo"],
+  ["giocatore", "profilo_giocatore", "Giocatore"],
+  ["squadra", "profilo_squadra", "Squadra"],
+  ["staff-sportivo", "profilo_staff_sportivo", "Staff sportivo"],
+  ["arbitro", "profilo_arbitro", "Arbitro"],
  ]) {
   const child = {...player, nome: "Nome riservato", cognome: "Cognome riservato", nome_societa: "Società riservata", nominativo_anonimo: true,
    storico_carriera: [], lista_esperienze: [{titolo: "Esperienza attuale", ente: "Ente sportivo"}],

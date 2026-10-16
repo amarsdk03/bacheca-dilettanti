@@ -112,4 +112,44 @@ test("notification database: events, history, pagination, links, contacts and pe
 			await assert.rejects(()=>db.query("select public.mark_notifications_read_v1($1,'{}')",[id(2)]),{code:"42501"});
 		}
 	});
+	await t.test("current labels and filters preserve anonymity, history, pagination and service-only permissions", async () => {
+		await db.exec("reset role; alter table public.annuncio add column tipologia_annuncio text default 'annuncio_giocatore'; update public.profilo set nascosto=false;");
+		await db.exec("alter table public.profilo_giocatore add column nominativo_anonimo boolean default false;");
+		// Install the actual anonymity resolver introduced by the preceding migrations.
+		const privacy = readFileSync(new URL("../supabase/migrations/20261007144625_private_player_highlights_and_profile_labels.sql", import.meta.url), "utf8");
+		await db.exec(privacy.match(/create or replace function private\.public_profile_name_v1[\s\S]*?\$\$;/)[0]);
+		const definition = (await db.query("select pg_get_functiondef('private.notification_profile_ref(uuid,text)'::regprocedure) definition")).rows[0].definition;
+		await db.exec(definition.replace("  return jsonb_build_object('id',p_id", "  v_label := private.public_profile_name_v1(v_type, coalesce((v_detail->>'nominativo_anonimo')::boolean,false), v_label);\n  return jsonb_build_object('id',p_id"));
+		await db.exec(readFileSync(new URL("../supabase/migrations/20261016193020_notification_labels_and_filters.sql", import.meta.url), "utf8"));
+		const ref = {id: id(30), kind: "annuncio", label: "Annuncio"};
+		const display = async (value) => (await db.query("select private.notification_display_ref($1::jsonb) result", [JSON.stringify(value)])).rows[0].result;
+		assert.equal((await display(ref)).label, "Annuncio storico");
+		await db.query("update public.annuncio set titolo_annuncio=null where uuid=$1", [id(30)]);
+		assert.equal((await display(ref)).label, "Mario 2 Rossi");
+		await db.query("update public.profilo_giocatore set nominativo_anonimo=true where uuid_profilo=$1", [id(12)]);
+		assert.equal((await display(ref)).label, "Giocatore");
+		assert.equal((await display({...ref, id: id(12), kind: "profilo", type: "giocatore", label: "Mario 2 Rossi"})).label, "Giocatore");
+		await db.query("update public.profilo set nascosto=true where uuid=$1", [id(12)]);
+		const hidden = await display({...ref, id: id(12), kind: "profilo", type: "giocatore", label: "Mario 2 Rossi"});
+		assert.equal(hidden.label, "Giocatore"); assert.equal(hidden.href, null);
+		await db.query("update public.annuncio set titolo_annuncio='Titolo aggiornato' where uuid=$1", [id(30)]);
+		assert.equal((await display(ref)).label, "Titolo aggiornato");
+		assert.equal((await display({...ref, id: id(99)})).label, "Annuncio non più disponibile");
+		await db.query("insert into private.notifiche(destinatario,tipo,evento) values ($1,'follower','filtered-follower')", [id(3)]);
+		const filtered = async (type, cursor = null) => (await db.query("select public.get_notifications_v2($1,20,$2,$3,$4) result", [id(3), cursor?.date ?? null, cursor?.id ?? null, type])).rows[0].result;
+		const first = await filtered("novita");
+		const second = await filtered("novita", first.nextCursor);
+		const third = await filtered("novita", second.nextCursor);
+		const all = [...first.items, ...second.items, ...third.items];
+		assert.equal(all.length, 44); assert.equal(new Set(all.map(item => item.id)).size, 44);
+		assert.ok(all.every(item => item.type === "novita"));
+		assert.equal((await filtered("follower")).items.length, 1);
+		assert.equal((await filtered("interesse")).items.length, 0);
+		assert.equal(first.unreadCount, 45);
+		await assert.rejects(() => filtered("unknown"), {code: "22023"});
+		for (const role of ["anon", "authenticated"]) {
+			await db.exec(`reset role; set role ${role}`);
+			await assert.rejects(() => filtered("novita"), {code: "42501"});
+		}
+	});
 });

@@ -13,7 +13,7 @@ export const TEAM_CATEGORY_GROUPS = [
 ] as const;
 
 export const TEAM_CATEGORY_OPTIONS = TEAM_CATEGORY_GROUPS.flatMap(({gruppo, opzioni}) =>
- opzioni.map(category => ({value: categoryKey(gruppo, category), label: `${gruppo} — ${category}`})),
+ [...opzioni, "Tornei"].map(category => ({value: categoryKey(gruppo, category), label: category === "Tornei" ? `${gruppo} - Tornei` : `${gruppo} — ${category}`})),
 );
 const labels = new Map(TEAM_CATEGORY_OPTIONS.map(({value, label}) => [value, label]));
 export function isTeamCategory(value: unknown): value is string {

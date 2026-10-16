@@ -12,7 +12,7 @@ import type {InteractionState, InteractionTarget} from "@/features/interazioni/i
 import {cn} from "@/lib/utils";
 import {AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from "@/components/ui/alert-dialog";
 import {Field, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import SubprofileSelect from "@/features/profilo/SubprofileSelect";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
 
 interface InteractionButtonProps {
@@ -131,13 +131,8 @@ function InteractionControl({target, state, href, showLabel = false, className}:
 					<FieldGroup>
 						<Field>
 							<FieldLabel>Con quale profilo vuoi seguire?</FieldLabel>
-							<Select value={sourceType ?? null} onValueChange={value => {if (value) setSourceType(value as ProfileType);}}
-								disabled={pending} items={profiles.map(profile => ({value: profile.type, label: `${profile.title} (${PROFILE_OPTIONS.find(option => option.value === profile.type)?.label})`}))}>
-								<SelectTrigger aria-label="Con quale profilo vuoi seguire?" className="w-full"><SelectValue /></SelectTrigger>
-								<SelectContent>{profiles.map(profile => <SelectItem key={profile.type} value={profile.type}>
-									{profile.title} ({PROFILE_OPTIONS.find(option => option.value === profile.type)?.label})
-								</SelectItem>)}</SelectContent>
-							</Select>
+							<SubprofileSelect profiles={profiles} value={sourceType ?? null}
+								onValueChange={value => {if (value) setSourceType(value);}} disabled={pending} label="Con quale profilo vuoi seguire?" />
 						</Field>
 						{formError && <FieldError role="alert">{formError}</FieldError>}
 					</FieldGroup>

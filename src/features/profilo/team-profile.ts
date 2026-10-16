@@ -10,6 +10,9 @@ export interface TeamProfileReference {
 }
 
 export interface PublicTeamProfile extends TeamProfileReference {
+	subprofileId?: number;
+	currentCategory?: string | null;
+	tournamentName?: string | null;
 	anonymousName: boolean;
 	imageUrl: string | null;
 	location: string | null;
@@ -23,6 +26,7 @@ export function publicTeamExperienceNames(value: unknown, teams: ReadonlyMap<str
 		const id = cleanText(entry.squadraProfiloId)?.toLocaleLowerCase("en-US");
 		if (!id || !UUID_PATTERN.test(id)) return entry;
 		const team = teams.get(id);
+		if (typeof entry.squadraIstanzaId === "number" && (!team || team.subprofileId !== entry.squadraIstanzaId)) return {...entry, squadraProfiloId: null};
 		if (team && !team.anonymousName) return {...entry, [nameField]: team.name};
 		const name = team?.name ?? "Squadra";
 		return {

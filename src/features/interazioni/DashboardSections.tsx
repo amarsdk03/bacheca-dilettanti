@@ -76,7 +76,7 @@ function RelationshipList({list, following}: {list: InteractionList<Relationship
 					</CardHeader>
 					{following && <CardFooter className="justify-end">
 						<InteractionButton target={{kind: "profilo", id: profile.id, profileType: profile.type}} state={{status: "ready", active: true,
-							sourceType: profile.ownedProfile.type, profiles: [{...profile.ownedProfile, isPrimary: false}]}}
+							sourceType: profile.ownedProfile.type, profiles: [{...profile.ownedProfile, imageUrl: null, isPrimary: false}]}}
 							href="/il-tuo-profilo?sezione=relazioni" showLabel />
 					</CardFooter>}
 				</Card>

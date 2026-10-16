@@ -1,5 +1,17 @@
 export const NOTIFICATION_TYPES = ["interesse", "follower", "annuncio_seguito", "stato_annuncio", "segnalazione", "profilo_speciale", "novita"] as const;
 export type NotificationType = typeof NOTIFICATION_TYPES[number];
+export function isNotificationType(value: unknown): value is NotificationType {
+	return typeof value === "string" && (NOTIFICATION_TYPES as readonly string[]).includes(value);
+}
+export const NOTIFICATION_LABELS: Record<NotificationType, string> = {
+	interesse: "Manifestazione di interesse",
+	follower: "Nuovo follower",
+	annuncio_seguito: "Annuncio di un profilo seguito",
+	stato_annuncio: "Stato del tuo annuncio",
+	segnalazione: "Segnalazione inviata",
+	profilo_speciale: "Profilo speciale abilitato",
+	novita: "Novità da Bacheca Dilettanti",
+};
 export interface NotificationReference {label: string; href: string | null}
 export interface NotificationItem {
 	id: string;

@@ -57,10 +57,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+export function isProfileReferencePlaceholder(value: string) {
+	return /^vedi (?:il )?profilo[.!]?$/i.test(value.replace(/\s+/g, " ").trim());
+}
+
 function cleanText(value: unknown, maxLength = 5_000) {
 	if (typeof value !== "string") return null;
 	const normalized = value.replace(/\s+/g, " ").trim();
-	return normalized ? normalized.slice(0, maxLength) : null;
+	return normalized && !isProfileReferencePlaceholder(normalized) ? normalized.slice(0, maxLength) : null;
 }
 
 function cleanStringArray(value: unknown) {

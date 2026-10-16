@@ -12,6 +12,7 @@ import {NOTIFICATION_POLL_MS, notificationBadge, type NotificationItem} from "@/
 import NotificationCard from "@/features/notifiche/NotificationCard";
 import {NotificationError, NotificationsEmpty} from "@/features/notifiche/NotificationFeedback";
 import {useNotificationRead} from "@/features/notifiche/use-notification-read";
+import {browserNotificationStatus, createBrowserNotificationDelivery, subscribeBrowserNotifications} from "./browser-notifications";
 
 const MOBILE_QUERY = "(width < 640px)";
 function subscribeMobile(onChange: () => void) {
@@ -22,7 +23,8 @@ function subscribeMobile(onChange: () => void) {
 const mobileSnapshot = () => window.matchMedia(MOBILE_QUERY).matches;
 const serverMobileSnapshot = () => false;
 
-export default function NotificationBell() {
+export default function NotificationBell({account}: {account: string}) {
+	const deliver = useMemo(() => createBrowserNotificationDelivery(account), [account]);
 	const mobile = useSyncExternalStore(subscribeMobile, mobileSnapshot, serverMobileSnapshot);
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const mobileAnchor = useMemo(() => mobile ? {
@@ -49,12 +51,14 @@ export default function NotificationBell() {
 		const revision = countRevision.current;
 		if (preview) setLoading(true);
 		try {
-			const page = await fetchNotifications(preview ? 3 : 0, null, controller.signal);
+			const browserEnabled = browserNotificationStatus(account) === "enabled";
+			const page = await fetchNotifications(browserEnabled ? 20 : preview ? 3 : 0, null, controller.signal);
 			if (controller.signal.aborted) return;
 			if (revision === countRevision.current) setCount(page.unreadCount);
+			void deliver(page.items).catch(() => { /* Browser delivery never blocks the in-site notification center. */ });
 			if (preview && opened.current) {
 				// Keep the "Nuova" highlight until this popover is closed.
-				setItems((previous) => page.items.map((item) => previous.find((old) => old.id === item.id && !old.readAt) ? {
+				setItems((previous) => page.items.slice(0, 3).map((item) => previous.find((old) => old.id === item.id && !old.readAt) ? {
 					...item,
 					readAt: null
 				} : item));
@@ -65,11 +69,11 @@ export default function NotificationBell() {
 		} finally {
 			if (!controller.signal.aborted) setLoading(false);
 		}
-	}, []);
+	}, [account, deliver]);
 
 	useEffect(() => {
 		const update = () => {
-			if (document.visibilityState === "visible") void refresh(opened.current);
+			if (document.visibilityState === "visible" || browserNotificationStatus(account) === "enabled") void refresh(opened.current);
 		};
 		const onCount = (event: Event) => {
 			countRevision.current += 1;
@@ -80,14 +84,16 @@ export default function NotificationBell() {
 		document.addEventListener("visibilitychange", update);
 		window.addEventListener("focus", update);
 		window.addEventListener(NOTIFICATION_COUNT_EVENT, onCount);
+		const unsubscribe = subscribeBrowserNotifications(update);
 		return () => {
+			unsubscribe();
 			request.current?.abort();
 			window.clearInterval(interval);
 			document.removeEventListener("visibilitychange", update);
 			window.removeEventListener("focus", update);
 			window.removeEventListener(NOTIFICATION_COUNT_EVENT, onCount);
 		};
-	}, [refresh]);
+	}, [account, refresh]);
 	const {readError, retryRead, readPending} = useNotificationRead(items, open);
 
 	function changeOpen(value: boolean) {

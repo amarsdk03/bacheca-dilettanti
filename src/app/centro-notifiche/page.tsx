@@ -15,5 +15,5 @@ export default async function NotificationCenterPage() {
 	if (!account.utenteId || !account.registeredAt) redirect("/registrati");
 	let initialPage = null;
 	try {initialPage = await getNotifications();} catch { /* Render a retryable error without breaking navigation. */ }
-	return <><Navbar /><NotificationCenter initialPage={initialPage} /><Footer whiteBackground /></>;
+	return <><Navbar /><NotificationCenter initialPage={initialPage} account={account.viewer.email} /><Footer whiteBackground /></>;
 }

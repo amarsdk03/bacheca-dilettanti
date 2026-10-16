@@ -55,7 +55,7 @@ export async function loadPublicTeamProfiles(
 				.not("uuid_utente", "is", null),
 			supabase
 				.from("profilo_squadra")
-				.select("uuid_profilo, nome_societa, nominativo_anonimo")
+				.select("id, uuid_profilo, nome_societa, nominativo_anonimo, categoria_attuale, torneo_attuale_nome")
 				.in("uuid_profilo", chunk)
 				.eq("nascosto", false),
 		]);
@@ -69,7 +69,7 @@ export async function loadPublicTeamProfiles(
 
 	const teamsById = new Map(teams.flatMap((team) => {
 		const name = publicProfileName("squadra", team.nominativo_anonimo, cleanText(team.nome_societa));
-		return name ? [[team.uuid_profilo, {name, anonymousName: team.nominativo_anonimo}] as const] : [];
+		return name ? [[team.uuid_profilo, {name, anonymousName: team.nominativo_anonimo, subprofileId: team.id, currentCategory: team.categoria_attuale, tournamentName: team.torneo_attuale_nome}] as const] : [];
 	}));
 	const order = new Map(ids.map((id, index) => [id, index]));
 
@@ -106,4 +106,18 @@ export async function searchPublicTeamProfiles(
 		supabase,
 		(data ?? []).map(({uuid_profilo}) => uuid_profilo),
 	)).slice(0, TEAM_PROFILE_SEARCH_LIMIT);
+}
+
+export async function searchPublicTournamentProfiles(supabase: SupabaseClient<Database>, rawQuery: string): Promise<PublicTeamProfile[]> {
+	const query = normalizeTeamSearchQuery(rawQuery);
+	if (query.length < TEAM_PROFILE_SEARCH_MIN_LENGTH) return [];
+	const {data, error} = await supabase.from("profilo_torneo_evento")
+		.select("id, uuid_profilo, nome_organizzazione, profilo!inner(nascosto, uuid_utente)")
+		.eq("nascosto", false).eq("profilo.nascosto", false).not("profilo.uuid_utente", "is", null)
+		.ilike("nome_organizzazione", `%${query}%`).order("nome_organizzazione").limit(TEAM_PROFILE_SEARCH_LIMIT);
+	if (error) throw error;
+	return (data ?? []).flatMap(row => row.nome_organizzazione?.trim() ? [{
+		profileId: row.uuid_profilo, subprofileId: row.id, name: row.nome_organizzazione.trim(),
+		anonymousName: false, imageUrl: null, location: null,
+	}] : []);
 }

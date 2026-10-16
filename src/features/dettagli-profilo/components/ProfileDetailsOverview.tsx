@@ -1,6 +1,7 @@
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import type {ReactNode} from "react";
-import {ExternalLinkIcon, EyeOff, StarIcon, type LucideIcon} from "lucide-react";
+import {ExternalLinkIcon, StarIcon, type LucideIcon} from "lucide-react";
+import ProfileAnonymityIndicator from "@/features/profilo/ProfileAnonymityIndicator";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -8,7 +9,8 @@ import type {GenericProfileDetail as PublicProfile} from "../profile-detail-mode
 import ProfilePngIcon from "@/features/profilo/ProfilePngIcon";
 import {PROFILE_OPTIONS} from "@/features/profilo/profile-model";
 import {profileInitials} from "@/features/profilo/public-profile-display";
-import {OfficialVerificationIcon, RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
+import {RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
+import ProfileNameWithIndicators from "@/features/profilo/ProfileNameWithIndicators";
 import {
 	getProfileDetailFacts,
 	getProfileDetailBadgeValues,
@@ -55,7 +57,7 @@ export function ProfileDetailsHeader({profile, presentation, actions}: {
 						</Avatar>
 						<div className="flex min-w-0 flex-1 flex-col gap-3">
 							<h1 className="font-home-display text-4xl leading-tight font-medium uppercase wrap-anywhere sm:text-5xl lg:text-6xl">
-								{profile.title} <OfficialVerificationIcon officialVerified={profile.officialVerified} className={"size-7 align-[0.16em]"} />
+								<ProfileNameWithIndicators name={profile.title} officialVerified={profile.officialVerified} anonymousName={profile.anonymousName} verificationClassName="size-7 align-[0.16em]" anonymityClassName="size-7 align-[0.16em]" white />
 							</h1>
 							{badges.length > 0 && <div role="group" aria-label="Caratteristiche del profilo" className="flex min-w-0 flex-wrap items-center gap-2">
 								{badges.map(value => <Badge key={value} title={value} className="h-auto min-h-5 max-w-full min-w-0 shrink whitespace-normal">
@@ -65,7 +67,7 @@ export function ProfileDetailsHeader({profile, presentation, actions}: {
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge variant="secondary" className="public-profile-type-badge"><ProfilePngIcon type={profile.type} color="currentColor" className="size-3" />{option.label}</Badge>
 								<RegisteredUserBadge emailConfirmed={profile.emailConfirmed} />
-								{profile.anonymousName && <Badge variant="outline"><EyeOff data-icon="inline-start" aria-hidden="true" />Nome nascosto</Badge>}
+								<ProfileAnonymityIndicator anonymousName={profile.anonymousName} badge />
 								{profile.primary && <Badge variant="outline"><StarIcon data-icon="inline-start" aria-hidden="true" />Profilo principale</Badge>}
 							</div>
 						</div>

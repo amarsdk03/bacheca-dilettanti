@@ -110,6 +110,8 @@ function profileRpcErrorMessage(message: string) {
 	if (message.includes("PROFILE_ACCESS_DENIED")) {
 		return "Questo sottoprofilo richiede l’abilitazione dell’admin.";
 	}
+	if (message.includes("CURRENT_TEAM_UNAVAILABLE")) return "La squadra selezionata non è più disponibile. Cercala nuovamente o inseriscila come testo.";
+	if (message.includes("CURRENT_TOURNAMENT_UNAVAILABLE")) return "Il torneo selezionato non è più disponibile. Cercalo nuovamente o inseriscilo come testo.";
 	if (message.includes("PROFILE_REQUIRED_FIELDS_MISSING")) {
 		return "Completa i campi obbligatori del sottoprofilo e riprova.";
 	}

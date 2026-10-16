@@ -74,7 +74,7 @@ export default async function Navbar({minimal = false, backToHome = false, workI
 										<ClipboardPenIcon aria-hidden="true" />
 										<span className="hidden lg:inline">Pubblica annuncio</span>
 									</Link>
-									{viewer && <NotificationBell />}
+									{viewer && <NotificationBell account={viewer.email} />}
 								</div>
 								<div className="hidden items-center gap-1 lg:flex">
 									{viewer ? (

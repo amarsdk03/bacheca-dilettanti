@@ -2,11 +2,12 @@ import type {AnnouncementAuthorProfileData, AnnouncementDetailField, Announcemen
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 import {getItalyDateParts} from "@/features/profilo/birth-date";
 import {buildAnnouncementSectionPresentation} from "./announcement-section-presentation";
+import {isProfileReferencePlaceholder} from "./announcement-content";
 
 function specified(value: unknown): string | null {
 	if (typeof value !== "string") return null;
 	const trimmed = value.trim();
-	return trimmed && !/^non specificat[oaie]$/i.test(trimmed) ? trimmed : null;
+	return trimmed && !/^non specificat[oaie]$/i.test(trimmed) && !isProfileReferencePlaceholder(trimmed) ? trimmed : null;
 }
 
 export function announcementYearRange(from: unknown, to: unknown, now = new Date()) {
@@ -18,10 +19,10 @@ export function announcementYearRange(from: unknown, to: unknown, now = new Date
 	};
 	const first = valid(from), last = valid(to);
 	if (first === null && last === null || first !== null && last !== null && first > last) return null;
-	if (first === last) return `${first} · circa ${year - first!} anni`;
-	if (first !== null && last !== null) return `${first}–${last} · circa ${year - last}–${year - first} anni`;
+	if (first === last) return `${first}`;
+	if (first !== null && last !== null) return `${first}–${last}`;
 	const only = first ?? last!;
-	return `${first !== null ? "Dal" : "Fino al"} ${only} · circa ${year - only} anni`;
+	return `${first !== null ? "Dal" : "Fino al"} ${only}`;
 }
 
 export function buildAnnouncementDetailSections({type, fields, facts, locations, authorProfile: profile, raw}: {
@@ -56,13 +57,15 @@ export function buildAnnouncementDetailSections({type, fields, facts, locations,
 	const experience = () => field("experience", "🏟️", "Esperienza", "Lista esperienze", "Non specificata");
 
 	switch (type) {
-		case "annuncio_giocatore":
+		case "annuncio_giocatore": {
 			zones(); football();
 			add("roles", "🎯", "Ruolo/i", null, [...new Set(fields.filter(item => ["Ruoli principali", "Ruoli specifici"].includes(item.label)).flatMap(item => item.items ?? []))], "Non specificati");
 			add("birth-year", "📅", "Anno", profile?.birthYear);
 			field("categories", "🏆", "Categoria cercata", "Categorie ricercate", "Non specificata");
-			add("previous-categories", "🏟️", "Categorie precedenti", null, profile?.previousCategories, "Non specificate");
+			const career = add("previous-categories", "🏟️", "Categorie precedenti", null, undefined, "Non specificate");
+			career.presentation = {kind: "player-career", rows: profile?.previousCareer ?? (profile?.previousCategories ?? []).map(category => ({category, team: null, period: null}))};
 			info(); break;
+		}
 		case "annuncio_squadra_cerca_giocatore":
 			zones(); football(); field("team-group", "👕", "Gruppo squadra", "Gruppo squadra");
 			field("roles", "🔍", "Ruolo/i cercati", "Ruolo/i cercati", "Non specificati");
@@ -128,7 +131,7 @@ export function buildAnnouncementDetailSections({type, fields, facts, locations,
 	for (const section of sections) {
 		// Display prose from its original text so paragraphs survive compact field formatting.
 		if (Object.hasOwn(proseSources, section.id)) section.value = specified(proseSources[section.id]);
-		section.presentation = buildAnnouncementSectionPresentation(section, raw);
+		section.presentation ??= buildAnnouncementSectionPresentation(section, raw);
 	}
 	return sections;
 }

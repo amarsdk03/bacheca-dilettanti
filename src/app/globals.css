@@ -14,7 +14,7 @@
     --notification-special: #23803e;
     --notification-news: #6457a6;
 }
-.notification-card { --notification-accent: var(--notification-news); }
+.notification-card, .notification-filter { --notification-accent: var(--notification-news); }
 .dark {
     --notification-interest: #bda3f3;
     --notification-follower: #8bbcf4;
@@ -24,12 +24,17 @@
     --notification-special: #92d9a7;
     --notification-news: #c0b4f3;
 }
-.notification-card[data-notification-type="interesse"] { --notification-accent: var(--notification-interest); }
-.notification-card[data-notification-type="follower"] { --notification-accent: var(--notification-follower); }
-.notification-card[data-notification-type="annuncio_seguito"] { --notification-accent: var(--notification-announcement); }
-.notification-card[data-notification-type="stato_annuncio"] { --notification-accent: var(--notification-status); }
-.notification-card[data-notification-type="segnalazione"] { --notification-accent: var(--notification-report); }
-.notification-card[data-notification-type="profilo_speciale"] { --notification-accent: var(--notification-special); }
+[data-notification-type="interesse"] { --notification-accent: var(--notification-interest); }
+[data-notification-type="follower"] { --notification-accent: var(--notification-follower); }
+[data-notification-type="annuncio_seguito"] { --notification-accent: var(--notification-announcement); }
+[data-notification-type="stato_annuncio"] { --notification-accent: var(--notification-status); }
+[data-notification-type="segnalazione"] { --notification-accent: var(--notification-report); }
+[data-notification-type="profilo_speciale"] { --notification-accent: var(--notification-special); }
+.notification-filter-dot { background: var(--notification-accent); }
+.notification-filter[aria-pressed="true"] {
+    border-color: var(--notification-accent);
+    background: color-mix(in srgb, var(--notification-accent) 12%, var(--background));
+}
 .notification-card[data-unread] { box-shadow: inset 2px 0 0 var(--notification-accent); }
 .notification-type-icon {
     color: var(--notification-accent);

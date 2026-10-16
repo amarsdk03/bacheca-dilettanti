@@ -1,6 +1,6 @@
 import "server-only";
 import {publicProfileName} from "@/features/profilo/profile-public-name";
-import {teamCategoryLabel} from "@/features/profilo/team-category-catalog";
+import {currentCategoryLabel} from "@/features/profilo/current-team";
 
 import type {SupabaseClient} from "@supabase/supabase-js";
 
@@ -141,7 +141,7 @@ async function loadProfileContent(
 		const [playerResult, mediaResult] = await Promise.all([
 			supabase
 				.from("profilo_giocatore")
-				.select("highlights_privati, richiede_caricamento_highlights, nominativo_anonimo, id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, tipologie_sport, categoria_attuale, disponibilita, genere, nazionalita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
+				.select("squadra_attuale_id, squadra_attuale_profilo_id, squadra_attuale_nome, squadra_attuale_categoria, squadra_attuale_torneo, squadra_attuale_dal, highlights_privati, richiede_caricamento_highlights, nominativo_anonimo, id, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, tipologie_sport, categoria_attuale, disponibilita, genere, nazionalita, ruoli_sport, piede_principale, altezza, peso, presentazione, storico_carriera")
 				.eq("uuid_profilo", id)
 				.eq("nascosto", false)
 				.maybeSingle(),
@@ -174,7 +174,7 @@ async function loadProfileContent(
 	if (type === "squadra") {
 		const {data, error} = await supabase
 			.from("profilo_squadra")
-			.select("nominativo_anonimo, id, nome_societa, sport_principale, tipologie_sport, categoria_attuale, presentazione")
+			.select("torneo_attuale_nome, nominativo_anonimo, id, nome_societa, sport_principale, tipologie_sport, categoria_attuale, presentazione")
 			.eq("uuid_profilo", id)
 			.eq("nascosto", false)
 			.maybeSingle();
@@ -189,7 +189,7 @@ async function loadProfileContent(
 				availability: null,
 				fields: [
 					detailListField("Tipologia calcio", ordinaTipologieCalcio(cleanStringArray(data.tipologie_sport))),
-					detailField("Categoria attuale Prima Squadra", teamCategoryLabel(data.categoria_attuale)),
+					detailField("Categoria attuale Prima Squadra", currentCategoryLabel(data.categoria_attuale, data.torneo_attuale_nome)),
 					detailField("Presentazione", data.presentazione, true),
 				],
 			},
@@ -463,9 +463,11 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			});
 		}
 		const enrichedExperiences = rawExperiences.map((experience, index) => {
-   const team = experience.teamProfileId ? teamProfiles.get(experience.teamProfileId) ?? null : null;
+   const candidate = experience.teamProfileId ? teamProfiles.get(experience.teamProfileId) ?? null : null;
+   const detached = Boolean(experience.teamSubprofileId && (!candidate || experience.teamSubprofileId !== candidate.subprofileId));
+   const team = detached ? null : candidate;
    const teamName = team?.name ?? "Squadra";
-   const concealSavedName = Boolean(experience.teamProfileId && (!team || team.anonymousName));
+   const concealSavedName = Boolean(!detached && experience.teamProfileId && (!team || team.anonymousName));
    const teamIsTitle = type === "giocatore" || (type === "staff-sportivo" && index < (content.experiences?.length ?? 0));
    return {
     ...experience,

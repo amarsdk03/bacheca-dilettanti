@@ -84,7 +84,7 @@ export default function PlayerOverview({presentation, highlightsUrl, privateHigh
 					</CardHeader>
 					<CardContent className="flex flex-col gap-3">
 						{privateHighlights ? <div className="flex min-h-48 w-full flex-col items-center justify-center gap-4 px-4 sm:px-32 py-6 sm:py-12 text-center">
-							<p className="text-base leading-7 text-muted-foreground">Highlights disponibili ma inviabili privatamente a chi è interessato. <InterestDialogTrigger inline /> per riceverlo!</p>
+							<p className="text-base leading-7 text-muted-foreground">Highlights disponibili ma inviabili privatamente a chi è interessato. <InterestDialogTrigger inline /></p>
 						</div> : embedUrl ? (
 							<div className="aspect-video overflow-hidden rounded-lg bg-muted">
 								<iframe

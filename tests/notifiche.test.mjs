@@ -49,7 +49,7 @@ test("server reads derive the recipient from the authenticated account", async (
 	const page = {items:[],nextCursor:null,unreadCount:7};
 	const load=loader({
 		"@/features/auth/server/queries":{getAuthenticatedViewer:async()=>account},
-		"@/lib/supabase/admin":{createAdminClient:()=>({rpc:async(name,values)=>{assert.equal(name,"get_notifications_v1");args=values;return {data:page,error:null};}})},
+		"@/lib/supabase/admin":{createAdminClient:()=>({rpc:async(name,values)=>{assert.equal(name,"get_notifications_v2");args=values;return {data:page,error:null};}})},
 	});
 	const queries=load("src/features/notifiche/server/queries.ts");
 	assert.deepEqual(await queries.getNotifications(3),page); assert.equal(args.p_user,userId); assert.equal(args.p_limit,3);
@@ -79,6 +79,7 @@ test("interest cards render names, links, safe contacts and a readable timestamp
 	assert.match(html,/Mario Rossi/); assert.match(html,/ASD Verona/); assert.match(html,/ha manifestato interesse/);
 	assert.match(html,/mailto:mario@example.it/); assert.match(html,/tel:\+393331234567/); assert.match(html,/dateTime="2026-10-05T10:00:00Z"/);
 	assert.match(html,/Nuova/); assert.match(html,/data-notification-type="interesse"/);
+	assert.match(html,/Contattalo se sei interessato!/);
 });
 test("deleted references lose links, read cards lose the new badge and snapshots escape HTML", () => {
 	const html=renderToStaticMarkup(React.createElement(Card,{item:{...item,readAt:"2026-10-05T10:10:00Z",actor:{label:"<script>bad</script>",href:null},target:null,email:null,phone:null}}));
@@ -104,4 +105,58 @@ test("notification GET is authenticated, validates pagination and disables cachi
 	assert.equal((await route.GET(new NextRequest("https://example.test/api/notifiche?limit=100"))).status,400);
 	current=null;assert.equal((await route.GET(new NextRequest("https://example.test/api/notifiche?limit=3"))).status,401);
 	assert.equal(calls,1);
+});
+
+test("notification filters reach the authenticated RPC and reject unknown types", async () => {
+	let args;
+	const queries = loader({
+		"@/features/auth/server/queries": {getAuthenticatedViewer: async () => account},
+		"@/lib/supabase/admin": {createAdminClient: () => ({rpc: async (name, values) => {
+			args = values; return {data: {items: [], nextCursor: null, unreadCount: 7}, error: null};
+		}})},
+	})("src/features/notifiche/server/queries.ts");
+	await queries.getNotifications(20, null, "follower");
+	assert.equal(args.p_type, "follower");
+	assert.equal(args.p_user, userId);
+	await assert.rejects(() => queries.getNotifications(20, null, "invalid"));
+	const {NextRequest} = require("next/server");
+	const route = loader({
+		"@/features/auth/server/queries": {getAuthenticatedViewer: async () => account},
+		"@/features/notifiche/server/queries": {getNotifications: async (limit, cursor, type) => {
+			assert.equal(type, "follower"); return {items: [], nextCursor: null, unreadCount: 0};
+		}},
+	})("src/app/api/notifiche/route.ts");
+	assert.equal((await route.GET(new NextRequest("https://example.test/api/notifiche?type=follower"))).status, 200);
+	assert.equal((await route.GET(new NextRequest("https://example.test/api/notifiche?type=invalid"))).status, 400);
+});
+
+test("browser delivery requires explicit permission, skips history and read items, and respects account opt-out", async (t) => {
+	const original = Object.fromEntries(["window", "navigator", "Notification", "localStorage"].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+	t.after(() => {for (const [key, descriptor] of Object.entries(original)) descriptor ? Object.defineProperty(globalThis, key, descriptor) : delete globalThis[key];});
+	const storage = new Map();
+	let permissionRequests = 0;
+	const shown = [];
+	const registration = {showNotification: async (title, options) => shown.push({title, ...options})};
+	Object.defineProperties(globalThis, {
+		window: {configurable: true, value: Object.assign(new EventTarget(), {isSecureContext: true, Notification: {}})},
+		navigator: {configurable: true, value: {serviceWorker: {register: async () => registration, ready: Promise.resolve(registration)}}},
+		Notification: {configurable: true, value: {permission: "default", requestPermission: async () => {permissionRequests++; Notification.permission = "granted"; return "granted";}}},
+		localStorage: {configurable: true, value: {getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value)}},
+	});
+	const browser = loader()("src/features/notifiche/browser-notifications.ts");
+	const deliver = browser.createBrowserNotificationDelivery("one");
+	assert.equal(browser.browserNotificationStatus("one"), "disabled");
+	await deliver([item]); assert.equal(permissionRequests, 0); assert.equal(shown.length, 0);
+	await browser.setBrowserNotifications("one", true);
+	assert.equal(permissionRequests, 1); assert.equal(browser.browserNotificationStatus("two"), "disabled");
+	await deliver([item]); assert.equal(shown.length, 0);
+	await deliver([{...item, id: "9007199254740993"}, item]);
+	assert.equal(shown.length, 1); assert.match(shown[0].tag, /9007199254740993/);
+	assert.doesNotMatch(JSON.stringify(shown), /mario@example|Mario Rossi|333/);
+	await deliver([{...item, id: "9007199254740993"}]); assert.equal(shown.length, 1);
+	await deliver([{...item, id: "9007199254740994", readAt: "2026-10-05"}]); assert.equal(shown.length, 1);
+	await browser.setBrowserNotifications("one", false);
+	await deliver([{...item, id: "9007199254740995"}]); assert.equal(shown.length, 1);
+	Notification.permission = "denied";
+	assert.equal(browser.browserNotificationStatus("one"), "denied");
 });

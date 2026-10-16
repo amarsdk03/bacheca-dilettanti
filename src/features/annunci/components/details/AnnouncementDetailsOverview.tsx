@@ -9,8 +9,8 @@ import AnnouncementSectionContent from "./AnnouncementSectionContent";
 
 function SectionCard({title, prefix, children}: {title: string; prefix: ReactNode; children: ReactNode}) {
 	return <Card className="min-w-0">
-		<CardHeader><CardTitle><h2 className="flex items-center justify-center gap-2 text-center font-home-display text-2xl uppercase wrap-anywhere lg:text-3xl">{prefix}<span>{title}:</span></h2></CardTitle></CardHeader>
-		<CardContent className="min-w-0 text-base leading-7">{children}</CardContent>
+		<CardHeader><CardTitle><h2 className="flex items-center justify-start gap-2 text-start font-home-display text-xl uppercase wrap-anywhere lg:text-2xl">{prefix}<span>{title}:</span></h2></CardTitle></CardHeader>
+		<CardContent className="min-w-0 text-sm leading-6">{children}</CardContent>
 	</Card>;
 }
 

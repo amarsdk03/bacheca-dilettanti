@@ -21,7 +21,7 @@ export default function AnnouncementDetailsContacts({
 		<section aria-labelledby="announcement-contacts-title" className="min-w-0">
 			<Card>
 				<CardHeader>
-					<CardTitle><h2 id="announcement-contacts-title" className="text-center font-home-display text-2xl uppercase lg:text-3xl">Contatta</h2></CardTitle>
+					<CardTitle><h2 id="announcement-contacts-title" className="text-start font-home-display text-xl uppercase lg:text-2xl">Contatta</h2></CardTitle>
 					<CardDescription>{authenticated ? "Usa uno dei recapiti pubblicati per questo annuncio." : "Accedi per visualizzare i recapiti pubblicati per questo annuncio."}</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -49,10 +49,12 @@ export default function AnnouncementDetailsContacts({
 											render={<a href={contact.href} />}
 											nativeButton={false}
 											variant={index === 0 ? "default" : "outline"}
-											className="w-full justify-start"
+											className="h-auto w-full min-w-0 flex-col items-start gap-1.5 text-left whitespace-normal"
+											style={{padding: "1rem"}}
 										>
-											<Icon data-icon="inline-start" aria-hidden="true" />
-											<span className="min-w-0 truncate">{contact.label}: {contact.value}{contact.referentRole ? ` (${contact.referentRole})` : ""}</span>
+											<span className="inline-flex items-center gap-2"><Icon data-icon="inline-start" aria-hidden="true" />{contact.label}</span>
+											<span className="max-w-full text-base leading-snug wrap-anywhere">{contact.value}</span>
+											{contact.referentRole && <span className="max-w-full text-xs font-normal wrap-anywhere opacity-80">{contact.referentRole}</span>}
 										</Button>
 									</li>
 								);

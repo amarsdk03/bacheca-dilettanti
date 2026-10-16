@@ -1,7 +1,9 @@
 import "server-only";
+import {PROFESSIONAL_AVAILABILITY_OPTIONS} from "@/features/profilo/professional-availability";
 import {isTeamCategory} from "@/features/profilo/team-category-catalog";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
+import {allowsForeignProfileRegion, FOREIGN_PROFILE_REGION} from "@/features/profilo/profile-location-regions";
 import {getRequiredBirthDateError} from "@/features/profilo/birth-date";
 import {normalizeOptionalTime} from "@/features/pubblica-annuncio/publish-field-validation";
 import {parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
@@ -219,7 +221,7 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 
 	return value.map((entry) => {
 		if (!isRecord(entry)) fail("Lo storico delle esperienze non è valido.", 3, profileType);
-		assertExactKeys(entry, ["id", "titolo", "ente", "periodoDa", "periodoA", "descrizione", "stato", "squadraProfiloId"], profileType);
+		assertExactKeys(entry, ["id", "titolo", "ente", "periodoDa", "periodoA", "descrizione", "stato", "squadraProfiloId", "squadraIstanzaId"], profileType);
 		const periodoDa = textValue(entry.periodoDa, 4, profileType);
 		const periodoA = textValue(entry.periodoA, 4, profileType);
 		const currentYear = new Date().getFullYear();
@@ -246,13 +248,14 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 		}
 		return {
 			id: textValue(entry.id, 100, profileType) ?? crypto.randomUUID(),
-			titolo: textValue(entry.titolo, 120, profileType) ?? "",
-			ente: textValue(entry.ente, 120, profileType) ?? "",
+			titolo: textValue(entry.titolo, MAX_SHORT_TEXT, profileType) ?? "",
+			ente: textValue(entry.ente, MAX_SHORT_TEXT, profileType) ?? "",
 			periodoDa: periodoDa ?? "",
-			periodoA: periodoDa ? periodoA ?? "" : "",
+			periodoA: periodoDa || profileType === "giocatore" ? periodoA ?? "" : "",
 			descrizione: textValue(entry.descrizione, MAX_LONG_TEXT, profileType) ?? "",
 			stato: stato ?? "non-specificare",
 			squadraProfiloId: squadraProfiloId?.toLocaleLowerCase("en-US") ?? null,
+			...(entry.squadraIstanzaId == null ? {} : {squadraIstanzaId: subprofileInstance(entry.squadraIstanzaId, profileType)}),
 		};
 	});
 }
@@ -311,7 +314,9 @@ function locations(
 		if (!isRecord(entry)) fail("Le località del profilo non sono valide.", 3, profileType);
 		assertExactKeys(entry, ["regione", "citta"], profileType);
 		const regione = textValue(entry.regione, 80, profileType);
-		if (!regione || !REGIONS.has(regione)) fail("Seleziona una regione italiana valida.", 3, profileType);
+		if (!regione || (!REGIONS.has(regione) && !(regione === FOREIGN_PROFILE_REGION && allowsForeignProfileRegion(profileType)))) {
+			fail(allowsForeignProfileRegion(profileType) ? "Seleziona una regione italiana valida oppure Estero." : "Seleziona una regione italiana valida.", 3, profileType);
+		}
 		const citta = textValue(entry.citta, 120, profileType);
 		const key = `${regione}\u0000${citta ?? ""}`;
 		if (seen.has(key)) fail("Rimuovi le località duplicate dal profilo.", 3, profileType);
@@ -331,6 +336,12 @@ function anonymousName(value: unknown, type: ProfileType): boolean {
  return enabled;
 }
 
+function subprofileInstance(value: unknown, type: ProfileType): number | null {
+	if (value == null) return null;
+	if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) fail("Il profilo collegato non è valido.", 3, type);
+	return value;
+}
+
 function normalizeDraft(
 	type: ProfileType,
 	value: unknown,
@@ -338,11 +349,11 @@ function normalizeDraft(
 	if (!isRecord(value)) fail("I dati del profilo non sono validi.", 3, type);
 
 	if (type === "giocatore") {
-		assertExactKeys(value, ["nominativo_anonimo", "altezza", "anno_nascita", "categoria_attuale", "categorie_ricercate", "cognome", "disponibilita", "genere", "giorno_nascita", "mese_nascita", "nome", "nazionalita", "peso", "piede_principale", "presentazione", "highlights_privati", "richiede_caricamento_highlights", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport", "video_highlights"], type);
+		assertExactKeys(value, ["squadra_attuale_id", "squadra_attuale_profilo_id", "squadra_attuale_nome", "squadra_attuale_categoria", "squadra_attuale_torneo", "squadra_attuale_dal", "nominativo_anonimo", "altezza", "anno_nascita", "categoria_attuale", "categorie_ricercate", "cognome", "disponibilita", "genere", "giorno_nascita", "mese_nascita", "nome", "nazionalita", "peso", "piede_principale", "presentazione", "highlights_privati", "richiede_caricamento_highlights", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport", "video_highlights"], type);
 		const normalizedBirthDate = birthDate(value, type);
 		const availability = value.disponibilita === "disponibile-subito" ? "svincolato" : enumText(value.disponibilita, new Set(["svincolato", "sotto-contratto"]), type);
 		const category = textValue(value.categoria_attuale, 120, type);
-		if (category && !isPlayerCurrentCategory(category)) fail("La categoria attuale non è valida.", 3, type);
+		if (category && !isPlayerCurrentCategory(category) && !isTeamCategory(category)) fail("La categoria attuale non è valida.", 3, type);
 		const gender = enumText(value.genere, new Set(["Uomo", "Donna"]), type);
 		const nationality = enumText(value.nazionalita, NATIONALITIES, type);
 		const highlightsUploadRequested = value.richiede_caricamento_highlights ?? false;
@@ -355,6 +366,12 @@ function normalizeDraft(
 			altezza: textValue(value.altezza, MAX_SHORT_TEXT, type),
 			anno_nascita: normalizedBirthDate.year,
 			categoria_attuale: availability === "svincolato" ? null : category,
+			squadra_attuale_id: availability === "svincolato" ? null : subprofileInstance(value.squadra_attuale_id, type),
+			squadra_attuale_profilo_id: null,
+			squadra_attuale_nome: availability === "svincolato" ? null : textValue(value.squadra_attuale_nome, MAX_SHORT_TEXT, type),
+			squadra_attuale_categoria: null,
+			squadra_attuale_torneo: null,
+			squadra_attuale_dal: availability === "svincolato" ? null : birthField(value.squadra_attuale_dal, "year", type),
 			categorie_ricercate: normalizeCategories(stringList(value.categorie_ricercate, type)),
 			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
 			disponibilita: availability,
@@ -377,7 +394,7 @@ function normalizeDraft(
 	}
 
 	if (type === "squadra") {
-		assertExactKeys(value, ["nominativo_anonimo", "categoria_attuale", "nome_societa", "presentazione", "sport_principale", "tipologie_sport"], type);
+		assertExactKeys(value, ["torneo_attuale_id", "torneo_attuale_nome", "nominativo_anonimo", "categoria_attuale", "nome_societa", "presentazione", "sport_principale", "tipologie_sport"], type);
 		const sports = ordinaTipologieCalcio(stringList(value.tipologie_sport, type));
 		if (sports.length !== 1) fail("Seleziona una sola tipologia di calcio.", 3, type);
 		const category = textValue(value.categoria_attuale, 120, type);
@@ -385,6 +402,8 @@ function normalizeDraft(
 		return {
 			nominativo_anonimo: anonymousName(value.nominativo_anonimo, type),
 			categoria_attuale: category,
+			torneo_attuale_id: category?.endsWith("::Tornei") ? subprofileInstance(value.torneo_attuale_id, type) : null,
+			torneo_attuale_nome: category?.endsWith("::Tornei") ? textValue(value.torneo_attuale_nome, MAX_SHORT_TEXT, type) : null,
 			nome_societa: textValue(value.nome_societa, MAX_SHORT_TEXT, type),
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
 			sport_principale: baseSport(value.sport_principale, type),
@@ -459,7 +478,7 @@ function normalizeDraft(
    sede_professionista: textValue(value.sede_professionista, MAX_SHORT_TEXT, type),
    contatto_email: textValue(value.contatto_email, 254, type)?.toLowerCase() ?? null,
    contatto_telefono: textValue(value.contatto_telefono, 40, type),
-   disponibilita: enumText(value.disponibilita, AVAILABILITIES, type),
+   disponibilita: enumText(value.disponibilita, new Set(PROFESSIONAL_AVAILABILITY_OPTIONS.map(option => option.value)), type),
    presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
    presentazione_servizi: textValue(value.presentazione_servizi, MAX_LONG_TEXT, type),
    sport_principale: baseSport(value.sport_principale, type),
