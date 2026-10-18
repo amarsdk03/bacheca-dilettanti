@@ -54,7 +54,9 @@ Sviluppato da Amar Sidkir, per Gabriele Zaniboni, a partire dal 15 luglio 2026.
 | `/profili` | Directory profili con ricerca e filtri |
 | `/dettagli-profilo?id=…&type=…` | Dettaglio pubblico di un sottoprofilo |
 | `/pubblica-annuncio` | Wizard di pubblicazione |
+| `/pubblica-annuncio/conferma` | Conferma della pubblicazione dell’annuncio |
 | `/il-tuo-profilo` | Area personale autenticata |
+| `/centro-notifiche` | Notifiche ricevute e preferenze del browser |
 | `/accedi` | Accesso utente |
 | `/registrati` | Registrazione account |
 | `/password-dimenticata` | Richiesta di recupero password |
@@ -64,6 +66,9 @@ Sviluppato da Amar Sidkir, per Gabriele Zaniboni, a partire dal 15 luglio 2026.
 | `/auth/link-non-valido` | Esito per link email non valido o non verificabile |
 | `/contatti` | Contatti e assistenza |
 | `/partner` | Sezione partner |
+| `/cookie-policy` | Informativa sui cookie |
+| `/privacy-policy` | Informativa sulla privacy |
+| `/termini-di-servizio` | Termini di servizio |
 | `/sitemap.xml` | Sitemap dei contenuti pubblici indicizzabili |
 | `/robots.txt` | Direttive per crawler e riferimento alla sitemap |
 | `/api/metadata/annuncio-immagine?id=…` | Immagine per le anteprime social degli annunci |
@@ -127,7 +132,7 @@ La piattaforma genera metadati completi per le pagine pubbliche: titolo, descriz
 - Gli annunci pubblicati usano titolo, descrizione, tipologia, località e immagine caricata; in assenza di quest’ultima usano la foto dell’autore o il banner.
 - Gli annunci non pubblicati, parziali o in revisione mantengono una preview completa con lo stato visibile, ma sono `noindex,nofollow`.
 - Le varianti con ricerca, filtri o paginazione di `/annunci` e `/profili` hanno una preview descrittiva, canonical verso la directory principale e `noindex,follow` per evitare contenuti duplicati.
-- Dashboard, autenticazione, recupero password, conferme e pagamenti non vengono indicizzati.
+- Le aree riservate, autenticazione, recupero password, conferme e pagamenti non vengono indicizzati.
 
 `/sitemap.xml` include le pagine pubbliche, gli articoli, i sottoprofili visibili e gli annunci effettivamente pubblicati; viene rigenerata con una cache di un'ora. Se una query Supabase fallisce, le voci dinamiche possono risultare parziali pur con una risposta valida: la completezza della sitemap va quindi monitorata. `/robots.txt` espone la sitemap e blocca i flussi riservati ai crawler.
 
@@ -155,7 +160,6 @@ node --test $testFiles
 
 - Completamento del flusso operativo di pagamento e rimborso degli annunci prioritari.
 - Analitiche visualizzazione per aggiornamenti, profili e annunci
-- Aggiunta di sponsor/partner nelle varie sezioni dedicate
 
 ---
 
@@ -165,9 +169,9 @@ Push effettuato il: ??/??/2026
 
 ### Feature principali
 
-- Dashboard amministrativa di gestione utenti, profili, annunci e moderazione
 - Personalizzazione aumentata e miglioramento UI per le pagine dei profili e annunci
 - Ampliati i dati degli annunci con gruppi squadra, categorie, contenuti e promozioni professionali
+- Aggiunto centro notifiche con filtri per tipologia, notifiche del browser e aggiornamenti su interessi, follower e annunci seguiti
 
 ---
 
@@ -187,7 +191,8 @@ Push effettuato il: 17/09/2026
 
 - Registrazione e accesso tramite indirizzo email verificato
 - Personalizzazione dei sottoprofili
-- Visualizzazione annunci personali
+- Gestione degli annunci personali e dei profili seguiti
+- Centro notifiche con preferenza per gli avvisi nel browser
 - Cambio password via link email
 
 ### Profili
@@ -205,12 +210,14 @@ Push effettuato il: 17/09/2026
     - Creators (disponibile solo con abilitazione admin)
 - Possibilità di cercare e filtrare i profili creati sulla piattaforma
 - Possibilità di visualizzare maggiori info su un profilo specifico
-- Possibilità di segnalare un annuncio con eventuale messaggio di info aggiuntivo
-- Disponibilità delle tipologie nella directory controllata dal feature flag `PROFILI_LIMITATI`.
+- Possibilità di seguire un profilo e ricevere notifiche sui nuovi annunci
+- Possibilità di impostare un nominativo anonimo per i profili supportati
+- Giocatori: squadra attuale, categoria/torneo e storico della carriera
+- Squadre: categoria e torneo attuali della prima squadra
 
 ### Annunci
 
-- Pubblicazione annuncii per utenti anonimi e registrati:
+- Pubblicazione di annunci per utenti anonimi e registrati:
     - Selezione del sottoprofilo
     - Compilazione/aggiornamento dati del sottoprofilo
     - Compilazione dati dell'annuncio
@@ -224,7 +231,4 @@ Push effettuato il: 17/09/2026
 
 ### Admin
 
-- Accesso per soli utenti admin
-- Visualizzazione riepilogo e statistiche piattaforma
-- Gestione profili e annunci
-- Approvazione o rifiuto pubblicazione annunci
+- La dashboard amministrativa è in fase di progettazione per un deploy separato; non fa parte delle route della webapp attuale.

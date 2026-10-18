@@ -1061,9 +1061,9 @@ function ProfileFields({
 				                    }}
 				                    groups={TEAM_CATEGORY_GROUPS.map(({gruppo, opzioni}) => ({
 					                    label: gruppo,
-					                    options: [...opzioni, "Tornei"].map(item => ({
+					                    options: opzioni.map(item => ({
 						                    value: categoryKey(gruppo, item),
-						                    label: item === "Tornei" ? `${gruppo} - Tornei` : `${gruppo} — ${item}`
+						                    label: `${gruppo} — ${item}`
 					                    }))
 				                    }))} placeholder="Seleziona una categoria" required={requiredFields}
 				                    error={errors.category}/>

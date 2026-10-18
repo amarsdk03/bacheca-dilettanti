@@ -4,6 +4,7 @@ import {test} from "node:test";
 
 const engine = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migration = readFileSync(new URL("../supabase/migrations/20261016194927_current_teams_tournaments_and_clean_profile_creation.sql", import.meta.url), "utf8");
+const regressionMigration = readFileSync(new URL("../supabase/migrations/20261017144323_fix_unassigned_current_team_record.sql", import.meta.url), "utf8");
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
 test("current teams: authoritative inheritance, history, recreation and scoped cleanup", {skip: !existsSync(engine)}, async t => {
@@ -53,8 +54,23 @@ test("current teams: authoritative inheritance, history, recreation and scoped c
 	await db.query("insert into public.link_social_profilo values($1,'squadra',10,'keep'),($1,'giocatore',999,'old')", [id(1)]);
 	await db.query("insert into public.localita_profilo values($1,'squadra',10,'Lazio'),($1,'giocatore',999,'old')", [id(1)]);
 	await db.exec(migration);
+	await db.exec(regressionMigration);
 	const save = async (profile, type, draft) => db.query("select private.save_owned_subprofile_internal_v1($1,$2,$3,'[]')", [id(profile), type, JSON.stringify(draft)]);
 	const player = async () => (await db.query("select * from public.profilo_giocatore where id=20")).rows[0];
+	const unassignedTeamPlayer = async () => (await db.query("select * from public.profilo_giocatore where id=40")).rows[0];
+	await db.query("insert into public.profilo_giocatore(id,uuid_profilo,disponibilita) values(40,$1,'sotto-contratto')", [id(4)]);
+	await save(4, "giocatore", {
+		disponibilita: "sotto-contratto",
+		categoria_attuale: "Calcio a 11 maschile::FIGC — Serie A",
+		squadra_attuale_id: null,
+		squadra_attuale_nome: null,
+		squadra_attuale_dal: null,
+		storico_carriera: [],
+	});
+	assert.equal((await unassignedTeamPlayer()).categoria_attuale, "Calcio a 11 maschile::FIGC — Serie A");
+	assert.equal((await unassignedTeamPlayer()).squadra_attuale_id, null);
+	assert.equal((await unassignedTeamPlayer()).squadra_attuale_profilo_id, null);
+	assert.equal((await unassignedTeamPlayer()).squadra_attuale_nome, null);
 	const draft = {disponibilita: "sotto-contratto", categoria_attuale: "FORGED", squadra_attuale_id: 10, squadra_attuale_nome: "FORGED", squadra_attuale_dal: "2024", storico_carriera: []};
 	await save(2, "giocatore", draft);
 	assert.equal((await player()).squadra_attuale_nome, "ASD Roma");

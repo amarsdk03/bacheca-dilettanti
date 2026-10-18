@@ -30,15 +30,20 @@ function loader(stubs = {}) {
 }
 const load = loader();
 const {currentCategoryLabel, currentPlayerCareer} = load("src/features/profilo/current-team.ts");
-const {TEAM_CATEGORY_OPTIONS} = load("src/features/profilo/team-category-catalog.ts");
+const {TEAM_CATEGORY_GROUPS, TEAM_CATEGORY_OPTIONS} = load("src/features/profilo/team-category-catalog.ts");
 
 test("all eight team groups offer tournaments and resolve the named competition", () => {
 	const tournaments = TEAM_CATEGORY_OPTIONS.filter(option => option.value.endsWith("::Tornei"));
 	assert.equal(tournaments.length, 8);
 	assert.equal(currentCategoryLabel("Calcio a 11 maschile::FIGC — Serie A"), "Calcio a 11 maschile — FIGC — Serie A");
-	assert.ok(tournaments.every(option => option.label.endsWith(" - Tornei")));
+	assert.ok(tournaments.every(option => option.label.endsWith(" — Tornei")));
+	for (const {gruppo, opzioni} of TEAM_CATEGORY_GROUPS) {
+		assert.equal(opzioni.at(-1), "Altra categoria", gruppo);
+		assert.equal(opzioni.at(-2), "Tornei", gruppo);
+		assert.equal(TEAM_CATEGORY_OPTIONS.find(option => option.value === `${gruppo}::Tornei`).label, `${gruppo} — Tornei`);
+	}
 	assert.equal(currentCategoryLabel("Calcio a 7 femminile::Tornei", "Coppa Primavera"), "Coppa Primavera");
-	assert.equal(currentCategoryLabel("Calcio a 7 femminile::Tornei", ""), "Calcio a 7 femminile - Tornei");
+	assert.equal(currentCategoryLabel("Calcio a 7 femminile::Tornei", ""), "Calcio a 7 femminile — Tornei");
 });
 
 test("managed career precedes history, uses the tournament and avoids matching open duplicates", () => {
