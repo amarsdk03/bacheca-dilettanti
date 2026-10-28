@@ -24,7 +24,7 @@ function sourceLoader(overrides = {}) {
 			if (specifier === "server-only") return {};
 			if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
 			const base = specifier.startsWith("@/")
-				? path.join(root, "src", specifier.slice(2))
+				? path.join(root, "apps/web/src", specifier.slice(2))
 				: path.resolve(path.dirname(file), specifier);
 			const target = [base, base + ".ts", base + ".tsx"].find((candidate) => existsSync(candidate));
 			if (!target) throw new Error("Cannot resolve " + specifier);
@@ -62,7 +62,7 @@ function createSupabaseMock(rowsByTable) {
 async function getEnabledProfileTypes(rowsByTable) {
 	const client = createSupabaseMock({profilo: [{uuid: "profile-1", uuid_utente: "user-1", nascosto: false}], ...rowsByTable});
 	const load = sourceLoader({"@/lib/supabase/server": {createClient: async () => client}, "@/lib/supabase/admin": {createAdminClient: () => client}});
-	const {getPublishProfileContext} = load("src/features/pubblica-annuncio/server/queries.ts");
+	const {getPublishProfileContext} = load("apps/web/src/features/pubblica-annuncio/server/queries.ts");
 	const context = await getPublishProfileContext("user-1");
 	return context;
 }

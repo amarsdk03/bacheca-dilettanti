@@ -6,7 +6,7 @@ import path from "node:path";
 import {test} from "node:test";
 import ts from "typescript";
 
-const source = readFileSync(new URL("../src/features/pubblica-annuncio/publish-field-validation.ts", import.meta.url), "utf8");
+const source = readFileSync(new URL("../apps/web/src/features/pubblica-annuncio/publish-field-validation.ts", import.meta.url), "utf8");
 const javascript = ts.transpileModule(source, {
 	compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022},
 }).outputText;
@@ -26,13 +26,13 @@ function load(relative) {
  });
  new Function("require", "module", "exports", outputText)(specifier => {
   if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
-  const base = specifier.startsWith("@/") ? path.join(root, "src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+  const base = specifier.startsWith("@/") ? path.join(root, "apps/web/src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
   return load([base, `${base}.ts`, `${base}.tsx`].find(existsSync));
  }, loaded, loaded.exports);
  return loaded.exports;
 }
-const {createAnnouncementDetailsDrafts, getAnnouncementValidationErrors} = load("src/features/pubblica-annuncio/publish-model.ts");
-const {getProfileRequiredFieldErrors} = load("src/features/profilo/profile-required-fields.ts");
+const {createAnnouncementDetailsDrafts, getAnnouncementValidationErrors} = load("apps/web/src/features/pubblica-annuncio/publish-model.ts");
+const {getProfileRequiredFieldErrors} = load("apps/web/src/features/profilo/profile-required-fields.ts");
 
 test("player requires a complete birth date, gender and availability while current category stays optional", () => {
 	const draft = {nome: "Mario", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"]}, genere: "", anno_nascita: "", disponibilita: ""};

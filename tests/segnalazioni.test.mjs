@@ -28,7 +28,7 @@ const {
 	isReportTarget,
 	normalizeReportReason,
 	readReportRpcResult,
-} = loadSource("src/features/segnalazioni/report-model.ts");
+} = loadSource("apps/web/src/features/segnalazioni/report-model.ts");
 
 test("report targets must identify an announcement or profile with a UUID", () => {
 	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -61,9 +61,9 @@ test("report RPC responses expose only supported application states", () => {
 });
 
 test("detail pages render the shared action bar for their displayed element", () => {
-	const announcement = readFileSync(path.join(root, "src/features/annunci/components/details/AnnouncementDetailsLayout.tsx"), "utf8");
-	const profile = readFileSync(path.join(root, "src/features/dettagli-profilo/DettagliProfilo.tsx"), "utf8");
-	const actions = readFileSync(path.join(root, "src/features/segnalazioni/DetailActions.tsx"), "utf8");
+	const announcement = readFileSync(path.join(root, "apps/web/src/features/annunci/components/details/AnnouncementDetailsLayout.tsx"), "utf8");
+	const profile = readFileSync(path.join(root, "apps/web/src/features/dettagli-profilo/DettagliProfilo.tsx"), "utf8");
+	const actions = readFileSync(path.join(root, "apps/web/src/features/segnalazioni/DetailActions.tsx"), "utf8");
 
 	assert.match(announcement, /<DetailActions/);
 	assert.match(announcement, /kind: "annuncio"/);

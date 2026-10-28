@@ -1,15 +1,14 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20261006194601_announcement_fields_and_professional_regions.sql", import.meta.url);
 const uid = "11111111-1111-4111-8111-111111111111";
 const profile = "22222222-2222-4222-8222-222222222222";
 const announcement = "33333333-3333-4333-8333-333333333333";
 
-test("announcement fields migration enforces regions transactionally, stores groups, and validates the full Staff catalogue", {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async (t) => {
-	const {PGlite} = await import(engineUrl.href);
+test("announcement fields migration enforces regions transactionally, stores groups, and validates the full Staff catalogue", async (t) => {
 	const db = await PGlite.create();
 	try {
 		await db.exec(`
@@ -96,7 +95,7 @@ test("announcement fields migration enforces regions transactionally, stores gro
 			}
 		});
 		await t.test("all 93 Staff options match the SQL catalogue and Qualsiasi is exclusive", async () => {
-			const source = readFileSync(new URL("../src/features/pubblica-annuncio/types/staff-category-catalog.ts", import.meta.url), "utf8");
+			const source = readFileSync(new URL("../apps/web/src/features/pubblica-annuncio/types/staff-category-catalog.ts", import.meta.url), "utf8");
 			const groups = Function(`return ${source.match(/STAFF_CATEGORY_GROUPS = (\[[\s\S]*?\]) as const/)[1]}`)();
 			const keys = groups.flatMap(({gruppo, opzioni}) => opzioni.map(option => gruppo === "Selezione generale" ? option : `${gruppo}::${option}`));
 			assert.equal(new Set(keys).size, 93);

@@ -6,7 +6,7 @@ import {fileURLToPath} from "node:url";
 import ts from "typescript";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const file = path.join(root, "src/features/profilo/team-profile.ts");
+const file = path.join(root, "apps/web/src/features/profilo/team-profile.ts");
 const {outputText} = ts.transpileModule(readFileSync(file, "utf8"), {
 	compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022},
 	fileName: file,

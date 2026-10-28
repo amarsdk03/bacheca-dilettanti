@@ -1,12 +1,11 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260927050000_repair_team_player_year_range.sql", import.meta.url);
 
-test("repair restores skipped year-range fields without replacing a later publication wrapper", {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async () => {
-	const {PGlite} = await import(engineUrl.href);
+test("repair restores skipped year-range fields without replacing a later publication wrapper", async () => {
 	const db = await PGlite.create();
 	const legacyId = "11111111-1111-4111-8111-111111111111";
 	const currentId = "33333333-3333-4333-8333-333333333333";

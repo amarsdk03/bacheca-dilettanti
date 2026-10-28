@@ -28,7 +28,7 @@ function sourceLoader(overrides = {}) {
 			if (specifier === "server-only") return {};
 			if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
 			const base = specifier.startsWith("@/")
-				? path.join(root, "src", specifier.slice(2))
+				? path.join(root, "apps/web/src", specifier.slice(2))
 				: path.resolve(path.dirname(file), specifier);
 			const target = [base, base + ".ts", base + ".tsx"].find(candidate => existsSync(candidate));
 			if (!target) throw new Error("Cannot resolve " + specifier);
@@ -41,7 +41,7 @@ function sourceLoader(overrides = {}) {
 }
 
 const load = sourceLoader();
-const {publicPlayerAge, parsePlayerCareer, toPublicPlayerData} = load("src/features/dettagli-profilo/server/player-profile-data.ts");
+const {publicPlayerAge, parsePlayerCareer, toPublicPlayerData} = load("apps/web/src/features/dettagli-profilo/server/player-profile-data.ts");
 
 test("current qualifications ignore obsolete free text and unknown properties", () => {
  const parsed = parsePlayerCareer(["testo libero precedente", {titolo: "Licenza attuale", note: "annotazione storica", stato: "conseguito"}]);
@@ -50,23 +50,23 @@ test("current qualifications ignore obsolete free text and unknown properties", 
  assert.equal(parsed[0].status, "conseguito");
  assert.doesNotMatch(JSON.stringify(parsed), /testo libero precedente|annotazione storica/);
 });
-const {availabilityLabel} = load("src/features/profilo/public-profile-display.ts");
-const {groupPublicProfileLocations, publicProfileLocationLabel} = load("src/features/profilo/public-profile-locations.ts");
-const {parseProfileDetailParams} = load("src/features/dettagli-profilo/profile-detail-model.ts");
-const {profileImageMapKey, profileImageRowsToMap, resolvedProfileImageUrl} = load("src/features/profilo/profile-image.ts");
-const {getPlayerRolePitchMarkers} = load("src/features/dettagli-profilo/components/player/PlayerRolePitch.tsx");
-const {getAnnouncementPlayerRolePitchMarkers} = load("src/features/annunci/components/details/AnnouncementPlayerRolePitch.tsx");
+const {availabilityLabel} = load("apps/web/src/features/profilo/public-profile-display.ts");
+const {groupPublicProfileLocations, publicProfileLocationLabel} = load("apps/web/src/features/profilo/public-profile-locations.ts");
+const {parseProfileDetailParams} = load("apps/web/src/features/dettagli-profilo/profile-detail-model.ts");
+const {profileImageMapKey, profileImageRowsToMap, resolvedProfileImageUrl} = load("apps/web/src/features/profilo/profile-image.ts");
+const {getPlayerRolePitchMarkers} = load("apps/web/src/features/dettagli-profilo/components/player/PlayerRolePitch.tsx");
+const {getAnnouncementPlayerRolePitchMarkers} = load("apps/web/src/features/annunci/components/details/AnnouncementPlayerRolePitch.tsx");
 const {
 	PLAYER_PRIMARY_ROLES,
 	PLAYER_SPECIFIC_ROLES_BY_PRIMARY,
 	getPlayerSpecificRoleGroups,
 	normalizePlayerSpecificRoles,
-} = load("src/features/profilo/player-roles.ts");
+} = load("apps/web/src/features/profilo/player-roles.ts");
 const now = new Date("2026-09-14T12:00:00Z");
 
 test("directory cards always show their supported facts and distinguish missing values from supplied values", () => {
-	const {PROFILE_CARD_FACTS, getProfileFacts} = load("src/features/profili/components/cards/profile-card-model.ts");
-	const Card = load("src/features/profili/components/cards/ProfileCard.tsx").default;
+	const {PROFILE_CARD_FACTS, getProfileFacts} = load("apps/web/src/features/profili/components/cards/profile-card-model.ts");
+	const Card = load("apps/web/src/features/profili/components/cards/ProfileCard.tsx").default;
 	for (const [type, definitions] of Object.entries(PROFILE_CARD_FACTS)) {
 		const profile = {id: "card-1", type, title: "Profilo", imageUrl: null, presentation: null,
 			emailConfirmed: false, officialVerified: false, facts: [], filterData: {ruoli: [], tipologie: [], figure: []}};
@@ -89,7 +89,7 @@ test("directory cards always show their supported facts and distinguish missing 
 });
 
 test("player overview puts Social last in the main column and Ecosystem above UUID in responsive footers", () => {
-	const Overview = load("src/features/dettagli-profilo/components/player/PlayerOverview.tsx").default;
+	const Overview = load("apps/web/src/features/dettagli-profilo/components/player/PlayerOverview.tsx").default;
 	const props = {presentation: "Descrizione", highlightsUrl: null, privateHighlights: false,
 		locations: [{city: "Roma", region: "Lazio"}], socialLinks: {instagram: "https://instagram.com/giocatore"},
 		sportTypes: [], primaryRoles: [], specificRoles: [], height: null, weight: null,
@@ -114,8 +114,8 @@ test("player overview puts Social last in the main column and Ecosystem above UU
 });
 
 test("all profile overview sections expose one decorative icon and retain readable headings", () => {
-	const Overview = load("src/features/dettagli-profilo/components/ProfileDetailsOverview.tsx").default;
-	const {NON_PLAYER_PRESENTATIONS} = load("src/features/dettagli-profilo/components/non-player-presentations.ts");
+	const Overview = load("apps/web/src/features/dettagli-profilo/components/ProfileDetailsOverview.tsx").default;
+	const {NON_PLAYER_PRESENTATIONS} = load("apps/web/src/features/dettagli-profilo/components/non-player-presentations.ts");
 	for (const [type, presentation] of Object.entries(NON_PLAYER_PRESENTATIONS)) {
 		const html = renderToStaticMarkup(React.createElement(Overview, {profile: genericProfile(type), presentation, authenticated: true, returnTo: "/dettagli-profilo"}));
 		const headings = [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)];
@@ -181,7 +181,7 @@ test("public projection contains only approved properties and safe highlights", 
 });
 
 test("nationality uses an SVG flag when available", () => {
-	const Flag = load("src/components/dynamic/DynamicReactFlag.tsx").default;
+	const Flag = load("apps/web/src/components/dynamic/DynamicReactFlag.tsx").default;
 	const italy = renderToStaticMarkup(React.createElement(Flag, {code: "IT"}));
 	assert.match(italy, /<svg\b/);
 	assert.match(italy, /aria-hidden="true"/);
@@ -190,8 +190,8 @@ test("nationality uses an SVG flag when available", () => {
 });
 
 test("obsolete nationality codes cannot be selected or shown as valid public facts", () => {
-	const {PLAYER_NATIONALITIES, isPlayerNationalityCode} = load("src/features/profilo/player-nationalities.ts");
-	const {getProfileRequiredFieldErrors} = load("src/features/profilo/profile-required-fields.ts");
+	const {PLAYER_NATIONALITIES, isPlayerNationalityCode} = load("apps/web/src/features/profilo/player-nationalities.ts");
+	const {getProfileRequiredFieldErrors} = load("apps/web/src/features/profilo/profile-required-fields.ts");
 	const excluded = "DY HV ZR AN FX DD BU UK SU CQ CS YU TP NH VD YD RH".split(" ");
 	const available = new Set(PLAYER_NATIONALITIES.map(({code}) => code));
 	for (const code of excluded) {
@@ -260,14 +260,14 @@ test("subprofile image removal selects its avatar fallback without changing othe
 });
 
 test("profile image uploads remain outside the registration flow", () => {
-	const registration = readFileSync(path.join(root, "src/features/registrati/Registrati.tsx"), "utf8");
-	const sharedDetails = readFileSync(path.join(root, "src/features/profilo/ProfileDetailsForm.tsx"), "utf8");
+	const registration = readFileSync(path.join(root, "apps/web/src/features/registrati/Registrati.tsx"), "utf8");
+	const sharedDetails = readFileSync(path.join(root, "apps/web/src/features/profilo/ProfileDetailsForm.tsx"), "utf8");
 	assert.doesNotMatch(registration, /ProfileImageEditor|saveProfileImage|type="file"/);
 	assert.doesNotMatch(sharedDetails, /ProfileImageEditor|saveProfileImage|type="file"/);
 });
 
 test("profile images are center-cropped to a square WebP and invalid payloads are rejected", async () => {
-	const {optimizeProfileImage} = load("src/features/profilo/server/profile-image-processing.ts");
+	const {optimizeProfileImage} = load("apps/web/src/features/profilo/server/profile-image-processing.ts");
 	const source = await sharp({
 		create: {width: 1200, height: 600, channels: 3, background: "#336699"},
 	}).png().toBuffer();
@@ -283,7 +283,7 @@ test("profile images are center-cropped to a square WebP and invalid payloads ar
 });
 
 test("location details use a dialog instead of an accordion", () => {
-	const source = readFileSync(path.join(root, "src/features/dettagli-profilo/components/ProfileLocationSummary.tsx"), "utf8");
+	const source = readFileSync(path.join(root, "apps/web/src/features/dettagli-profilo/components/ProfileLocationSummary.tsx"), "utf8");
 	assert.doesNotMatch(source, /Accordion/);
 	assert.match(source, /<DialogTrigger/);
 	assert.match(source, /<DialogTitle>Zone di interesse<\/DialogTitle>/);
@@ -311,8 +311,8 @@ test("player role catalog exposes only the canonical taxonomy and normalizes leg
 });
 
 test("legacy football type filters resolve to the current label", () => {
-	const {parseProfileDirectoryQuery} = load("src/features/profili/profile-directory-model.ts");
-	const {parseAnnouncementDirectoryQuery, announcementOption, isAnnouncementType} = load("src/features/annunci/announcement-model.ts");
+	const {parseProfileDirectoryQuery} = load("apps/web/src/features/profili/profile-directory-model.ts");
+	const {parseAnnouncementDirectoryQuery, announcementOption, isAnnouncementType} = load("apps/web/src/features/annunci/announcement-model.ts");
 	assert.equal(parseProfileDirectoryQuery({type: "giocatore", tipologia: "Calcio a 11"}).filters.tipologia, "Calcio 11");
 	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", tipologia: "Calcio a 11"}).filters.tipologia, "Calcio 11");
 	assert.equal(isAnnouncementType("annuncio_professionisti_studi"), false);
@@ -320,8 +320,8 @@ test("legacy football type filters resolve to the current label", () => {
 });
 
 test("profile directory keeps completion and activity ahead of stable randomized ties", () => {
-	const {sortRankedDirectoryProfiles} = load("src/features/profili/profile-directory-ranking.ts");
-	const {parseProfileDirectoryQuery, buildProfilesHref} = load("src/features/profili/profile-directory-model.ts");
+	const {sortRankedDirectoryProfiles} = load("apps/web/src/features/profili/profile-directory-ranking.ts");
+	const {parseProfileDirectoryQuery, buildProfilesHref} = load("apps/web/src/features/profili/profile-directory-model.ts");
 	const profiles = Array.from({length: 20}, (_, index) => ({
 		profile: {id: `profile-${index}`, type: "giocatore"},
 		completionPercentage: index === 0 ? 90 : 80,
@@ -341,7 +341,7 @@ test("profile directory keeps completion and activity ahead of stable randomized
 });
 
 test("single-location profile editor shows only the first saved location", () => {
-	const ProfileLocationsField = sourceLoader()("src/features/profilo/ProfileLocationsField.tsx").default;
+	const ProfileLocationsField = sourceLoader()("apps/web/src/features/profilo/ProfileLocationsField.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(ProfileLocationsField, {
 		idPrefix: "player-location", mode: "single", label: "In che zona vivi?", required: true,
 		value: [{regione: "Lazio", citta: "Roma"}, {regione: "Sicilia", citta: "Palermo"}], onValueChange: () => {},
@@ -353,9 +353,9 @@ test("single-location profile editor shows only the first saved location", () =>
 });
 
 test("player form disables current category when availability is Svincolato", () => {
-	const Form = load("src/features/profilo/ProfileDetailsForm.tsx").default;
-	const {createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
-	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
+	const Form = load("apps/web/src/features/profilo/ProfileDetailsForm.tsx").default;
+	const {createProfileDrafts, createProfileLocations} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
 	const drafts = createProfileDrafts();
 	drafts.giocatore.disponibilita = "svincolato";
 	const html = renderToStaticMarkup(React.createElement(Form, {type: "giocatore", drafts, locations: createProfileLocations(), socialLinks: createProfileSocialLinks().giocatore, onChange: () => {}, onLocationsChange: () => {}, onSocialLinksChange: () => {}}));
@@ -366,9 +366,9 @@ test("player form disables current category when availability is Svincolato", ()
 });
 
 test("player anonymity remains editable between the name and birth fields", () => {
-	const Form = load("src/features/profilo/ProfileDetailsForm.tsx").default;
-	const {createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
-	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
+	const Form = load("apps/web/src/features/profilo/ProfileDetailsForm.tsx").default;
+	const {createProfileDrafts, createProfileLocations} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
 	for (const anonymous of [false, true]) {
 		const drafts = createProfileDrafts();
 		drafts.giocatore.nominativo_anonimo = anonymous;
@@ -405,7 +405,7 @@ test("player role pitch uses the 3x7 grid and hides only specialized primary gro
 });
 
 test("player header renders the ordered public facts", () => {
-	const PlayerHeader = load("src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
+	const PlayerHeader = load("apps/web/src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(PlayerHeader, {
 		title: "Mario Rossi", imageUrl: null, emailConfirmed: false, officialVerified: false, primary: false,
 		availabilityLabel: "Disponibile subito",
@@ -432,7 +432,7 @@ test("player header renders the ordered public facts", () => {
 
 test("player results card shows only the requested four facts", () => {
 	const CardShell = ({facts}) => React.createElement("dl", null, facts.map(({kind, label, value}) => React.createElement("div", {key: kind}, React.createElement("dt", null, label), React.createElement("dd", null, value))));
-	const GiocatoreCard = sourceLoader({"./ProfileCardShell": CardShell})("src/features/profili/components/cards/GiocatoreCard.tsx").default;
+	const GiocatoreCard = sourceLoader({"./ProfileCardShell": CardShell})("apps/web/src/features/profili/components/cards/GiocatoreCard.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(GiocatoreCard, {profile: {
 		id: "player-1", type: "giocatore", title: "Mario Rossi", presentation: null,
 		imageUrl: null, emailConfirmed: true, officialVerified: false, roles: [],
@@ -450,7 +450,7 @@ test("player results card shows only the requested four facts", () => {
 });
 
 test("player header handles missing sports data without exposing unspecified availability", () => {
-	const PlayerHeader = load("src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
+	const PlayerHeader = load("apps/web/src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(PlayerHeader, {
 		title: "Mario Rossi", imageUrl: null, emailConfirmed: false, officialVerified: false, primary: false,
 		availabilityLabel: null, followerCount: null, announcementCount: null,
@@ -469,7 +469,7 @@ test("registered profile hover card links to complete information with or withou
 			HoverCardTrigger: ({render, children, className, "aria-label": ariaLabel}) => React.cloneElement(render, {className, "aria-label": ariaLabel}, children),
 			HoverCardContent: passthrough,
 		},
-	})("src/features/annunci/AnnouncementAuthorHoverCard.tsx").default;
+	})("apps/web/src/features/annunci/AnnouncementAuthorHoverCard.tsx").default;
 	const author = {
 		kind: "registered", profileId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", profileType: "giocatore",
 		title: "Mario Rossi", imageUrl: null, emailConfirmed: true, officialVerified: false,
@@ -489,7 +489,7 @@ test("registered profile hover card links to complete information with or withou
 });
 
 test("email confirmation and official verification have distinct profile marks", () => {
-	const PlayerHeader = load("src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
+	const PlayerHeader = load("apps/web/src/features/dettagli-profilo/components/player/PlayerHeader.tsx").default;
 	const base = {
 		title: "Mario Rossi", imageUrl: null, primary: false, availabilityLabel: null,
 		followerCount: null, announcementCount: null, player: toPublicPlayerData(player, null, now),
@@ -510,7 +510,7 @@ test("email confirmation and official verification have distinct profile marks",
 });
 
 test("player overview shows grouped locations, visible social URLs and highlights below description", () => {
-	const Overview = load("src/features/dettagli-profilo/components/player/PlayerOverview.tsx").default;
+	const Overview = load("apps/web/src/features/dettagli-profilo/components/player/PlayerOverview.tsx").default;
 	const href = "https://instagram.com/mario.rossi?ref=profilo";
 	const html = renderToStaticMarkup(React.createElement(Overview, {
 		profileId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -550,7 +550,7 @@ test("player overview shows grouped locations, visible social URLs and highlight
 });
 
 test("player overview omits absent media and socials and supports non-YouTube highlights", () => {
-	const Overview = load("src/features/dettagli-profilo/components/player/PlayerOverview.tsx").default;
+	const Overview = load("apps/web/src/features/dettagli-profilo/components/player/PlayerOverview.tsx").default;
 	const props = {profileId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", sportTypes: [], primaryRoles: [], specificRoles: [], preferredCategories: [], presentation: null, highlightsUrl: null, locations: [], socialLinks: {instagram: "", facebook: "", youtube: "", linkedin: ""}};
 	const empty = renderToStaticMarkup(React.createElement(Overview, props));
 	assert.match(empty, /Descrizione non disponibile/);
@@ -563,7 +563,7 @@ test("player overview omits absent media and socials and supports non-YouTube hi
 });
 
 test("all populated player social links use their brand icon, including website and LinkedIn", () => {
-	const SocialLinks = load("src/features/dettagli-profilo/components/ProfileSocialLinks.tsx").default;
+	const SocialLinks = load("apps/web/src/features/dettagli-profilo/components/ProfileSocialLinks.tsx").default;
 	const socialLinks = {website: "https://player.example.com", instagram: "https://instagram.com/player", facebook: "https://facebook.com/player", youtube: "https://youtube.com/@player", linkedin: "https://linkedin.com/in/player"};
 	const html = renderToStaticMarkup(React.createElement(SocialLinks, {socialLinks, presentation: "profile"}));
 	for (const [platform, href] of Object.entries(socialLinks)) {
@@ -581,7 +581,7 @@ function fixtureClient(results) {
 			const call = {table, operations: []};
 			calls.push(call);
 			const query = {};
-			for (const method of ["select", "eq", "neq", "not", "or", "in", "order", "limit", "range", "maybeSingle"]) {
+			for (const method of ["select", "eq", "neq", "is", "not", "or", "in", "order", "limit", "range", "maybeSingle"]) {
 				query[method] = (...args) => {call.operations.push([method, ...args]); return query;};
 			}
 			query.then = (resolve, reject) => Promise.resolve(typeof results[table] === "function" ? results[table](call) : results[table] ?? {data: [], error: null, count: 0}).then(resolve, reject);
@@ -609,8 +609,8 @@ test("directory ranks completion then activity without reading followers or expo
 	const {getProfileDirectory} = sourceLoader({
 		"@/lib/supabase/admin": {createAdminClient: () => client},
 		"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => new Map()},
-	})("src/features/profili/server/queries.ts");
-	const query = {...load("src/features/profili/profile-directory-model.ts").parseProfileDirectoryQuery({}), sortSeed: "a".repeat(32)};
+	})("apps/web/src/features/profili/server/queries.ts");
+	const query = {...load("apps/web/src/features/profili/profile-directory-model.ts").parseProfileDirectoryQuery({}), sortSeed: "a".repeat(32)};
 	const result = await getProfileDirectory(query);
 	assert.equal(result.error, false);
 	assert.deepEqual(result.profiles.map(profile => profile.id), [id("c"), id("a"), id("b")]);
@@ -629,7 +629,7 @@ test("detail query preserves visibility filters and exposes age without birth pa
 		localita_profilo: {data: [{id_sottoprofilo: 7, citta: "Roma", regione: "Lazio"}, {id_sottoprofilo: null, citta: null, regione: "Toscana"}, {id_sottoprofilo: 8, citta: "Wrong", regione: "Lazio"}], error: null},
 	});
 	const queryLoad = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}});
-	const {getProfileDetail} = queryLoad("src/features/dettagli-profilo/server/profile-detail-query.ts");
+	const {getProfileDetail} = queryLoad("apps/web/src/features/dettagli-profilo/server/profile-detail-query.ts");
 	const result = await getProfileDetail(id, "giocatore");
 	assert.equal(result.status, "ok");
 	assert.ok(!Object.hasOwn(result.profile, "followerCount"));
@@ -663,7 +663,7 @@ test("referee detail query exposes calculated age without returning birth date p
 		profilo_follow: {data: null, count: 0, error: null},
 	});
 	const queryLoad = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}});
-	const {getProfileDetail} = queryLoad("src/features/dettagli-profilo/server/profile-detail-query.ts");
+	const {getProfileDetail} = queryLoad("apps/web/src/features/dettagli-profilo/server/profile-detail-query.ts");
 	const result = await getProfileDetail(id, "arbitro");
 	assert.equal(result.status, "ok");
 	assert.ok(result.profile.primaryFields.some(field => field.label === "Età" && /^\d+ \(2000\)$/.test(field.value)));
@@ -674,7 +674,7 @@ test("referee detail query exposes calculated age without returning birth date p
 
 test("missing or hidden profiles keep returning not-found", async () => {
 	const client = fixtureClient({profilo: {data: null, error: null}, profilo_giocatore: {data: null, error: null}, media_profilo: {data: null, error: null}});
-	const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("src/features/dettagli-profilo/server/profile-detail-query.ts");
+	const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("apps/web/src/features/dettagli-profilo/server/profile-detail-query.ts");
 	assert.deepEqual(await getProfileDetail("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "giocatore"), {status: "not-found"});
 	assert.ok(!client.calls.some(call => call.table === "profilo_follow"));
 });
@@ -688,7 +688,7 @@ test("similar profiles select six newest visible children of the same type and r
 		profilo_giocatore: {data: [{id: 12, uuid_profilo: newest}, {id: 11, uuid_profilo: older}], error: null},
 		profilo: {data: [row(older, 11), row(newest, 12)], error: null},
 	});
-	const {loadRecentSimilarProfiles} = sourceLoader()("src/features/profili/server/queries.ts");
+	const {loadRecentSimilarProfiles} = sourceLoader()("apps/web/src/features/profili/server/queries.ts");
 	const profiles = await loadRecentSimilarProfiles(client, current, "giocatore");
 	assert.deepEqual(profiles.map(profile => [profile.id, profile.type]), [[newest, "giocatore"], [older, "giocatore"]]);
 	const childQuery = client.calls[0];
@@ -710,7 +710,7 @@ test("similar-profile failures do not hide the current profile", async (t) => {
 			? {data: player, error: null} : {data: null, error: {code: "TEST_UNAVAILABLE"}},
 		profilo_follow: {data: null, count: null, error: {code: "TEST_UNAVAILABLE"}},
 	});
-	const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("src/features/dettagli-profilo/server/profile-detail-query.ts");
+	const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("apps/web/src/features/dettagli-profilo/server/profile-detail-query.ts");
 	const result = await getProfileDetail("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "giocatore");
 	assert.equal(result.status, "ok");
 	assert.ok(!Object.hasOwn(result.profile, "followerCount"));
@@ -719,8 +719,8 @@ test("similar-profile failures do not hide the current profile", async (t) => {
 });
 
 test("similar profiles tab and empty/error states are available", () => {
-	const Tabs = load("src/features/dettagli-profilo/components/player/PlayerTabs.tsx").default;
-	const SimilarProfiles = load("src/features/dettagli-profilo/components/SimilarProfiles.tsx").default;
+	const Tabs = load("apps/web/src/features/dettagli-profilo/components/player/PlayerTabs.tsx").default;
+	const SimilarProfiles = load("apps/web/src/features/dettagli-profilo/components/SimilarProfiles.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(Tabs, {overview: "Panoramica", career: "Carriera", announcements: "Annunci", similarProfiles: React.createElement(SimilarProfiles, {profiles: [], unavailable: false})}));
 	assert.match(html, /role="tab"[^>]*[\s\S]*Profili simili/);
 	assert.match(renderToStaticMarkup(React.createElement(SimilarProfiles, {profiles: [], unavailable: false})), /Nessun profilo simile/);
@@ -735,7 +735,7 @@ test("an announcement failure leaves player details available", async (t) => {
 		media_profilo: {data: null, error: null},
 		annuncio: {data: null, error: {code: "TEST_UNAVAILABLE"}},
 	});
-	const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("src/features/dettagli-profilo/server/profile-detail-query.ts");
+	const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("apps/web/src/features/dettagli-profilo/server/profile-detail-query.ts");
 	const result = await getProfileDetail("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "giocatore");
 	assert.equal(result.status, "ok");
 	assert.equal(result.profile.announcementsUnavailable, true);
@@ -810,12 +810,12 @@ test("all seven non-player profiles show configured badges, facts, central secti
 		creators: ["1234", "7"], "torneo-evento": ["1234", "7"],
 		"campi-impianti-sportivi": ["Via Roma 1, Roma, Lazio, Viterbo, Lazio", "1234", "7"],
 	};
-	const {NON_PLAYER_PRESENTATIONS} = load("src/features/dettagli-profilo/components/non-player-presentations.ts");
-	const Overview = load("src/features/dettagli-profilo/components/ProfileDetailsOverview.tsx").default;
+	const {NON_PLAYER_PRESENTATIONS} = load("apps/web/src/features/dettagli-profilo/components/non-player-presentations.ts");
+	const Overview = load("apps/web/src/features/dettagli-profilo/components/ProfileDetailsOverview.tsx").default;
 	for (const [type, name, labels] of nonPlayerCases) {
 		const primaryFields = Object.entries(values).map(([label, value]) => ({label, value: Array.isArray(value) ? value.join(", ") : value, ...(Array.isArray(value) ? {items: value} : {})}));
 		const profile = genericProfile(type, {primaryFields, contacts: {email: "private@example.test", phone: "123456789"}});
-		const Component = load("src/features/dettagli-profilo/components/types/DettagliProfilo" + name + ".tsx").default;
+		const Component = load("apps/web/src/features/dettagli-profilo/components/types/DettagliProfilo" + name + ".tsx").default;
 		const html = renderToStaticMarkup(React.createElement(Component, {profile, authenticated: true, returnTo: "/dettagli-profilo", actions: React.createElement("button", null, "Condividi")}));
 		assert.deepEqual(renderedFacts(html), labels.map((label, index) => [label, expectedValues[type][index]]), type);
 		const badgeGroup = html.match(/<div role="group" aria-label="Caratteristiche del profilo"[^>]*>([\s\S]*?)<\/div>/)?.[1];
@@ -849,7 +849,7 @@ test("all seven non-player profiles show configured badges, facts, central secti
 });
 
 test("anonymity icons use contextual colors while the hidden-name badge has no tooltip", () => {
-	const {default: Indicator, PROFILE_ANONYMITY_MESSAGE} = load("src/features/profilo/ProfileAnonymityIndicator.tsx");
+	const {default: Indicator, PROFILE_ANONYMITY_MESSAGE} = load("apps/web/src/features/profilo/ProfileAnonymityIndicator.tsx");
 	assert.equal(renderToStaticMarkup(React.createElement(Indicator, {anonymousName: false})), "");
 	const icon = renderToStaticMarkup(React.createElement(Indicator, {anonymousName: true}));
 	assert.match(icon, /lucide-eye-off/);
@@ -861,7 +861,7 @@ test("anonymity icons use contextual colors while the hidden-name badge has no t
 	const badge = renderToStaticMarkup(React.createElement(Indicator, {anonymousName: true, badge: true}));
 	assert.match(badge, /Nome nascosto/);
 	assert.ok(!badge.includes(PROFILE_ANONYMITY_MESSAGE));
-	const ProfileCard = load("src/features/profili/components/cards/ProfileCard.tsx").default;
+	const ProfileCard = load("apps/web/src/features/profili/components/cards/ProfileCard.tsx").default;
 	for (const type of ["giocatore", "squadra", "staff-sportivo", "arbitro"]) {
 		const profile = {id: "test", type, title: "Profilo anonimo", anonymousName: true, imageUrl: null, emailConfirmed: false, officialVerified: true,
 			facts: [], presentation: null, filterData: {ruoli: [], tipologie: [], figure: []}};
@@ -882,7 +882,7 @@ test("public directory forwards anonymity flags while concealing real profile na
 		const {loadPublicSubprofiles} = sourceLoader({
 			"@/lib/supabase/admin": {createAdminClient: () => client},
 			"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => new Map()},
-		})("src/features/profili/server/queries.ts");
+		})("apps/web/src/features/profili/server/queries.ts");
 		const profiles = await loadPublicSubprofiles([id]);
 		assert.equal(profiles.length, 4);
 		assert.ok(profiles.every(profile => profile.anonymousName === anonymousName));
@@ -897,10 +897,10 @@ test("profile forms group foreign and Italian regions only for residence and tea
 	const selectUi = Object.fromEntries(["Select", "SelectContent", "SelectGroup", "SelectLabel", "SelectTrigger", "SelectValue"].map(name => [name, wrap(name)]));
 	selectUi.SelectItem = function SelectOption({value, children}) { return React.createElement("span", {"data-test-value": encodeURIComponent(value).replaceAll("'", "%27")}, children); };
 	const loadForm = sourceLoader({"@/components/ui/select": selectUi});
-	const Form = loadForm("src/features/profilo/ProfileDetailsForm.tsx").default;
-	const {PROFILE_TYPES, createProfileDrafts, createProfileLocations} = loadForm("src/features/profilo/profile-model.ts");
-	const {createProfileSocialLinks} = loadForm("src/features/profilo/profile-social-links.ts");
-	const {REGIONI_ITALIANE} = loadForm("src/const/defaultConstants.ts");
+	const Form = loadForm("apps/web/src/features/profilo/ProfileDetailsForm.tsx").default;
+	const {PROFILE_TYPES, createProfileDrafts, createProfileLocations} = loadForm("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = loadForm("apps/web/src/features/profilo/profile-social-links.ts");
+	const {REGIONI_ITALIANE} = loadForm("apps/web/src/const/defaultConstants.ts");
 	const drafts = createProfileDrafts();
 	const locations = createProfileLocations();
 	const socialLinks = createProfileSocialLinks();
@@ -920,14 +920,14 @@ test("profile forms group foreign and Italian regions only for residence and tea
 			assert.doesNotMatch(html, /data-test-value="Estero"/, type);
 		}
 	}
-	const Field = loadForm("src/features/profilo/ProfileLocationsField.tsx").default;
+	const Field = loadForm("apps/web/src/features/profilo/ProfileLocationsField.tsx").default;
 	const defaultHtml = renderToStaticMarkup(React.createElement(Field, {idPrefix: "default-region", mode: "single", value: [], onValueChange: () => {}}));
 	assert.doesNotMatch(defaultHtml, /data-test-value="Estero"/);
 });
 
 test("non-player facts retain expected cells with missing data and distinguish unknown counts from zero", () => {
 	for (const [type, name, labels] of nonPlayerCases) {
-		const Component = load(`src/features/dettagli-profilo/components/types/DettagliProfilo${name}.tsx`).default;
+		const Component = load(`apps/web/src/features/dettagli-profilo/components/types/DettagliProfilo${name}.tsx`).default;
 		const profile = genericProfile(type, {
 			availabilityLabel: null, primaryFields: [], fields: [], experiences: [],
 			locations: [], socialLinks: {instagram: "", facebook: "", youtube: "", linkedin: ""},
@@ -948,7 +948,7 @@ test("the detail page places one profile action group inside every non-player he
 		"@/features/interessi/ProfileInterestDialog": ({children}) => children,
 		"@/features/interazioni/DetailActions": props => React.createElement("button", {"data-presentation": props.presentation, "data-target": props.target.id}, "Azioni profilo"),
 		"./components/ProfileHistoryBackButton": () => React.createElement("button", null, "Indietro"),
-	})("src/features/dettagli-profilo/DettagliProfilo.tsx").default;
+	})("apps/web/src/features/dettagli-profilo/DettagliProfilo.tsx").default;
 	for (const [type] of nonPlayerCases) {
 		const html = renderToStaticMarkup(React.createElement(Page, {result: {status: "ok", profile: genericProfile(type)}}));
 		assert.match(html, /public-profile-page/);
@@ -972,7 +972,7 @@ test("long-form fields remain in dedicated overview cards without duplication", 
 			{label: "Informazioni aggiuntive", value: "Accesso senza barriere"},
 		]],
 	]) {
-		const Component = load(`src/features/dettagli-profilo/components/types/DettagliProfilo${name}.tsx`).default;
+		const Component = load(`apps/web/src/features/dettagli-profilo/components/types/DettagliProfilo${name}.tsx`).default;
 		const profile = genericProfile(type, {primaryFields: narrativeFields, fields: [{label: "Presentazione", value: "Descrizione dimostrativa"}, ...narrativeFields.slice(0, 1)]});
 		const html = renderToStaticMarkup(React.createElement(Component, {profile, authenticated: false, returnTo: "/dettagli-profilo"}));
 		for (const {label, value} of narrativeFields) {
@@ -985,7 +985,7 @@ test("long-form fields remain in dedicated overview cards without duplication", 
 });
 
 test("facility overview hides obsolete cost, hours, services and historic location", () => {
-	const Facility = load("src/features/dettagli-profilo/components/types/DettagliProfiloCampiImpianti.tsx").default;
+	const Facility = load("apps/web/src/features/dettagli-profilo/components/types/DettagliProfiloCampiImpianti.tsx").default;
 	const profile = genericProfile("campi-impianti-sportivi", {fields: [
 		{label: "Costo di partenza", value: "€ 45 / 1h"},
 		{label: "Sede principale storica", value: "Vecchia sede"},
@@ -1001,7 +1001,7 @@ test("facility overview hides obsolete cost, hours, services and historic locati
 });
 
 test("new announcement CTA is shown only for the profile owner", () => {
-	const Announcements = load("src/features/dettagli-profilo/components/LatestProfileAnnouncements.tsx").default;
+	const Announcements = load("apps/web/src/features/dettagli-profilo/components/LatestProfileAnnouncements.tsx").default;
 	const base = {announcements: [], announcementsUnavailable: false};
 	const owned = renderToStaticMarkup(React.createElement(Announcements, {...base, isOwner: true}));
 	const visitor = renderToStaticMarkup(React.createElement(Announcements, {...base, isOwner: false}));
@@ -1010,7 +1010,7 @@ test("new announcement CTA is shown only for the profile owner", () => {
 });
 
 test("experience timeline preserves roles, team links, periods and the empty state", () => {
-	const History = load("src/features/dettagli-profilo/components/ProfileExperienceHistory.tsx").default;
+	const History = load("apps/web/src/features/dettagli-profilo/components/ProfileExperienceHistory.tsx").default;
 	const teamId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 	const experiences = [
 		{...genericProfile("arbitro").experiences[0], linkedTeam: {profileId: teamId, name: "Squadra collegata", imageUrl: null, location: "Roma"}},
@@ -1023,7 +1023,7 @@ test("experience timeline preserves roles, team links, periods and the empty sta
 });
 
 test("directory cards keep a single profile link, badges before the avatar, and type-specific facts", () => {
-	const Card = load("src/features/profili/components/cards/ProfileCard.tsx").default;
+	const Card = load("apps/web/src/features/profili/components/cards/ProfileCard.tsx").default;
 	const facts = [
 		{kind: "age", label: "Età", value: "26 anni"},
 		{kind: "availability", label: "Disponibilità", value: "Disponibile subito"},
@@ -1088,7 +1088,7 @@ test("public profiles conceal the nominative for every supported subprofile with
    [table]: call => call.operations.some(([method]) => method === "maybeSingle") ? {data: child, error: null} : {data: [], error: null},
    media_profilo: {data: null, error: null}, annuncio: {data: [], count: 0, error: null},
   });
-  const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("src/features/dettagli-profilo/server/profile-detail-query.ts");
+  const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("apps/web/src/features/dettagli-profilo/server/profile-detail-query.ts");
   const result = await getProfileDetail(id, type);
   assert.equal(result.status, "ok", type);
   assert.equal(result.profile.title, name);
@@ -1101,7 +1101,7 @@ test("public profiles conceal the nominative for every supported subprofile with
 });
 
 test("linked team names are resolved publicly and stale identifying copies never become fallbacks", () => {
- const {publicTeamExperienceNames} = load("src/features/profilo/team-profile.ts");
+ const {publicTeamExperienceNames} = load("apps/web/src/features/profilo/team-profile.ts");
  const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
  const source = [{titolo: "Società riservata", ente: "Società riservata", squadraProfiloId: id, periodoDa: "2024"}];
  const teams = new Map([[id, {profileId: id, name: "Squadra anonima", anonymousName: true}]]);
@@ -1115,7 +1115,7 @@ test("linked team names are resolved publicly and stale identifying copies never
 
 test("follower count is aggregated for the exact target subprofile and tolerates lookup errors", async (t) => {
 	t.mock.method(console, "error", () => {});
-	const {loadProfileFollowerCount} = load("src/features/dettagli-profilo/server/profile-follower-count.ts");
+	const {loadProfileFollowerCount} = load("apps/web/src/features/dettagli-profilo/server/profile-follower-count.ts");
 	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 	for (const count of [0, 42]) {
 		const client = fixtureClient({profilo_follow: call => {
@@ -1145,7 +1145,7 @@ test("staff details load public age and subprofile follower count without exposi
 		const {getProfileDetail} = sourceLoader({
 			"@/lib/supabase/admin": {createAdminClient: () => client},
 			"@/features/annunci/server/queries": {loadPublicProfileAnnouncements: async () => ({announcements: [], announcementCount: 0, unavailable: false})},
-		})("src/features/dettagli-profilo/server/profile-detail-query.ts");
+		})("apps/web/src/features/dettagli-profilo/server/profile-detail-query.ts");
 		const result = await getProfileDetail(id, "staff-sportivo");
 		assert.equal(result.status, "ok");
 		assert.equal(result.profile.followerCount, unavailable ? null : 12);
@@ -1158,8 +1158,8 @@ test("staff details load public age and subprofile follower count without exposi
 
 test("player result cards carry nationality through the directory mapper and display it beside roles", async () => {
 	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-	const {loadRecentSimilarProfiles} = load("src/features/profili/server/queries.ts");
-	const Card = load("src/features/profili/components/cards/ProfileCard.tsx").default;
+	const {loadRecentSimilarProfiles} = load("apps/web/src/features/profili/server/queries.ts");
+	const Card = load("apps/web/src/features/profili/components/cards/ProfileCard.tsx").default;
 	for (const nationality of ["IT", null, "ZZ"]) {
 		const client = fixtureClient({
 			profilo_giocatore: {data: [{id: 7, uuid_profilo: id}], error: null},
@@ -1178,8 +1178,8 @@ test("player result cards carry nationality through the directory mapper and dis
 });
 
 test("free-text badges stay compact while overview cards preserve their complete content", () => {
-	const {NON_PLAYER_PRESENTATIONS} = load("src/features/dettagli-profilo/components/non-player-presentations.ts");
-	const {ProfileDetailsHeader, default: Overview} = load("src/features/dettagli-profilo/components/ProfileDetailsOverview.tsx");
+	const {NON_PLAYER_PRESENTATIONS} = load("apps/web/src/features/dettagli-profilo/components/non-player-presentations.ts");
+	const {ProfileDetailsHeader, default: Overview} = load("apps/web/src/features/dettagli-profilo/components/ProfileDetailsOverview.tsx");
 	for (const [type, label] of [["servizi-consulenze", "Tipo di azienda / professione"], ["creators", "Tipologia di contenuti"]]) {
 		const content = "Descrizione lunga con virgole, e contenuto integrale. ".repeat(30);
 		const profile = genericProfile(type, {primaryFields: [{label, value: content}]});

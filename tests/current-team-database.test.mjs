@@ -1,14 +1,13 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engine = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migration = readFileSync(new URL("../supabase/migrations/20261016194927_current_teams_tournaments_and_clean_profile_creation.sql", import.meta.url), "utf8");
 const regressionMigration = readFileSync(new URL("../supabase/migrations/20261017144323_fix_unassigned_current_team_record.sql", import.meta.url), "utf8");
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
-test("current teams: authoritative inheritance, history, recreation and scoped cleanup", {skip: !existsSync(engine)}, async t => {
-	const {PGlite} = await import(engine.href);
+test("current teams: authoritative inheritance, history, recreation and scoped cleanup", async t => {
 	const db = await PGlite.create();
 	t.after(() => db.close());
 	await db.exec(`

@@ -119,6 +119,18 @@ Ordine di rilascio: distribuisci il codice, verifica Site URL e Redirect URLs ne
 
 Per registrazioni pubbliche configura un provider SMTP dedicato: il servizio predefinito è destinato ai test, applica limiti restrittivi e invia soltanto agli indirizzi autorizzati del team del progetto.
 
+## Errori HTTP 500 di Supabase Auth
+
+Un `AuthRetryableFetchError` con `status: 500` e messaggio `{}` non identifica la causa del problema: la versione del client Auth installata non conserva il corpo della risposta per gli errori del server. I client Supabase server e admin registrano quindi una voce `[supabase-auth] HTTP request failed` con percorso, stato, codice restituito, messaggio e identificativo della richiesta, se disponibile. Il log non include body della richiesta, cookie o header di autenticazione; email, URL e credenziali riconoscibili nei messaggi vengono oscurati.
+
+Per risalire alla causa, cerca la stessa richiesta nei log Auth e Postgres del progetto Supabase, usando orario e identificativo. Controlla l'errore SQL originale prima di modificare trigger, vincoli o permessi: il solo HTTP 500 non dimostra che siano sbagliati il numero o i dati dei sottoprofili.
+
+Dopo un errore temporaneo di registrazione l'app verifica nuovamente lo stato dell'email senza inviare altri messaggi. Mostra la conferma soltanto se la registrazione risulta salvata e in attesa di verifica. L'intent associato all'email conserva la normale scadenza di 15 minuti, così una richiesta ancora in corso non viene invalidata dalla pulizia immediata. Gli errori temporanei del servizio durante la conferma email vengono distinti dai link effettivamente scaduti o non validi.
+
+Se il log Postgres riporta `permission denied for schema private` (`42501`) al `COMMIT`, con contesto `private.track_profile_activity()` e utente `supabase_auth_admin`, applica `supabase/migrations/20261022230902_fix_deferred_activity_trigger_permissions.sql` come `postgres`. Il trigger differito stava eseguendo la funzione interna con i privilegi di Auth: l'email poteva partire prima del rollback che annullava la creazione dell'account. La migrazione imposta `SECURITY DEFINER`, proprietario `postgres` e `search_path` vuoto sui soli trigger di attività di profili e annunci, mantenendo privati schema, tabelle e helper.
+
+Dopo l'applicazione ripeti la registrazione e usa l'email ricevuta dal nuovo tentativo: i link emessi per gli account la cui creazione è stata annullata non diventano validi retroattivamente. Verifica un account con il solo Staff sportivo, uno con cinque sottoprofili e la successiva pubblicazione di un annuncio. Il deploy della sola webapp non applica questa correzione al database hosted.
+
 ## Verifica finale
 
 Prova il flusso in un ambiente configurato:

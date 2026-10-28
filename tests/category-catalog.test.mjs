@@ -1,3 +1,4 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
 import {existsSync, readFileSync} from "node:fs";
 import {createRequire} from "node:module";
@@ -19,7 +20,7 @@ function load(file) {
 	new Function("require", "module", "exports", outputText)(specifier => {
 		if (specifier === "server-only") return {};
 		if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
-		const base = specifier.startsWith("@/") ? path.join(root, "src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+		const base = specifier.startsWith("@/") ? path.join(root, "apps/web/src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
 		return load([base, base + ".ts", base + ".tsx"].find(existsSync));
 	}, loaded, loaded.exports);
 	return loaded.exports;
@@ -27,9 +28,9 @@ function load(file) {
 const source = relative => load(path.join(root, relative));
 
 test("category pairs keep homonymous labels separate in the catalogue, filters and public details", () => {
-	const catalog = source("src/features/pubblica-annuncio/types/category-catalog.ts");
-	const {announcementContent} = source("src/features/annunci/announcement-content.ts");
-	const {parseAnnouncementDirectoryQuery, getAnnouncementFiltersForDirectoryType} = source("src/features/annunci/announcement-model.ts");
+	const catalog = source("apps/web/src/features/pubblica-annuncio/types/category-catalog.ts");
+	const {announcementContent} = source("apps/web/src/features/annunci/announcement-content.ts");
+	const {parseAnnouncementDirectoryQuery, getAnnouncementFiltersForDirectoryType} = source("apps/web/src/features/annunci/announcement-model.ts");
 	assert.equal(catalog.CATEGORY_FILTER_OPTIONS.length, 147);
 	assert.equal(new Set(catalog.CATEGORY_FILTER_OPTIONS.map(option => option.value)).size, 147);
 	assert.equal(catalog.FIGURA_PROFESSIONALE_OPTIONS.length, 22);
@@ -57,7 +58,7 @@ test("category pairs keep homonymous labels separate in the catalogue, filters a
 });
 
 test("player catalogue preserves group order, youth labels and the women's nine-a-side exception", () => {
-	const catalog = source("src/features/pubblica-annuncio/types/category-catalog.ts");
+	const catalog = source("apps/web/src/features/pubblica-annuncio/types/category-catalog.ts");
 	assert.deepEqual(catalog.CATEGORIE_CALCIO_GROUPS.map(({gruppo}) => gruppo), [
 		"Calcio a 11 maschile", "Calcio a 8 maschile", "Calcio a 7 maschile", "Calcio a 5 maschile",
 		"Calcio a 11 femminile", "Calcio a 8 femminile", "Calcio a 7 femminile", "Calcio a 5 femminile",
@@ -78,7 +79,7 @@ test("player catalogue preserves group order, youth labels and the women's nine-
 });
 
 test("player any selections are exclusive globally or within their group, including server normalization", () => {
-	const {categoryKey, normalizeCategories, updatePlayerCategories} = source("src/features/pubblica-annuncio/types/category-catalog.ts");
+	const {categoryKey, normalizeCategories, updatePlayerCategories} = source("apps/web/src/features/pubblica-annuncio/types/category-catalog.ts");
 	const any = categoryKey("Calcio a 11 maschile", "Qualsiasi");
 	const specific = categoryKey("Calcio a 11 maschile", "FIGC — Under 15 regionale");
 	const other = categoryKey("Calcio a 8 maschile", "AiCS — Pro League Youth Under 15");
@@ -92,10 +93,8 @@ test("player any selections are exclusive globally or within their group, includ
 	assert.deepEqual(normalizeCategories([any, other, "Qualsiasi"]), ["Qualsiasi"]);
 });
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260926173431_group_football_categories_and_figures.sql", import.meta.url);
-test("category migration converts only certain historical groups and figure aliases", {skip: !existsSync(engineUrl) && "Optional PGlite runner is not installed"}, async t => {
-	const {PGlite} = await import(engineUrl.href);
+test("category migration converts only certain historical groups and figure aliases", async t => {
 	const db = await PGlite.create();
 	t.after(() => db.close());
 	await db.exec(`

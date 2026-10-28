@@ -1,0 +1,72 @@
+{
+  "source": "supabase/migrations/20261024205423_admin_announcement_export.sql",
+  "sourceSha256": "df51f80d8d04d08abf67d67cae5f4a7b17820275bdaf2a38ebab11a691b9e467",
+  "m07VerifierSha256": "5e0d281bfac8a27818582324ceb22b522ed7de11e058b402e5f69ad92df8bed7",
+  "provenance": "Definitions generated in PGlite from unchanged M07 reviewed fixture and unchanged M08 migration; no remote connection or application rows extracted.",
+  "functions": [
+    {
+      "schema_name": "private",
+      "name": "admin_audit_payload_valid_v1",
+      "args": "text,text,text,text,jsonb,jsonb",
+      "identity": "private.admin_audit_payload_valid_v1(text,text,text,text,jsonb,jsonb)",
+      "definition_md5": "62989e15a0d3c83f39e23a600332dc06",
+      "acl_md5": "dfda960bf9e0be03ea7516906ee58e3b",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "volatility": "i",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 0,
+      "return_type": "boolean",
+      "language": "plpgsql",
+      "before_md5": "606bb068d32160b3a7ac848e20a02ae1",
+      "after_md5": "62989e15a0d3c83f39e23a600332dc06",
+      "api_role": null
+    },
+    {
+      "schema_name": "private",
+      "name": "export_admin_announcements_v1",
+      "args": "jsonb,jsonb",
+      "identity": "private.export_admin_announcements_v1(jsonb,jsonb)",
+      "definition_md5": "3ff58ded93b08f40f4ff5000f268e885",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\"",
+        "TimeZone=UTC"
+      ],
+      "volatility": "v",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 0,
+      "return_type": "jsonb",
+      "language": "plpgsql",
+      "before_md5": null,
+      "after_md5": "3ff58ded93b08f40f4ff5000f268e885",
+      "api_role": "authenticated"
+    },
+    {
+      "schema_name": "public",
+      "name": "admin_export_announcements_v1",
+      "args": "jsonb,jsonb",
+      "identity": "public.admin_export_announcements_v1(jsonb,jsonb)",
+      "definition_md5": "708210e7709133e6a59ac9e8b5484575",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "volatility": "v",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 0,
+      "return_type": "jsonb",
+      "language": "sql",
+      "before_md5": null,
+      "after_md5": "708210e7709133e6a59ac9e8b5484575",
+      "api_role": "authenticated"
+    }
+  ]
+}

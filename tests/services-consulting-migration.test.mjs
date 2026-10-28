@@ -1,14 +1,11 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260930162056_rename_services_consulting.sql", import.meta.url);
 
-test("services and consulting migration retains existing profiles and announcements", {
-	skip: !existsSync(engineUrl) && "Optional PGlite runner is not installed",
-}, async (t) => {
-	const {PGlite} = await import(engineUrl.href);
+test("services and consulting migration retains existing profiles and announcements", async (t) => {
 	const db = await PGlite.create();
 	t.after(() => db.close());
 

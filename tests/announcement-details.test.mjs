@@ -23,7 +23,7 @@ function sourceLoader(overrides = {}) {
 			if (Object.hasOwn(overrides, specifier)) return overrides[specifier];
 			if (specifier === "server-only") return {};
 			if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
-			const base = specifier.startsWith("@/") ? path.join(root, "src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+			const base = specifier.startsWith("@/") ? path.join(root, "apps/web/src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
 			return load([base, base + ".ts", base + ".tsx"].find(candidate => existsSync(candidate)));
 		}, loaded, loaded.exports);
 		return loaded.exports;
@@ -33,9 +33,9 @@ function sourceLoader(overrides = {}) {
 
 function formattedDetails(type, raw, authorProfile = null) {
 	const load = sourceLoader();
-	const content = load("src/features/annunci/announcement-content.ts").announcementContent(type, raw, [], true);
-	const sections = load("src/features/annunci/announcement-detail-sections.ts").buildAnnouncementDetailSections({type, ...content, raw, authorProfile});
-	const Overview = load("src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
+	const content = load("apps/web/src/features/annunci/announcement-content.ts").announcementContent(type, raw, [], true);
+	const sections = load("apps/web/src/features/annunci/announcement-detail-sections.ts").buildAnnouncementDetailSections({type, ...content, raw, authorProfile});
+	const Overview = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(Overview, {announcement: {...content, sections, announcementLink: null, shareImageUrl: null}}));
 	return {sections, html};
 }
@@ -126,7 +126,7 @@ test("structured dates use Italian month names and generic sections remain compa
 	assert.match(html, /Fino al 15 ottobre 2026/);
 	assert.match(html, /Dalle 18:00 alle 20:00/);
 	const load = sourceLoader();
-	const Content = load("src/features/annunci/components/details/AnnouncementSectionContent.tsx").default;
+	const Content = load("apps/web/src/features/annunci/components/details/AnnouncementSectionContent.tsx").default;
 	const section = {id: "legacy", value: null, items: ["Voce A", "Voce B"], emptyLabel: "Non specificato"};
 	const generic = renderToStaticMarkup(React.createElement(Content, {section}));
 	assert.match(generic, /Voce A/);
@@ -164,6 +164,7 @@ function fixture({current = row(), authors = [profile], playerCareers = [], anon
 			let count = counts[table] ?? 0;
 			if (table === "annuncio") {
 				const rows = (isSimilar ? similar : [current]).filter(Boolean).filter(candidate => call.operations.every(([method, key, value]) => {
+					if (method === "is") return (candidate[key] ?? null) === value;
 					if (method === "eq") return candidate[key] === value;
 					if (method === "neq") return candidate[key] !== value;
 					if (method === "in") return value.includes(candidate[key]);
@@ -184,11 +185,42 @@ function fixture({current = row(), authors = [profile], playerCareers = [], anon
 	}};
 	const load = sourceLoader({
 		"@/lib/supabase/admin": {createAdminClient: () => client},
+		"@/lib/supabase/server": {createClient: async () => client},
 		"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => new Map()},
 		"@/features/profilo/server/public-team-profiles": {loadPublicTeamProfiles: async () => []},
 	});
-	return {calls, client, queries: load("src/features/annunci/server/queries.ts"), load};
+	return {calls, client, queries: load("apps/web/src/features/annunci/server/queries.ts"), load};
 }
+
+test("Admin trash is unavailable by direct URL before auxiliary content is loaded", async () => {
+  const h=fixture({current:{...row(),eliminato_il:"2026-10-24T10:00:00Z"}});
+  assert.deepEqual(await h.queries.loadPublicAnnouncementDetail(id),{status:"not-found"});
+  assert.deepEqual(h.calls.map(c=>c.table),["annuncio"]);
+});
+
+test("all discovery readers exclude trash independently of status, privacy and hidden flags", async () => {
+  const h=fixture({current:{...row(),eliminato_il:"2026-10-24T10:00:00Z"}});
+  assert.deepEqual(await h.queries.loadPublicAnnouncementsByIds([id]),[]);
+  const q=h.load("apps/web/src/features/annunci/announcement-model.ts").parseAnnouncementDirectoryQuery({type:"annuncio_giocatore"});
+  for(const read of [()=>h.queries.loadLatestPublicAnnouncements(),()=>h.queries.loadPublicAnnouncementDirectory(q),
+    ()=>h.queries.loadRelatedPublicAnnouncements(otherId,"annuncio_squadra_cerca_giocatore",[]),
+    ()=>h.queries.loadPublicProfileAnnouncements(h.client,authorId,"giocatore")]) {
+    const result=await read(); assert(!JSON.stringify(result).includes(id));
+  }
+  assert(h.calls.some(c=>c.table==="annuncio"));
+  for(const c of h.calls.filter(c=>c.table==="annuncio")) assert(c.operations.some(([m,k,v])=>m==="is"&&k==="eliminato_il"&&v===null));
+});
+
+test("owner confirmation excludes trash and uses a revocable image proxy for active records", async () => {
+  const trashed=fixture({current:{...row(),eliminato_il:"2026-10-24T10:00:00Z"}});
+  assert.deepEqual(await trashed.load("apps/web/src/features/pubblica-annuncio/server/confirmation.ts").loadPublishConfirmation(id),{status:"not-found"});
+  assert.deepEqual(trashed.calls.map(c=>c.table),["annuncio"]);
+  const active=fixture({current:{...row(),media_annuncio:[{formato_media:"image/webp",link_media:"owner/image.webp"}]}});
+  const result=await active.load("apps/web/src/features/pubblica-annuncio/server/confirmation.ts").loadPublishConfirmation(id);
+  assert.equal(result.status,"ok");
+  assert.match(JSON.stringify(result),/\/api\/metadata\/annuncio-immagine\?id=/);
+  assert(!JSON.stringify(result).includes("owner/image.webp"));
+});
 
 test("detail exposes aggregate counts and complete comma-separated selections; directory stays compact", async () => {
 	const current = {...row(), localita_annuncio: [{regione: "Lazio", citta: "Roma"}, {regione: "Toscana", citta: "Firenze"}]};
@@ -226,14 +258,14 @@ test("current tournament name appears in player announcement details and existin
 
 test("player directory filters by the author's birth year", async () => {
 	const {queries, load} = fixture();
-	const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
+	const {parseAnnouncementDirectoryQuery} = load("apps/web/src/features/annunci/announcement-model.ts");
 	assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", annoNascita: "2005"}))).total, 1);
 	assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", annoNascita: "2006"}))).total, 0);
 });
 
 test("player filters use an inclusive year range, gender and requested categories", async () => {
 	const {queries, load} = fixture();
-	const {parseAnnouncementDirectoryQuery, getAnnouncementFilterEntries} = load("src/features/annunci/announcement-model.ts");
+	const {parseAnnouncementDirectoryQuery, getAnnouncementFilterEntries} = load("apps/web/src/features/annunci/announcement-model.ts");
 	const query = values => parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", ...values});
 	assert.equal((await queries.loadPublicAnnouncementDirectory(query({annoDa: "2004", annoA: "2005", genere: "Uomo", categorieRicercate: "Eccellenza"}))).total, 1);
 	assert.equal((await queries.loadPublicAnnouncementDirectory(query({annoDa: "2006", annoA: "2026"}))).total, 0);
@@ -248,7 +280,7 @@ test("player filters use an inclusive year range, gender and requested categorie
 test("anonymous player facets remain filterable and essential author info stays scoped", async () => {
 	const anonymousProfile = {uuid: authorId, profilo_giocatore: [{nascosto: false, nome: "Luca", cognome: "Bianchi", anno_nascita: "2005", genere: "Uomo", presentazione: "Cerco una squadra"}]};
 	const {queries, load, calls} = fixture({authors: [], anonymousProfile, profileLocations: [{regione: "Lazio", citta: "Roma"}]});
-	const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
+	const {parseAnnouncementDirectoryQuery} = load("apps/web/src/features/annunci/announcement-model.ts");
 	const result = await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_giocatore", genere: "Uomo"}));
 	assert.equal(result.total, 1);
 	const detail = await queries.loadPublicAnnouncementDetail(id);
@@ -266,7 +298,7 @@ test("service and creator announcements are discoverable and have public details
 	for (const [type, relation, child] of cases) {
 		const current = {...row(type), [type]: undefined, [relation]: child};
 		const {queries, load} = fixture({current, authors: []});
-		const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
+		const {parseAnnouncementDirectoryQuery} = load("apps/web/src/features/annunci/announcement-model.ts");
 		assert.equal((await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type}))).total, 1, type);
 		const detail = await queries.loadPublicAnnouncementDetail(id);
 		assert.equal(detail.status, "success", type);
@@ -279,8 +311,8 @@ test("header shows compact author identity while full categories precede additio
 	const current = row("annuncio_giocatore", {categorie_ricercate: ["Eccellenza", "Promozione", "Prima Categoria", "Seconda Categoria"]});
 	const {queries, load} = fixture({current});
 	const {announcement} = await queries.loadPublicAnnouncementDetail(id);
-	const Header = load("src/features/annunci/components/details/AnnouncementDetailsHeader.tsx").default;
-	const Overview = load("src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
+	const Header = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsHeader.tsx").default;
+	const Overview = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
 	const header = renderToStaticMarkup(React.createElement(Header, {announcement}));
 	const overview = renderToStaticMarkup(React.createElement(Overview, {announcement}));
 	assert.match(header, /Mario Rossi/);
@@ -292,7 +324,7 @@ test("header shows compact author identity while full categories precede additio
 
 test("author card links public profiles and explains unavailable anonymous profile links", async () => {
 	const {load} = fixture();
-	const AuthorCard = load("src/features/annunci/components/details/AnnouncementAuthorCard.tsx").default;
+	const AuthorCard = load("apps/web/src/features/annunci/components/details/AnnouncementAuthorCard.tsx").default;
 	const registered = renderToStaticMarkup(React.createElement(AuthorCard, {announcement: {author: {kind: "registered", profileId: authorId, profileType: "giocatore", title: "Mario Rossi", emailConfirmed: true, presentation: "Cerco una squadra"}}}));
 	assert.match(registered, /Apri profilo/);
 	assert.match(registered, /Apri scheda giocatore/);
@@ -309,14 +341,14 @@ test("author card links public profiles and explains unavailable anonymous profi
 
 test("tournament cost includes its unit and facility displays hours and services without duplicating narrative", async () => {
 	const {load} = fixture();
-	const {announcementContent} = load("src/features/annunci/announcement-content.ts");
-	const {buildAnnouncementDetailSections} = load("src/features/annunci/announcement-detail-sections.ts");
+	const {announcementContent} = load("apps/web/src/features/annunci/announcement-content.ts");
+	const {buildAnnouncementDetailSections} = load("apps/web/src/features/annunci/announcement-detail-sections.ts");
 	const tournament = announcementContent("annuncio_torneo_evento", {nome_evento: "Coppa", costo_partecipazione: 50, tipo_partecipazione: "giocatore"}, [], true);
 	assert.match(tournament.facts.find(fact => fact.label === "Costo").value, /50,00[^/]*\/ giocatore/);
 	const raw = {orari: "Lun-Ven 18-22", servizi_inclusi: "Spogliatoi", descrizione_aggiuntiva: "Campo disponibile", indirizzo: "Vedi profilo"};
 	const facility = announcementContent("annuncio_campo_impianto", raw, [], true);
 	const sections = buildAnnouncementDetailSections({type: "annuncio_campo_impianto", ...facility, authorProfile: null, raw});
-	const Overview = load("src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
+	const Overview = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
 	const html = renderToStaticMarkup(React.createElement(Overview, {announcement: {...facility, sections, announcementLink: null, shareImageUrl: null}}));
 	assert.match(html, /Lun-Ven 18-22/);
 	assert.match(html, /Spogliatoi/);
@@ -351,7 +383,7 @@ test("team directory ignores removed current-category parameters", async () => {
 		current: row("annuncio_squadra_cerca_staff"),
 		authors: [{...profile, profilo_giocatore: [], profilo_squadra: [{nascosto: false, nome_societa: "A.S.D. Alfa", categoria_attuale: male}]}],
 	});
-	const {parseAnnouncementDirectoryQuery} = current.load("src/features/annunci/announcement-model.ts");
+	const {parseAnnouncementDirectoryQuery} = current.load("apps/web/src/features/annunci/announcement-model.ts");
 	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "staff", categoriaAttuale: male}))).total, 1);
 	assert.equal((await current.queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "staff", categoriaAttuale: "Calcio 5 (Femminile)::Serie A"}))).total, 1);
 	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", categoriaAttuale: male}).filters.categoriaAttuale, undefined);
@@ -359,7 +391,7 @@ test("team directory ignores removed current-category parameters", async () => {
 
 test("team search announcements keep saved age ranges in details without exposing them as directory filters", async () => {
 	const legacy = fixture({current: row("annuncio_squadra_cerca_giocatore", {annate_ricercate: ["2004", "2007"], annata_da: null, annata_a: null})});
-	const {parseAnnouncementDirectoryQuery} = legacy.load("src/features/annunci/announcement-model.ts");
+	const {parseAnnouncementDirectoryQuery} = legacy.load("apps/web/src/features/annunci/announcement-model.ts");
 	const oldDetail = await legacy.queries.loadPublicAnnouncementDetail(id);
 	assert.equal(oldDetail.announcement.fields.find(({label}) => label === "Annate ricercate"), undefined);
 	assert.equal(parseAnnouncementDirectoryQuery({type: "annuncio_squadra", ricercaSquadra: "giocatore", annata: "2005"}).filters.annoDa, "");
@@ -375,7 +407,7 @@ test("team staff search reads current figures and omits historical free text and
 		figura_ricercata: "Allenatore", figure_ricercate: ["Allenatore", "Preparatore atletico"],
 		stagione: "2026/27", periodo_dal: null, periodo_al: null, requisiti: "Esperienza richiesta",
 	})});
-	const {parseAnnouncementDirectoryQuery} = current.load("src/features/annunci/announcement-model.ts");
+	const {parseAnnouncementDirectoryQuery} = current.load("apps/web/src/features/annunci/announcement-model.ts");
 	const detail = await current.queries.loadPublicAnnouncementDetail(id);
 	assert.equal(detail.announcement.title, "Ricerca staff sportivo");
 	assert.deepEqual(detail.announcement.fields.find(({label}) => label === "Figure ricercate").items, ["Allenatore", "Preparatore atletico"]);
@@ -432,7 +464,7 @@ test("Staff, Arbitro and Impianto share the public profile title across cards, l
 });
 
 test("team search titles count effective roles and keep sponsor sector separate", () => {
-	const content = sourceLoader()("src/features/annunci/announcement-content.ts").announcementContent;
+	const content = sourceLoader()("apps/web/src/features/annunci/announcement-content.ts").announcementContent;
 	assert.equal(content("annuncio_squadra_cerca_giocatore", {}, [], false, "Ricerca personalizzata").title, "Ricerca personalizzata");
 	assert.equal(content("annuncio_squadra_cerca_giocatore", {}, []).title, "Ricerca giocatori");
 	assert.equal(content("annuncio_squadra_cerca_giocatore", {ruoli_principali: ["Portiere"]}, []).title, "Ricerca Portiere");
@@ -482,8 +514,8 @@ test("priority styling follows the published activation flag and expiry", async 
 	const future = new Date(Date.now() + 86_400_000).toISOString();
 	const past = new Date(Date.now() - 86_400_000).toISOString();
 	const load = sourceLoader();
-	const Header = load("src/features/annunci/components/details/AnnouncementDetailsHeader.tsx").default;
-	const {ANNOUNCEMENT_DETAIL_PRESENTATIONS: presentations} = load("src/features/annunci/components/details/announcement-detail-presentation.ts");
+	const Header = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsHeader.tsx").default;
+	const {ANNOUNCEMENT_DETAIL_PRESENTATIONS: presentations} = load("apps/web/src/features/annunci/components/details/announcement-detail-presentation.ts");
 	for (const [changes, active, level] of [
 		[{priorita_attiva: true, priorita_fine_il: future}, true, "prioritario"],
 		[{priorita_attiva: false, priorita_fine_il: future}, false, "gratuito"],
@@ -581,7 +613,7 @@ test("saved unlisted announcements are accessible by URL with contacts but absen
 		assert.doesNotMatch(projection, /info_stato_annuncio|creato_da|stripe|normalized_email/);
 		assert.deepEqual(await queries.loadPublicAnnouncementsByIds([id]), []);
 		assert.deepEqual((await queries.loadLatestPublicAnnouncements()).announcements, []);
-		const {parseAnnouncementDirectoryQuery} = load("src/features/annunci/announcement-model.ts");
+		const {parseAnnouncementDirectoryQuery} = load("apps/web/src/features/annunci/announcement-model.ts");
 		for (const params of [{}, {q: "Difensore"}]) {
 			const directory = await queries.loadPublicAnnouncementDirectory(parseAnnouncementDirectoryQuery(params));
 			assert.equal(directory.error, false);
@@ -614,8 +646,8 @@ test("preview banners describe the actual state and pass share-only behavior to 
 	const load = sourceLoader({
 		"@/features/interazioni/DetailActions": {__esModule: true, default: ({shareOnly}) => React.createElement("span", {"data-share-only": String(shareOnly)})},
 	});
-	const Layout = load("src/features/annunci/components/details/AnnouncementDetailsLayout.tsx").default;
-	const {ANNOUNCEMENT_DETAIL_PRESENTATIONS: presentations} = load("src/features/annunci/components/details/announcement-detail-presentation.ts");
+	const Layout = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsLayout.tsx").default;
+	const {ANNOUNCEMENT_DETAIL_PRESENTATIONS: presentations} = load("apps/web/src/features/annunci/components/details/announcement-detail-presentation.ts");
 	for (const [status, title] of [
 		["in_revisione", "Annuncio in attesa di revisione"],
 		["in_attesa_pagamento", "Annuncio da completare"],
@@ -637,7 +669,7 @@ test("preview banners describe the actual state and pass share-only behavior to 
 });
 
 test("announcement links open the saved detail in a new tab for both preview and published states", () => {
-	const ViewLink = sourceLoader()("src/features/annunci/AnnouncementViewLink.tsx").default;
+	const ViewLink = sourceLoader()("apps/web/src/features/annunci/AnnouncementViewLink.tsx").default;
 	for (const isListed of [true, false]) {
 		const html = renderToStaticMarkup(React.createElement(ViewLink, {id, isListed}));
 		assert.ok(html.includes(`href="/dettagli-annuncio?id=${id}"`));
@@ -650,7 +682,7 @@ test("announcement links open the saved detail in a new tab for both preview and
 });
 
 test("confirmation renders the saved preview and opens its detail in a new tab before approval or payment", () => {
-	const Confirmation = sourceLoader()("src/features/pubblica-annuncio/ConfermaPubblicazione.tsx").default;
+	const Confirmation = sourceLoader()("apps/web/src/features/pubblica-annuncio/ConfermaPubblicazione.tsx").default;
 	for (const awaitingPayment of [true, false]) {
 		const preview = {
 			id, announcementType: "annuncio_giocatore", profileType: "giocatore", title: "Annuncio salvato",
@@ -670,7 +702,7 @@ test("confirmation renders the saved preview and opens its detail in a new tab b
 });
 
 test("publish preview stays light and compact while retaining locations, image, contacts and links", () => {
-	const PreviewCard = sourceLoader()("src/features/pubblica-annuncio/components/AnnouncementPreviewCard.tsx").default;
+	const PreviewCard = sourceLoader()("apps/web/src/features/pubblica-annuncio/components/AnnouncementPreviewCard.tsx").default;
 	const preview = {
 		announcementType: "annuncio_giocatore", profileType: "giocatore", title: "Difensore disponibile",
 		typeLabel: "Giocatore", author: "Mario Rossi", description: "Descrizione completa",
@@ -699,9 +731,9 @@ test("publish preview stays light and compact while retaining locations, image, 
 
 test("publish preview shows the persisted facts and supporting fields for all ten announcement types", () => {
 	const load = sourceLoader();
-	const {createProfileDrafts} = load("src/features/profilo/profile-model.ts");
-	const {buildPublishPreview} = load("src/features/pubblica-annuncio/announcement-preview.ts");
-	const PreviewCard = load("src/features/pubblica-annuncio/components/AnnouncementPreviewCard.tsx").default;
+	const {createProfileDrafts} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {buildPublishPreview} = load("apps/web/src/features/pubblica-annuncio/announcement-preview.ts");
+	const PreviewCard = load("apps/web/src/features/pubblica-annuncio/components/AnnouncementPreviewCard.tsx").default;
 	const drafts = createProfileDrafts();
 	drafts.giocatore.nome = "Mario";
 	drafts.giocatore.ruoli_sport = {principali: ["Difensore"], specifici: ["Terzino destro"]};
@@ -771,9 +803,9 @@ test("count and similar failures are isolated, including rejected promises; zero
 
 test("all eleven types render the configured sections, author header and complete additional information", async () => {
 	const load = sourceLoader();
-	const types = load("src/features/annunci/announcement-content.ts").ACTIVE_ANNOUNCEMENT_TYPES;
-	const Header = load("src/features/annunci/components/details/AnnouncementDetailsHeader.tsx").default;
-	const Overview = load("src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
+	const types = load("apps/web/src/features/annunci/announcement-content.ts").ACTIVE_ANNOUNCEMENT_TYPES;
+	const Header = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsHeader.tsx").default;
+	const Overview = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
 	for (const type of types) {
 		const {announcement} = await fixture({current: row(type, {descrizione_post: "Post creator", presentazione_servizi: "Servizi completi", requisiti: "Requisiti completi", servizi_inclusi: "Spogliatoi"}), authors: []}).queries.loadPublicAnnouncementDetail(id);
 		const header = renderToStaticMarkup(React.createElement(Header, {announcement, actions: React.createElement("button", null, "Salva annuncio")}));
@@ -796,7 +828,7 @@ test("all eleven types render the configured sections, author header and complet
 
 test("sidebar follows central content and orders profile, contacts, sponsor and copyable UUID", async () => {
 	const load = sourceLoader({"@/features/interazioni/DetailActions": {__esModule: true, default: () => null}});
-	const Layout = load("src/features/annunci/components/details/AnnouncementDetailsLayout.tsx").default;
+	const Layout = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsLayout.tsx").default;
 	const {announcement} = await fixture().queries.loadPublicAnnouncementDetail(id);
 	const html = renderToStaticMarkup(React.createElement(Layout, {announcement, authenticated: false, returnTo: "/dettagli-annuncio?id=" + id}));
 	const aside = html.slice(html.indexOf('<aside aria-label="Profilo autore, contatti e sponsor"'));
@@ -811,8 +843,8 @@ test("sidebar follows central content and orders profile, contacts, sponsor and 
 
 test("similar announcements expose a tab and distinguish empty/error states", () => {
 	const load = sourceLoader();
-	const Tabs = load("src/features/annunci/components/details/AnnouncementDetailsTabs.tsx").default;
-	const Similar = load("src/features/annunci/components/details/SimilarAnnouncements.tsx").default;
+	const Tabs = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsTabs.tsx").default;
+	const Similar = load("apps/web/src/features/annunci/components/details/SimilarAnnouncements.tsx").default;
 	assert.match(renderToStaticMarkup(React.createElement(Tabs, {overview: "Dettagli", similar: "Risultati"})), /role="tab"[\s\S]*Annunci simili/);
 	assert.match(renderToStaticMarkup(React.createElement(Tabs, {overview: "Dettagli", similar: "Risultati"})), /Dettagli annuncio/);
 	assert.match(renderToStaticMarkup(React.createElement(Similar, {announcements: [], unavailable: false})), /Nessun annuncio simile/);
@@ -842,7 +874,7 @@ test("each announcement type preserves the requested section order including emp
 
 test("badges use author values, limit staff figures and only use known referee booleans", () => {
 	const load = sourceLoader();
-	const {announcementAuthorBadges} = load("src/features/annunci/announcement-detail-sections.ts");
+	const {announcementAuthorBadges} = load("apps/web/src/features/annunci/announcement-detail-sections.ts");
 	const profile = {age: 24, birthYear: "2002", primaryRoles: ["Difensore", "Centrocampista"], sportTypes: ["Calcio 11"], currentCategory: "Promozione", figures: ["Allenatore", "Preparatore atletico", "Dirigente", "Fisioterapista"], companyType: "Studio professionale", availabilityLabel: "Disponibile", contentTypes: ["Interviste"]};
 	const expected = {
 		annuncio_giocatore: ["24 anni (2002)", "Difensore", "Centrocampista"],
@@ -883,7 +915,7 @@ test("author projection exposes age and career categories without full birth dat
 	const careerSection = announcement.sections.find(section => section.id === "previous-categories");
 	assert.equal(careerSection.presentation.kind, "player-career");
 	assert.deepEqual(careerSection.presentation.rows, announcement.authorProfile.previousCareer);
-	const Content = load("src/features/annunci/components/details/AnnouncementSectionContent.tsx").default;
+	const Content = load("apps/web/src/features/annunci/components/details/AnnouncementSectionContent.tsx").default;
 	const careerHtml = renderToStaticMarkup(React.createElement(Content, {section: careerSection}));
 	assert.match(careerHtml, /Eccellenza<\/span><span[^>]*> - Squadra Alfa<\/span>/);
 	assert.match(careerHtml, /Dal 2020 al 2022/);
@@ -891,7 +923,7 @@ test("author projection exposes age and career categories without full birth dat
 	assert.equal((careerHtml.match(/<li /g) ?? []).length, 5);
 	assert.doesNotMatch(careerHtml, /undefined|null|Private career note/);
 	assert.deepEqual(announcement.authorProfile.locations, [{region: "Lazio", city: "Roma"}]);
-	assert.deepEqual(load("src/features/annunci/announcement-detail-sections.ts").announcementAuthorBadges(announcement.type, announcement.authorProfile, announcement.sections).map(badge => badge.label), [announcement.authorProfile.age + " anni (2005)", "Portiere"]);
+	assert.deepEqual(load("apps/web/src/features/annunci/announcement-detail-sections.ts").announcementAuthorBadges(announcement.type, announcement.authorProfile, announcement.sections).map(badge => badge.label), [announcement.authorProfile.age + " anni (2005)", "Portiere"]);
 	assert.doesNotMatch(JSON.stringify(announcement), /giorno_nascita|mese_nascita|Private career note|Torino|Verona/);
 	const query = calls.find(call => call.table === "profilo" && call.operations.some(([method, value]) => method === "select" && value.includes("giorno_nascita")));
 	assert.ok(query.operations.some(([method, key, value]) => method === "eq" && key === "nascosto" && value === false));
@@ -910,7 +942,7 @@ test("supplemental author query failures keep the announcement readable with pla
 });
 
 test("year ranges show only birth years and tolerate partial or invalid data", () => {
-	const {announcementYearRange} = sourceLoader()("src/features/annunci/announcement-detail-sections.ts");
+	const {announcementYearRange} = sourceLoader()("apps/web/src/features/annunci/announcement-detail-sections.ts");
 	const now = new Date("2026-10-08T12:00:00Z");
 	assert.equal(announcementYearRange("2002", "2005", now), "2002–2005");
 	assert.equal(announcementYearRange("2002", "2002", now), "2002");
@@ -921,7 +953,7 @@ test("year ranges show only birth years and tolerate partial or invalid data", (
 });
 
 test("age calculation uses the complete birthday and handles Italian calendar boundaries", () => {
-	const {publicPlayerAge} = sourceLoader()("src/features/dettagli-profilo/server/player-profile-data.ts");
+	const {publicPlayerAge} = sourceLoader()("apps/web/src/features/dettagli-profilo/server/player-profile-data.ts");
 	const birth = {day: "9", month: "Ottobre", year: "2002"};
 	assert.equal(publicPlayerAge(birth, new Date("2026-10-08T12:00:00Z")), 23);
 	assert.equal(publicPlayerAge(birth, new Date("2026-10-09T12:00:00Z")), 24);
@@ -930,7 +962,7 @@ test("age calculation uses the complete birthday and handles Italian calendar bo
 
 test("optional link and image sections follow all details with a visible external-link notice", async () => {
 	const load = sourceLoader();
-	const Overview = load("src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
+	const Overview = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsOverview.tsx").default;
 	const {announcement} = await fixture().queries.loadPublicAnnouncementDetail(id);
 	const html = renderToStaticMarkup(React.createElement(Overview, {announcement: {...announcement, announcementLink: "https://example.com", shareImageUrl: "/api/metadata/annuncio-immagine?id=" + id}}));
 	assert.ok(html.indexOf("Informazioni aggiuntive:") < html.indexOf("Link annuncio:"));
@@ -943,7 +975,7 @@ test("optional link and image sections follow all details with a visible externa
 });
 
 test("external navigation confirmation excludes internal links, anchors, email, phone and non-web protocols", () => {
-	const {externalNavigationUrl} = sourceLoader()("src/components/navigation/external-navigation.ts");
+	const {externalNavigationUrl} = sourceLoader()("apps/web/src/components/navigation/external-navigation.ts");
 	const origin = "https://bacheca.example";
 	for (const href of ["/annunci", "#ruoli", origin + "/profili", "mailto:info@example.test", "tel:+3912345678", "javascript:alert(1)", "data:text/html,test", "https://["]) assert.equal(externalNavigationUrl(href, origin), null);
 	for (const href of ["https://example.test/path?ref=profilo", "//example.test/path", "http://example.test/path"]) assert.equal(externalNavigationUrl(href, origin).hostname, "example.test");
@@ -952,7 +984,7 @@ test("external navigation confirmation excludes internal links, anchors, email, 
 
 test("external link intercepts normal, modified and middle clicks only inside the scoped provider", () => {
 	const requests = [];
-	const {ExternalLink} = sourceLoader({react: {...React, useContext: () => request => requests.push(request)}})("src/components/navigation/ExternalNavigation.tsx");
+	const {ExternalLink} = sourceLoader({react: {...React, useContext: () => request => requests.push(request)}})("apps/web/src/components/navigation/ExternalNavigation.tsx");
 	const previousWindow = globalThis.window;
 	globalThis.window = {location: {origin: "https://bacheca.example"}};
 	try {
@@ -970,7 +1002,7 @@ test("external link intercepts normal, modified and middle clicks only inside th
 			ExternalLink({href}).props.onClick(event);
 			assert.equal(event.defaultPrevented, false);
 		}
-		const NativeLink = sourceLoader({react: {...React, useContext: () => null}})("src/components/navigation/ExternalNavigation.tsx").ExternalLink;
+		const NativeLink = sourceLoader({react: {...React, useContext: () => null}})("apps/web/src/components/navigation/ExternalNavigation.tsx").ExternalLink;
 		const event = {button: 0, defaultPrevented: false, preventDefault() {this.defaultPrevented = true;}};
 		NativeLink({href}).props.onClick(event);
 		assert.equal(event.defaultPrevented, false);
@@ -998,7 +1030,7 @@ test("anonymous profile names protect existing announcement details and cards wh
   assert.equal(detail.announcement.author.profileId, authorId);
   assert.equal(detail.announcement.author.title, expected);
   assert.equal(detail.announcement.author.anonymousName, true);
-  const Header = load("src/features/annunci/components/details/AnnouncementDetailsHeader.tsx").default;
+  const Header = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsHeader.tsx").default;
   const html = renderToStaticMarkup(React.createElement(Header, {announcement: detail.announcement}));
   assert.match(html, /lucide-eye-off/);
   assert.doesNotMatch(html, /Nome nascosto/);

@@ -29,7 +29,7 @@ function sourceLoader() {
 		const localRequire = (specifier) => {
 			if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
 			const base = specifier.startsWith("@/")
-				? path.join(root, "src", specifier.slice(2))
+				? path.join(root, "apps/web/src", specifier.slice(2))
 				: path.resolve(path.dirname(file), specifier);
 			const target = [base, `${base}.ts`, `${base}.tsx`].find((candidate) => existsSync(candidate));
 			if (!target) throw new Error(`Cannot resolve ${specifier}`);
@@ -42,9 +42,9 @@ function sourceLoader() {
 }
 
 const load = sourceLoader();
-const AnnouncementCard = load("src/features/annunci/components/cards/AnnouncementCard.tsx").default;
-const {getAnnouncementFacts} = load("src/features/annunci/components/cards/announcement-card-model.ts");
-const {buildAnnouncementCardRows} = load("src/features/annunci/announcement-card-rows.ts");
+const AnnouncementCard = load("apps/web/src/features/annunci/components/cards/AnnouncementCard.tsx").default;
+const {getAnnouncementFacts} = load("apps/web/src/features/annunci/components/cards/announcement-card-model.ts");
+const {buildAnnouncementCardRows} = load("apps/web/src/features/annunci/announcement-card-rows.ts");
 
 const FACTS = [
 	{kind: "roles", label: "Ruoli principali", value: "Difensore"},
@@ -172,7 +172,7 @@ test("card row mappings compact locations and translate player roles", () => {
 });
 
 test("recent profile announcements show the same saved title and meaningful facts as public cards", () => {
-	const ProfileAnnouncementCard = load("src/features/dettagli-profilo/components/ProfileAnnouncementCard.tsx").default;
+	const ProfileAnnouncementCard = load("apps/web/src/features/dettagli-profilo/components/ProfileAnnouncementCard.tsx").default;
 	const announcement = fixtureAnnouncement("annuncio_torneo_evento", [
 		{kind: "registration", label: "Iscrizione", value: "Online"},
 		{kind: "price", label: "Costo", value: "50 €"},

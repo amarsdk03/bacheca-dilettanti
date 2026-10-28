@@ -23,7 +23,7 @@ function sourceLoader(overrides = {}) {
 			if (Object.hasOwn(overrides, specifier)) return overrides[specifier];
 			if (specifier === "server-only") return {};
 			if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
-			const base = specifier.startsWith("@/") ? path.join(root, "src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+			const base = specifier.startsWith("@/") ? path.join(root, "apps/web/src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
 			const target = [base, `${base}.ts`, `${base}.tsx`].find((candidate) => existsSync(candidate));
 			if (!target) throw new Error(`Cannot resolve ${specifier}`);
 			return load(target);
@@ -35,14 +35,14 @@ function sourceLoader(overrides = {}) {
 
 function validRegistrationPayload(legalAccepted = true, newsletterSubscribed = false) {
 	const load = sourceLoader();
-	const {createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
-	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
-	const {createRegistrationPayload} = load("src/features/registrati/registration-payload.ts");
+	const {createProfileDrafts, createProfileLocations} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
+	const {createRegistrationPayload} = load("apps/web/src/features/registrati/registration-payload.ts");
 	const drafts = createProfileDrafts();
 	const locations = createProfileLocations();
 	drafts.squadra.nome_societa = "Squadra Test";
 	drafts.squadra.tipologie_sport = ["Calcio 11"];
-	drafts.squadra.categoria_attuale = load("src/features/profilo/team-category-catalog.ts").TEAM_CATEGORY_OPTIONS[0].value;
+	drafts.squadra.categoria_attuale = load("apps/web/src/features/profilo/team-category-catalog.ts").TEAM_CATEGORY_OPTIONS[0].value;
 	locations.squadra = [{regione: "Lazio", citta: "Roma"}];
 	return createRegistrationPayload(
 		["squadra"],
@@ -57,9 +57,9 @@ function validRegistrationPayload(legalAccepted = true, newsletterSubscribed = f
 
 function validPlayerPayload() {
 	const load = sourceLoader();
-	const {createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
-	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
-	const {createRegistrationPayload} = load("src/features/registrati/registration-payload.ts");
+	const {createProfileDrafts, createProfileLocations} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
+	const {createRegistrationPayload} = load("apps/web/src/features/registrati/registration-payload.ts");
 	const drafts = createProfileDrafts();
 	const locations = createProfileLocations();
 	Object.assign(drafts.giocatore, {nome: "Mario", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"], specifici: []}, genere: "Uomo", anno_nascita: "2000", mese_nascita: "Gennaio", giorno_nascita: "01", disponibilita: "sotto-contratto", categoria_attuale: "Calcio a 11 maschile::FIGC-LND — Eccellenza", nazionalita: "IT", piede_principale: "Ambipiede", categorie_ricercate: ["Calcio a 11 maschile::FIGC-LND — Eccellenza"]});
@@ -69,11 +69,11 @@ function validPlayerPayload() {
 
 test("foreign residence and team headquarters round-trip through registration and profile editing only for the four eligible profiles", () => {
 	const load = sourceLoader();
-	const {PROFILE_TYPES, createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
-	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
-	const {createRegistrationPayload, isRegistrableProfileType} = load("src/features/registrati/registration-payload.ts");
-	const {parseRegistrationPayload, parseProfileEditorPayload, RegistrationPayloadError} = load("src/features/registrati/server/registration.ts");
-	const {TEAM_CATEGORY_OPTIONS} = load("src/features/profilo/team-category-catalog.ts");
+	const {PROFILE_TYPES, createProfileDrafts, createProfileLocations} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
+	const {createRegistrationPayload, isRegistrableProfileType} = load("apps/web/src/features/registrati/registration-payload.ts");
+	const {parseRegistrationPayload, parseProfileEditorPayload, RegistrationPayloadError} = load("apps/web/src/features/registrati/server/registration.ts");
+	const {TEAM_CATEGORY_OPTIONS} = load("apps/web/src/features/profilo/team-category-catalog.ts");
 	const drafts = createProfileDrafts();
 	Object.assign(drafts.giocatore, validPlayerPayload().profiles[0].draft);
 	Object.assign(drafts.giocatore, {disponibilita: "svincolato", categoria_attuale: "", categorie_ricercate: []});
@@ -111,11 +111,11 @@ test("foreign residence and team headquarters round-trip through registration an
 
 test("professional availability accepts presence, online and both without changing staff availability", () => {
 	const load = sourceLoader();
-	const {createProfileDrafts} = load("src/features/profilo/profile-model.ts");
-	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
-	const {parseProfileEditorPayload, RegistrationPayloadError} = load("src/features/registrati/server/registration.ts");
-	const {availabilityLabel} = load("src/features/profilo/public-profile-display.ts");
-	const {normalizeProfessionalAvailability} = load("src/features/profilo/professional-availability.ts");
+	const {createProfileDrafts} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
+	const {parseProfileEditorPayload, RegistrationPayloadError} = load("apps/web/src/features/registrati/server/registration.ts");
+	const {availabilityLabel} = load("apps/web/src/features/profilo/public-profile-display.ts");
+	const {normalizeProfessionalAvailability} = load("apps/web/src/features/profilo/professional-availability.ts");
 	const drafts = createProfileDrafts();
 	const draft = {...drafts["servizi-consulenze"], nome: "Studio Test", contatto_email: "studio@example.com"};
 	const parse = (disponibilita) => parseProfileEditorPayload({type: "servizi-consulenze", draft: {...draft, disponibilita}, locations: [{regione: "Lazio", citta: "Roma"}], socialLinks: createProfileSocialLinks()["servizi-consulenze"]});
@@ -136,11 +136,11 @@ test("professional availability accepts presence, online and both without changi
 
 test("staff qualifications require a state and discard obsolete historical free text", () => {
 	const load = sourceLoader();
-	const {createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
-	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
-	const {createRegistrationPayload} = load("src/features/registrati/registration-payload.ts");
-	const {parseRegistrationPayload, RegistrationPayloadError} = load("src/features/registrati/server/registration.ts");
-	const {getProfileRequiredFieldErrors} = load("src/features/profilo/profile-required-fields.ts");
+	const {createProfileDrafts, createProfileLocations} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
+	const {createRegistrationPayload} = load("apps/web/src/features/registrati/registration-payload.ts");
+	const {parseRegistrationPayload, RegistrationPayloadError} = load("apps/web/src/features/registrati/server/registration.ts");
+	const {getProfileRequiredFieldErrors} = load("apps/web/src/features/profilo/profile-required-fields.ts");
 	const drafts = createProfileDrafts();
 	const locations = createProfileLocations();
 	drafts["staff-sportivo"].nome = "Ada";
@@ -162,7 +162,7 @@ test("staff qualifications require a state and discard obsolete historical free 
 });
 
 test("player profile requires a complete birth date and normalizes current fields", () => {
-	const {parseRegistrationPayload, RegistrationPayloadError} = sourceLoader()("src/features/registrati/server/registration.ts");
+	const {parseRegistrationPayload, RegistrationPayloadError} = sourceLoader()("apps/web/src/features/registrati/server/registration.ts");
 	const payload = validPlayerPayload();
 	const profile = parseRegistrationPayload(JSON.stringify(payload)).profiles[0].draft;
 	assert.equal(profile.categoria_attuale, "Calcio a 11 maschile::FIGC-LND — Eccellenza");
@@ -184,7 +184,7 @@ test("player profile requires a complete birth date and normalizes current field
 });
 
 test("registration requires current legal versions and preserves the optional newsletter choice", () => {
-	const {parseRegistrationPayload, RegistrationPayloadError} = sourceLoader()("src/features/registrati/server/registration.ts");
+	const {parseRegistrationPayload, RegistrationPayloadError} = sourceLoader()("apps/web/src/features/registrati/server/registration.ts");
 	const accepted = validRegistrationPayload(true, false);
 	const parsed = parseRegistrationPayload(JSON.stringify(accepted));
 	assert.deepEqual(parsed.consents, {
@@ -208,7 +208,7 @@ test("registration requires current legal versions and preserves the optional ne
 });
 
 test("registration normalizes an optional invitation code and rejects malformed input on account step", () => {
-	const {parseRegistrationPayload, RegistrationPayloadError} = sourceLoader()("src/features/registrati/server/registration.ts");
+	const {parseRegistrationPayload, RegistrationPayloadError} = sourceLoader()("apps/web/src/features/registrati/server/registration.ts");
 	const payload = validRegistrationPayload();
 	assert.equal(parseRegistrationPayload(JSON.stringify(payload)).inviteCode, null);
 	assert.equal(
@@ -222,7 +222,7 @@ test("registration normalizes an optional invitation code and rejects malformed 
 });
 
 test("registration UI includes all legal links, a required consent and newsletter disabled by default", () => {
-	const source = readFileSync(path.join(root, "src/features/registrati/Registrati.tsx"), "utf8");
+	const source = readFileSync(path.join(root, "apps/web/src/features/registrati/Registrati.tsx"), "utf8");
 	assert.match(source, /useState\(false\).*legalAccepted|legalAccepted[^]*useState\(false\)/);
 	assert.match(source, /newsletterSubscribed[^]*useState\(false\)/);
 	assert.match(source, /id="registration-legal-consent"[^]*required[^]*aria-required="true"/);
@@ -252,7 +252,7 @@ test("newsletter preference action verifies account ownership and stores the cho
 		"@/features/auth/server/queries": {getAuthenticatedViewer: async () => account},
 		"@/lib/supabase/admin": {createAdminClient: () => admin},
 		"@/lib/supabase/server": {createClient: async () => ({})},
-	})("src/features/profilo/server/actions.ts");
+	})("apps/web/src/features/profilo/server/actions.ts");
 
 	assert.equal((await setNewsletterSubscription("true")).status, "error");
 	account = null;

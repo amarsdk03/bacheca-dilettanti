@@ -1,0 +1,88 @@
+{
+  "source": "supabase/migrations/20261024212824_admin_home_aggregations.sql",
+  "sourceSha256": "fd7cc905e9ce81c90dc1023c27dcf5bf40144276c4af152f6c2bb3fa2ead71aa",
+  "m09VerifierSha256": "4a9544edcf6967a9d5a129d9ac3c9f3ac531e2a6dd61e95373c3152acc400cbb",
+  "provenance": "Exact M10 definitions generated in PGlite after reviewed M07/M08/M09 sources; tipologia_principale added only to the minimal synthetic fixture; no remote connection.",
+  "functions": [
+    {
+      "schema_name": "private",
+      "name": "admin_get_home_chart_bridge_v1",
+      "args": "text",
+      "identity": "private.admin_get_home_chart_bridge_v1(text)",
+      "after_md5": "4be1cb4b412e4a59a7fd65a0a653e429",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "volatility": "s",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 0,
+      "return_type": "jsonb",
+      "language": "plpgsql",
+      "before_md5": null,
+      "api_role": "authenticated"
+    },
+    {
+      "schema_name": "private",
+      "name": "admin_get_home_summary_bridge_v1",
+      "args": "",
+      "identity": "private.admin_get_home_summary_bridge_v1()",
+      "after_md5": "1d15061006cff84a33a02034891c858f",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "volatility": "s",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 0,
+      "return_type": "jsonb",
+      "language": "plpgsql",
+      "before_md5": null,
+      "api_role": "authenticated"
+    },
+    {
+      "schema_name": "public",
+      "name": "admin_get_home_chart_v1",
+      "args": "text",
+      "identity": "public.admin_get_home_chart_v1(text)",
+      "after_md5": "8bc4c9f1e2f7c00ddcd43d9a84668b72",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "volatility": "s",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 0,
+      "return_type": "jsonb",
+      "language": "sql",
+      "before_md5": null,
+      "api_role": "authenticated"
+    },
+    {
+      "schema_name": "public",
+      "name": "admin_get_home_summary_v1",
+      "args": "",
+      "identity": "public.admin_get_home_summary_v1()",
+      "after_md5": "49bccf5793a43c6706618ee4db73714b",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "volatility": "s",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 0,
+      "return_type": "jsonb",
+      "language": "sql",
+      "before_md5": null,
+      "api_role": "authenticated"
+    }
+  ]
+}

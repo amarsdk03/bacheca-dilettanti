@@ -1,12 +1,11 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260926212640_team_sponsor_optional_location_and_support.sql", import.meta.url);
 
-test("sponsor publication permits no support or location while preserving legacy sponsor rows", {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async () => {
-	const {PGlite} = await import(engineUrl.href);
+test("sponsor publication permits no support or location while preserving legacy sponsor rows", async () => {
 	const db = await PGlite.create();
 	try {
 		await db.exec(`

@@ -1,12 +1,11 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260926205141_team_player_year_range.sql", import.meta.url);
 
-test("year range migration preserves non-contiguous legacy years and writes both bounds through publication", {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async () => {
-	const {PGlite} = await import(engineUrl.href);
+test("year range migration preserves non-contiguous legacy years and writes both bounds through publication", async () => {
 	const db = await PGlite.create();
 	try {
 		await db.exec(`

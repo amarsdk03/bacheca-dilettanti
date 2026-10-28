@@ -1,14 +1,13 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {readFileSync, existsSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 
 const migration = readFileSync(new URL("../supabase/migrations/20261005121608_manifestazioni_interesse.sql", import.meta.url), "utf8");
 const id = (group, n) => `${group}0000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const tables = ["profilo_giocatore", "profilo_squadra", "profilo_staff_sportivo", "profilo_arbitro", "profilo_torneo_evento", "profilo_campi_impianti", "profilo_servizi_consulenze", "profilo_creator"];
 
-test("interests migration enforces contacts, ownership, privacy, per-user quotas and Italian calendar days", {skip: !existsSync(engineUrl) && "PGlite runner unavailable (see docs/follow-e-annunci-salvati.md)"}, async (t) => {
-	const {PGlite} = await import(engineUrl.href);
+test("interests migration enforces contacts, ownership, privacy, per-user quotas and Italian calendar days", async (t) => {
 	const db = await PGlite.create();
 	t.after(() => db.close());
 	await db.exec(`

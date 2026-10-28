@@ -19,14 +19,14 @@ function load(file) {
 	new Function("require", "module", "exports", outputText)((specifier) => {
 		if (specifier === "server-only") return {};
 		if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
-		const base = specifier.startsWith("@/") ? path.join(root, "src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+		const base = specifier.startsWith("@/") ? path.join(root, "apps/web/src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
 		return load([base, `${base}.ts`, `${base}.tsx`].find((candidate) => existsSync(candidate)));
 	}, loaded, loaded.exports);
 	return loaded.exports;
 }
 
-const {parsePublishPayload} = load(path.join(root, "src/features/pubblica-annuncio/server/validation.ts"));
-const {PUBLISH_PAYLOAD_VERSION} = load(path.join(root, "src/features/pubblica-annuncio/publish-model.ts"));
+const {parsePublishPayload} = load(path.join(root, "apps/web/src/features/pubblica-annuncio/server/validation.ts"));
+const {PUBLISH_PAYLOAD_VERSION} = load(path.join(root, "apps/web/src/features/pubblica-annuncio/publish-model.ts"));
 const weekdays = ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica"];
 const schedule = () => weekdays.map((giorno, index) => ({
 	giorno, attivo: index === 0, dalle: index === 0 ? "20:--" : "", alle: index === 0 ? "22:00" : "",

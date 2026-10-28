@@ -1,6 +1,8 @@
 # Proposta: webapp e dashboard Admin nella stessa repository
 
-**Stato:** progettazione aggiornata con le decisioni concordate; architettura e requisiti non ancora implementati.
+**Stato:** implementazione della prima versione disponibile fino allo step 15; verifiche locali 16A concluse e [runbook 16B](steps/16-verifica-rilascio/runbook-rilascio-recupero.md) preparato, non eseguito sul destinatario. Web in `apps/web`, dashboard in `apps/admin` e tipi condivisi in `packages/database`. Percorso test comune Node/PGlite senza Docker, con prove integrate/browser non ancora attestate. Configurazioni esterne, migrazioni e attivazioni restano distinte dai test locali: vedere il [master](master_plan.md) e la [matrice delle evidenze](steps/16-verifica-rilascio/matrice-verifiche.md) per stati e limiti aggiornati. I pacchetti domain/UI saranno estratti quando necessari a entrambi i consumatori.
+
+**Roadmap operativa:** il [master plan](master_plan.md) e i documenti dei suoi step definiscono il perimetro approvato della prima versione, modello/impegno, stato e avanzamento a un solo step per prompt. Questo documento resta il riferimento architetturale; per le decisioni funzionali aggiornate fare riferimento al master.
 
 **Obiettivo:** mantenere webapp e dashboard come applicazioni distinte, distribuirle separatamente e conservare una sola fonte per schema e regole condivise.
 
@@ -98,6 +100,8 @@ Un controllo server centralizzato deve essere richiamato da tutte le pagine prot
 
 Il ruolo va riletto dal database a ogni richiesta protetta, senza cache persistente tra richieste. Una revoca deve impedire le richieste successive anche se la sessione Auth è ancora valida; non si presume che interrompa un’operazione già in esecuzione. I dati privati non devono essere serviti tramite cache condivise tra utenti.
 
+Il controllo della sessione corrente e del ruolo viene accorpato alle operazioni funzionali tramite procedure dedicate, evitando una chiamata HTTP aggiuntiva per ogni riga o componente. I lookup devono essere indicizzati e i controlli indipendenti dalle righe valutati una volta per operazione/statement dove applicabile. È ammessa deduplicazione nella sola richiesta; nessuna cache del ruolo tra richieste. La sola validità crittografica del token non sostituisce la verifica della sessione revocata, né la sola presenza della riga sessione dimostra il rispetto di tutti i limiti temporali applicabili. Dettagli e verifiche sono negli [step 03](steps/03-autorizzazione-database.md) e [05](steps/05-accesso-sessione.md).
+
 Solo gli ingressi strettamente necessari al login e al recupero credenziali possono essere raggiunti senza autorizzazione Admin; gli asset necessari a mostrarli non devono contenere dati riservati. Un visitatore anonimo viene indirizzato al login; un account autenticato ordinario riceve un diniego e non accede ai contenuti.
 
 ### Account operativi e gestione manuale
@@ -156,11 +160,11 @@ Le migrazioni restano uniche e vengono applicate tramite un processo coordinato,
 
 Il refactoring della struttura va separato dalle nuove funzioni Admin e dalle eventuali modifiche allo schema. Prima di un rilascio che modifica dati reali devono essere definite la procedura di backup e quella di ripristino; tornare a un deploy precedente non annulla automaticamente una migrazione.
 
-Le modifiche amministrative devono lasciare una traccia persistente con identità dell’operatore, operazione, risorsa interessata, data ed esito, compresi gli errori rilevanti. La registrazione avviene lato server e non dipende da valori dichiarati dal browser. Non inserire password, token o interi payload personali nei log. Schema dell’audit, durata di conservazione e trattamento degli errori di registrazione saranno definiti prima di implementare le prime operazioni di modifica.
+Le modifiche amministrative devono lasciare una traccia persistente con identità dell’operatore, operazione, risorsa interessata, data ed esito, compresi gli errori rilevanti. La registrazione avviene lato server e non dipende da valori dichiarati dal browser. Non inserire password, token o interi payload personali nei log. La prima versione registra accessi, logout, modifiche, export e fallimenti significativi, senza tracciare ogni semplice consultazione. La conservazione è di **12 mesi**, con pulizia tecnica riservata e registro non modificabile dalla UI. Modifica e audit di successo sono atomici; i fallimenti sono registrati separatamente dalla transazione annullata. Lo [step 04](steps/04-audit-persistente.md) definisce il contratto e i casi di errore prima delle azioni di moderazione.
 
 ## Spostamenti e refactoring proposti
 
-La migrazione va fatta in passaggi piccoli. Prima si crea un checkpoint Git delle modifiche presenti; poi:
+La migrazione va fatta in passaggi piccoli, seguendo gli step del [master plan](master_plan.md). Prima si fotografa lo stato Git e si preservano le modifiche presenti, senza includerle indiscriminatamente in un commit; poi:
 
 1. **Preparare il workspace.** Convertire il `package.json` in root in un manifest privato con Workspaces e script coordinati; creare `apps/web/package.json` mantenendo versioni e script dell’app attuale. Conservare un solo `package-lock.json` in root.
 2. **Spostare la webapp senza ridisegnarla.** Trasferire `src/`, `public/`, `next.config.ts`, `tsconfig.json` e `components.json` in `apps/web/`. Conservare root `supabase/`, `docs/` e `tests/`. Aggiornare alias `@/*`, configurazione ESLint, comandi, percorsi usati dai test e root directory del deploy.
@@ -189,16 +193,16 @@ Webapp e Admin si possono sviluppare e distribuire separatamente. Un cambio cond
 
 Sono fissati: monorepo con npm Workspaces; due progetti Vercel; indirizzo previsto della dashboard; sessioni indipendenti; account Admin dedicati con email e password; ruolo letto da `utente.tipologia_utente`; gestione manuale degli account; staging isolato con dati sintetici; esclusione dei dati reali dai test; non indicizzabilità e assenza di collegamenti pubblici dalla piattaforma principale.
 
-Restano da trattare nei documenti successivi, prima delle rispettive implementazioni:
+Il piano funzionale della prima versione è ora definito nel [master plan](master_plan.md). Le decisioni e i punti da verificare durante i rispettivi step sono:
 
 | Tema | Decisioni e verifiche ancora necessarie |
 | --- | --- |
-| Prima versione | Funzioni della dashboard, priorità, dati consultabili dall’Admin e azioni consentite su utenti, profili e annunci |
-| Operazioni sensibili | Conferme, eventuale nuova verifica della password, cancellazione definitiva o reversibile ed effetti sulle risorse collegate |
-| Provisioning e permessi | Procedura manuale completa, compatibilità di vincoli e trigger con gli account Admin, protezione del ruolo e privilegi richiesti da ciascuna operazione |
-| Recupero accesso | Reset password, account compromesso, revoca delle sessioni ed eventuale introduzione della MFA |
-| Ambienti e deploy | Creazione di staging, identificativi e host di preview, assegnazione dell’indirizzo Vercel, callback Auth e destinazioni di test ammesse |
-| Audit e monitoraggio | Struttura dei record, conservazione, accesso ai log, comportamento in caso di mancata registrazione e gestione degli errori operativi |
-| Rilascio e ripristino | Automazioni CI/CD, regole per promuovere un rilascio in produzione, backup e procedura di ripristino coordinata tra app e schema |
+| Prima versione | Home, moderazione Annunci, export della pagina corrente (massimo 30 righe), Registro attività; altre sezioni con pagina futura. Creazione annunci/profili rinviata; profitti non disponibili; logout nel menu senza Impostazioni o gruppo Altro. |
+| Operazioni sensibili | Motivazione per rifiuto, oscuramento e cestino; controllo di concorrenza e audit atomico. Cestino recuperabile distinto da Nascondi, senza cancellazione definitiva né pubblicazione automatica al ripristino. Verificare tutti i consumatori e webhook nello step 10. |
+| Provisioning e permessi | Step 03: procedura manuale, compatibilità di vincoli/trigger con Admin, protezione del ruolo e privilegi minimi. Nessuna registrazione Admin pubblica. |
+| Recupero accesso | Step 05: procedura riservata di recupero password e revoca sessioni. MFA resta un miglioramento successivo. |
+| Ambienti e deploy | Step 02 e 16: ambiente sintetico isolato, identificativi e host effettivi, configurazioni Vercel/Auth e destinazioni di test. Nessun servizio o host è dichiarato già creato. |
+| Audit e monitoraggio | Step 04 e 12: accessi/modifiche/export/errori, 12 mesi di conservazione, registro read only e gestione esplicita dei guasti audit. Step 16: misure di chiamate e prestazioni su dati sintetici. |
+| Rilascio e ripristino | Step 16: runbook concreto, configurazioni e migrazioni con ordine di applicazione, backup e recupero coordinato. Produzione distinta dalle prove. |
 
-Questi punti non autorizzano ora il refactoring, lo sviluppo della dashboard, la creazione di servizi o operazioni sul database: ne definiscono la progettazione da completare.
+La documentazione dello step 00 non implementa questi requisiti. Il refactoring e lo sviluppo procedono un solo step per prompt secondo il master; creazione di servizi e applicazioni in produzione restano operazioni distinte da documentare e autorizzare nel rispettivo contesto.

@@ -1,12 +1,11 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260926210517_team_staff_search_fields.sql", import.meta.url);
 
-test("staff search migration preserves legacy text and dates and saves selected figures with season", {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async () => {
-	const {PGlite} = await import(engineUrl.href);
+test("staff search migration preserves legacy text and dates and saves selected figures with season", async () => {
 	const db = await PGlite.create();
 	try {
 		await db.exec(`

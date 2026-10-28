@@ -19,18 +19,18 @@ function load(file) {
 	new Function("require", "module", "exports", outputText)((specifier) => {
 		if (specifier === "server-only") return {};
 		if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
-		const base = specifier.startsWith("@/") ? path.join(root, "src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+		const base = specifier.startsWith("@/") ? path.join(root, "apps/web/src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
 		return load([base, `${base}.ts`, `${base}.tsx`].find((candidate) => existsSync(candidate)));
 	}, loaded, loaded.exports);
 	return loaded.exports;
 }
 
-const {categoryKey} = load(path.join(root, "src/features/pubblica-annuncio/types/category-catalog.ts"));
-const catalog = load(path.join(root, "src/features/pubblica-annuncio/types/staff-category-catalog.ts"));
-const {announcementContent} = load(path.join(root, "src/features/annunci/announcement-content.ts"));
-const {parseAnnouncementDirectoryQuery} = load(path.join(root, "src/features/annunci/announcement-model.ts"));
-const {parsePublishPayload} = load(path.join(root, "src/features/pubblica-annuncio/server/validation.ts"));
-const {createAnnouncementDetailsDrafts, getAnnouncementValidationErrors, PUBLISH_PAYLOAD_VERSION} = load(path.join(root, "src/features/pubblica-annuncio/publish-model.ts"));
+const {categoryKey} = load(path.join(root, "apps/web/src/features/pubblica-annuncio/types/category-catalog.ts"));
+const catalog = load(path.join(root, "apps/web/src/features/pubblica-annuncio/types/staff-category-catalog.ts"));
+const {announcementContent} = load(path.join(root, "apps/web/src/features/annunci/announcement-content.ts"));
+const {parseAnnouncementDirectoryQuery} = load(path.join(root, "apps/web/src/features/annunci/announcement-model.ts"));
+const {parsePublishPayload} = load(path.join(root, "apps/web/src/features/pubblica-annuncio/server/validation.ts"));
+const {createAnnouncementDetailsDrafts, getAnnouncementValidationErrors, PUBLISH_PAYLOAD_VERSION} = load(path.join(root, "apps/web/src/features/pubblica-annuncio/publish-model.ts"));
 
 const male = categoryKey("Calcio a 5 maschile", "FIGC-LND — Serie A");
 const female = categoryKey("Calcio a 5 femminile", "FIGC-LND — Serie A");

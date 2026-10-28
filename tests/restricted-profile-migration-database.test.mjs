@@ -1,16 +1,13 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20261001160000_restricted_profiles_and_service_publication.sql", import.meta.url);
 const owner = "22222222-2222-4222-8222-222222222222";
 const profile = "33333333-3333-4333-8333-333333333333";
 
-test("restricted grants, ordinary count, deletion and service publication work in PostgreSQL", {
-	skip: !existsSync(engineUrl) && "PGlite runner unavailable",
-}, async () => {
-	const {PGlite} = await import(engineUrl.href);
+test("restricted grants, ordinary count, deletion and service publication work in PostgreSQL", async () => {
 	const db = await PGlite.create();
 	try {
 		const setup = `

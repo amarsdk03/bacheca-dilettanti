@@ -20,17 +20,17 @@ function load(file) {
 	new Function("require", "module", "exports", outputText)((specifier) => {
 		if (specifier === "server-only") return {};
 		if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
-		const base = specifier.startsWith("@/") ? path.join(root, "src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+		const base = specifier.startsWith("@/") ? path.join(root, "apps/web/src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
 		return load([base, `${base}.ts`, `${base}.tsx`].find((candidate) => existsSync(candidate)));
 	}, loaded, loaded.exports);
 	return loaded.exports;
 }
 
-const profileModel = load(path.join(root, "src/features/profilo/profile-model.ts"));
-const registration = load(path.join(root, "src/features/registrati/registration-payload.ts"));
-const registrationServer = load(path.join(root, "src/features/registrati/server/registration.ts"));
-const publishModel = load(path.join(root, "src/features/pubblica-annuncio/publish-model.ts"));
-const publishServer = load(path.join(root, "src/features/pubblica-annuncio/server/validation.ts"));
+const profileModel = load(path.join(root, "apps/web/src/features/profilo/profile-model.ts"));
+const registration = load(path.join(root, "apps/web/src/features/registrati/registration-payload.ts"));
+const registrationServer = load(path.join(root, "apps/web/src/features/registrati/server/registration.ts"));
+const publishModel = load(path.join(root, "apps/web/src/features/pubblica-annuncio/publish-model.ts"));
+const publishServer = load(path.join(root, "apps/web/src/features/pubblica-annuncio/server/validation.ts"));
 
 test("restricted categories cannot be self-selected at registration", () => {
 	for (const type of ["servizi-consulenze", "creators"]) {
@@ -42,7 +42,7 @@ test("restricted categories cannot be self-selected at registration", () => {
 	drafts.squadra.nome_societa = "Squadra Test";
 	drafts.squadra.tipologie_sport = ["Calcio 11"];
 	locations.squadra = [{regione: "Lazio", citta: "Roma"}];
-	const social = load(path.join(root, "src/features/profilo/profile-social-links.ts")).createProfileSocialLinks();
+	const social = load(path.join(root, "apps/web/src/features/profilo/profile-social-links.ts")).createProfileSocialLinks();
 	const valid = registration.createRegistrationPayload(["squadra"], "squadra", drafts, locations, social, true, false);
 	for (const type of ["servizi-consulenze", "creators"]) {
 		assert.equal(registration.createRegistrationPayload([type], type, drafts, locations, social, true, false), null);

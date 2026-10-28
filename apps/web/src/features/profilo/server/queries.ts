@@ -1,0 +1,501 @@
+import {professionalAllowedRegions} from "@/features/profilo/professional-regions";
+import "server-only";
+import {normalizeProfessionalAvailability} from "@/features/profilo/professional-availability";
+import {normalizeTeamCategory} from "@/features/profilo/team-category-catalog";
+
+import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
+
+import {announcementOption, isAnnouncementType,} from "@/features/annunci/announcement-model";
+import {
+	createProfileDrafts,
+	createProfileLocations,
+	isProfileType,
+	PROFILE_OPTIONS,
+	type ProfileType,
+} from "@/features/profilo/profile-model";
+import {createProfileSocialLinks, profileSocialLinksFromRows,} from "@/features/profilo/profile-social-links";
+import {profileImageMapKey, resolvedProfileImageUrl,} from "@/features/profilo/profile-image";
+import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
+import type {ManagedAnnouncement, ProfileDashboardData,} from "@/features/profilo/types";
+import {createAdminClient} from "@/lib/supabase/admin";
+import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
+import {
+	categoryLabel,
+	normalizeCategories,
+	normalizeFigure,
+	normalizeFigures
+} from "@/features/pubblica-annuncio/types/category-catalog";
+import {createClient} from "@/lib/supabase/server";
+import type {Database} from "@/server/supabase";
+import {getDashboardInteractions} from "@/features/interazioni/server/queries";
+
+const ANNOUNCEMENT_PAGE_SIZE = 250;
+
+const DETAIL_DEFINITIONS = [
+	{
+		key: "annuncio_generico",
+		profileType: "giocatore",
+		subtype: "Generico",
+		fallbackTitle: "Annuncio generico",
+		titleFields: ["titolo"],
+		descriptionFields: ["contenuto"],
+	},
+	{
+		key: "annuncio_giocatore",
+		profileType: "giocatore",
+		subtype: "Giocatore",
+		fallbackTitle: "Disponibilità giocatore",
+		titleFields: ["ruoli_principali", "categorie_ricercate"],
+		descriptionFields: ["descrizione_aggiuntiva"],
+	},
+	{
+		key: "annuncio_squadra_cerca_giocatore",
+		profileType: "squadra",
+		subtype: "Squadra cerca giocatore",
+		fallbackTitle: "Ricerca giocatori",
+		titleFields: ["ruoli_principali"],
+		descriptionFields: ["descrizione_aggiuntiva", "stagione"],
+	},
+	{
+		key: "annuncio_squadra_cerca_staff",
+		profileType: "squadra",
+		subtype: "Ricerca staff sportivo",
+		fallbackTitle: "Ricerca staff sportivo",
+		titleFields: ["figure_ricercate", "figura_ricercata"],
+		descriptionFields: ["descrizione_aggiuntiva", "requisiti"],
+	},
+	{
+		key: "annuncio_squadra_cerca_partita",
+		profileType: "squadra",
+		subtype: "Ricerca partite/amichevoli",
+		fallbackTitle: "Ricerca partite/amichevoli",
+		titleFields: ["categorie_avversario"],
+		descriptionFields: ["descrizione_aggiuntiva"],
+	},
+	{
+		key: "annuncio_squadra_cerca_sponsor",
+		profileType: "squadra",
+		subtype: "Ricerca sponsor",
+		fallbackTitle: "Ricerca sponsor",
+		titleFields: ["categoria_settore"],
+		descriptionFields: ["descrizione_aggiuntiva", "supporto_cercato", "offerta_fornita"],
+	},
+	{
+		key: "annuncio_staff_sportivo",
+		profileType: "staff-sportivo",
+		subtype: "Staff sportivo",
+		fallbackTitle: "Disponibilità staff sportivo",
+		titleFields: ["figure_professionali"],
+		descriptionFields: ["descrizione_aggiuntiva"],
+	},
+	{
+		key: "annuncio_arbitro",
+		profileType: "arbitro",
+		subtype: "Arbitro",
+		fallbackTitle: "Disponibilità arbitro",
+		titleFields: [],
+		descriptionFields: ["descrizione_aggiuntiva"],
+	},
+	{
+		key: "annuncio_torneo_evento",
+		profileType: "torneo-evento",
+		subtype: "Torneo / evento",
+		fallbackTitle: "Torneo o evento",
+		titleFields: ["nome_evento"],
+		descriptionFields: ["descrizione_aggiuntiva"],
+	},
+	{
+		key: "annuncio_campo_impianto",
+		profileType: "campi-impianti-sportivi",
+		subtype: "Campo / impianto",
+		fallbackTitle: "Campo o impianto sportivo",
+		titleFields: ["tipologie_sport"],
+		descriptionFields: ["descrizione_aggiuntiva", "servizi_inclusi"],
+	},
+	{
+		key: "annuncio_servizi_consulenze",
+		profileType: "servizi-consulenze",
+		subtype: "Servizi e professionisti",
+		fallbackTitle: "Servizio professionale",
+		titleFields: ["specializzazione", "figura_professionale"],
+		descriptionFields: ["presentazione_servizi", "descrizione_aggiuntiva"],
+	},
+	{
+		key: "annuncio_creator",
+		profileType: "creators",
+		subtype: "Creator",
+		fallbackTitle: "Contenuto creator",
+		titleFields: ["titolo_post"],
+		descriptionFields: ["descrizione_post", "contenuto_post", "descrizione_aggiuntiva"],
+	},
+] as const;
+
+function announcementQuery(supabase: SupabaseClient<Database>) {
+	return supabase
+		.from("annuncio")
+		.select(`
+			uuid,
+			titolo_annuncio,
+			tipologia_annuncio,
+			creato_il,
+			livello_annuncio,
+			nascosto,
+			oscurato_da_admin,
+			privato,
+			stato_annuncio,
+			info_stato_annuncio,
+			annuncio_generico(titolo, contenuto),
+			annuncio_giocatore(ruoli_principali, categorie_ricercate, descrizione_aggiuntiva),
+			annuncio_squadra_cerca_giocatore(ruoli_principali, stagione, descrizione_aggiuntiva),
+			annuncio_squadra_cerca_staff(figura_ricercata, figure_ricercate, requisiti, descrizione_aggiuntiva),
+			annuncio_squadra_cerca_partita(categorie_avversario, descrizione_aggiuntiva),
+			annuncio_squadra_cerca_sponsor(categoria_settore, supporto_cercato, offerta_fornita, descrizione_aggiuntiva),
+			annuncio_staff_sportivo(figure_professionali, descrizione_aggiuntiva),
+			annuncio_arbitro(categorie_ricercate, descrizione_aggiuntiva),
+			annuncio_torneo_evento(nome_evento, descrizione_aggiuntiva),
+			annuncio_campo_impianto(tipologie_sport, servizi_inclusi, descrizione_aggiuntiva),
+			annuncio_servizi_consulenze(figura_professionale, specializzazione, presentazione_servizi, descrizione_aggiuntiva),
+			annuncio_creator(titolo_post, descrizione_post, contenuto_post, descrizione_aggiuntiva),
+			localita_annuncio(regione, citta)
+		`).is("eliminato_il", null);
+}
+
+type AnnouncementQueryRow = QueryData<
+	ReturnType<typeof announcementQuery>
+>[number];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function firstRelation(value: unknown): Record<string, unknown> | null {
+	const relation = Array.isArray(value) ? value[0] : value;
+	return isRecord(relation) ? relation : null;
+}
+
+function firstText(value: unknown): string | null {
+	if (typeof value === "string") {
+		const normalized = value.trim();
+		return normalized || null;
+	}
+	if (Array.isArray(value)) {
+		for (const item of value) {
+			const normalized = firstText(item);
+			if (normalized) return normalized;
+		}
+	}
+	return null;
+}
+
+function firstDetailText(
+	detail: Record<string, unknown>,
+	fields: readonly string[],
+): string | null {
+	for (const field of fields) {
+		const value = firstText(detail[field]);
+		if (value) {
+			if (field === "categorie_ricercate" || field === "categorie_avversario") return categoryLabel(value);
+			if (field === "figure_professionali" || field === "figure_ricercate" || field === "figura_ricercata") return normalizeFigure(value);
+			return value;
+		}
+	}
+	return null;
+}
+
+function humanizeAnnouncementType(value: string) {
+	const normalized = value.trim().replaceAll("_", " ").replaceAll("-", " ");
+	if (!normalized) return "Annuncio";
+	return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function locationLabel(row: AnnouncementQueryRow) {
+	const source = (row as unknown as Record<string, unknown>).localita_annuncio;
+	const locations = (Array.isArray(source) ? source : [source])
+		.filter(isRecord)
+		.map((location) => ({
+			regione: firstText(location.regione),
+			citta: firstText(location.citta),
+		}))
+		.filter((location) => location.regione || location.citta)
+		.sort((left, right) => {
+			const leftLabel = [left.citta, left.regione].filter(Boolean).join(", ");
+			const rightLabel = [right.citta, right.regione].filter(Boolean).join(", ");
+			return leftLabel.localeCompare(rightLabel, "it");
+		});
+
+	if (locations.length === 0) return "Località non specificata";
+	const first = [locations[0].citta, locations[0].regione].filter(Boolean).join(", ");
+	return locations.length > 1 ? `${first} +${locations.length - 1}` : first;
+}
+
+function toManagedAnnouncement(row: AnnouncementQueryRow): ManagedAnnouncement {
+	const source = row as unknown as Record<string, unknown>;
+	const definition = DETAIL_DEFINITIONS.find(({key}) => firstRelation(source[key]));
+	const announcementType = isAnnouncementType(row.tipologia_annuncio)
+		? row.tipologia_annuncio
+		: null;
+	const option = announcementType ? announcementOption(announcementType) : null;
+	const detail = definition ? firstRelation(source[definition.key]) : null;
+	const title = firstText(source.titolo_annuncio) ?? (detail && definition
+		? firstDetailText(detail, definition.titleFields) ?? definition.fallbackTitle
+		: humanizeAnnouncementType(row.tipologia_annuncio));
+	const description = detail && definition
+		? firstDetailText(detail, definition.descriptionFields)
+		: null;
+
+	return {
+		id: row.uuid,
+		announcementType,
+		profileType: option?.profileType ?? definition?.profileType ?? "giocatore",
+		type: humanizeAnnouncementType(row.tipologia_annuncio),
+		subtype: definition?.subtype ?? "Generico",
+		title,
+		description: description ?? "Nessuna descrizione aggiuntiva.",
+		location: locationLabel(row),
+		createdAt: row.creato_il,
+		level: row.livello_annuncio,
+		visibility: row.nascosto === true || (row.tipologia_annuncio === "annuncio_servizi_consulenze" && row.localita_annuncio.length === 0) ? "hidden" : "visible",
+		isPrivate: row.privato !== false,
+		regionSuspended: row.tipologia_annuncio === "annuncio_servizi_consulenze" && row.localita_annuncio.length === 0,
+		adminHidden: row.oscurato_da_admin === true,
+		moderationStatus: row.stato_annuncio,
+		moderationInfo: row.info_stato_annuncio,
+	};
+}
+
+async function loadAnnouncements(
+	supabase: SupabaseClient<Database>,
+	userId: string,
+	profileId: string | null,
+) {
+	const rows: AnnouncementQueryRow[] = [];
+	let from = 0;
+
+	while (true) {
+		let query = announcementQuery(supabase)
+			.order("creato_il", {ascending: false, nullsFirst: false})
+			.order("uuid", {ascending: false})
+			.range(from, from + ANNOUNCEMENT_PAGE_SIZE - 1);
+
+		query = profileId
+			? query.or(`creato_da.eq.${userId},autore_annuncio.eq.${profileId}`)
+			: query.eq("creato_da", userId);
+
+		const {data, error} = await query;
+		if (error) {
+			console.error("[profile-dashboard] Announcement query failed", {code: error.code});
+			throw new Error("PROFILE_DASHBOARD_ANNOUNCEMENTS_UNAVAILABLE");
+		}
+
+		const page = data ?? [];
+		rows.push(...page);
+		if (page.length < ANNOUNCEMENT_PAGE_SIZE) break;
+		from += ANNOUNCEMENT_PAGE_SIZE;
+	}
+
+	return rows.map(toManagedAnnouncement);
+}
+
+function hydrateDraft<Shape extends object>(
+	defaults: Shape,
+	row: object | null,
+): Shape {
+	if (!row) return defaults;
+	const source = row as Record<string, unknown>;
+	const hydrated = Object.fromEntries(
+		Object.entries(defaults).map(([key, defaultValue]) => [
+			key,
+			source[key] ?? defaultValue,
+		]),
+	) as Record<string, unknown>;
+	if (Array.isArray(hydrated.tipologie_sport)) {
+		hydrated.tipologie_sport = ordinaTipologieCalcio(hydrated.tipologie_sport.filter((value): value is string => typeof value === "string"));
+	}
+	if (Array.isArray(hydrated.categorie_ricercate)) {
+		hydrated.categorie_ricercate = normalizeCategories(hydrated.categorie_ricercate.filter((value): value is string => typeof value === "string"));
+	}
+	if (Array.isArray(hydrated.figure_professionali)) {
+		hydrated.figure_professionali = normalizeFigures(hydrated.figure_professionali.filter((value): value is string => typeof value === "string"));
+	}
+	return hydrated as Shape;
+}
+
+function queryFailed(error: {code?: string} | null, source: string) {
+	if (!error) return;
+	console.error("[profile-dashboard] Profile query failed", {
+		source,
+		code: error.code,
+	});
+	throw new Error("PROFILE_DASHBOARD_PROFILES_UNAVAILABLE");
+}
+
+export async function getProfileDashboardData(
+	userId: string,
+): Promise<ProfileDashboardData> {
+	const supabase = await createClient();
+	const {data: preferences, error: preferencesError} = await supabase
+		.from("utente")
+		.select("consenso_newsletter, codice_invito")
+		.eq("utente_uuid", userId)
+		.maybeSingle();
+	queryFailed(preferencesError, "utente");
+	const newsletterSubscribed = preferences?.consenso_newsletter === true;
+	if (!preferences?.codice_invito) throw new Error("PROFILE_INVITATION_CODE_UNAVAILABLE");
+	const {count: confirmedInvitations, error: invitationCountError} = await createAdminClient()
+		.from("invito")
+		.select("invito_uuid", {count: "exact", head: true})
+		.eq("uuid_invitante", userId)
+		.not("confermato_il", "is", null);
+	queryFailed(invitationCountError, "invito");
+	const {data: baseProfile, error: baseProfileError} = await supabase
+		.from("profilo")
+		.select("uuid, tipologia_principale, link_foto_profilo")
+		.eq("uuid_utente", userId)
+		.eq("nascosto", false)
+		.maybeSingle();
+
+	queryFailed(baseProfileError, "profilo");
+
+	const drafts = createProfileDrafts();
+	const locations = createProfileLocations();
+	const socialLinks = createProfileSocialLinks();
+
+	if (!baseProfile) {
+		return {
+			interactions: await getDashboardInteractions(supabase, userId, null),
+			newsletterSubscribed,
+			invitationCode: preferences.codice_invito,
+			confirmedInvitations: confirmedInvitations ?? 0,
+			mainImageUrl: null,
+			hasMainImage: false,
+			profiles: [],
+			restrictedProfileAccess: [],
+			professionalRegions: [],
+			drafts,
+			locations,
+			socialLinks,
+			announcements: await loadAnnouncements(supabase, userId, null),
+		};
+	}
+
+	// baseProfile was read through the current user's RLS policy. The highlights
+	// link is stored separately and must be available to hydrate this editor.
+	const admin = createAdminClient();
+	const [
+		playerResult,
+		playerMediaResult,
+		teamResult,
+		staffResult,
+		refereeResult,
+		tournamentResult,
+		facilityResult,
+		professionalResult,
+		creatorResult,
+		restrictedAccessResult,
+		locationResult,
+		socialLinksResult,
+		profileImages,
+		announcements,
+		interactions,
+	] = await Promise.all([
+		supabase.from("profilo_giocatore").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		admin.from("media_profilo").select("link_media").eq("uuid_profilo", baseProfile.uuid).eq("formato_media", "video_highlights").order("id", {ascending: false}).limit(1).maybeSingle(),
+		supabase.from("profilo_squadra").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_staff_sportivo").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_arbitro").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_torneo_evento").select("id, nome_organizzazione, presentazione, sport_principale, tipologie_sport").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_campi_impianti").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_servizi_consulenze").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		supabase.from("profilo_creator").select("*").eq("uuid_profilo", baseProfile.uuid).eq("nascosto", false).maybeSingle(),
+		admin.from("restricted_profile_access").select("profile_type, allowed_regions").eq("profile_id", baseProfile.uuid),
+		supabase.from("localita_profilo").select("id, id_sottoprofilo, sottoprofilo, regione, citta").eq("uuid_profilo", baseProfile.uuid).order("id"),
+		admin.from("link_social_profilo").select("id_sottoprofilo, sottoprofilo, piattaforma, sublink").eq("uuid_profilo", baseProfile.uuid).in("piattaforma", ["website", "instagram", "facebook", "youtube", "linkedin"]),
+		loadProfileImageUrlMap(admin, [baseProfile.uuid]),
+		loadAnnouncements(supabase, userId, baseProfile.uuid),
+		getDashboardInteractions(supabase, userId, baseProfile.uuid),
+	]);
+
+	queryFailed(playerResult.error, "profilo_giocatore");
+	queryFailed(playerMediaResult.error, "media_profilo");
+	queryFailed(teamResult.error, "profilo_squadra");
+	queryFailed(staffResult.error, "profilo_staff_sportivo");
+	queryFailed(refereeResult.error, "profilo_arbitro");
+	queryFailed(tournamentResult.error, "profilo_torneo_evento");
+	queryFailed(facilityResult.error, "profilo_campi_impianti");
+	queryFailed(professionalResult.error, "profilo_servizi_consulenze");
+	queryFailed(creatorResult.error, "profilo_creator");
+	queryFailed(restrictedAccessResult.error, "restricted_profile_access");
+	queryFailed(locationResult.error, "localita_profilo");
+	queryFailed(socialLinksResult.error, "link_social_profilo");
+
+	drafts.giocatore = hydrateDraft(drafts.giocatore, playerResult.data);
+	if (drafts.giocatore.piede_principale === "Ambipiede") drafts.giocatore.piede_principale = "Ambidestro";
+	if (drafts.giocatore.disponibilita === "disponibile-subito") drafts.giocatore.disponibilita = "svincolato";
+	if (drafts.giocatore.disponibilita === "svincolato") drafts.giocatore.categoria_attuale = "";
+	drafts.giocatore.video_highlights = !playerResult.data || drafts.giocatore.highlights_privati || drafts.giocatore.richiede_caricamento_highlights ? "" : playerMediaResult.data?.link_media ?? "";
+	drafts.squadra = hydrateDraft(drafts.squadra, teamResult.data);
+	drafts.squadra.categoria_attuale = normalizeTeamCategory(drafts.squadra.categoria_attuale);
+	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staffResult.data);
+	drafts.arbitro = hydrateDraft(drafts.arbitro, refereeResult.data);
+	drafts["torneo-evento"] = hydrateDraft(drafts["torneo-evento"], tournamentResult.data);
+	drafts["campi-impianti-sportivi"] = hydrateDraft(drafts["campi-impianti-sportivi"], facilityResult.data);
+	drafts["servizi-consulenze"] = hydrateDraft(drafts["servizi-consulenze"], professionalResult.data);
+	drafts["servizi-consulenze"].disponibilita = normalizeProfessionalAvailability(drafts["servizi-consulenze"].disponibilita);
+	drafts.creators = hydrateDraft(drafts.creators, creatorResult.data);
+
+	const activeInstanceIds: Partial<Record<ProfileType, number>> = {"giocatore": playerResult.data?.id, "squadra": teamResult.data?.id, "staff-sportivo": staffResult.data?.id, "arbitro": refereeResult.data?.id, "torneo-evento": tournamentResult.data?.id, "campi-impianti-sportivi": facilityResult.data?.id, "servizi-consulenze": professionalResult.data?.id, "creators": creatorResult.data?.id};
+
+	for (const location of locationResult.data ?? []) {
+		if (!location.sottoprofilo || !isProfileType(location.sottoprofilo) || !activeInstanceIds[location.sottoprofilo]
+			|| (location.id_sottoprofilo != null && location.id_sottoprofilo !== activeInstanceIds[location.sottoprofilo])) continue;
+		locations[location.sottoprofilo].push({
+			regione: location.regione,
+			citta: location.citta,
+		});
+	}
+
+	for (const type of PROFILE_OPTIONS.map(({value}) => value)) {
+		socialLinks[type] = profileSocialLinksFromRows(
+			(socialLinksResult.data ?? []).filter((link) => link.sottoprofilo === type && activeInstanceIds[type] && (link.id_sottoprofilo == null || link.id_sottoprofilo === activeInstanceIds[type])),
+		);
+	}
+
+	const activeRows = new Map<ProfileType, {id: number}>();
+	if (playerResult.data) activeRows.set("giocatore", playerResult.data);
+	if (teamResult.data) activeRows.set("squadra", teamResult.data);
+	if (staffResult.data) activeRows.set("staff-sportivo", staffResult.data);
+	if (refereeResult.data) activeRows.set("arbitro", refereeResult.data);
+	if (tournamentResult.data) activeRows.set("torneo-evento", tournamentResult.data);
+	if (facilityResult.data) activeRows.set("campi-impianti-sportivi", facilityResult.data);
+	if (professionalResult.data) activeRows.set("servizi-consulenze", professionalResult.data);
+	if (creatorResult.data) activeRows.set("creators", creatorResult.data);
+	const mainImageUrl = firstText(baseProfile.link_foto_profilo);
+
+	const profiles = PROFILE_OPTIONS.flatMap(({value}) => {
+		const row = activeRows.get(value);
+		return row ? [{
+			id: `${value}:${row.id}`,
+			profileId: baseProfile.uuid,
+			type: value,
+			isPrimary: baseProfile.tipologia_principale === value,
+			imageUrl: resolvedProfileImageUrl(profileImages, baseProfile.uuid, value, mainImageUrl),
+			hasCustomImage: Boolean(profileImages.get(profileImageMapKey(baseProfile.uuid, value))),
+		}] : [];
+	});
+
+	return {
+		interactions,
+		newsletterSubscribed,
+		invitationCode: preferences.codice_invito,
+		confirmedInvitations: confirmedInvitations ?? 0,
+		mainImageUrl,
+		hasMainImage: Boolean(mainImageUrl),
+		profiles,
+		professionalRegions: professionalAllowedRegions(restrictedAccessResult.data?.find(row => row.profile_type === "servizi-consulenze")?.allowed_regions),
+		restrictedProfileAccess: (restrictedAccessResult.data ?? []).flatMap(({profile_type}) => profile_type === "servizi-consulenze" || profile_type === "creators" ? [profile_type] : []),
+		drafts,
+		locations,
+		socialLinks,
+		announcements,
+	};
+}

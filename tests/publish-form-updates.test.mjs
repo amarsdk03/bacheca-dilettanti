@@ -20,7 +20,7 @@ function sourceLoader(overrides = {}) {
 			if (Object.hasOwn(overrides, specifier)) return overrides[specifier];
 			if (specifier === "server-only") return {};
 			if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
-			const base = specifier.startsWith("@/") ? path.join(root, "src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+			const base = specifier.startsWith("@/") ? path.join(root, "apps/web/src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
 			return load([base, `${base}.ts`, `${base}.tsx`].find(candidate => existsSync(candidate)));
 		}, loaded, loaded.exports);
 		return loaded.exports;
@@ -29,9 +29,9 @@ function sourceLoader(overrides = {}) {
 }
 
 const load = sourceLoader();
-const model = load("src/features/pubblica-annuncio/publish-model.ts");
-const {parsePublishPayload} = load("src/features/pubblica-annuncio/server/validation.ts");
-const {announcementContent} = load("src/features/annunci/announcement-content.ts");
+const model = load("apps/web/src/features/pubblica-annuncio/publish-model.ts");
+const {parsePublishPayload} = load("apps/web/src/features/pubblica-annuncio/server/validation.ts");
+const {announcementContent} = load("apps/web/src/features/annunci/announcement-content.ts");
 
 function payload(type, teamSubtype, detail) {
 	return {version: model.PUBLISH_PAYLOAD_VERSION, submissionId: "11111111-1111-4111-8111-111111111111", visibility: "gratuito", profileType: type, teamSubtype, anonymousProfile: null, profileUpdate: null, announcement: {
@@ -83,7 +83,7 @@ test("public supporting fields expose team groups, content and promotion with th
 });
 
 test("rendered fields use the requested labels, empty placeholders, monetary controls and restricted regions", () => {
-	const Details = load("src/features/pubblica-annuncio/components/AnnouncementDetailsForm.tsx").default;
+	const Details = load("apps/web/src/features/pubblica-annuncio/components/AnnouncementDetailsForm.tsx").default;
 	const props = {registered: true, showMinorContactNotice: false, teamSubtype: null, announcementTitle: "", onAnnouncementTitleChange() {}, drafts: model.createAnnouncementDetailsDrafts(), onDraftsChange() {}, locations: [], onLocationsChange() {}, contacts: {email: "", phone: ""}, onContactsChange() {}, extras: {genericLink: ""}, onExtrasChange() {}, image: null, onImageChange() {}};
 	const render = (profileType, extra = {}) => renderToStaticMarkup(React.createElement(Details, {...props, profileType, ...extra}));
 	for (const subtype of ["cerca-staff", "cerca-giocatore", "cerca-partite-amichevoli"]) {
@@ -143,7 +143,7 @@ function wizardHarness() {
 		"@/features/pubblica-annuncio/components/ConfermaInvioAnnuncio": {default: Confirmation, __esModule: true},
 		"@/components/ui/tooltip": {Tooltip: marker, TooltipContent: marker, TooltipTrigger: marker},
 	});
-	const Wrapper = wizardLoader("src/features/pubblica-annuncio/PubblicaAnnuncio.tsx").default;
+	const Wrapper = wizardLoader("apps/web/src/features/pubblica-annuncio/PubblicaAnnuncio.tsx").default;
 	const session = (component, props) => {
 		const state = {slots: [], cursor: 0};
 		return {state, render() {active = state; active.cursor = 0; return component(props);}};
@@ -167,8 +167,8 @@ test("changing profile or team subtype discards unsaved social and announcement 
 	try {
 		const harness = wizardHarness();
 		const profileLoader = sourceLoader();
-		const {createProfileDrafts, createProfileLocations} = profileLoader("src/features/profilo/profile-model.ts");
-		const {createProfileSocialLinks} = profileLoader("src/features/profilo/profile-social-links.ts");
+		const {createProfileDrafts, createProfileLocations} = profileLoader("apps/web/src/features/profilo/profile-model.ts");
+		const {createProfileSocialLinks} = profileLoader("apps/web/src/features/profilo/profile-social-links.ts");
 		const context = {profileId: "saved-profile", enabledProfileTypes: ["squadra", "creators", "servizi-consulenze"], authorizedRestrictedProfileTypes: ["creators", "servizi-consulenze"], drafts: createProfileDrafts(), locations: createProfileLocations(), socialLinks: createProfileSocialLinks()};
 		context.socialLinks.squadra.instagram = "saved-team";
 		context.professionalRegions = ["Lombardia", "Campania"];

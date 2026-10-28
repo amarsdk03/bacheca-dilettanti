@@ -24,7 +24,7 @@ function loader(stubs = {}) {
 			if (name in stubs) return stubs[name];
 			if (name === "server-only") return {};
 			if (name.startsWith("@/") || name.startsWith(".")) {
-				const base = name.startsWith("@/") ? path.join(root, "src", name.slice(2)) : path.resolve(path.dirname(file), name);
+				const base = name.startsWith("@/") ? path.join(root, "apps/web/src", name.slice(2)) : path.resolve(path.dirname(file), name);
 				return load([base, `${base}.ts`, `${base}.tsx`].find((candidate) => existsSync(candidate)));
 			}
 			return require(name);
@@ -34,7 +34,7 @@ function loader(stubs = {}) {
 	return load;
 }
 
-const model = loader()("src/features/interessi/interest-model.ts");
+const model = loader()("apps/web/src/features/interessi/interest-model.ts");
 const targetId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const userId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const target = {kind: "profilo", id: targetId, profileType: "squadra"};
@@ -90,7 +90,7 @@ function actionFixture(viewer = account, rpcResponse = {status: "success"}) {
 			calls.push({name, args}); return {data: rpcResponse, error: null};
 		}})},
 	});
-	return {calls, action: load("src/features/interessi/server/actions.ts").submitInterest};
+	return {calls, action: load("apps/web/src/features/interessi/server/actions.ts").submitInterest};
 }
 
 test("server action rejects guests, incomplete accounts and invalid forms without any write", async () => {
@@ -124,21 +124,21 @@ function contextFixture({viewer = account, recipientUser = "recipient", register
 		"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => new Map()},
 		"@/features/auth/server/queries": {getAuthenticatedViewer: async () => viewer},
 		"@/lib/supabase/admin": {createAdminClient: () => ({from(table) {
-			return {select() {return this;}, eq() {return this;}, async maybeSingle() {
+			return {select() {return this;}, is() {return this;}, eq() {return this;}, async maybeSingle() {
 				return {error: null, data: table === "annuncio" ? (listed ? {autore_annuncio: targetId} : null)
 					: table === "profilo" ? {uuid_utente: recipientUser}
 					: table === "utente" ? {registrato_il: registeredAt} : {id: 1}};
 			}};
 		}})},
 		"@/lib/supabase/server": {createClient: async () => ({from(table) {
-			return {select() {return this;}, eq() {return this;}, async maybeSingle() {
+			return {select() {return this;}, is() {return this;}, eq() {return this;}, async maybeSingle() {
 				const tables = {giocatore: "profilo_giocatore", squadra: "profilo_squadra", "staff-sportivo": "profilo_staff_sportivo"};
 				return {error: null, data: table === "profilo" ? (sender ? {uuid: userId, tipologia_principale: primary} : null)
 					: active.some((type) => tables[type] === table) ? {id: 1, nome: "Goncalo", cognome: "Ramos", nome_societa: "Squadra Test"} : null};
 			}};
 		}})},
 	});
-	return load("src/features/interessi/server/queries.ts").getInterestContext;
+	return load("apps/web/src/features/interessi/server/queries.ts").getInterestContext;
 }
 
 test("context hides own/anonymous/unpublished targets and only returns active owned profile choices", async () => {
@@ -162,7 +162,7 @@ test("submission failures never report success and do not expose shared contacts
 			"@/features/auth/server/queries": {getAuthenticatedViewer: async () => account},
 			"@/lib/supabase/admin": {createAdminClient: () => ({rpc: fail})},
 		});
-		const result = await load("src/features/interessi/server/actions.ts").submitInterest(target, form());
+		const result = await load("apps/web/src/features/interessi/server/actions.ts").submitInterest(target, form());
 		assert.equal(result.status, "error");
 		assert.doesNotMatch(result.message, /user@example.com/);
 	}
@@ -183,7 +183,7 @@ function dialogFixture() {
 			AlertDialogTrigger: element("button"), AlertDialogCancel: element("button"),
 		},
 	});
-	const Dialog = load("src/features/interessi/InterestDialog.tsx").default;
+	const Dialog = load("apps/web/src/features/interessi/InterestDialog.tsx").default;
 	return (context) => renderToStaticMarkup(React.createElement(Dialog, {target, context, href: `/dettagli-profilo?id=${targetId}&type=squadra`}));
 }
 
@@ -221,7 +221,7 @@ test("private subprofile identities require ownership and resolve real names and
 		const client = {from(table) {
 			const filters = [];
 			calls.push({table, filters});
-			return {select() {return this;}, eq(...args) {filters.push(args); return this;}, async maybeSingle() {
+			return {select() {return this;}, is(...args) {filters.push(args); return this;}, eq(...args) {filters.push(args); return this;}, async maybeSingle() {
 				const rows = {
 					profilo: authorized ? {uuid: userId, link_foto_profilo: "/main.webp"} : null,
 					profilo_giocatore: {id: 1, nome: "Goncalo", cognome: "Ramos"},
@@ -235,7 +235,7 @@ test("private subprofile identities require ownership and resolve real names and
 			imageReads++;
 			return new Map([[`${userId}:giocatore`, "/player.webp"], [`${userId}:squadra`, ""]]);
 		}}});
-		const {loadOwnedSubprofileIdentities} = load("src/features/profilo/server/owned-subprofile-identities.ts");
+		const {loadOwnedSubprofileIdentities} = load("apps/web/src/features/profilo/server/owned-subprofile-identities.ts");
 		const result = await loadOwnedSubprofileIdentities(client, "authenticated-owner", userId);
 		assert.ok(calls[0].filters.some(([key, value]) => key === "uuid_utente" && value === "authenticated-owner"));
 		if (!authorized) {
@@ -260,7 +260,7 @@ test("subprofile selectors show two text lines and a right-hand avatar in both t
 	};
 	const select = Object.fromEntries(["Select", "SelectContent", "SelectGroup", "SelectItem", "SelectTrigger", "SelectValue"].map(name => [name, wrap(name)]));
 	const load = loader({"@/components/ui/select": select});
-	const Selector = load("src/features/profilo/SubprofileSelect.tsx").default;
+	const Selector = load("apps/web/src/features/profilo/SubprofileSelect.tsx").default;
 	const profiles = [{type: "giocatore", title: "Goncalo Ramos", imageUrl: null}, {type: "squadra", title: "Squadra Test", imageUrl: null}];
 	const html = renderToStaticMarkup(React.createElement(Selector, {profiles, value: "giocatore", onValueChange() {}, disabled: true, label: "Scegli profilo"}));
 	assert.equal((html.match(/font-bold">Goncalo Ramos/g) ?? []).length, 2);

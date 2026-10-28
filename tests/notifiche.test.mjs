@@ -24,7 +24,7 @@ function loader(stubs = {}) {
 			if (name in stubs) return stubs[name];
 			if (name === "server-only") return {};
 			if (name.startsWith("@/") || name.startsWith(".")) {
-				const base = name.startsWith("@/") ? path.join(root, "src", name.slice(2)) : path.resolve(path.dirname(file), name);
+				const base = name.startsWith("@/") ? path.join(root, "apps/web/src", name.slice(2)) : path.resolve(path.dirname(file), name);
 				return load([base, `${base}.ts`, `${base}.tsx`].find((candidate) => existsSync(candidate)));
 			}
 			return require(name);
@@ -33,7 +33,7 @@ function loader(stubs = {}) {
 	}
 	return load;
 }
-const model = loader()("src/features/notifiche/notification-model.ts");
+const model = loader()("apps/web/src/features/notifiche/notification-model.ts");
 const userId = "00000000-0000-4000-8000-000000000001";
 const account = {utenteId: userId, registeredAt: "2026-10-01"};
 test("notification cursors keep bigint IDs and microseconds without accepting query fragments", () => {
@@ -51,7 +51,7 @@ test("server reads derive the recipient from the authenticated account", async (
 		"@/features/auth/server/queries":{getAuthenticatedViewer:async()=>account},
 		"@/lib/supabase/admin":{createAdminClient:()=>({rpc:async(name,values)=>{assert.equal(name,"get_notifications_v2");args=values;return {data:page,error:null};}})},
 	});
-	const queries=load("src/features/notifiche/server/queries.ts");
+	const queries=load("apps/web/src/features/notifiche/server/queries.ts");
 	assert.deepEqual(await queries.getNotifications(3),page); assert.equal(args.p_user,userId); assert.equal(args.p_limit,3);
 	await assert.rejects(()=>queries.getNotifications(20,{id:"injected",date:"invalid"}));
 });
@@ -60,7 +60,7 @@ test("mark-read rejects unauthenticated access, invalid IDs and oversized batche
 	const action=loader({
 		"@/features/auth/server/queries":{getAuthenticatedViewer:async()=>current},
 		"@/lib/supabase/admin":{createAdminClient:()=>({rpc:async(name,args)=>{calls++;assert.equal(name,"mark_notifications_read_v1");assert.equal(args.p_user,userId);return {data:4,error:null};}})},
-	})("src/features/notifiche/server/actions.ts");
+	})("apps/web/src/features/notifiche/server/actions.ts");
 	assert.deepEqual(await action.markNotificationsRead(["1","9007199254740993"]),{unreadCount:4});
 	for(const ids of [["other"],Array(21).fill("1"),[1],null]) assert.ok("error" in await action.markNotificationsRead(ids));
 	current=null; assert.ok("error" in await action.markNotificationsRead(["1"]));
@@ -72,7 +72,7 @@ const cardStubs = {
 	"@/components/ui/card":{Card:Element,CardContent:Element,CardDescription:Element,CardHeader:Element,CardTitle:Element},
 	"@/components/ui/badge":{Badge:function Badge({children}) {return React.createElement("span",null,children);}},
 };
-const Card = loader(cardStubs)("src/features/notifiche/NotificationCard.tsx").default;
+const Card = loader(cardStubs)("apps/web/src/features/notifiche/NotificationCard.tsx").default;
 const item={id:"1",type:"interesse",createdAt:"2026-10-05T10:00:00Z",readAt:null,actor:{label:"Mario Rossi",href:"/dettagli-profilo?id=sender&type=giocatore"},target:{label:"ASD Verona",href:"/dettagli-profilo?id=recipient&type=squadra"},targetKind:"profilo",email:"mario@example.it",phone:"+39 (333) 123-4567",state:null,info:null};
 test("interest cards render names, links, safe contacts and a readable timestamp", () => {
 	const html=renderToStaticMarkup(React.createElement(Card,{item}));
@@ -99,7 +99,7 @@ test("notification GET is authenticated, validates pagination and disables cachi
 	const route=loader({
 		"@/features/auth/server/queries":{getAuthenticatedViewer:async()=>current},
 		"@/features/notifiche/server/queries":{getNotifications:async(limit)=>{calls++;assert.equal(limit,3);return {items:[],nextCursor:null,unreadCount:1};}},
-	})("src/app/api/notifiche/route.ts");
+	})("apps/web/src/app/api/notifiche/route.ts");
 	const result=await route.GET(new NextRequest("https://example.test/api/notifiche?limit=3&user=other"));
 	assert.equal(result.status,200);assert.equal(result.headers.get("cache-control"),"private, no-store");
 	assert.equal((await route.GET(new NextRequest("https://example.test/api/notifiche?limit=100"))).status,400);
@@ -114,7 +114,7 @@ test("notification filters reach the authenticated RPC and reject unknown types"
 		"@/lib/supabase/admin": {createAdminClient: () => ({rpc: async (name, values) => {
 			args = values; return {data: {items: [], nextCursor: null, unreadCount: 7}, error: null};
 		}})},
-	})("src/features/notifiche/server/queries.ts");
+	})("apps/web/src/features/notifiche/server/queries.ts");
 	await queries.getNotifications(20, null, "follower");
 	assert.equal(args.p_type, "follower");
 	assert.equal(args.p_user, userId);
@@ -125,7 +125,7 @@ test("notification filters reach the authenticated RPC and reject unknown types"
 		"@/features/notifiche/server/queries": {getNotifications: async (limit, cursor, type) => {
 			assert.equal(type, "follower"); return {items: [], nextCursor: null, unreadCount: 0};
 		}},
-	})("src/app/api/notifiche/route.ts");
+	})("apps/web/src/app/api/notifiche/route.ts");
 	assert.equal((await route.GET(new NextRequest("https://example.test/api/notifiche?type=follower"))).status, 200);
 	assert.equal((await route.GET(new NextRequest("https://example.test/api/notifiche?type=invalid"))).status, 400);
 });
@@ -143,7 +143,7 @@ test("browser delivery requires explicit permission, skips history and read item
 		Notification: {configurable: true, value: {permission: "default", requestPermission: async () => {permissionRequests++; Notification.permission = "granted"; return "granted";}}},
 		localStorage: {configurable: true, value: {getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value)}},
 	});
-	const browser = loader()("src/features/notifiche/browser-notifications.ts");
+	const browser = loader()("apps/web/src/features/notifiche/browser-notifications.ts");
 	const deliver = browser.createBrowserNotificationDelivery("one");
 	assert.equal(browser.browserNotificationStatus("one"), "disabled");
 	await deliver([item]); assert.equal(permissionRequests, 0); assert.equal(shown.length, 0);

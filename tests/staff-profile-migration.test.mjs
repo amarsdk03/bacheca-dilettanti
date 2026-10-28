@@ -1,12 +1,11 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260926220000_staff_profile_experiences.sql", import.meta.url);
 
-test("staff profile migration preserves old qualifications and snapshots both new lists", {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async () => {
-	const {PGlite} = await import(engineUrl.href);
+test("staff profile migration preserves old qualifications and snapshots both new lists", async () => {
 	const db = await PGlite.create();
 	const profileId = "11111111-1111-4111-8111-111111111111";
 	const announcementId = "22222222-2222-4222-8222-222222222222";

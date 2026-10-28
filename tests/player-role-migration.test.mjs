@@ -1,13 +1,12 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260921212157_normalize_player_roles.sql", import.meta.url);
 const taxonomyMigrationUrl = new URL("../supabase/migrations/20260926170135_normalize_soccer_types_and_player_roles.sql", import.meta.url);
 
-test("player-role migration canonicalizes and deduplicates legacy roles", {skip: !existsSync(engineUrl) && "Optional PGlite runner is not installed"}, async (t) => {
-	const {PGlite} = await import(engineUrl.href);
+test("player-role migration canonicalizes and deduplicates legacy roles", async (t) => {
 	const db = await PGlite.create();
 	t.after(() => db.close());
 	await db.exec(`

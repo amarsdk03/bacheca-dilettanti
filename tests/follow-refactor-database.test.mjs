@@ -1,7 +1,7 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const types = ["giocatore", "squadra", "staff-sportivo", "arbitro", "torneo-evento", "campi-impianti-sportivi", "servizi-consulenze", "creators"];
@@ -9,8 +9,7 @@ const tables = ["giocatore", "squadra", "staff_sportivo", "arbitro", "torneo_eve
 const announcementTables = ["giocatore", "squadra_cerca_giocatore", "squadra_cerca_staff", "squadra_cerca_partita", "squadra_cerca_sponsor", "staff_sportivo", "arbitro", "torneo_evento", "campo_impianto", "servizi_consulenze", "creator"];
 const migration = name => readFileSync(new URL(`../supabase/migrations/${name}.sql`, import.meta.url), "utf8");
 
-test("subprofile follows and significant activity: migration, quota, notifications, privacy", {skip: !existsSync(engineUrl)}, async t => {
-  const {PGlite} = await import(engineUrl.href);
+test("subprofile follows and significant activity: migration, quota, notifications, privacy", async t => {
   const db = await PGlite.create();
   t.after(() => db.close());
   await db.exec(`
@@ -190,5 +189,92 @@ test("subprofile follows and significant activity: migration, quota, notificatio
       await assert.rejects(() => db.query("select * from public.get_profile_activity_v1($1)", [[id(101)]]), {code: "42501"});
       await assert.rejects(() => db.query("select * from private.follow_daily_usage"), {code: "42501"});
     }
+  });
+  await t.test("deferred activity commits work for Auth and browser roles without granting private access", async t => {
+    await db.exec(`
+      reset role;
+      create role supabase_auth_admin;
+      revoke all on schema private from public, anon, authenticated, supabase_auth_admin;
+      -- Fixture-only permissions let us queue events under the committing role,
+      -- matching the failing hosted Auth COMMIT rather than running everything
+      -- as the superuser/service_role used by the earlier fixture tests.
+      grant insert on public.profilo, public.profilo_giocatore, public.profilo_squadra,
+        public.profilo_staff_sportivo, public.profilo_arbitro, public.profilo_torneo_evento to supabase_auth_admin;
+      grant usage, select on all sequences in schema public to supabase_auth_admin;
+      grant select, update(titolo_annuncio) on public.annuncio to authenticated;
+    `);
+    for (const n of [501, 502, 503]) await db.query("insert into public.utente(utente_uuid) values($1)", [id(n)]);
+    await db.query("insert into public.annuncio(uuid,autore_annuncio,stato_annuncio,titolo_annuncio) values($1,$2,'pubblicato','Test commit')", [id(600), id(101)]);
+    await db.query("insert into public.annuncio_giocatore(uuid_annuncio,descrizione) values($1,'Dettagli completi')", [id(600)]);
+
+    const insertProfiles = async (n, selected) => {
+      await db.query("insert into public.profilo(uuid,uuid_utente,tipologia_principale) values($1,$1,$2)", [id(n), selected[0]]);
+      for (const type of selected) {
+        const table = tables[types.indexOf(type)];
+        await db.query(`insert into public.profilo_${table}(uuid_profilo,nome) values($1,'Profilo test')`, [id(n)]);
+      }
+    };
+    const deniedCommit = async (role, stage, message = /schema private/) => {
+      await db.exec(`set role ${role}; begin`);
+      try {
+        await stage();
+        await assert.rejects(() => db.exec("commit"), error => error.code === "42501" && message.test(error.message));
+      } finally {
+        await db.exec("rollback; reset role");
+      }
+    };
+    await t.test("the original profile trigger reproduces the reported 42501 at COMMIT", async () => {
+      await deniedCommit("supabase_auth_admin", () => insertProfiles(501, ["staff-sportivo"]));
+      assert.equal(Number((await db.query("select count(*) from public.profilo where uuid=$1", [id(501)])).rows[0].count), 0);
+    });
+    await t.test("the original announcement trigger has the same deferred privilege problem", async () => {
+      await deniedCommit("authenticated", () => db.query("update public.annuncio set titolo_annuncio='Modifica persa' where uuid=$1", [id(600)]), /permission denied for (schema private|function announcement_profile_type)/);
+      assert.equal((await db.query("select titolo_annuncio from public.annuncio where uuid=$1", [id(600)])).rows[0].titolo_annuncio, "Test commit");
+    });
+
+    const fix = migration("20261022230902_fix_deferred_activity_trigger_permissions");
+    await db.exec(fix);
+    await db.exec(fix); // Safe to rerun the SQL Editor hotfix.
+    await t.test("one staff subprofile and five selected subprofiles persist and record activity", async () => {
+      for (const [n, selected] of [[502, ["staff-sportivo"]], [503, ["giocatore", "squadra", "staff-sportivo", "arbitro", "torneo-evento"]]]) {
+        await db.exec("set role supabase_auth_admin; begin");
+        try {
+          await insertProfiles(n, selected);
+          await db.exec("commit");
+        } finally {
+          await db.exec("reset role");
+        }
+        const activity = (await db.query("select profile_type from private.profile_activity where profile_id=$1 order by profile_type", [id(n)])).rows;
+        assert.deepEqual(activity.map(row => row.profile_type), [...selected].sort());
+      }
+    });
+    await t.test("authenticated announcement edits commit and refresh their activity hash", async () => {
+      const before = (await db.query("select content_hash from private.announcement_activity where announcement_id=$1", [id(600)])).rows[0].content_hash;
+      await db.exec("set role authenticated; begin");
+      await db.query("update public.annuncio set titolo_annuncio='Modifica salvata' where uuid=$1", [id(600)]);
+      await db.exec("commit; reset role");
+      const after = (await db.query("select content_hash from private.announcement_activity where announcement_id=$1", [id(600)])).rows[0].content_hash;
+      assert.notEqual(after, before);
+    });
+    await t.test("only the two trigger entry points are elevated and private access stays restricted", async () => {
+      const functions = (await db.query(`select proname, prosecdef, proconfig, pg_get_userbyid(proowner) owner
+        from pg_proc join pg_namespace n on n.oid=pronamespace where n.nspname='private'
+        and proname in ('track_profile_activity','track_announcement_activity','refresh_profile_activity','profile_content_snapshot','announcement_content_snapshot')`)).rows;
+      for (const fn of functions) {
+        const isTrigger = fn.proname.startsWith("track_");
+        assert.equal(fn.prosecdef, isTrigger);
+        if (isTrigger) {
+          assert.equal(fn.owner, "postgres");
+          assert.deepEqual(fn.proconfig, ['search_path=""']);
+          for (const role of ["anon", "authenticated", "supabase_auth_admin", "service_role"]) {
+            const result = await db.query("select has_function_privilege($1,$2,'EXECUTE') allowed", [role, `private.${fn.proname}()`]);
+            assert.equal(result.rows[0].allowed, false);
+          }
+        }
+      }
+      for (const role of ["anon", "authenticated", "supabase_auth_admin"]) {
+        assert.equal((await db.query("select has_schema_privilege($1,'private','USAGE') allowed", [role])).rows[0].allowed, false);
+      }
+    });
   });
 });

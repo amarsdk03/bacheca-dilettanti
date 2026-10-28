@@ -1,15 +1,14 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {readFileSync, existsSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-// Optional isolated PostgreSQL runner; see docs/follow-e-annunci-salvati.md.
+// Required isolated PostgreSQL runner installed from the root lockfile.
 // It never connects to the application's Supabase project.
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260919115906_profile_follows_and_saved_announcements.sql", import.meta.url);
 const id = (group, n) => `${group}0000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
-test("follow/bookmark migration on isolated PostgreSQL", {skip: !existsSync(engineUrl) && "Install the optional PGlite runner described in docs/follow-e-annunci-salvati.md"}, async (t) => {
-	const {PGlite} = await import(engineUrl.href);
+test("follow/bookmark migration on isolated PostgreSQL", async (t) => {
 	const db = await PGlite.create();
 	t.after(() => db.close());
 	// Minimal existing schema + real owner-only policy semantics from this repo.

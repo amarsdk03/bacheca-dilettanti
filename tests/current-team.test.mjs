@@ -21,7 +21,7 @@ function loader(stubs = {}) {
 			if (name in stubs) return stubs[name];
 			if (name === "server-only") return {};
 			if (!name.startsWith("@/") && !name.startsWith(".")) return require(name);
-			const base = name.startsWith("@/") ? path.join(root, "src", name.slice(2)) : path.resolve(path.dirname(file), name);
+			const base = name.startsWith("@/") ? path.join(root, "apps/web/src", name.slice(2)) : path.resolve(path.dirname(file), name);
 			return load([base, `${base}.ts`, `${base}.tsx`].find(candidate => existsSync(candidate)));
 		}, mod, mod.exports);
 		return mod.exports;
@@ -29,8 +29,8 @@ function loader(stubs = {}) {
 	return load;
 }
 const load = loader();
-const {currentCategoryLabel, currentPlayerCareer} = load("src/features/profilo/current-team.ts");
-const {TEAM_CATEGORY_GROUPS, TEAM_CATEGORY_OPTIONS} = load("src/features/profilo/team-category-catalog.ts");
+const {currentCategoryLabel, currentPlayerCareer} = load("apps/web/src/features/profilo/current-team.ts");
+const {TEAM_CATEGORY_GROUPS, TEAM_CATEGORY_OPTIONS} = load("apps/web/src/features/profilo/team-category-catalog.ts");
 
 test("all eight team groups offer tournaments and resolve the named competition", () => {
 	const tournaments = TEAM_CATEGORY_OPTIONS.filter(option => option.value.endsWith("::Tornei"));
@@ -57,9 +57,9 @@ test("managed career precedes history, uses the tournament and avoids matching o
 });
 
 test("profile payloads accept instance references, reject invalid IDs and retain partial archived periods", () => {
-	const {createProfileDrafts} = load("src/features/profilo/profile-model.ts");
-	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
-	const {parseProfileEditorPayload} = load("src/features/registrati/server/registration.ts");
+	const {createProfileDrafts} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
+	const {parseProfileEditorPayload} = load("apps/web/src/features/registrati/server/registration.ts");
 	const drafts = createProfileDrafts();
 	Object.assign(drafts.giocatore, {nome: "Mario", anno_nascita: "2000", mese_nascita: "Gennaio", giorno_nascita: "01", genere: "Uomo", disponibilita: "sotto-contratto", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"], specifici: []}, squadra_attuale_nome: "ASD Roma", squadra_attuale_id: 10, squadra_attuale_dal: "2024", categoria_attuale: "Calcio a 7 femminile::Tornei", storico_carriera: [{titolo: "Storica", ente: "Coppa", periodoDa: "", periodoA: "2023"}]});
 	const parse = (type) => parseProfileEditorPayload({type, draft: drafts[type], locations: [{regione: "Lazio", citta: "Roma"}], socialLinks: createProfileSocialLinks()[type]});
@@ -86,8 +86,8 @@ test("managed career fields disable team, category and end period, allowing the 
 		"@/features/profilo/TeamProfileComboboxField": {default: Wrapper},
 		"./TeamProfileComboboxField": {default: Wrapper},
 	});
-	const {CurrentPlayerCareerFields} = ui("src/features/profilo/CurrentPlayerTeamFields.tsx");
-	const {createProfileDrafts} = load("src/features/profilo/profile-model.ts");
+	const {CurrentPlayerCareerFields} = ui("apps/web/src/features/profilo/CurrentPlayerTeamFields.tsx");
+	const {createProfileDrafts} = load("apps/web/src/features/profilo/profile-model.ts");
 	const draft = {...createProfileDrafts().giocatore, squadra_attuale_nome: "Roma", categoria_attuale: "Calcio a 7 femminile::Tornei", squadra_attuale_torneo: "Coppa"};
 	const html = renderToStaticMarkup(React.createElement(CurrentPlayerCareerFields, {prefix: "test", draft, onFromChange() {}}));
 	assert.match(html, /disabled=""[^>]*value="Ad oggi"/);
@@ -107,9 +107,9 @@ test("adding a subprofile starts empty while editing keeps the saved draft", () 
 		"@/components/ui/toast": {toast: {add() {}}},
 		"@/features/profilo/ProfileDetailsForm": {__esModule: true, default: props => React.createElement("pre", null, JSON.stringify({draft: props.drafts.giocatore, locations: props.locations.giocatore, socials: props.socialLinks}))},
 	});
-	const Dialog = ui("src/features/profilo/ProfileEditorDialog.tsx").default;
-	const {createProfileDrafts, createProfileLocations} = load("src/features/profilo/profile-model.ts");
-	const {createProfileSocialLinks} = load("src/features/profilo/profile-social-links.ts");
+	const Dialog = ui("apps/web/src/features/profilo/ProfileEditorDialog.tsx").default;
+	const {createProfileDrafts, createProfileLocations} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
 	const drafts = createProfileDrafts(), locations = createProfileLocations(), socialLinks = createProfileSocialLinks();
 	drafts.giocatore.nome = "OLD-NAME";
 	locations.giocatore = [{regione: "Lazio", citta: "OLD-CITY"}];
@@ -121,7 +121,7 @@ test("adding a subprofile starts empty while editing keeps the saved draft", () 
 });
 
 test("a recreated team never resolves an earlier instance's saved name or link", () => {
-	const {publicTeamExperienceNames} = load("src/features/profilo/team-profile.ts");
+	const {publicTeamExperienceNames} = load("apps/web/src/features/profilo/team-profile.ts");
 	const profileId = "11111111-1111-4111-8111-111111111111";
 	const row = {titolo: "Squadra precedente", squadraProfiloId: profileId, squadraIstanzaId: 10};
 	const recreated = {profileId, subprofileId: 11, name: "Squadra ricreata", anonymousName: false};

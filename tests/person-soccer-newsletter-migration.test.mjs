@@ -1,8 +1,8 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20261001143400_person_soccer_types_and_anonymous_newsletter.sql", import.meta.url);
 const wrapperUrl = new URL("../supabase/migrations/20260928141148_refactor_profile_publication_fields.sql", import.meta.url);
 const invitationWrapperUrl = new URL("../supabase/migrations/20260924173632_invitation_codes.sql", import.meta.url);
@@ -17,10 +17,7 @@ function functionSql(source, name) {
 	return suffix.slice(0, match.index + match[0].length);
 }
 
-test("profile soccer types and anonymous newsletter choice persist through publication", {
-	skip: !existsSync(engineUrl) && "PGlite runner unavailable",
-}, async () => {
-	const {PGlite} = await import(engineUrl.href);
+test("profile soccer types and anonymous newsletter choice persist through publication", async () => {
 	const db = await PGlite.create();
 	const anonymousAuthId = "11111111-1111-4111-8111-111111111111";
 	const registeredAuthId = "22222222-2222-4222-8222-222222222222";

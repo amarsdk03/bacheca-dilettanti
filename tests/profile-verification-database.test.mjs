@@ -1,14 +1,13 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260924193443_distinguish_profile_verification.sql", import.meta.url);
 const uuid = (suffix) => `aaaaaaaa-aaaa-4aaa-8aaa-${String(suffix).padStart(12, "0")}`;
 
 for (const schema of ["legacy", "already-refactored"]) {
-	test(`profile verification migration preserves ${schema} data and follows email confirmation`, {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async () => {
-		const {PGlite} = await import(engineUrl.href);
+	test(`profile verification migration preserves ${schema} data and follows email confirmation`, async () => {
 		const db = await PGlite.create();
 		try {
 			await db.exec(`

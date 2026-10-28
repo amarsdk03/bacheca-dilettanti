@@ -1,16 +1,13 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20261008165007_verify_new_special_profile_accounts.sql", import.meta.url);
 const accessMigrationUrl = new URL("../supabase/migrations/20261001160000_restricted_profiles_and_service_publication.sql", import.meta.url);
 const id = number => `aaaaaaaa-aaaa-4aaa-8aaa-${String(number).padStart(12, "0")}`;
 
-test("special profile creation verifies only new accounts atomically and preserves admin access guards", {
-	skip: !existsSync(engineUrl) && "PGlite runner unavailable",
-}, async () => {
-	const {PGlite} = await import(engineUrl.href);
+test("special profile creation verifies only new accounts atomically and preserves admin access guards", async () => {
 	const db = await PGlite.create();
 	try {
 		await db.exec(`

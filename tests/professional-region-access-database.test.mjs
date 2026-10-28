@@ -1,8 +1,8 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20261007152510_professional_regions_and_service_labels.sql", import.meta.url);
 const user = "11111111-1111-4111-8111-111111111111";
 const profile = "22222222-2222-4222-8222-222222222222";
@@ -15,8 +15,7 @@ function existingFunction(file, name) {
     return source.slice(start, source.indexOf("$$;", start) + 3);
 }
 
-test("admin region entitlements guard independent profile/publication selections and prune revocations", {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async (t) => {
-    const {PGlite} = await import(engineUrl.href);
+test("admin region entitlements guard independent profile/publication selections and prune revocations", async (t) => {
     const db = await PGlite.create();
     try {
         await db.exec(`

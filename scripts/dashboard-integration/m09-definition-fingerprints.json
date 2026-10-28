@@ -1,0 +1,92 @@
+{
+  "source": "supabase/migrations/20261024211431_admin_audit_reads.sql",
+  "sourceSha256": "05e49150a129d5a8af3ef2941cd00e077714441cd01158f7e6f090750eb86a2e",
+  "m08VerifierSha256": "df5e3a4b69a8d6405a2cee19cc8f62b862fa3682a75342bf25e4cab9839505b6",
+  "provenance": "Exact M09 definitions generated in PGlite after unchanged reviewed M07 fixture and M08 migration; no remote connection.",
+  "functions": [
+    {
+      "schema_name": "private",
+      "name": "admin_get_audit_event_bridge_v1",
+      "args": "uuid",
+      "identity": "private.admin_get_audit_event_bridge_v1(uuid)",
+      "after_md5": "dd131c46630324cdaa3a825f8705ad5b",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "volatility": "v",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 0,
+      "return_type": "jsonb",
+      "language": "plpgsql",
+      "before_md5": null,
+      "api_role": "authenticated"
+    },
+    {
+      "schema_name": "private",
+      "name": "admin_list_audit_events_bridge_v1",
+      "args": "jsonb",
+      "identity": "private.admin_list_audit_events_bridge_v1(jsonb)",
+      "after_md5": "cdae8b9e6cc187adb973ba946af110ef",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "volatility": "v",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 0,
+      "return_type": "jsonb",
+      "language": "plpgsql",
+      "before_md5": null,
+      "api_role": "authenticated"
+    },
+    {
+      "schema_name": "public",
+      "name": "admin_get_audit_event_v1",
+      "args": "uuid",
+      "identity": "public.admin_get_audit_event_v1(uuid)",
+      "after_md5": "108cec6ff9a7bfdc0b075ea8f8c5c80b",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "volatility": "v",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 0,
+      "return_type": "jsonb",
+      "language": "sql",
+      "before_md5": null,
+      "api_role": "authenticated"
+    },
+    {
+      "schema_name": "public",
+      "name": "admin_list_audit_events_v1",
+      "args": "jsonb",
+      "identity": "public.admin_list_audit_events_v1(jsonb)",
+      "after_md5": "f435781e6c58f209421452db28f5640b",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "volatility": "v",
+      "is_strict": false,
+      "returns_set": false,
+      "default_args": 1,
+      "return_type": "jsonb",
+      "language": "sql",
+      "before_md5": null,
+      "api_role": "authenticated"
+    }
+  ],
+  "index": {
+    "definition": "CREATE INDEX admin_audit_event_auth_time_v1 ON private.admin_audit_event_v1 USING btree (actor_auth_user_uuid, occurred_at DESC, event_uuid DESC) WHERE (actor_auth_user_uuid IS NOT NULL)",
+    "definition_md5": "70f10f582d85db483117de89fba1194a"
+  }
+}

@@ -1,0 +1,626 @@
+{
+  "version": 1,
+  "projectRef": "nsytraextbndfyprwzts",
+  "sourceInventoryAt": "2026-10-26T11:25:16.517713+00:00",
+  "migrationSha256": "0afed5cbddb38219037672c6595c725bc3131e2e7287cf27f460609f5d2aa9da",
+  "fixtureSha256": "e91533cc9a5525d33308d2ee6c6efaf7d5e23aa7c39d8b385919e9555f6ca562",
+  "functions": [
+    {
+      "schema_name": "private",
+      "name": "admin_moderation_capabilities_v1",
+      "args": "jsonb,jsonb",
+      "identity": "private.admin_moderation_capabilities_v1(jsonb,jsonb)",
+      "before_md5": "9e8450c8255a342109bcdaad9e62c954",
+      "after_md5": "1f01ac11c43c6465b18d3557b4b35caa",
+      "acl_md5": "dfda960bf9e0be03ea7516906ee58e3b",
+      "owner": "postgres",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": null
+    },
+    {
+      "schema_name": "private",
+      "name": "auto_approve_new_announcement_until_v1",
+      "args": "",
+      "identity": "private.auto_approve_new_announcement_until_v1()",
+      "before_md5": "893f818587ade9ca2b8d0f27fac660e8",
+      "after_md5": "3541acabba0afd57c036b552b22dcb81",
+      "acl_md5": "dfda960bf9e0be03ea7516906ee58e3b",
+      "owner": "postgres",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": null
+    },
+    {
+      "schema_name": "private",
+      "name": "guard_announcement_trash_v1",
+      "args": "",
+      "identity": "private.guard_announcement_trash_v1()",
+      "before_md5": null,
+      "after_md5": "b9d416e6847e7d8ac710e661967d18e0",
+      "acl_md5": "dfda960bf9e0be03ea7516906ee58e3b",
+      "owner": "postgres",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": null
+    },
+    {
+      "schema_name": "private",
+      "name": "list_admin_announcements_v1",
+      "args": "jsonb",
+      "identity": "private.list_admin_announcements_v1(jsonb)",
+      "before_md5": "29910e0bd58ec293e1990b606c84e09d",
+      "after_md5": "dea0fb8102667f29d22c3226ea53fbde",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "owner": "postgres",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\"",
+        "TimeZone=UTC"
+      ],
+      "api_role": "authenticated"
+    },
+    {
+      "schema_name": "private",
+      "name": "lock_announcement_child_parent_v1",
+      "args": "",
+      "identity": "private.lock_announcement_child_parent_v1()",
+      "before_md5": "3f9b776a4e1194bea2eb6f6aa7e61c05",
+      "after_md5": "60c836283d4aff2cef93d9ae5b998f42",
+      "acl_md5": "dfda960bf9e0be03ea7516906ee58e3b",
+      "owner": "postgres",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": null
+    },
+    {
+      "schema_name": "private",
+      "name": "moderate_admin_announcement_v1",
+      "args": "uuid,text,text,text",
+      "identity": "private.moderate_admin_announcement_v1(uuid,text,text,text)",
+      "before_md5": "ace0def49e8a35dcb59c0c72b120e5d7",
+      "after_md5": "e66dbe840d1b9aa27fe7ac79fa6b6da8",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "owner": "postgres",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\"",
+        "TimeZone=UTC"
+      ],
+      "api_role": "authenticated"
+    },
+    {
+      "schema_name": "private",
+      "name": "notification_display_ref",
+      "args": "jsonb,boolean",
+      "identity": "private.notification_display_ref(jsonb,boolean)",
+      "before_md5": "3e998f80a4513347c7f1438136ae7ed7",
+      "after_md5": "13e0c62d7427811509b455de5877bdd0",
+      "acl_md5": "db23e67d6fad77fdfa003856d807d6af",
+      "owner": "postgres",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "service_role"
+    },
+    {
+      "schema_name": "private",
+      "name": "notification_target_ref",
+      "args": "uuid,uuid,text",
+      "identity": "private.notification_target_ref(uuid,uuid,text)",
+      "before_md5": "cac75d74b1a071d2295e0250c6c7293b",
+      "after_md5": "81e5e29fa1a66e648a20969ca7974147",
+      "acl_md5": "db23e67d6fad77fdfa003856d807d6af",
+      "owner": "postgres",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "service_role"
+    },
+    {
+      "schema_name": "private",
+      "name": "notify_announcement_v1",
+      "args": "",
+      "identity": "private.notify_announcement_v1()",
+      "before_md5": "2735b306133d0ba90dd7feb7715b10c1",
+      "after_md5": "3448753b4008593bae365041c8cf5288",
+      "acl_md5": "db23e67d6fad77fdfa003856d807d6af",
+      "owner": "postgres",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "service_role"
+    },
+    {
+      "schema_name": "private",
+      "name": "project_admin_announcement_v1",
+      "args": "jsonb",
+      "identity": "private.project_admin_announcement_v1(jsonb)",
+      "before_md5": "b673a78e7214368677a39109697b8e0b",
+      "after_md5": "aba2757a5e72bd267cbf8c325647eb3f",
+      "acl_md5": "dfda960bf9e0be03ea7516906ee58e3b",
+      "owner": "postgres",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\"",
+        "TimeZone=UTC"
+      ],
+      "api_role": null
+    },
+    {
+      "schema_name": "private",
+      "name": "prune_revoked_professional_regions_v1",
+      "args": "",
+      "identity": "private.prune_revoked_professional_regions_v1()",
+      "before_md5": "077856bb543dcec689800e3b0841d236",
+      "after_md5": "b5ffb877a3a225e8b19d634f1f428d26",
+      "acl_md5": "db23e67d6fad77fdfa003856d807d6af",
+      "owner": "postgres",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "service_role"
+    },
+    {
+      "schema_name": "public",
+      "name": "get_notifications_v1",
+      "args": "uuid,integer,timestamp with time zone,bigint",
+      "identity": "public.get_notifications_v1(uuid,integer,timestamp with time zone,bigint)",
+      "before_md5": "1479c65da44778e4291fdba171a64996",
+      "after_md5": "55713baacb8ffa7d847c6e5f4b07370e",
+      "acl_md5": "db23e67d6fad77fdfa003856d807d6af",
+      "owner": "postgres",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "service_role"
+    },
+    {
+      "schema_name": "public",
+      "name": "get_notifications_v2",
+      "args": "uuid,integer,timestamp with time zone,bigint,text",
+      "identity": "public.get_notifications_v2(uuid,integer,timestamp with time zone,bigint,text)",
+      "before_md5": "d3c028ad4e6b96069ea0724e12470582",
+      "after_md5": "aeecfa47e2325237d8dd79259f50f6d7",
+      "acl_md5": "db23e67d6fad77fdfa003856d807d6af",
+      "owner": "postgres",
+      "is_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "service_role"
+    },
+    {
+      "schema_name": "public",
+      "name": "get_owned_priority_checkout_v1",
+      "args": "uuid",
+      "identity": "public.get_owned_priority_checkout_v1(uuid)",
+      "before_md5": "584cc98a7fd6f653053c7af8f58fc44b",
+      "after_md5": "f97eac99d2081b0862052e60984e9f93",
+      "acl_md5": "5fc13192159b7c60c3a808895ae2c2c8",
+      "owner": "postgres",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "authenticated"
+    },
+    {
+      "schema_name": "public",
+      "name": "record_priority_checkout_event_v1",
+      "args": "uuid,uuid,text,text,integer,integer,text,text,text,boolean",
+      "identity": "public.record_priority_checkout_event_v1(uuid,uuid,text,text,integer,integer,text,text,text,boolean)",
+      "before_md5": "f77948a78239684e1e8ba4333d299fb5",
+      "after_md5": "bb6e0f982f238aab88eec51d7c6e7804",
+      "acl_md5": "db23e67d6fad77fdfa003856d807d6af",
+      "owner": "postgres",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "service_role"
+    },
+    {
+      "schema_name": "public",
+      "name": "record_priority_checkout_event_v1",
+      "args": "uuid,uuid,text,text,text,text,text,boolean",
+      "identity": "public.record_priority_checkout_event_v1(uuid,uuid,text,text,text,text,text,boolean)",
+      "before_md5": "e23890414fe6633d54cd4cb8694901fe",
+      "after_md5": "858d3aaf166f8b8bc7d0a083046cf1ae",
+      "acl_md5": "db23e67d6fad77fdfa003856d807d6af",
+      "owner": "postgres",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "service_role"
+    },
+    {
+      "schema_name": "public",
+      "name": "record_priority_checkout_session_v1",
+      "args": "uuid,uuid,text,text,integer,integer,text,text,integer",
+      "identity": "public.record_priority_checkout_session_v1(uuid,uuid,text,text,integer,integer,text,text,integer)",
+      "before_md5": "96b12ddf647dcc6e02ce9cdca3caf4a7",
+      "after_md5": "89af3bebd95579c8752cacc8f0a25b09",
+      "acl_md5": "db23e67d6fad77fdfa003856d807d6af",
+      "owner": "postgres",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "service_role"
+    },
+    {
+      "schema_name": "public",
+      "name": "record_priority_checkout_session_v1",
+      "args": "uuid,uuid,text,text,text,text,integer",
+      "identity": "public.record_priority_checkout_session_v1(uuid,uuid,text,text,text,text,integer)",
+      "before_md5": "d19374cb76be47b3aeedbd28c9aa550d",
+      "after_md5": "727ca3928a5b0477188e5d473ed046e5",
+      "acl_md5": "db23e67d6fad77fdfa003856d807d6af",
+      "owner": "postgres",
+      "is_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "api_role": "service_role"
+    }
+  ],
+  "policies": [
+    {
+      "name": "annuncio_not_trashed_v1",
+      "check_md5": "8607aa61a16b54d3aeb51e5f24d638ae",
+      "using_md5": "8607aa61a16b54d3aeb51e5f24d638ae",
+      "table_name": "annuncio"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "1be727dae130c13908cdb552a363bf67",
+      "using_md5": "1be727dae130c13908cdb552a363bf67",
+      "table_name": "annuncio_arbitro"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "06fbae111b0cf0eeeba36207a1d8fdc8",
+      "using_md5": "06fbae111b0cf0eeeba36207a1d8fdc8",
+      "table_name": "annuncio_campo_impianto"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "65822a386c9e93108106a2d707519d05",
+      "using_md5": "65822a386c9e93108106a2d707519d05",
+      "table_name": "annuncio_creator"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "ae9db05156cfde064a492d785a16ad04",
+      "using_md5": "ae9db05156cfde064a492d785a16ad04",
+      "table_name": "annuncio_generico"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "095a648700dcf57639d07a86ff817dc4",
+      "using_md5": "095a648700dcf57639d07a86ff817dc4",
+      "table_name": "annuncio_giocatore"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "6df36c652df6dd66d55c46a8faf606a6",
+      "using_md5": "6df36c652df6dd66d55c46a8faf606a6",
+      "table_name": "annuncio_servizi_consulenze"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "2d22a0c7edc39b77d3c6ba24f9782b14",
+      "using_md5": "2d22a0c7edc39b77d3c6ba24f9782b14",
+      "table_name": "annuncio_squadra_cerca_giocatore"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "483c7d730af206236da1f12e6835ee19",
+      "using_md5": "483c7d730af206236da1f12e6835ee19",
+      "table_name": "annuncio_squadra_cerca_partita"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "647ee9432643832046371fa75d4881ab",
+      "using_md5": "647ee9432643832046371fa75d4881ab",
+      "table_name": "annuncio_squadra_cerca_sponsor"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "ee969dc14bfab1adbe9893cf7f78e19c",
+      "using_md5": "ee969dc14bfab1adbe9893cf7f78e19c",
+      "table_name": "annuncio_squadra_cerca_staff"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "d9dc818aa18b9fc8ac1e0087d9ca62c7",
+      "using_md5": "d9dc818aa18b9fc8ac1e0087d9ca62c7",
+      "table_name": "annuncio_staff_sportivo"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "52a105a937668a15b95f1707d734246c",
+      "using_md5": "52a105a937668a15b95f1707d734246c",
+      "table_name": "annuncio_torneo_evento"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "2667d80a6b50e7eefdc43412bf054f7d",
+      "using_md5": "2667d80a6b50e7eefdc43412bf054f7d",
+      "table_name": "contatto_annuncio"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "28d5f68baebd85c2e17022308fbe9b4f",
+      "using_md5": "28d5f68baebd85c2e17022308fbe9b4f",
+      "table_name": "link_social_annuncio"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "a0c82202514832c8e88847321cc1373d",
+      "using_md5": "a0c82202514832c8e88847321cc1373d",
+      "table_name": "localita_annuncio"
+    },
+    {
+      "name": "not_trashed_v1",
+      "check_md5": "3b3875a9c392af50eb80c85c7d38d58b",
+      "using_md5": "3b3875a9c392af50eb80c85c7d38d58b",
+      "table_name": "media_annuncio"
+    }
+  ],
+  "newIndex": {
+    "live": true,
+    "name": "annuncio_admin_trash_order_v1_idx",
+    "ready": true,
+    "valid": true,
+    "definition_md5": "348a6441294af0ed7f3b15c3ad06a6b7"
+  },
+  "newConstraint": {
+    "name": "annuncio_trash_metadata_v1",
+    "type": "c",
+    "validated": true,
+    "definition_md5": "b6f7b6c86bd22defddbb39e4dfc7c814"
+  },
+  "newTriggers": [
+    {
+      "table_name": "annuncio",
+      "name": "zz_guard_announcement_trash_v1",
+      "enabled": "O",
+      "function_md5": "b9d416e6847e7d8ac710e661967d18e0",
+      "definition_md5": "c51b6f8f5afc226128f51b74401c3965",
+      "function_owner": "postgres",
+      "function_acl_md5": "dfda960bf9e0be03ea7516906ee58e3b",
+      "function_identity": "private.guard_announcement_trash_v1()",
+      "function_effective_execute": [
+        [
+          "anon",
+          false
+        ],
+        [
+          "authenticated",
+          false
+        ],
+        [
+          "service_role",
+          false
+        ],
+        [
+          "supabase_auth_admin",
+          false
+        ]
+      ]
+    },
+    {
+      "table_name": "annuncio_generico",
+      "name": "admin_lock_parent_v1",
+      "enabled": "O",
+      "function_md5": "60c836283d4aff2cef93d9ae5b998f42",
+      "definition_md5": "ae1beb1c9d9deb997f9466095a105ce2",
+      "function_owner": "postgres",
+      "function_acl_md5": "dfda960bf9e0be03ea7516906ee58e3b",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "function_effective_execute": [
+        [
+          "anon",
+          false
+        ],
+        [
+          "authenticated",
+          false
+        ],
+        [
+          "service_role",
+          false
+        ],
+        [
+          "supabase_auth_admin",
+          false
+        ]
+      ]
+    }
+  ],
+  "gateColumns": [
+    [
+      "singleton",
+      "boolean",
+      true,
+      "",
+      "",
+      null,
+      "true"
+    ],
+    [
+      "enabled",
+      "boolean",
+      true,
+      "",
+      "",
+      null,
+      "false"
+    ]
+  ],
+  "gateConstraints": [
+    [
+      "admin_trash_release_v1_pkey",
+      "p",
+      true,
+      "7511e9a8e50c073e1d6eff73afcc0f24"
+    ],
+    [
+      "admin_trash_release_v1_singleton_check",
+      "c",
+      true,
+      "ae6f6dfbe38290d5bfa8f3e96d1aff91"
+    ]
+  ],
+  "consumerTriggers": [
+    {
+      "table_name": "annuncio",
+      "name": "auto_approve_new_announcement_until_v1",
+      "definition_md5": "c5a9e3ea6286f3d9a58dade75c079edb",
+      "function_identity": "private.auto_approve_new_announcement_until_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio",
+      "name": "notification_announcement",
+      "definition_md5": "dd0257740950c621fb90664ee0ad4606",
+      "function_identity": "private.notify_announcement_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_arbitro",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "8a334ebc632201cd6a897bd45a434e53",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_campo_impianto",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "04729cdf0681bbcc75b452d8182158a3",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_creator",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "f1c529971806b526a91af99a8458293b",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_giocatore",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "dfbd4d3073deea9622c4716dcc003e85",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_servizi_consulenze",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "63c1175415857bc39feb658bad67cebc",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_squadra_cerca_giocatore",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "c084f09cec6400ea02e097f2a82f3a98",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_squadra_cerca_partita",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "46eb478ec742a15cb1107dd14ebb4eae",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_squadra_cerca_sponsor",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "7cbacc380463c982a274d3b6d5894dfc",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_squadra_cerca_staff",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "7b5cc702e0b2a2d86b5eac9dcadbc2af",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_staff_sportivo",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "e08c9ee4ff068823b5ebced0bc48a97b",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_torneo_evento",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "149ba691aaa33f6751c77af771eb8fd6",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "contatto_annuncio",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "bc91d9ed60ec399513d7a1ccc8511bc1",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "link_social_annuncio",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "a0a034edea33754796bde80b4dd677bb",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "localita_annuncio",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "c12bd686e234ec1fdcef9af3dce95776",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "media_annuncio",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "19b730b7a5c2925474eefb3fe583f7f1",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "restricted_profile_access",
+      "name": "prune_revoked_professional_regions",
+      "definition_md5": "8070b2beef2d44247ec02b0494e025b6",
+      "function_identity": "private.prune_revoked_professional_regions_v1()",
+      "is_new": false
+    },
+    {
+      "table_name": "annuncio_generico",
+      "name": "admin_lock_parent_v1",
+      "definition_md5": "ae1beb1c9d9deb997f9466095a105ce2",
+      "function_identity": "private.lock_announcement_child_parent_v1()",
+      "is_new": true
+    }
+  ]
+}

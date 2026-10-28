@@ -1,12 +1,11 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const migrationUrl = new URL("../supabase/migrations/20260927060000_preserve_tournament_legacy_headquarters.sql", import.meta.url);
 
-test("saving a tournament without a headquarters keeps the historical value", {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async () => {
-	const {PGlite} = await import(engineUrl.href);
+test("saving a tournament without a headquarters keeps the historical value", async () => {
 	const db = await PGlite.create();
 	try {
 		await db.exec(`

@@ -24,7 +24,7 @@ function loader(stubs = {}) {
 			if (name in stubs) return stubs[name];
 			if (name === "server-only") return {};
 			if (name.startsWith("@/") || name.startsWith(".")) {
-				const base = name.startsWith("@/") ? path.join(root, "src", name.slice(2)) : path.resolve(path.dirname(file), name);
+				const base = name.startsWith("@/") ? path.join(root, "apps/web/src", name.slice(2)) : path.resolve(path.dirname(file), name);
 				const target = [base, `${base}.ts`, `${base}.tsx`].find((candidate) => existsSync(candidate));
 				return load(target);
 			}
@@ -57,7 +57,7 @@ function actionFixture({account = registered, visible = true, failure = false} =
 		const filters = [];
 		const query = {
 			select() {return this;},
-			eq(...args) {filters.push(args); return this;},
+			is(...args) {filters.push(args); return this;}, eq(...args) {filters.push(args); return this;},
 			maybeSingle() {return Promise.resolve({data: visible ? {uuid: targetId} : null, error: null});},
 			upsert(row, opts) {operation = "insert"; payload = row; options = opts; return this;},
 			delete() {operation = "delete"; return this;},
@@ -76,7 +76,7 @@ function actionFixture({account = registered, visible = true, failure = false} =
 		"@/lib/supabase/admin": {createAdminClient: () => admin},
 		"@/lib/supabase/server": {createClient: async () => ({})},
 	});
-	return {actions: load("src/features/interazioni/server/actions.ts"), writes, revalidated};
+	return {actions: load("apps/web/src/features/interazioni/server/actions.ts"), writes, revalidated};
 }
 
 test("interaction actions reject malformed inputs and unauthenticated/incomplete accounts before writing", async () => {
@@ -127,7 +127,7 @@ test("a failed write does not report success or revalidate the UI", async () => 
 });
 
 test("saved items preserve saved-date order, ignore publication priority and omit unavailable content", () => {
-	const {resolveSavedAnnouncements, formatSavedDate} = loader()("src/features/interazioni/interaction-model.ts");
+	const {resolveSavedAnnouncements, formatSavedDate} = loader()("apps/web/src/features/interazioni/interaction-model.ts");
 	const rows = [
 		{uuid_annuncio: "new", salvato_il: "2026-09-19T10:15:00Z"},
 		{uuid_annuncio: "hidden", salvato_il: "2026-09-18T10:00:00Z"},
@@ -148,7 +148,7 @@ test("dashboard reads every batch through the session and hydrates only the rele
 	const rows = Array.from({length: 252}, (_, i) => ({uuid_annuncio: `ad-${i}`, salvato_il: "2026-09-19T10:00:00Z"}));
 	const client = {from(table) {
 		const query = {
-			select() {return this;}, eq() {return this;}, order() {return this;},
+			select() {return this;}, is() {return this;}, eq() {return this;}, order() {return this;},
 			range(from, to) {batches.push([table, from, to]); return Promise.resolve({data: table === "annuncio_salvato" ? rows.slice(from, to + 1) : [], error: null});},
 		};
 		return query;
@@ -158,14 +158,14 @@ test("dashboard reads every batch through the session and hydrates only the rele
 		"@/features/annunci/server/queries": {loadPublicAnnouncementsByIds: async (ids) => ids.map((id) => ({id}))},
 		"@/features/profili/server/queries": {loadPublicSubprofiles: async () => []},
 	});
-	const result = await load("src/features/interazioni/server/queries.ts").getDashboardInteractions(client, internalUser, ownProfile);
+	const result = await load("apps/web/src/features/interazioni/server/queries.ts").getDashboardInteractions(client, internalUser, ownProfile);
 	assert.equal(result.savedAnnouncements.items.length, 252);
 	assert.deepEqual(batches.filter(([table]) => table === "annuncio_salvato"), [["annuncio_salvato", 0, 249], ["annuncio_salvato", 250, 499]]);
 });
 
 test("a failed bookmark read is an error while independent relationship sections still work", async () => {
 	const client = {from(table) {
-		return {select() {return this;}, eq() {return this;}, order() {return this;},
+		return {select() {return this;}, is() {return this;}, eq() {return this;}, order() {return this;},
 			range() {return Promise.resolve(table === "annuncio_salvato" ? {data: null, error: {code: "42P01"}} : {data: [], error: null});}};
 	}};
 	const load = loader({
@@ -173,7 +173,7 @@ test("a failed bookmark read is an error while independent relationship sections
 		"@/features/annunci/server/queries": {},
 		"@/features/profili/server/queries": {loadPublicSubprofiles: async () => []},
 	});
-	const result = await load("src/features/interazioni/server/queries.ts").getDashboardInteractions(client, internalUser, ownProfile);
+	const result = await load("apps/web/src/features/interazioni/server/queries.ts").getDashboardInteractions(client, internalUser, ownProfile);
 	assert.equal(result.savedAnnouncements.status, "error");
 	assert.deepEqual(result.followers, {status: "success", items: []});
 	assert.deepEqual(result.following, {status: "success", items: []});
@@ -182,14 +182,14 @@ test("a failed bookmark read is an error while independent relationship sections
 test("the server hides the self-follow control even for uppercase profile UUIDs", async () => {
 	const client = {from(table) {
 		assert.equal(table, "profilo");
-		return {select() {return this;}, eq() {return this;}, maybeSingle: async () => ({data: {uuid: ownProfile}, error: null})};
+		return {select() {return this;}, is() {return this;}, eq() {return this;}, maybeSingle: async () => ({data: {uuid: ownProfile}, error: null})};
 	}};
 	const load = loader({
 		"@/features/auth/server/queries": {getAuthenticatedViewer: async () => registered},
 		"@/lib/supabase/server": {createClient: async () => client},
 		"@/features/annunci/server/queries": {}, "@/features/profili/server/queries": {},
 	});
-	assert.deepEqual(await load("src/features/interazioni/server/queries.ts").getInteractionState({kind: "profilo", id: ownProfile.toUpperCase()}), {status: "own-profile"});
+	assert.deepEqual(await load("apps/web/src/features/interazioni/server/queries.ts").getInteractionState({kind: "profilo", id: ownProfile.toUpperCase()}), {status: "own-profile"});
 });
 
 const uiLoad = loader({
@@ -198,7 +198,7 @@ const uiLoad = loader({
 });
 
 test("real toggle components render accessible persisted state and hide self-follow", () => {
-	const Button = uiLoad("src/features/interazioni/InteractionButton.tsx").default;
+	const Button = uiLoad("apps/web/src/features/interazioni/InteractionButton.tsx").default;
 	const render = (kind, state) => renderToStaticMarkup(React.createElement(Button, {
 		target: {kind, id: targetId}, state, href: "/dettagli-annuncio", showLabel: true,
 	}));
@@ -229,7 +229,7 @@ test("Follow asks only for multiple identities, defaults to the primary and keep
 			"@/components/ui/toast": {toast: {add() {}}},
 			"@/features/interazioni/server/actions": {setProfileFollow: async (...args) => {calls.push(args); return response;}}
 		});
-		const Button = load("src/features/interazioni/InteractionButton.tsx").default;
+		const Button = load("apps/web/src/features/interazioni/InteractionButton.tsx").default;
 		function render() {
 			index = 0;
 			const element = Button({target: followTarget, state: {status: "ready", active: false, profiles}, href: "/dettagli-profilo"});
@@ -262,7 +262,7 @@ test("Follow state and dashboard resolve exact sender/recipient identities", asy
 		{id: targetId, type: "squadra", title: "Target Team", imageUrl: null}];
 	const filters = [];
 	const client = {from(table) {
-		return {select() {return this;}, eq(...args) {filters.push(args); return this;}, order() {return this;},
+		return {select() {return this;}, is(...args) {filters.push(args); return this;}, eq(...args) {filters.push(args); return this;}, order() {return this;},
 			maybeSingle: async () => ({data: table === "profilo" ? {uuid: ownProfile, tipologia_principale: "squadra"} : {sottoprofilo_follower: "giocatore"}, error: null}),
 			range: async () => ({data: table === "profilo_follow" ? [{uuid_profilo_follower: ownProfile, uuid_profilo_seguito: targetId,
 				sottoprofilo_follower: "giocatore", sottoprofilo_seguito: "squadra", creato_il: "2026-10-05"}] : [], error: null})};
@@ -274,7 +274,7 @@ test("Follow state and dashboard resolve exact sender/recipient identities", asy
 		"@/features/profilo/server/owned-subprofile-identities": {loadOwnedSubprofileIdentities: async () => identities.filter(profile => profile.id === ownProfile).map(profile => ({...profile, title: `Private ${profile.title}`, imageUrl: "/own-photo.webp"}))},
 		"@/features/annunci/server/queries": {loadPublicAnnouncementsByIds: async () => []},
 	});
-	const queries = load("src/features/interazioni/server/queries.ts");
+	const queries = load("apps/web/src/features/interazioni/server/queries.ts");
 	const state = await queries.getInteractionState(followTarget);
 	assert.equal(state.active, true);
 	assert.equal(state.sourceType, "giocatore");
@@ -294,7 +294,7 @@ test("announcement visibility authenticates ownership through RLS before its ser
 		{owned: true, viewer: {...registered, utenteId: null}},
 	]) {
 		const writes = [];
-		const query = {select() {return this;}, eq() {return this;}, maybeSingle: async () => ({data: owned ? {uuid: targetId} : null, error: null})};
+		const query = {select() {return this;}, is() {return this;}, eq() {return this;}, maybeSingle: async () => ({data: owned ? {uuid: targetId} : null, error: null})};
 		const load = loader({
 			"next/cache": {revalidatePath() {}},
 			"@/features/auth/server/queries": {getAuthenticatedViewer: async () => viewer},
@@ -303,10 +303,54 @@ test("announcement visibility authenticates ownership through RLS before its ser
 			"@/lib/supabase/server": {createClient: async () => ({from: () => query})},
 			"@/lib/supabase/admin": {createAdminClient: () => ({from: () => ({...query, update(payload) {writes.push(payload); return this;}})})},
 		});
-		const result = await load("src/features/profilo/server/actions.ts").setAnnouncementVisibility(targetId, true);
+		const result = await load("apps/web/src/features/profilo/server/actions.ts").setAnnouncementVisibility(targetId, true);
 		assert.equal(result.status, owned && viewer.utenteId ? "success" : "error");
 		assert.deepEqual(writes, owned && viewer.utenteId ? [{nascosto: true, ultima_modifica_da: internalUser}] : []);
 	}
+});
+
+test("author cannot clear an administrative hold, including one set after the ownership read", async () => {
+	for (const raced of [false, true]) {
+		let writes = 0;
+		const query = {select() {return this;}, is() {return this;}, eq() {return this;}, maybeSingle: async () => ({data: {uuid: targetId, oscurato_da_admin: !raced}, error: null})};
+		const load = loader({
+			"next/cache": {revalidatePath() {}},
+			"@/features/auth/server/queries": {getAuthenticatedViewer: async () => registered},
+			"@/features/profilo/server/profile-image-processing": {},
+			"@/features/registrati/server/registration": {},
+			"@/lib/supabase/server": {createClient: async () => ({from: () => query})},
+			"@/lib/supabase/admin": {createAdminClient: () => ({from: () => ({...query, update() {writes++; return this;}, maybeSingle: async () => ({data: null, error: {code: "42501", message: "ADMIN_ANNOUNCEMENT_HIDDEN"}})})})},
+		});
+		const result = await load("apps/web/src/features/profilo/server/actions.ts").setAnnouncementVisibility(targetId, false);
+		assert.equal(result.status, "error"); assert.match(result.message, /oscurato dall’amministrazione/); assert.equal(writes, raced ? 1 : 0);
+	}
+});
+
+test("physical owner deletion cleans media only after an active row was actually deleted", async () => {
+  for(const outcome of ["active","trash","raced"]) {
+    let removed=0, excluded=false;
+    const query={ select(){return this;},eq(){return this;},is(k,v){excluded=k==="eliminato_il"&&v===null;return this;},delete(){return this;},
+      async maybeSingle(){return {data:outcome==="active"?{uuid:targetId}:null,error:outcome==="raced"?{code:"42501",message:"ANNOUNCEMENT_TRASH_PROTECTED"}:null};} };
+    const session={from:table=>table==="media_annuncio"?{select(){return this;},eq:async()=>({data:[{link_media:"owner/image.webp"}],error:null})}:query};
+    const actions=loader({"next/cache":{revalidatePath(){}},"@/features/auth/server/queries":{getAuthenticatedViewer:async()=>registered},
+      "@/features/profilo/server/profile-image-processing":{},"@/features/registrati/server/registration":{},
+      "@/lib/supabase/server":{createClient:async()=>session},"@/lib/supabase/admin":{createAdminClient:()=>({storage:{from:()=>({async remove(paths){assert.deepEqual(paths,["owner/image.webp"]);removed++;return{error:null};}})}})}
+    })("apps/web/src/features/profilo/server/actions.ts");
+    assert.equal((await actions.removeAnnouncement(targetId)).status,outcome==="active"?"success":"error");
+    assert(excluded); assert.equal(removed,outcome==="active"?1:0);
+  }
+});
+
+test("owner dashboard query excludes Admin trash instead of showing recoverable cards", async () => {
+  let excluded=false;
+  const client={from(table){const query={select(){return this;},eq(){return this;},or(){return this;},order(){return this;},range(){return this;},not(){return this;},
+    is(k,v){if(table==="annuncio")excluded=k==="eliminato_il"&&v===null;return this;},
+    maybeSingle:async()=>({data:table==="utente"?{codice_invito:"TEST"}:null,error:null}),
+    then(resolve){if(table==="annuncio")assert(excluded,"owner query must hide trash");return Promise.resolve({data:[],count:0,error:null}).then(resolve);} };return query;}};
+  const load=loader({"@/lib/supabase/server":{createClient:async()=>client},"@/lib/supabase/admin":{createAdminClient:()=>client},
+    "@/features/profilo/server/profile-images":{},"@/features/interazioni/server/queries":{getDashboardInteractions:async()=>({})}});
+  const result=await load("apps/web/src/features/profilo/server/queries.ts").getProfileDashboardData(internalUser);
+  assert.deepEqual(result.announcements,[]);assert(excluded);
 });
 
 test("profile actions keep accessible icon-only share/report controls and preserve own-profile and error states", () => {
@@ -315,7 +359,7 @@ test("profile actions keep accessible icon-only share/report controls and preser
 		"@/features/interazioni/server/actions": {},
 		"@/features/segnalazioni/server/actions": {},
 	});
-	const Actions = actionsLoad("src/features/segnalazioni/DetailActions.tsx").default;
+	const Actions = actionsLoad("apps/web/src/features/segnalazioni/DetailActions.tsx").default;
 	const render = (interaction, presentation = "profile") => renderToStaticMarkup(React.createElement(Actions, {
 		target: {kind: "profilo", id: targetId}, interaction, href: "/dettagli-profilo", presentation,
 	}));
@@ -343,7 +387,7 @@ test("announcement detail actions use the shared bookmark styling without profil
 		"@/features/interazioni/server/actions": {},
 		"@/features/segnalazioni/server/actions": {},
 	});
-	const Actions = load("src/features/segnalazioni/DetailActions.tsx").default;
+	const Actions = load("apps/web/src/features/segnalazioni/DetailActions.tsx").default;
 	for (const active of [false, true]) {
 		const html = renderToStaticMarkup(React.createElement(Actions, {
 			target: {kind: "annuncio", id: targetId}, interaction: {status: "ready", active},
@@ -362,7 +406,7 @@ test("unlisted preview actions only share and never load session interaction sta
 		"@/features/segnalazioni/server/actions": {},
 		"@/features/interazioni/server/queries": {getInteractionState: () => assert.fail("Preview must not load interactions")},
 	});
-	const Actions = load("src/features/interazioni/DetailActions.tsx").default;
+	const Actions = load("apps/web/src/features/interazioni/DetailActions.tsx").default;
 	const element = await Actions({target: {kind: "annuncio", id: targetId}, href: "/dettagli-annuncio", presentation: "announcement", shareOnly: true});
 	const html = renderToStaticMarkup(element);
 	assert.match(html, /Condividi/);
@@ -370,7 +414,7 @@ test("unlisted preview actions only share and never load session interaction sta
 });
 
 test("saved-list components distinguish errors from empty results and display saved timestamps", () => {
-	const {SavedAnnouncementsSection} = uiLoad("src/features/interazioni/DashboardSections.tsx");
+	const {SavedAnnouncementsSection} = uiLoad("apps/web/src/features/interazioni/DashboardSections.tsx");
 	const render = (list) => renderToStaticMarkup(React.createElement(SavedAnnouncementsSection, {list}));
 	assert.match(render({status: "error"}), /Elenco momentaneamente non disponibile/);
 	assert.doesNotMatch(render({status: "error"}), /Nessun annuncio salvato disponibile/);
@@ -389,7 +433,7 @@ test("saved-list components distinguish errors from empty results and display sa
 });
 
 test("followers show the exact identity and owned target and a working public-profile link", () => {
-	const {RelationshipsSection} = uiLoad("src/features/interazioni/DashboardSections.tsx");
+	const {RelationshipsSection} = uiLoad("apps/web/src/features/interazioni/DashboardSections.tsx");
 	const html = renderToStaticMarkup(React.createElement(RelationshipsSection, {
 		followers: {status: "success", items: [{id: targetId, type: "squadra", title: "Squadra principale", imageUrl: null, followedAt: "2026-09-19T10:15:00Z", ownedProfile: {id: ownProfile, type: "giocatore", title: "Own Player"}}]},
 		following: {status: "success", items: []},
@@ -410,7 +454,7 @@ test("follow lists resolve one current primary profile, fall back to visible sub
 	const client = {from(table) {
 		assert.equal(table, "profilo");
 		return {select() {return this;}, order() {return this;}, range() {return this;},
-			eq(...args) {filters.push(args); return this;}, not(...args) {filters.push(args); return this;},
+			is(...args) {filters.push(args); return this;}, eq(...args) {filters.push(args); return this;}, not(...args) {filters.push(args); return this;},
 			in(column, ids) {assert.equal(column, "uuid"); assert.deepEqual(ids, [targetId]); return this;},
 			then(resolve) {return Promise.resolve({data: [row], error: null}).then(resolve);},
 		};
@@ -419,7 +463,7 @@ test("follow lists resolve one current primary profile, fall back to visible sub
 		"@/lib/supabase/admin": {createAdminClient: () => client},
 		"@/features/profilo/server/profile-images": {loadProfileImageUrlMap: async () => new Map()},
 	});
-	const {loadPublicPrimaryProfiles} = load("src/features/profili/server/queries.ts");
+	const {loadPublicPrimaryProfiles} = load("apps/web/src/features/profili/server/queries.ts");
 	const initial = await loadPublicPrimaryProfiles([targetId, targetId]);
 	assert.equal(initial.length, 1);
 	assert.equal(initial[0].title, "Squadra principale");

@@ -1,8 +1,8 @@
+import { PGlite } from "./helpers/pglite.mjs";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 import {test} from "node:test";
 
-const engineUrl = new URL("../node_modules/.cache/interaction-tests/node_modules/@electric-sql/pglite/dist/index.js", import.meta.url);
 const profileMigrationUrl = new URL("../supabase/migrations/20260926220000_staff_profile_experiences.sql", import.meta.url);
 const announcementMigrationUrl = new URL("../supabase/migrations/20260927002300_staff_announcement_catalog.sql", import.meta.url);
 
@@ -13,8 +13,7 @@ function staffCategoryKeys() {
 	);
 }
 
-test("Staff publication RPC accepts Catalog C and Da valutare but rejects other categories", {skip: !existsSync(engineUrl) && "PGlite runner unavailable"}, async () => {
-	const {PGlite} = await import(engineUrl.href);
+test("Staff publication RPC accepts Catalog C and Da valutare but rejects other categories", async () => {
 	const db = await PGlite.create();
 	try {
 		await db.exec(`
