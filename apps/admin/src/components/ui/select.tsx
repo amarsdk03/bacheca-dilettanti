@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
+import { useAdminAppearance } from "@/components/ui/admin-appearance"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
 const Select = SelectPrimitive.Root
@@ -69,9 +70,12 @@ function SelectContent({
     SelectPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
   >) {
+  const appearance = useAdminAppearance()
+  if (appearance && !appearance.portalContainer) return null
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={appearance?.portalContainer}>
       <SelectPrimitive.Positioner
+        data-slot="select-positioner"
         side={side}
         sideOffset={sideOffset}
         align={align}

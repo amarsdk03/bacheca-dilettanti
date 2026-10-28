@@ -18,10 +18,10 @@ export function DashboardSidebar() {
   const compact = state === "collapsed" && !isMobile;
   return <Sidebar collapsible="icon">
     <SidebarHeader>
-      <div className="flex items-center justify-between gap-2">
-        <Link href="/" aria-label="Bacheca Dilettanti — Home" prefetch={false} onClick={() => setOpenMobile(false)}>
-          {compact ? <Image src="/logo.png" alt="Bacheca Dilettanti" width={32} height={32} /> :
-            <Image src="/banner.png" alt="Bacheca Dilettanti" width={216} height={108} className="h-auto max-w-full" priority />}
+      <div className="admin-brand-row">
+        <Link href="/" className="admin-brand" aria-label="Bacheca Dilettanti — Home" prefetch={false} onClick={() => setOpenMobile(false)}>
+          {compact ? <Image src="/logo.png" alt="Bacheca Dilettanti" width={32} height={32} className="admin-brand-logo" /> :
+            <Image src="/banner.png" alt="Bacheca Dilettanti" width={216} height={108} className="admin-brand-banner" priority />}
         </Link>
         {isMobile && <Button variant="ghost" size="icon" aria-label="Chiudi menu" onClick={() => setOpenMobile(false)}><X aria-hidden="true" /></Button>}
       </div>

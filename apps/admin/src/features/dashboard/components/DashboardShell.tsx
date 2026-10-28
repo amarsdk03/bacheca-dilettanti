@@ -1,20 +1,29 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { MotionConfig } from "motion/react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ExternalNavigationProvider } from "@/features/navigation/ExternalNavigation";
 import { DashboardSidebar } from "./DashboardSidebar";
+import { DashboardThemeProvider } from "./DashboardThemeProvider";
+import { DashboardThemeToggle } from "./DashboardThemeToggle";
+import { DashboardPageTransition } from "./DashboardPageTransition";
+import { DASHBOARD_SECTIONS, isSectionActive } from "../sections";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
-  return <TooltipProvider><ExternalNavigationProvider><SidebarProvider>
-    <a href="#dashboard-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-background focus:p-3 focus:ring-2 focus:ring-ring">Salta al contenuto</a>
+  const pathname = usePathname();
+  const currentSection = DASHBOARD_SECTIONS.find((section) => isSectionActive(pathname, section.href));
+  return <DashboardThemeProvider><MotionConfig reducedMotion="user"><TooltipProvider><ExternalNavigationProvider><SidebarProvider mobileBreakpoint={1024}>
+    <a href="#dashboard-content" className="admin-skip-link sr-only focus:not-sr-only">Salta al contenuto</a>
     <DashboardSidebar />
     <SidebarInset className="min-w-0">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4 sm:px-6">
-        <SidebarTrigger /><span className="text-sm text-muted-foreground">Dashboard amministrativa</span>
+      <header className="admin-header">
+        <div className="flex min-w-0 items-center gap-3"><SidebarTrigger /><span className="min-w-0 text-sm font-medium">{currentSection?.title ?? "Dashboard amministrativa"}</span></div>
+        <DashboardThemeToggle />
       </header>
-      <div id="dashboard-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col gap-8 p-4 outline-none sm:p-6 lg:p-8">{children}</div>
+      <DashboardPageTransition>{children}</DashboardPageTransition>
     </SidebarInset>
-  </SidebarProvider></ExternalNavigationProvider></TooltipProvider>;
+  </SidebarProvider></ExternalNavigationProvider></TooltipProvider></MotionConfig></DashboardThemeProvider>;
 }

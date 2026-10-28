@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { ArrowLeft, ArrowRight, RefreshCw, Filter } from "lucide-react";
+import { ArrowLeft, ArrowRight, CircleAlert, RefreshCw, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -23,7 +23,7 @@ function Selector({ id, label, value, items, onChange }: { id: string; label: st
   </Select></Field>;
 }
 function Failure({ title, retry, correlationId }: { title: string; retry(): void; correlationId?: string }) {
-  return <Alert variant="destructive"><AlertTitle>{title}</AlertTitle><AlertDescription>
+  return <Alert variant="destructive" className="admin-feedback"><CircleAlert aria-hidden="true" /><AlertTitle>{title}</AlertTitle><AlertDescription>
     <p>Riprova oppure aggiorna l’elenco.</p>{correlationId && correlationId !== "client" && <p>Riferimento: {correlationId}</p>}
     <Button variant="outline" onClick={retry}><RefreshCw data-icon="inline-start" aria-hidden="true" />Riprova</Button>
   </AlertDescription></Alert>;
@@ -42,28 +42,29 @@ export function AuditWorkspace({ initialQuery, initialResult }: { initialQuery: 
   }, [controller]);
   const result = state.list.result, detail = state.detail.result;
   const set = (patch: Partial<AuditFilters>) => controller.draft(patch);
-  return <div className="flex min-w-0 flex-col gap-6">
-    <Card><CardHeader><CardTitle>Filtri del registro</CardTitle><CardDescription>Le date comprendono l’intera giornata in Europe/Rome. L’operatore corrisponde all’email attuale o a un UUID esatto.</CardDescription></CardHeader>
-      <CardContent><form onSubmit={event => { event.preventDefault(); controller.apply(); }} className="flex flex-col gap-4">
-        <FieldGroup className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-5">
+  return <div className="admin-workspace">
+    <Card className="admin-filters-card"><CardHeader><CardTitle><h2>Filtri del registro</h2></CardTitle><CardDescription>Le date comprendono l’intera giornata in Europe/Rome. L’operatore corrisponde all’email attuale o a un UUID esatto.</CardDescription></CardHeader>
+      <CardContent><form onSubmit={event => { event.preventDefault(); controller.apply(); }} className="admin-filter-form">
+        <FieldGroup className="admin-audit-filters">
           <Field><FieldLabel htmlFor="audit-from">Dal</FieldLabel><Input id="audit-from" type="date" value={state.draft.from} onChange={e => set({ from: e.target.value })} /></Field>
           <Field><FieldLabel htmlFor="audit-to">Al</FieldLabel><Input id="audit-to" type="date" value={state.draft.to} onChange={e => set({ to: e.target.value })} /></Field>
-          <Field><FieldLabel htmlFor="audit-operator">Operatore</FieldLabel><Input id="audit-operator" value={state.draft.operator} onChange={e => set({ operator: e.target.value })} placeholder="Email o UUID" aria-describedby="audit-operator-help" />
+          <Field className="admin-audit-operator"><FieldLabel htmlFor="audit-operator">Operatore</FieldLabel><Input id="audit-operator" value={state.draft.operator} onChange={e => set({ operator: e.target.value })} placeholder="Email o UUID" aria-describedby="audit-operator-help" />
             <FieldDescription id="audit-operator-help">Vuoto: tutti. Usa “Non identificato” per gli eventi senza identità.</FieldDescription>
             <Button type="button" variant="outline" size="sm" onClick={() => set({ operator: "unknown" })}>Non identificato</Button></Field>
           <Selector id="audit-action" label="Operazione" value={state.draft.action} items={[{ value: "", label: "Tutte" }, ...AUDIT_ACTIONS.map(value => ({ value, label: AUDIT_LABELS[value] }))]} onChange={action => set({ action: action as AuditFilters["action"] })} />
           <Selector id="audit-outcome" label="Esito" value={state.draft.outcome} items={[{ value: "", label: "Tutti" }, { value: "success", label: "Riuscita" }, { value: "failure", label: "Fallita" }]} onChange={outcome => set({ outcome: outcome as AuditFilters["outcome"] })} />
         </FieldGroup>{state.error && <FieldError role="alert">{state.error}</FieldError>}
-        <div className="flex flex-wrap gap-2"><Button type="submit"><Filter data-icon="inline-start" aria-hidden="true" />Applica filtri</Button><Button type="button" variant="outline" onClick={controller.reset}>Ripristina filtri</Button></div>
+        <div className="admin-action-list"><Button type="submit"><Filter data-icon="inline-start" aria-hidden="true" />Applica filtri</Button><Button type="button" variant="outline" onClick={controller.reset}>Ripristina filtri</Button></div>
       </form></CardContent>
     </Card>
-    <Card><CardHeader><CardTitle><h2 ref={resultsTitle} tabIndex={-1}>Operazioni registrate</h2></CardTitle><CardDescription>Fino a 30 eventi per pagina. Email attuali; gli operatori possono avere un ruolo diverso da quello al momento dell’evento.</CardDescription>
-      <Button variant="outline" size="sm" onClick={controller.refresh} disabled={state.list.pending}><RefreshCw data-icon="inline-start" aria-hidden="true" />Aggiorna</Button></CardHeader>
-      <CardContent className="flex min-w-0 flex-col gap-4" aria-live="polite">
+    <Card className="admin-results-card"><CardHeader><div className="admin-workspace-toolbar"><CardTitle><h2 ref={resultsTitle} tabIndex={-1}>Operazioni registrate</h2></CardTitle>
+      <Button variant="outline" size="sm" onClick={controller.refresh} disabled={state.list.pending}><RefreshCw data-icon="inline-start" aria-hidden="true" />Aggiorna</Button></div>
+      <CardDescription>Fino a 30 eventi per pagina. Email attuali; gli operatori possono avere un ruolo diverso da quello al momento dell’evento.</CardDescription></CardHeader>
+      <CardContent className="admin-results-body" aria-live="polite">
         {state.list.pending ? <TableSkeleton columns={4} /> : result?.status === "ok" ? <>
           {result.page.items.length ? <AuditSummaryTable items={result.page.items} caption={`${result.page.items.length} eventi in questa pagina, dal più recente. Date in Europe/Rome.`}
             onShowDetails={(id, element) => { trigger.current = element; controller.open(id); }} /> : <EmptyState title="Nessun evento disponibile" description="Il registro mostra soltanto gli eventi conservati e corrispondenti ai filtri. Lo storico precedente all’attivazione dell’audit non è disponibile." />}
-          <nav aria-label="Paginazione registro attività" className="flex flex-wrap justify-between gap-3"><Button variant="ghost" disabled={!state.query.cursor} onClick={controller.first}>Prima pagina</Button><div className="flex gap-2">
+          <nav aria-label="Paginazione registro attività" className="admin-pagination"><Button variant="outline" disabled={!state.query.cursor} onClick={controller.first}>Prima pagina</Button><div className="admin-action-list">
             <Button variant="outline" disabled={!state.canPrevious} onClick={controller.previous}><ArrowLeft data-icon="inline-start" aria-hidden="true" />Precedente</Button>
             <Button variant="outline" disabled={!result.page.hasMore} onClick={controller.next}>Successiva<ArrowRight data-icon="inline-end" aria-hidden="true" /></Button>
           </div></nav>
@@ -71,9 +72,9 @@ export function AuditWorkspace({ initialQuery, initialResult }: { initialQuery: 
       </CardContent>
     </Card>
     <Sheet open={!!state.detail.id} onOpenChange={open => { if (!open) controller.close(); }}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl" initialFocus={panelTitle} finalFocus={() => trigger.current?.isConnected ? trigger.current : resultsTitle.current}>
+      <SheetContent side="right" className="admin-detail-sheet" initialFocus={panelTitle} finalFocus={() => trigger.current?.isConnected ? trigger.current : resultsTitle.current}>
         <SheetHeader><SheetTitle ref={panelTitle} tabIndex={-1}>Dettagli dell’operazione</SheetTitle><SheetDescription>Consultazione in sola lettura dell’evento registrato.</SheetDescription></SheetHeader>
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pb-6" aria-live="polite">
+        <div className="admin-detail-body" aria-live="polite">
           {state.detail.pending ? <PanelSkeleton /> : detail?.status === "ok" ? <AuditDetailContent detail={detail.detail} /> : detail?.status === "not_found" ? <EmptyState title="Evento non più disponibile" description="L’evento potrebbe essere stato rimosso dalla conservazione del registro."><Button variant="outline" onClick={controller.refresh}>Aggiorna elenco</Button></EmptyState> : detail && <Failure title="Impossibile caricare il dettaglio" retry={() => { if (state.detail.id) controller.open(state.detail.id); }} correlationId={detail.status === "unavailable" ? detail.correlationId : undefined} />}
         </div>
       </SheetContent>

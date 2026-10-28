@@ -14,12 +14,12 @@ export default async function AdminPage() {
   // Start both reads after the guard, then stream each result independently.
   const summary = getAdminHomeSummary(), activity = getAdminHomeActivity();
   return (
-    <HomeSessionProvider><section className="flex min-w-0 flex-col gap-6">
+    <HomeSessionProvider><section className="admin-home">
       <SectionHeading section={DASHBOARD_SECTIONS[0]} />
       <Suspense fallback={<HomeKpiSkeleton />}><HomeKpiSection result={summary} /></Suspense>
       <HomeQuickActions />
+      <HomeChartPanel />
       <Suspense fallback={<HomeActivitySkeleton />}><HomeActivitySection result={activity} /></Suspense>
-    <HomeChartPanel />
     </section></HomeSessionProvider>
   );
 }

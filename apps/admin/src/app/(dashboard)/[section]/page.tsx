@@ -8,5 +8,5 @@ export default async function SectionPage({ params }: { params: Promise<{ sectio
   await requireAdminPageContext();
   const section = findDashboardSection((await params).section);
   if (!section || !section.slug) notFound();
-  return <section className="flex min-w-0 flex-col gap-8"><SectionHeading section={section} /><ComingSoon /></section>;
+  return <section className="admin-page"><SectionHeading section={section} /><ComingSoon /></section>;
 }

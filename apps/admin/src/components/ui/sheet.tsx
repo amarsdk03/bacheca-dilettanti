@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
 import { cn } from "@/lib/utils"
+import { useAdminAppearance } from "@/components/ui/admin-appearance"
 
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
@@ -19,8 +20,10 @@ function SheetClose({ ...props }: SheetPrimitive.Close.Props) {
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
 }
 
-function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {
-  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
+function SheetPortal({ container, ...props }: SheetPrimitive.Portal.Props) {
+  const appearance = useAdminAppearance()
+  if (appearance && !appearance.portalContainer) return null
+  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} container={appearance ? appearance.portalContainer : container} />
 }
 
 function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {

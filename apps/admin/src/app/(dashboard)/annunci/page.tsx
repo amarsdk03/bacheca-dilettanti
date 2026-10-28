@@ -12,5 +12,5 @@ export default async function AnnunciPage({ searchParams }: { searchParams: Prom
   const query = parseAnnunciUrl(annunciSearchParams(await searchParams));
   const result: AnnouncementListResult = query.valid ? await listAdminAnnouncements({ ...query.filters, cursor: query.cursor, limit: 30 }) : { status: "invalid", code: "INVALID_QUERY" };
   if (result.status === "denied") redirect("/accesso");
-  return <section className="flex min-w-0 flex-col gap-8"><SectionHeading section={findDashboardSection("annunci")!} /><AnnunciWorkspace key={query.key} initialQuery={query} initialResult={result} /></section>;
+  return <section className="admin-page"><SectionHeading section={findDashboardSection("annunci")!} /><AnnunciWorkspace key={query.key} initialQuery={query} initialResult={result} /></section>;
 }

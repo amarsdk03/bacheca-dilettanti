@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useRef } from "react";
+import { Check, CircleAlert, Info } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -30,23 +31,23 @@ export function ModerationDialog({ state, controller, finalFocus }: { state: Ann
     result?.status === "invalid" ? "La richiesta non è valida. Ricarica il dettaglio prima di riprovare." :
     result?.status === "unavailable" ? "Esito non verificabile. La modifica potrebbe essere stata salvata: ricarica il dettaglio prima di effettuare un’altra operazione." : state?.error;
   return <AlertDialog open={state !== null} onOpenChange={(open) => { if (!open && !pending) controller.closeModeration(); }}>
-    <AlertDialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto" initialFocus={cancel} finalFocus={finalFocus}>
+    <AlertDialogContent className="admin-moderation-dialog" initialFocus={cancel} finalFocus={finalFocus}>
       <AlertDialogHeader><AlertDialogTitle>{state ? MODERATION_LABELS[state.operation] : "Moderazione annuncio"}</AlertDialogTitle>
         <AlertDialogDescription>{state && EFFECTS[state.operation]}</AlertDialogDescription>
       </AlertDialogHeader>
-      {state?.phase === "loading" ? <PanelSkeleton /> : state && <div className="flex min-w-0 flex-col gap-4">
-        <p className="break-words font-medium">{state.detail?.summary.title || state.id}</p>
-        {state.detail && state.phase === "ready" && !cap?.allowed && <Alert><AlertDescription>{moderationReason(cap?.reason ?? "UNAVAILABLE")}</AlertDescription></Alert>}
+      {state?.phase === "loading" ? <PanelSkeleton /> : state && <div className="admin-detail-stack">
+        <p className="admin-dialog-subject">{state.detail?.summary.title || state.id}</p>
+        {state.detail && state.phase === "ready" && !cap?.allowed && <Alert variant="warning"><Info aria-hidden="true" /><AlertDescription>{moderationReason(cap?.reason ?? "UNAVAILABLE")}</AlertDescription></Alert>}
         {state.detail && (state.phase === "ready" || pending) && needsReason(state.operation) && <FieldGroup><Field data-invalid={Boolean(state.error)}>
           <FieldLabel htmlFor="moderation-reason">{state.operation === "trash" ? "Motivazione interna" : "Motivazione visibile all’autore"}</FieldLabel>
           <Textarea id="moderation-reason" rows={4} required value={state.reason} disabled={pending} onChange={(event) => controller.setReason(event.target.value)} aria-invalid={Boolean(state.error)} aria-describedby={state.error ? "moderation-reason-description moderation-reason-error" : "moderation-reason-description"} />
           <FieldDescription id="moderation-reason-description">{state.operation === "trash" ? "Da 1 a 1.000 caratteri. Il testo viene conservato esclusivamente nel registro amministrativo." : "Da 1 a 1.000 caratteri. Non inserire informazioni riservate: il testo sarà presente nei dati consultabili dell’annuncio."}</FieldDescription>
           {state.error && <FieldError id="moderation-reason-error">{state.error}</FieldError>}
         </Field></FieldGroup>}
-        {message && <Alert variant={result?.status === "ok" ? "default" : "destructive"}><AlertDescription><p>{message}</p>{result && result.correlationId !== "client" && <p>Riferimento: {result.correlationId}</p>}</AlertDescription></Alert>}
+        {message && <Alert variant={result?.status === "ok" ? "success" : "destructive"} className="admin-feedback">{result?.status === "ok" ? <Check aria-hidden="true" /> : <CircleAlert aria-hidden="true" />}<AlertDescription><p>{message}</p>{result && result.correlationId !== "client" && <p>Riferimento: {result.correlationId}</p>}</AlertDescription></Alert>}
       </div>}
       <AlertDialogFooter><AlertDialogCancel ref={cancel} disabled={pending}>{result?.status === "ok" ? "Chiudi" : "Annulla"}</AlertDialogCancel>
-        {state?.phase === "ready" && <AlertDialogAction disabled={!cap?.allowed} onClick={() => startTransition(() => { void controller.confirmModeration(); })}>{MODERATION_LABELS[state.operation]}</AlertDialogAction>}
+        {state?.phase === "ready" && <AlertDialogAction variant={state.operation === "reject" || state.operation === "trash" ? "destructive" : "default"} disabled={!cap?.allowed} onClick={() => startTransition(() => { void controller.confirmModeration(); })}>{MODERATION_LABELS[state.operation]}</AlertDialogAction>}
         {pending && <Button disabled><Spinner data-icon="inline-start" />Salvataggio…</Button>}
         {state?.phase === "result" && result?.status !== "ok" && <Button variant="outline" onClick={controller.reloadModeration}>Ricarica dettaglio</Button>}
       </AlertDialogFooter>

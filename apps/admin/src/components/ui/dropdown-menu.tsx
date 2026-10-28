@@ -3,14 +3,17 @@
 import * as React from "react"
 import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import { cn } from "@/lib/utils"
+import { useAdminAppearance } from "@/components/ui/admin-appearance"
 import { ChevronRightIcon, CheckIcon } from "lucide-react"
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
 }
 
-function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
-  return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
+function DropdownMenuPortal({ container, ...props }: MenuPrimitive.Portal.Props) {
+  const appearance = useAdminAppearance()
+  if (appearance && !appearance.portalContainer) return null
+  return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} container={appearance ? appearance.portalContainer : container} />
 }
 
 function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
@@ -30,8 +33,9 @@ function DropdownMenuContent({
     "align" | "alignOffset" | "side" | "sideOffset"
   >) {
   return (
-    <MenuPrimitive.Portal>
+    <DropdownMenuPortal>
       <MenuPrimitive.Positioner
+        data-slot="dropdown-menu-positioner"
         className="isolate z-50 outline-none"
         align={align}
         alignOffset={alignOffset}
@@ -44,7 +48,7 @@ function DropdownMenuContent({
           {...props}
         />
       </MenuPrimitive.Positioner>
-    </MenuPrimitive.Portal>
+    </DropdownMenuPortal>
   )
 }
 

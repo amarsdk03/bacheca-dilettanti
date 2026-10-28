@@ -2,11 +2,17 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useAdminAppearance } from "@/components/ui/admin-appearance"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
+  const appearance = useAdminAppearance()
   return (
     <div
       data-slot="table-container"
+      tabIndex={appearance ? 0 : undefined}
+      role={appearance ? "region" : undefined}
+      aria-label={appearance ? props["aria-label"] ?? "Tabella con scorrimento orizzontale" : undefined}
+      aria-labelledby={appearance ? props["aria-labelledby"] : undefined}
       className="relative w-full overflow-x-auto"
     >
       <table

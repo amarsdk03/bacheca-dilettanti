@@ -9,14 +9,14 @@ export function CardSkeleton() {
   </Card>;
 }
 export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
-  return <div className="min-w-0 max-w-full" aria-busy="true" aria-label="Caricamento tabella">
+  return <div className="admin-table-skeleton" data-columns={columns} aria-busy="true" aria-label="Caricamento tabella">
     <Table><TableBody>{Array.from({ length: Math.min(30, Math.max(1, rows)) }, (_, row) => <TableRow key={row}>
       {Array.from({ length: Math.min(10, Math.max(1, columns)) }, (_, column) => <TableCell key={column}><Skeleton className="h-5 w-28" /></TableCell>)}
     </TableRow>)}</TableBody></Table>
   </div>;
 }
 export function PanelSkeleton() {
-  return <div className="flex flex-col gap-5" aria-busy="true" aria-label="Caricamento dettagli">
+  return <div className="admin-panel-skeleton" aria-busy="true" aria-label="Caricamento dettagli">
     <Skeleton className="h-7 w-48" /><Skeleton className="h-40 w-full" /><Skeleton className="h-5 w-3/4" /><Skeleton className="h-5 w-1/2" />
   </div>;
 }
@@ -26,7 +26,7 @@ export function ChartSkeleton() {
   </div>;
 }
 export function SectionSkeleton() {
-  return <div className="flex min-w-0 flex-col gap-8" aria-busy="true" aria-label="Caricamento sezione">
+  return <div className="admin-section-skeleton" aria-busy="true" aria-label="Caricamento sezione">
     <Skeleton className="h-9 w-56" /><Skeleton className="h-64 w-full" />
   </div>;
 }

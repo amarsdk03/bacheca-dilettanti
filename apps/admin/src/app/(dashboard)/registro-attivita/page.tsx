@@ -11,5 +11,5 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const query = parseAuditUrl(auditSearchParams(await searchParams));
   const result: AuditListResult = query.valid ? await listAdminAuditEvents({ ...query.filters, cursor: query.cursor, limit: 30 }) : { status: "invalid", code: "INVALID_QUERY" };
   if (result.status === "denied") redirect("/accesso");
-  return <section className="flex min-w-0 flex-col gap-8"><SectionHeading section={findDashboardSection("registro-attivita")!} /><AuditWorkspace key={query.key} initialQuery={query} initialResult={result} /></section>;
+  return <section className="admin-page"><SectionHeading section={findDashboardSection("registro-attivita")!} /><AuditWorkspace key={query.key} initialQuery={query} initialResult={result} /></section>;
 }

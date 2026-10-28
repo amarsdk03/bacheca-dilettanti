@@ -29,12 +29,12 @@ export function ExternalNavigationProvider({ children }: { children: ReactNode }
   return <NavigationContext.Provider value={request}>
     {children}
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogContent initialFocus={cancelRef} finalFocus={() => pending?.source?.isConnected ? pending.source : null}>
+      <AlertDialogContent className="admin-external-confirmation" initialFocus={cancelRef} finalFocus={() => pending?.source?.isConnected ? pending.source : null}>
         <AlertDialogHeader>
           <AlertDialogTitle>Stai aprendo un sito esterno</AlertDialogTitle>
           <AlertDialogDescription>
             Stai per aprire questo indirizzo fuori dalla dashboard, in una nuova scheda:
-            <span className="mt-2 block break-all">{pending?.href}</span>
+            <span className="admin-confirm-url">{pending?.href}</span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -3,6 +3,7 @@
 import * as React from "react"
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog"
 import { cn } from "@/lib/utils"
+import { useAdminAppearance } from "@/components/ui/admin-appearance"
 
 import { Button } from "@/components/ui/button"
 
@@ -16,9 +17,11 @@ function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {
   )
 }
 
-function AlertDialogPortal({ ...props }: AlertDialogPrimitive.Portal.Props) {
+function AlertDialogPortal({ container, ...props }: AlertDialogPrimitive.Portal.Props) {
+  const appearance = useAdminAppearance()
+  if (appearance && !appearance.portalContainer) return null
   return (
-    <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />
+    <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} container={appearance ? appearance.portalContainer : container} />
   )
 }
 
