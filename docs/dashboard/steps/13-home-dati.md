@@ -1,10 +1,24 @@
 # 13 — KPI e aggregazioni Home
 
-**Stato:** Da terminare (sole verifiche integrate; implementazione verificata)  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, high  
 **Dipendenze:** Implementazione dello step 12 verificata; prove integrate rinviate al gate 16. Stati Annunci e audit stabilizzati.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -36,7 +50,7 @@ generata con Supabase CLI, applicata e verificata in M10 sul progetto
 `nsytraextbndfyprwzts`, versione remota `20261026222201`. Nessun indice aggiuntivo,
 tabella, job, variabile env o script di attivazione. Nessuna integrazione pagamenti.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 ### Integrazione esterna M10 — Concluso
 
@@ -220,6 +234,6 @@ eventuali indici solo con nuove evidenze. Verificare header/cache del deployment
 e nessun dato dopo diniego. Collegamento UI, skeleton, errori indipendenti e
 caricamento della sola metrica selezionata restano negli step 14–15.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 [14 — Interfaccia Home](14-home-interfaccia.md), **6.1 Sol, medium**.

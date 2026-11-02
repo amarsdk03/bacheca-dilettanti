@@ -22,6 +22,7 @@ import {
 import type {ProfileType} from "@/features/profilo/profile-model";
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 import type {TeamProfileReference} from "@/features/profilo/team-profile";
+import type {AnnouncementSummarySection} from "./announcement-summary";
 import {normalizeTipologiaCalcio} from "@/features/pubblica-annuncio/types/tipologie-calcio";
 import {
 	CATEGORY_FILTER_OPTIONS,
@@ -363,6 +364,8 @@ export type AnnouncementAuthor =
 	};
 
 export interface AnnouncementDirectoryItem {
+	publicationId?: string | null;
+	region?: string | null;
 	id: string;
 	type: AnnouncementType;
 	typeLabel: string;
@@ -483,6 +486,7 @@ export interface AnnouncementDetailSection {
 }
 
 export interface AnnouncementDetail extends AnnouncementDirectoryItem {
+	summarySections?: AnnouncementSummarySection[];
 	authorProfile: AnnouncementAuthorProfileData | null;
 	sections: AnnouncementDetailSection[];
 	anonymousAuthorInfo: AnonymousAnnouncementAuthorInfo | null;
@@ -604,6 +608,8 @@ export function parseAnnouncementDirectoryQuery(
 	const selectedType = types.length === 1 ? types[0] : null;
 	const filters = createEmptyAnnouncementFilters();
 
+	filters.regione = allowedValue(firstValue(params.regione), REGION_SET);
+
 	if (selectedType) {
 		if (selectedType === "annuncio_squadra") {
 			const requestedTeamSearch = firstValue(params.ricercaSquadra);
@@ -612,10 +618,6 @@ export function parseAnnouncementDirectoryQuery(
 			} else if (legacyTeamTypes.size === 1) {
 				filters.ricercaSquadra = TEAM_SEARCH_BY_ANNOUNCEMENT_TYPE[[...legacyTeamTypes][0]] ?? "";
 			}
-		}
-
-		if (supportsFilter(selectedType, "regione")) {
-			filters.regione = allowedValue(firstValue(params.regione), REGION_SET);
 		}
 		if (supportsFilter(selectedType, "tipologia")) {
 			filters.tipologia = allowedValue(normalizeTipologiaCalcio(firstValue(params.tipologia)), TYPE_SET);

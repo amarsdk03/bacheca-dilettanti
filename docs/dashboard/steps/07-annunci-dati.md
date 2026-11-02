@@ -1,10 +1,24 @@
 # 07 — Contratti e query Annunci
 
-**Stato:** Da terminare — 07A e 07B conclusi come milestone; verifiche integrate pendenti  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, high  
 **Dipendenze di sviluppo:** Step 06 implementato e verificato con test mirati; guardie e audit disponibili. Prove browser/integrate 03–06 rinviate secondo il master e obbligatorie prima del rilascio.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -30,7 +44,7 @@ Limite massimo anche con input alterato, cursori non validi, filtri combinati, r
 
 Possibili procedure di lettura e indici mirati; documentare piani query e permessi. Applicare e verificare su ambiente sintetico prima dell'interfaccia. Aggiornare tipi condivisi secondo il workflow del repository.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 Suddivisione approvata per svolgere un solo sottopasso per prompt:
 
@@ -54,6 +68,6 @@ interni/filtri/cursori profondi. I risultati PGlite non sostituiscono questi
 controlli. Runbook, contratti e migrazioni nelle schede 07A/07B. La parte
 implementativa dello step 07 è disponibile per lo sviluppo 08.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 [08 — Tabella e anteprima Annunci](08-annunci-interfaccia.md), **6.1 Sol, medium**.

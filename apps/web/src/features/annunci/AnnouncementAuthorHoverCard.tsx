@@ -5,14 +5,10 @@ import {HoverCard, HoverCardContent, HoverCardTrigger,} from "@/components/ui/ho
 import type {AnnouncementAuthor} from "@/features/annunci/announcement-model";
 import {OfficialVerificationIcon} from "@/features/profilo/ProfileVerificationStatus";
 import AnnouncementAuthorSummary from "./AnnouncementAuthorSummary";
+import {profileInitials} from "@/features/profilo/public-profile-display";
 
 function initials(value: string) {
-	return value
-		.split(/\s+/)
-		.filter(Boolean)
-		.slice(0, 2)
-		.map((part) => part[0]?.toLocaleUpperCase("it-IT"))
-		.join("") || "PR";
+	return profileInitials(value);
 }
 
 export default function AnnouncementAuthorHoverCard({

@@ -1,42 +1,35 @@
 # Master plan — Dashboard Admin
 
 **Ultimo aggiornamento:** 2026-10-28  
-**Fase attuale:** IN03 **Concluso**, trenta controlli riusciti e fixture rimossa. Su richiesta dell'utente del 28 ottobre, resta **un'unica task preparatoria: [step 16 — chiusura finale e decisione di rilascio](steps/16-verifica-rilascio/chiusura-finale.md)**, Da iniziare. Il prossimo «procedi» ne avvia l'intero perimetro, comprese correzioni e verifica finale, senza richiedere un prompt per ciascun controllo. Esito previsto: «Pronto per il rilascio» oppure elenco preciso di blocchi riscontrati. Nessun requisito obbligatorio viene eliminato; gate cestino disabilitato e nessun rilascio eseguito.  
-**Stato della dashboard:** accesso, shell protetta, Annunci, moderazione, cestino recuperabile, export CSV e Registro attività disponibili nel codice. Home con quattro KPI, azioni rapide, ultime cinque operazioni e grafici della sola metrica selezionata. Auth e isolamento delle sessioni integrati verificati nel perimetro IN03; compatibilità completa Web, cache/Storage, recupero e job Cron ancora da completare. Cestino disabilitato nel DB fino al rilascio compatibile e alla revisione delle cache.
+**Fase attuale:** sviluppo e collaudo locale **Conclusi**. L'utente conferma
+la ridistribuzione di Web e Admin e accetta le ultime verifiche live. La
+[chiusura finale dello step 16](steps/16-verifica-rilascio/chiusura-finale.md)
+consegna favicon e manifest Admin: typecheck, lint e controllo HTTP locale
+riusciti, processi di test fermati. Nessun nuovo step preparatorio.
 
-**Vincolo operativo attuale:** Supabase **Free**, confermato dall'utente.
-Database Backups automatici, PITR e altre funzionalità Pro non sono disponibili
-per questo percorso. [Copia manuale](integrazione/backup-free.md)
-**Conclusa per il checkpoint M02**: report utente positivo delle 18:20 UTC,
-`archive_verified_restore_untested`, sei controlli veri, dimensioni e SHA-256
-registrati, senza Docker. Ripristino non provato, file Storage e configurazioni
-esterne esclusi; V20 resta aperto. Non attestare retroattivamente un backup precedente a M02.
+**Destinazioni confermate:** Admin `https://dashboard-bacheca.vercel.app/`;
+Web ridistribuita dall'utente, host di riferimento `https://www.bachecadilettanti.it`.
+La conferma dell'utente non è presentata come un nuovo test live dell'agente.
 
-**Prossimo e ultimo step preparatorio: [16 — chiusura finale e decisione di rilascio](steps/16-verifica-rilascio/chiusura-finale.md).**
-IN02 è Concluso, senza operazioni manuali residue. Non serve un nuovo UUID:
-la deroga esplicita per l'identità esistente è applicata e documentata nella
-[scheda IN02](integrazione/auth-accesso-admin.md).
-IN03 è Concluso con trenta controlli riusciti. L'identità Auth temporanea
-autorizzata è stata cancellata dopo revoca; nessun altro accesso manuale richiesto.
-Le prove Web usano un'identità senza mapping applicativo, non un profilo
-ordinario completo; i limiti residui restano nella matrice dello step 16.
-Un nuovo «procedi» avvia l'intera chiusura finale: residui integrati,
-compatibilità Web/cache/Storage, recuperabilità, candidato e consegna di
-rilascio. Nessun nuovo IN04/IN05 o sequenza di sottopassi da autorizzare
-singolarmente. Non ripetere IN02, IN03 o le migrazioni già applicate.
-I prerequisiti esterni oggi mancanti o da confermare sono dichiarati nella
-scheda finale: connessione SQL operativa e destinazioni/accesso Vercel.
-La destinazione isolata per il restore deve essere predisposta prima della
-prova, senza sovrascrivere il progetto condiviso. Le attivazioni dipendenti
-dal deploy e la prima esecuzione Cron sono operazioni del rilascio, non
-ulteriori task preparatorie; non sono dichiarate già riuscite.
-Un allegato di uno step già concluso resta contesto, salvo richiesta esplicita
-di riesecuzione. M07C non richiede ulteriori ripetizioni; il vecchio verificatore
-M07 non accetta l'hash audit modificato intenzionalmente da M08. Usare il
-verificatore M10 per la baseline cumulativa corrente, solo per verifiche
-motivate; nessun replay delle installazioni. Il gate del cestino resta
-disabilitato durante le verifiche residue. La sola attività preparatoria
-restante è la chiusura finale dello step 16, seguita dalla procedura di rilascio.
+**Politica di verifica:** tutti i test futuri dell'agente si eseguono solo in
+locale, con fixture e servizi sintetici. Non usare deployment o Supabase remoto
+per test; non caricare credenziali remote nei processi di verifica locale.
+Riutilizzare le evidenze valide già acquisite, inclusi i trenta controlli IN03.
+
+**Consegna:** codice e documentazione pronti per l'ultimo push/redeploy degli
+asset: verifica locale completata. Gli step 03–16 sono chiusi nel perimetro dello
+sviluppo; le loro vecchie liste di residui sono cronologia e limiti conservati.
+
+**Operazioni manuali separate:** attivazione cestino, pianificazione retention
+audit/Cron e relativa prima esecuzione, backup aggiornato e prova completa di
+ripristino. Non sono state eseguite dall'agente e non bloccano questa consegna,
+su scelta esplicita dell'utente «Chiusura sviluppo». Le procedure e i prerequisiti
+restano nel [runbook](steps/16-verifica-rilascio/runbook-rilascio-recupero.md).
+Ultimo gate cestino verificato: disabilitato. Non dichiararlo attivo.
+
+**Supabase Free:** conservata la [copia manuale M02](integrazione/backup-free.md),
+archivio leggibile verificato e ripristino non provato; Storage binario e
+configurazioni esterne esclusi. Nessuna falsa attestazione di recupero o Cron.
 
 ## Obiettivo e fonte delle decisioni
 
@@ -47,7 +40,7 @@ Questo documento recepisce il piano approvato e le scelte concordate: prima vers
 ## Protocollo di lavoro obbligatorio
 
 1. Leggere questo master e il documento dello step corrente prima di intervenire.
-2. Un prompt come **«procedi»** avvia **un solo step**, oppure riprende quello rimasto incompleto. Dal 28 ottobre, su richiesta esplicita dell'utente, questo step è l'intera chiusura finale dello step 16: eseguire tutti i suoi controlli e le correzioni necessarie senza fermarsi per un nuovo prompt a ogni voce. Pubblicazione e attivazioni restano operazioni di rilascio con la propria autorizzazione.
+2. La consegna dello sviluppo è chiusa. Nuove richieste avviano soltanto il lavoro esplicitamente richiesto; un generico «procedi» non riapre le vecchie verifiche live. I test dell’agente restano esclusivamente locali, secondo la scelta dell’utente.
 3. Verificare le dipendenze. Passare lo step a **In corso** prima di modificarne l'implementazione.
 4. Svolgere le verifiche pertinenti sullo step e aggiornare il suo documento con risultati, file interessati, limitazioni e operazioni manuali residue.
 5. Usare **Da terminare** per lavoro parziale, verifiche mancanti o applicazioni manuali necessarie ancora pendenti. Non dichiarare concluso uno step soltanto perché il codice è scritto.
@@ -84,30 +77,28 @@ di prova disponibile. Su scelta esplicita dell'utente si prosegue con PGlite:
 uno step può restare **Da terminare** per sole prove integrate rinviate senza
 bloccare lo sviluppo successivo, purché la sua parte implementativa richiesta
 sia verificata. Una funzionalità mancante non è una verifica rinviabile.
-I residui restano elencati e obbligatori prima del rilascio nello step 16.
-Per la chiusura finale il prompt avvia l'intera task dello step 16.
-Le quattordici righe aperte 03–16 condividono questa accettazione finale:
-il loro stato non è il conteggio di quattordici task da svolgere in sequenza.
+I residui storici restano documentati; la chiusura corrente distingue test locali, accettazione live dell’utente e operazioni manuali separate.
+Gli step 03–16 sono conclusi nel perimetro dello sviluppo; nessuna nuova sequenza preparatoria è aperta.
 
 | Step | Risultato | Modello | Impegno | Stato |
 | --- | --- | --- | --- | --- |
 | [00](steps/00-documentazione.md) | Master e documenti degli step | 6.1 Sol | medium | Concluso |
 | [01](steps/01-workspace-web.md) | Workspace npm e trasferimento webapp | 6.1 Sol | high | Concluso |
 | [02](steps/02-scheletro-admin.md) | Scheletro Admin, condivisioni minime e ambienti | 6.1 Sol | medium | Concluso |
-| [03](steps/03-autorizzazione-database.md) | Ruolo Admin, sessione e protezione dei permessi | 6.1 Sol | high | Da terminare |
-| [04](steps/04-audit-persistente.md) | Archivio audit e conservazione | 6.1 Sol | high | Da terminare |
-| [05](steps/05-accesso-sessione.md) | Login, rinnovo sessione, logout e guardie server | 6.1 Sol | high | Da terminare |
-| [06](steps/06-layout-navigazione.md) | Layout, pagine future, skeleton e link esterni | 6.1 Sol | medium | Da terminare |
-| [07](steps/07-annunci-dati.md) | Contratti e query lista/dettaglio annunci | 6.1 Sol | high | Da terminare |
-| [08](steps/08-annunci-interfaccia.md) | Tabella, filtri e anteprima annunci | 6.1 Sol | medium | Da terminare |
-| [09](steps/09-moderazione.md) | Approva, rifiuta, nascondi e ripristina visibilità | 6.1 Sol | high | Da terminare |
-| [10](steps/10-cestino.md) | Cestino recuperabile e compatibilità webapp | 6.1 Sol | high | Da terminare |
-| [11](steps/11-export-csv.md) | Export CSV della pagina corrente | 6.1 Sol | medium | Da terminare |
-| [12](steps/12-registro-attivita.md) | Registro attività e dettagli | 6.1 Sol | medium | Da terminare |
-| [13](steps/13-home-dati.md) | Aggregazioni e definizioni dei KPI | 6.1 Sol | high | Da terminare |
-| [14](steps/14-home-interfaccia.md) | Home, KPI, azioni rapide e ultime operazioni | 6.1 Sol | medium | Da terminare |
-| [15](steps/15-home-grafici.md) | Grafici selezionabili e caricamento su richiesta | 6.1 Sol | medium | Da terminare |
-| [16](steps/16-verifica-rilascio/README.md) | Unica [task finale](steps/16-verifica-rilascio/chiusura-finale.md): residui, correzioni, verifica e decisione «Pronto per il rilascio» o blocchi concreti; esecuzione completa al prossimo procedi | 6.1 Sol | high | Da terminare |
+| [03](steps/03-autorizzazione-database.md) | Ruolo Admin, sessione e protezione dei permessi | 6.1 Sol | high | Concluso |
+| [04](steps/04-audit-persistente.md) | Archivio audit e conservazione | 6.1 Sol | high | Concluso |
+| [05](steps/05-accesso-sessione.md) | Login, rinnovo sessione, logout e guardie server | 6.1 Sol | high | Concluso |
+| [06](steps/06-layout-navigazione.md) | Layout, pagine future, skeleton e link esterni | 6.1 Sol | medium | Concluso |
+| [07](steps/07-annunci-dati.md) | Contratti e query lista/dettaglio annunci | 6.1 Sol | high | Concluso |
+| [08](steps/08-annunci-interfaccia.md) | Tabella, filtri e anteprima annunci | 6.1 Sol | medium | Concluso |
+| [09](steps/09-moderazione.md) | Approva, rifiuta, nascondi e ripristina visibilità | 6.1 Sol | high | Concluso |
+| [10](steps/10-cestino.md) | Cestino recuperabile e compatibilità webapp | 6.1 Sol | high | Concluso |
+| [11](steps/11-export-csv.md) | Export CSV della pagina corrente | 6.1 Sol | medium | Concluso |
+| [12](steps/12-registro-attivita.md) | Registro attività e dettagli | 6.1 Sol | medium | Concluso |
+| [13](steps/13-home-dati.md) | Aggregazioni e definizioni dei KPI | 6.1 Sol | high | Concluso |
+| [14](steps/14-home-interfaccia.md) | Home, KPI, azioni rapide e ultime operazioni | 6.1 Sol | medium | Concluso |
+| [15](steps/15-home-grafici.md) | Grafici selezionabili e caricamento su richiesta | 6.1 Sol | medium | Concluso |
+| [16](steps/16-verifica-rilascio/README.md) | [Chiusura dello sviluppo](steps/16-verifica-rilascio/chiusura-finale.md), asset Admin e verifiche locali; live accettato dall’utente, operazioni manuali separate | 6.1 Sol | high | Concluso |
 
 ### Completamento graduale dello step 16
 
@@ -178,12 +169,20 @@ automaticamente dagli env o aggiunta alla lista dei runner di test.
 | [M04](integrazione/04-elenco-annunci.md) | Elenco annunci: installazione strutturalmente verificata e protezioni di 10/10 tabelle identiche nel confronto prima/dopo | 6.1 Sol | high | Concluso |
 | [M05](integrazione/05-dettaglio-annunci.md) | Dettaglio annunci: sei funzioni strutturalmente verificate e protezioni di 25/25 tabelle identiche nel confronto prima/dopo | 6.1 Sol | high | Concluso |
 | [M06](integrazione/06-moderazione-annunci.md) | Moderazione e correzione legacy M06A strutturalmente verificate: 26 oggetti, dodici routine, protezioni/metadati di 27/27 tabelle invariati | 6.1 Sol | high | Concluso |
-| [M07](integrazione/07-cestino.md) | A/B/C Conclusi; installazione verificata alle 21:55 UTC, 33/33 impronte invariate, gate disabilitato; attivazione separata pendente | 6.1 Sol | high | Da terminare |
+| [M07](integrazione/07-cestino.md) | A/B/C Conclusi; installazione verificata alle 21:55 UTC, 33/33 impronte invariate, gate disabilitato; attivazione manuale separata dalla consegna dello sviluppo | 6.1 Sol | high | Concluso |
 | [M08](integrazione/08-export-csv.md) · [step 11](steps/11-export-csv.md) | Export CSV applicato e verificato: tre routine, 33/33 tabelle e 149/149 altre routine invariate; gate disabilitato | 6.1 Sol | high | Concluso |
 | [M09](integrazione/09-registro-attivita.md) · [step 12](steps/12-registro-attivita.md) | Registro attività applicato e verificato: quattro funzioni e indice, 33 tabelle, audit/Auth e 152 altre routine invariati; nessun SELECT API diretto | 6.1 Sol | high | Concluso |
 | [M10](integrazione/10-home-dati.md) · [step 13](steps/13-home-dati.md) | Home applicata e verificata: quattro funzioni STABLE, 33 tabelle, audit/Auth e 156 altre routine invariati; gate disabilitato | 6.1 Sol | high | Concluso |
 | [IN02](integrazione/auth-accesso-admin.md) | Runtime pronto, policy applicata, account esistente promosso su deroga esplicita con dati conservati e trigger ripristinato; 53 test e verifica MCP positivi | 6.1 Sol | high | Concluso |
 | [IN03](integrazione/03-accettazione-auth.md) | 30 controlli riusciti: Auth, audit, revoca, dinieghi non Admin senza mapping e isolamento Web/Admin bidirezionale; unica identità temporanea revocata/cancellata e pulizia verificata | 6.1 Sol | high | Concluso |
+
+## Documentazione tecnica e cronologia precedente
+
+Le sezioni successive conservano il percorso e gli stati registrati prima
+della chiusura approvata dall'utente. Le indicazioni «Da terminare», «prossimo
+step» e le richieste di verifiche live in questa cronologia non riaprono lo
+sviluppo. Lo stato corrente è quello iniziale e delle tabelle aggiornate:
+sviluppo concluso, test futuri soltanto locali, operazioni manuali separate.
 
 M07 procede per sottopassi: **A** raccoglie soltanto cataloghi, firme e impronte
 dei consumatori presenti, dopo M06/M06A; **B** prepara i controlli di applicazione
@@ -475,3 +474,5 @@ Il rilascio in produzione è distinto dalle prove e richiede istruzioni concrete
 | 2026-10-28 | IN03 chiusura | Concluso nel perimetro Auth/PostgREST e sessioni Web/Admin: 30 controlli riusciti, inclusi login/rinnovo, tre letture protette, audit persistenti, logout/revoca con JWT ancora temporalmente valido, osservatore indipendente, due RPC e tre API negate all'identità Auth senza mapping, logout Web e Admin indipendenti in entrambe le direzioni. Consenso contestuale al ciclo della singola identità sintetica dopo richiesta specifica; account revocato/cancellato con verifica 404 e cookie rimossi. Helper e server Web di test fermati; Admin disponibile al login. Gate del sito escluso solo nel processo Web locale, env e implementazione app invariati. Evidenze e limiti nella scheda IN03 e nella matrice generale; nessuna migrazione, attivazione cestino, Cron o pubblicazione. Nessuna operazione manuale residua IN03. Prossima revisione compatibilità Web/cache/Storage non avviata; 6.1 Sol high. |
 
 | 2026-10-28 | Decisione di chiusura finale | Su richiesta esplicita dell'utente, sostituito il raggruppamento informale in cinque blocchi con una sola task finale dello step 16. Il prossimo procedi comprende tutti i residui obbligatori, correzioni, validazione del candidato e decisione di rilascio, senza un prompt per ciascun controllo. Nuova scheda chiusura-finale.md con baseline riutilizzabile, prerequisiti dichiarati, lista chiusa riferita a V01-V20 e separazione fra preparazione e operazioni dipendenti dal deploy. SQL non disponibile nei tool/IDE e progetti/host Vercel da confermare: domanda unica posta ora all'utente, senza richiesta di segreti. Nessun requisito obbligatorio omesso, nessun nuovo test applicativo o servizio modificato. IN03 resta Concluso; task finale preparata, non ancora eseguita. |
+
+| 2026-10-28 | Chiusura sviluppo approvata | Utente conferma ridistribuzione Web/Admin, accetta le ultime verifiche live e richiede test futuri solo locali. Scelta esplicita Chiusura sviluppo: attivazione cestino, Cron e prova restore restano operazioni manuali separate, non dichiarate eseguite. Aggiunti favicon e manifest Admin; controlli locali e risultati nella scheda finale. Stati 03–16 e M07 chiusi per lo sviluppo, nessun nuovo ciclo di verifiche live. |

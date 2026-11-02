@@ -26,9 +26,9 @@ import {parseProfileEditorPayload, RegistrationPayloadError,} from "@/features/r
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import type {Json} from "@/server/supabase";
+import {removeUnreferencedAnnouncementImages} from "@/features/pubblica-annuncio/server/image-cleanup";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const ANNOUNCEMENT_IMAGES_BUCKET = "immagini_annunci";
 const PROFILE_TABLE_BY_TYPE = {
 	giocatore: "profilo_giocatore",
 	squadra: "profilo_squadra",
@@ -602,10 +602,7 @@ export async function removeAnnouncement(
 		return {status: "error", message: "L’annuncio non è più disponibile oppure non appartiene al tuo account."};
 	}
 	if (imagePaths.length > 0) {
-		const {error: storageError} = await createAdminClient().storage
-			.from(ANNOUNCEMENT_IMAGES_BUCKET)
-			.remove(imagePaths);
-		if (storageError) console.error("[profile-dashboard] Announcement image cleanup failed", {message: storageError.message});
+		await removeUnreferencedAnnouncementImages(imagePaths);
 	}
 
 	revalidatePath("/il-tuo-profilo");

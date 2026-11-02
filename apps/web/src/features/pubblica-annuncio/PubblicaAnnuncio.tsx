@@ -500,7 +500,7 @@ function PublishAnnouncementForm({
 					<TabsContent value="tab-4">
 						<Card className="my-4 pt-6">
 							<CardContent>
-								{payload && profileType && <ConfermaInvioAnnuncio key={submissionId} payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} authenticated={authenticated} registered={registered} onEditStep={goToStep} />}
+								{payload && profileType && <ConfermaInvioAnnuncio key={submissionId} payload={payload} image={announcementImage} imagePreviewUrl={announcementImagePreviewUrl} profileDrafts={profileDrafts} profileLocations={profileLocations[profileType]} authenticated={authenticated} registered={registered} onEditStep={goToStep} />}
 							</CardContent>
 						</Card>
 					</TabsContent>

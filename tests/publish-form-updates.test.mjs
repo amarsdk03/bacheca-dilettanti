@@ -39,6 +39,52 @@ function payload(type, teamSubtype, detail) {
 	}, consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true, newsletterSubscribed: false}};
 }
 
+test("player categories are required while additional announcement information is optional", () => {
+	const drafts = model.createAnnouncementDetailsDrafts();
+	const detail = model.getAnnouncementDetail("giocatore", null, drafts);
+	const request = payload("giocatore", null, detail);
+	assert.throws(() => parsePublishPayload(request, true));
+	assert.match(model.getAnnouncementValidationErrors("giocatore", null, drafts, request.announcement.locations, request.announcement.contacts, undefined, "", true).playerCategories, /categoria/);
+	for (const category of ["Qualsiasi", "Calcio a 11 maschile::Eccellenza"]) {
+		drafts.giocatore.categorie_ricercate = [category];
+		request.announcement.detail = model.getAnnouncementDetail("giocatore", null, drafts);
+		assert.equal(parsePublishPayload(request, true).detail.descrizione_aggiuntiva, null);
+		assert.equal(model.getAnnouncementValidationErrors("giocatore", null, drafts, request.announcement.locations, request.announcement.contacts, undefined, "", true).playerCategories, undefined);
+	}
+});
+
+test("team categories follow the selected sport and referee history stays free text", () => {
+	const {teamCategoryGroupsForSport, isTeamCategoryForSport} = load("apps/web/src/features/profilo/team-category-catalog.ts");
+	const {createProfileDrafts} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
+	const {parseProfileEditorPayload} = load("apps/web/src/features/registrati/server/registration.ts");
+	const drafts = createProfileDrafts();
+	const parse = type => parseProfileEditorPayload({type, draft: drafts[type], locations: [{regione: "Lazio", citta: "Roma"}], socialLinks: createProfileSocialLinks()[type]});
+	drafts.squadra.nome_societa = "Test";
+	assert.equal(teamCategoryGroupsForSport("").length, 8);
+	for (const size of [11, 8, 7, 5]) {
+		const sport = `Calcio ${size}`;
+		assert.equal(teamCategoryGroupsForSport(sport).length, 2);
+		for (const gender of ["maschile", "femminile"]) {
+			const category = `Calcio a ${size} ${gender}::Tornei`;
+			assert.ok(isTeamCategoryForSport(category, sport));
+			assert.equal(isTeamCategoryForSport(category, `Calcio ${size === 11 ? 5 : 11}`), false);
+			drafts.squadra.tipologie_sport = [sport]; drafts.squadra.categoria_attuale = category;
+			assert.equal(parse("squadra").draft.categoria_attuale, category);
+		}
+	}
+	drafts.squadra.tipologie_sport = ["Calcio 11"];
+	assert.throws(() => parse("squadra"));
+	drafts.arbitro = {...drafts.arbitro, nome: "Test", anno_nascita: "1990", mese_nascita: "Gennaio", giorno_nascita: "01", lista_esperienze: [{id: "test", titolo: "Prima Categoria e Juniores", ente: "CSI", periodoDa: "2020", periodoA: "oggi", squadraProfiloId: "11111111-1111-4111-8111-111111111111", squadraIstanzaId: 1}]};
+	const history = parse("arbitro").draft.lista_esperienze[0];
+	assert.equal(history.titolo, "Prima Categoria e Juniores");
+	assert.equal(history.ente, "CSI");
+	assert.equal(history.squadraProfiloId, null);
+	assert.equal(history.squadraIstanzaId, null);
+	drafts.giocatore = {...drafts.giocatore, nome: "Test", anno_nascita: "1990", mese_nascita: "Gennaio", giorno_nascita: "01", genere: "Uomo", disponibilita: "svincolato", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"], specifici: []}, richiede_caricamento_highlights: true};
+	assert.throws(() => parse("giocatore"));
+});
+
 test("opponent free text and optional team group survive draft serialization and server normalization", () => {
 	const drafts = model.createAnnouncementDetailsDrafts();
 	drafts.squadraCercaPartita.gruppo_squadra = "  Allievi  ";

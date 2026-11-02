@@ -25,7 +25,7 @@ export const PROFILE_CARD_FACTS: Record<ProfileType, readonly CardFactDefinition
 		{kind: "category", label: "Categoria attuale", emptyValue: "Non specificata"},
 	],
 	squadra: [types, {kind: "category", label: "Categoria attuale Prima Squadra", emptyValue: "Non specificata"}, location],
-	"staff-sportivo": [{kind: "figures", label: "Figure", emptyValue: "Non specificate"}, availability, location],
+	"staff-sportivo": [{kind: "figures", label: "Figure", emptyValue: "Non specificate"}, availability, {...location, label: "Vive a"}],
 	arbitro: [availability, location],
 	"torneo-evento": [types, location],
 	"campi-impianti-sportivi": [{...types, label: "Tipologia campi disponibili", emptyValue: "Non specificata"}, location],

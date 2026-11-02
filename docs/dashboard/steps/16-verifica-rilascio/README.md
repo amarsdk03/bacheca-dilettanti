@@ -1,26 +1,23 @@
 # 16 — Verifica integrata e istruzioni di rilascio
 
-**Stato:** Da terminare  
+**Stato:** Concluso — sviluppo e collaudo locale; accettazione live dell’utente.
+
 **Modello consigliato:** 6.1 Sol, high  
-**Dipendenze:** Implementazione degli step 03A–15 verificata per 16A; i controlli integrati mantengono i propri prerequisiti, non ancora verificati.
+**Dipendenze:** sviluppo 03A–15 e percorso locale 16A–16H conclusi; ridistribuzione Web/Admin confermata dall’utente.
 
 [Master plan](../../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
 
-## Decisione corrente — una sola task finale
+## Chiusura corrente dello sviluppo
 
-Su richiesta dell'utente del 28 ottobre 2026, il prossimo «procedi» avvia
-l'intera [chiusura finale e decisione di rilascio](chiusura-finale.md).
-Comprende tutti i residui ancora obbligatori, le relative correzioni, la
-verifica del candidato e la consegna operativa. Non creare nuovi sottopassi
-o richiedere un nuovo prompt per ciascun controllo. IN02/IN03 e 16A–16H
-restano conclusi nei rispettivi perimetri; riutilizzarne le evidenze valide.
+La [consegna finale](chiusura-finale.md) comprende favicon/manifest Admin e
+controlli esclusivamente locali. Le ultime verifiche live sono accettate
+dall'utente, che conferma la ridistribuzione di entrambe le app. Nessun nuovo
+test remoto o richiesta di connessione SQL è necessario per questa chiusura.
 
-La scheda finale fissa i prerequisiti, la lista chiusa di accettazione e i due
-esiti consentiti: **Pronto per il rilascio** oppure **blocchi concreti con
-azione risolutiva**. Le operazioni che dipendono dalla pubblicazione sono
-esplicitamente distinte dai controlli necessari prima del via libera.
-Le checklist storiche sotto restano riferimenti di copertura, non un nuovo
-conteggio di task o un ordine di ripetizione delle prove già riuscite.
+Cestino, Cron/retention e prova completa di ripristino restano operazioni
+manuali nel runbook, esterne alla consegna dello sviluppo e non dichiarate
+eseguite. La sequenza di sviluppo è chiusa. Le sezioni seguenti conservano
+la documentazione tecnica e la cronologia, non aprono altri sottopassi.
 
 ## Percorso scelto e sottopassi
 
@@ -199,7 +196,7 @@ Prima versione verificata su ambiente sintetico, documentazione e stati aggiorna
 
 Consolidare i percorsi effettivi prodotti negli step precedenti con stato preparato/applicato/verificato per ambiente. Non duplicare SQL nei documenti. Indicare in chiusura ogni applicazione manuale ancora richiesta.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 16A concluso: **1.275 test riusciti, zero fallimenti/skip**, typecheck Web/Admin
 e CSS delle due app riusciti. ESLint sui test/runner: zero errori e un avviso
@@ -241,7 +238,7 @@ riusciti. Cleanup dei processi verificato. Dettagli ed evidenze nella [scheda
 tabelle, Supabase reale e HTTPS/CDN restano aperti. Gli avvisi Base UI della
 Home sono un residuo esplicito del sottopasso successivo.
 
-## Chiusura locale e prossima fase
+## Chiusura locale e fase prevista originariamente (storico)
 
 16F concluso: **otto gruppi Home browser superati**, quattro screenshot
 ispezionati, renderer differito osservato sulla rete dev, tre pulsanti-link

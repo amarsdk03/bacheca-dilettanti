@@ -1,10 +1,24 @@
 # 06 — Layout, navigazione e stati comuni
 
-**Stato:** Da terminare — implementazione e test mirati riusciti; prove visive/interattive browser pendenti  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, medium  
 **Dipendenze di sviluppo:** Step 05 implementato e verificato con SDK/risposte sintetiche; accesso e pagine protette disponibili. Prove integrate 03–05 obbligatorie prima del rilascio, rinviate secondo il master.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -38,7 +52,7 @@ già presenti mantenuti; import `cn` allineati all'utility Admin esistente e
 dipendenza aggiuntiva `cn` rimossa dall'Admin. Lockfile root unico mantenuto.
 Il logo quadrato esistente è già copiato in `apps/admin/public/logo.png`.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 ### Implementazione disponibile
 
@@ -145,6 +159,6 @@ richieste dati nuove per i placeholder. Restano anche le prove integrate 03–05
 Questi residui mantengono lo step **Da terminare**, mentre la parte implementativa
 verificata consente lo sviluppo dello step 07 secondo il protocollo del master.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 [07 — Dati Annunci](07-annunci-dati.md), **6.1 Sol, high**.

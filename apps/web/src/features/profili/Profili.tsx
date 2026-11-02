@@ -139,10 +139,10 @@ function hasFilter(filters: readonly ProfileFilterParam[], filter: ProfileFilter
 
 function ProfileFiltersForm({query, type, idPrefix}: {
 	query: ProfileDirectoryQuery;
-	type: ProfileType;
+	type: ProfileType | null;
 	idPrefix: string;
 }) {
-	const availableFilters = PROFILE_FILTERS_BY_TYPE[type] as readonly ProfileFilterParam[];
+	const availableFilters = type ? PROFILE_FILTERS_BY_TYPE[type] as readonly ProfileFilterParam[] : ["regione"] as const;
 	const resetHref = buildProfilesHref(query, {
 		page: 1,
 		filters: createEmptyProfileFilters(),
@@ -252,21 +252,6 @@ function ProfileFiltersForm({query, type, idPrefix}: {
 	);
 }
 
-function FiltersUnavailable({selectedCount}: {selectedCount: number}) {
-	const multiple = selectedCount > 1;
-	return (
-		<Alert>
-			<InfoIcon aria-hidden="true" />
-			<AlertTitle>{multiple ? "Filtri specifici disattivati" : "Scegli una tipologia"}</AlertTitle>
-			<AlertDescription>
-				{multiple
-					? "Mantieni un solo tipo di profilo selezionato per attivare i filtri dedicati. La ricerca testuale resta disponibile."
-					: "Seleziona un solo tipo di profilo per visualizzare i filtri più utili per quella categoria."}
-			</AlertDescription>
-		</Alert>
-	);
-}
-
 function ProfileFiltersSheet({query}: {query: ProfileDirectoryQuery}) {
 	const selectedType = query.types.length === 1 ? query.types[0] : null;
 	const activeCount = getActiveProfileFilterCount(query.filters);
@@ -290,13 +275,11 @@ function ProfileFiltersSheet({query}: {query: ProfileDirectoryQuery}) {
 					<SheetDescription>
 						{selectedType
 							? `Opzioni dedicate a “${profileTypeOption(selectedType).label}”.`
-							: "I filtri specifici richiedono una sola tipologia selezionata."}
+							: "La regione si applica a tutte le tipologie. Seleziona una sola tipologia per usare anche i filtri specifici."}
 					</SheetDescription>
 				</SheetHeader>
 				<div className="overflow-y-auto px-4 pb-6">
-					{selectedType
-						? <ProfileFiltersForm query={query} type={selectedType} idPrefix="sheet-filter" />
-						: <FiltersUnavailable selectedCount={query.types.length} />}
+					<ProfileFiltersForm query={query} type={selectedType} idPrefix="sheet-filter" />
 				</div>
 			</SheetContent>
 		</Sheet>
@@ -403,7 +386,7 @@ export default function Profili({query, result}: ProfiliProps) {
 					<div className="mt-3 flex items-center justify-between gap-4">
 						{
 							query.types.length > 0 && (
-								<Link href={buildProfilesHref({...query, types: [], filters: createEmptyProfileFilters(), page: 1})} className="mb-3 ms-1 text-sm font-medium text-brand-indigo underline-offset-4 hover:underline">
+								<Link href={buildProfilesHref({...query, types: [], filters: {...createEmptyProfileFilters(), regione: query.filters.regione}, page: 1})} className="mb-3 ms-1 text-sm font-medium text-brand-indigo underline-offset-4 hover:underline">
 									Mostra tutti
 								</Link>
 							)

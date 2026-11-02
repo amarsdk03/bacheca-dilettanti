@@ -1,10 +1,24 @@
 # 05 — Login, sessione e logout
 
-**Stato:** Da terminare — implementazione verificata con risposte sintetiche; prove integrate Supabase/browser pendenti  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, high  
 **Dipendenze di sviluppo:** 04A e 04B implementati e verificati con PGlite/fixture server. Prove integrate degli step 03–04 obbligatorie prima del rilascio; il solo rinvio di queste prove non blocca lo sviluppo, secondo la scelta aggiornata del master.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -120,7 +134,7 @@ modificare implicitamente la policy condivisa. Un rollback applicativo non annul
 un cambio password né ripristina sessioni revocate; i runbook DB restano quelli
 degli step 03–04. Nessun intervento sul reale è stato eseguito.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 ### Implementato
 
@@ -202,7 +216,7 @@ proxy e sicurezza; [SSR Supabase](https://supabase.com/docs/guides/auth/server-s
 [cambio password riservato](https://supabase.com/docs/reference/javascript/auth-admin-updateuserbyid),
 [revoca riservata](https://supabase.com/docs/reference/javascript/auth-admin-signout).
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 [06 — Layout e navigazione](06-layout-navigazione.md), **6.1 Sol, medium**.
 La parte implementativa verificata consente di proseguire lo sviluppo secondo

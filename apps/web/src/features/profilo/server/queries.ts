@@ -432,7 +432,8 @@ export async function getProfileDashboardData(
 	if (drafts.giocatore.piede_principale === "Ambipiede") drafts.giocatore.piede_principale = "Ambidestro";
 	if (drafts.giocatore.disponibilita === "disponibile-subito") drafts.giocatore.disponibilita = "svincolato";
 	if (drafts.giocatore.disponibilita === "svincolato") drafts.giocatore.categoria_attuale = "";
-	drafts.giocatore.video_highlights = !playerResult.data || drafts.giocatore.highlights_privati || drafts.giocatore.richiede_caricamento_highlights ? "" : playerMediaResult.data?.link_media ?? "";
+	drafts.giocatore.richiede_caricamento_highlights = false;
+	drafts.giocatore.video_highlights = !playerResult.data || drafts.giocatore.highlights_privati ? "" : playerMediaResult.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, teamResult.data);
 	drafts.squadra.categoria_attuale = normalizeTeamCategory(drafts.squadra.categoria_attuale);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staffResult.data);

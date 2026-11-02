@@ -90,6 +90,7 @@ test("facility opening hours normalize missing minutes and reject invalid hours"
 test("all eleven announcement types pass client validation with complete details", () => {
 	const drafts = createAnnouncementDetailsDrafts();
 	drafts.giocatore.descrizione_aggiuntiva = "Cerco una squadra.";
+	drafts.giocatore.categorie_ricercate = ["Qualsiasi"];
 	drafts.squadraCercaGiocatore = {...drafts.squadraCercaGiocatore, ruoli_principali: ["Difensore"], descrizione_aggiuntiva: "Cerchiamo un giocatore."};
 	drafts.squadraCercaStaff = {...drafts.squadraCercaStaff, figure_ricercate: ["Allenatore", "Preparatore atletico"], requisiti: "Esperienza", compenso_mensile: "19.99", stagione: "2026/27"};
 	drafts.squadraCercaPartita = {...drafts.squadraCercaPartita, categorie_avversario: "Under 17", periodo_dal: "2026-10-01", periodo_al: "2026-12-31", orario_dalle: "18:30", orario_alle: "20:00"};
@@ -116,6 +117,7 @@ test("all eleven announcement types pass client validation with complete details
 		["campi-impianti-sportivi", null],
 	];
 	for (const [type, subtype] of cases) {
+		for (const draft of Object.values(drafts)) if ("descrizione_aggiuntiva" in draft) draft.descrizione_aggiuntiva = "";
 		const errors = getAnnouncementValidationErrors(type, subtype, drafts, locations, contacts);
 		assert.equal(Object.keys(errors).length, 0, `${type}/${subtype}: ${JSON.stringify(errors)}`);
 	}

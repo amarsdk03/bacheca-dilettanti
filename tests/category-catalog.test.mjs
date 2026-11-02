@@ -53,7 +53,7 @@ test("category pairs keep homonymous labels separate in the catalogue, filters a
 	const content = announcementContent("annuncio_giocatore", {categorie_ricercate: [male, female, "Under 15"]}, [], true);
 	assert.deepEqual(content.filters.categories, [male, female, "Under 15"]);
 	assert.deepEqual(content.fields.find(field => field.label === "Categorie ricercate").items, [
-		"Calcio a 5 maschile — FIGC-LND — Serie A — Nazionale", "Calcio a 5 femminile — FIGC-LND — Serie A — Nazionale", "Under 15",
+		"Calcio a 5 maschile — FIGC-LND — Serie A", "Calcio a 5 femminile — FIGC-LND — Serie A", "Under 15",
 	]);
 });
 

@@ -190,7 +190,7 @@ function buildProfileFacts(
 	if (type === "staff-sportivo") {
 		return [
 			profileFact("figures", "Figure", figures),
-			profileFact("location", "Località", location),
+			profileFact("location", "Vive a", location),
 			profileFact("availability", "Disponibilità", availability),
 		];
 	}

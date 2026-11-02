@@ -1,5 +1,7 @@
 import {publicProfileName} from "@/features/profilo/profile-public-name";
 import {announcementContent} from "@/features/annunci/announcement-content";
+import {buildAnnouncementSummarySections, summaryAnnouncementTitle, type AnnouncementSummarySection} from "@/features/annunci/announcement-summary";
+import {projectAnnouncementSummaryProfile} from "@/features/annunci/announcement-summary-profile";
 import {
 	type AnnouncementDetailField,
 	announcementDisplayLabel,
@@ -7,7 +9,7 @@ import {
 	type AnnouncementPlayerRoles,
 	type AnnouncementType,
 } from "@/features/annunci/announcement-model";
-import type {ProfileDrafts, ProfileType} from "@/features/profilo/profile-model";
+import type {ProfileDrafts, ProfileType, ProfileLocationDraft} from "@/features/profilo/profile-model";
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 import {experienceTeamReferences, type TeamProfileReference} from "@/features/profilo/team-profile";
 import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";
@@ -31,6 +33,7 @@ export interface AnnouncementPreviewData {
 	status: string | null;
 	statusInfo: string | null;
 	linkedTeams: TeamProfileReference[];
+	summarySections?: AnnouncementSummarySection[];
 }
 
 function announcementPreviewContacts(payload: PublishAnnouncementPayload) {
@@ -64,6 +67,7 @@ export function buildPublishPreview(
 	drafts: ProfileDrafts,
 	imageUrl: string | null,
 	imageLabel: string | null,
+	profileLocations: readonly ProfileLocationDraft[] = [],
 ): AnnouncementPreviewData {
 	const type = payload.announcement.type;
 	const detail = {...payload.announcement.detail} as Record<string, unknown>;
@@ -92,31 +96,8 @@ export function buildPublishPreview(
 	}
 
 	const locations = payload.announcement.locations.map(({regione, citta}) => ({region: regione, city: citta}));
-	if (type === "annuncio_creators") {
-		const title = (typeof payload.announcement.title === "string" ? payload.announcement.title.trim() : "")
-			|| "Annuncio creator";
-		const description = typeof detail.descrizione_post === "string" && detail.descrizione_post.trim() ? detail.descrizione_post.trim() : null;
-		const location = locations.map(({city, region}) => [city, region].filter(Boolean).join(", ")).join(", ") || "Località non specificata";
-		return {
-			announcementType: type,
-			profileType: payload.profileType,
-			title,
-			typeLabel: announcementDisplayLabel(type),
-			author: profileTitle(payload, drafts),
-			description,
-			locations,
-			contacts: announcementPreviewContacts(payload),
-			facts: [{kind: "location", label: "Zone di ricerca", value: location}],
-			fields: [],
-			playerRoles: null,
-			genericLink: payload.announcement.extras.genericLink.trim() || null,
-			imageUrl,
-			imageLabel,
-			status: "In revisione dopo l’invio",
-			statusInfo: null,
-			linkedTeams: [],
-		};
-	}
+	const authorProfile = projectAnnouncementSummaryProfile(payload.profileType, drafts[payload.profileType] as unknown as Record<string, unknown>, profileLocations.map(({regione, citta}) => ({region: regione, city: citta})));
+	const author = profileTitle(payload, drafts);
 	const content = announcementContent(type, detail, locations, true, payload.announcement.title);
 	const profileExperiences = type === "annuncio_giocatore"
 		? drafts.giocatore.storico_carriera
@@ -127,9 +108,9 @@ export function buildPublishPreview(
 	return {
 		announcementType: type,
 		profileType: payload.profileType,
-		title: content.title,
+		title: summaryAnnouncementTitle(type, payload.announcement.title, content.title, payload.anonymousProfile ? null : author),
 		typeLabel: announcementDisplayLabel(type),
-		author: profileTitle(payload, drafts),
+		author,
 		description: content.description,
 		locations: content.locations,
 		contacts: announcementPreviewContacts(payload),
@@ -141,6 +122,13 @@ export function buildPublishPreview(
 		imageLabel,
 		status: "In revisione dopo l’invio",
 		statusInfo: null,
-		linkedTeams: experienceTeamReferences(profileExperiences, type === "annuncio_giocatore" || type === "annuncio_staff_sportivo" ? "titolo" : "ente"),
+		linkedTeams: type === "annuncio_arbitro" ? [] : experienceTeamReferences(profileExperiences, "titolo"),
+		summarySections: buildAnnouncementSummarySections({type, ...content, authorProfile, raw: detail}),
 	};
+}
+
+export function buildRegionalPublishPreviews(payload: PublishAnnouncementPayload, drafts: ProfileDrafts, imageUrl: string | null, imageLabel: string | null, profileLocations: readonly ProfileLocationDraft[]) {
+	const regions = [...new Set(payload.announcement.locations.map(item => item.regione))].sort((a,b) => a.localeCompare(b,"it-IT"));
+	if (payload.announcement.type === "annuncio_squadra_cerca_sponsor" || regions.length === 0) return [{region: null, preview: buildPublishPreview(payload,drafts,imageUrl,imageLabel,profileLocations)}];
+	return regions.map(region => ({region, preview: buildPublishPreview({...payload, announcement: {...payload.announcement, locations: payload.announcement.locations.filter(item => item.regione === region)}}, drafts,imageUrl,imageLabel,profileLocations)}));
 }

@@ -4,13 +4,17 @@
 
 ## Come leggere le evidenze
 
-**Decisione del 28 ottobre:** i residui ancora obbligatori V01–V20 confluiscono
-nell'unica [task finale dello step 16](chiusura-finale.md). Il prossimo
-«procedi» comprende verifica, correzioni e decisione di rilascio, senza
-ulteriori sottopassi da avviare singolarmente. Per ogni requisito registrare
-evidenza valida, non applicabilità dimostrata, operazione effettivamente
-dipendente dal rilascio oppure blocco concreto. Nessun requisito obbligatorio
-è cancellato per ridurre il numero degli step.
+**Chiusura dello sviluppo — 28 ottobre 2026:** l'utente conferma la
+ridistribuzione di Web/Admin e accetta le ultime verifiche live. Le prove
+eseguite dall'agente restano quelle delle evidenze storiche; questa accettazione
+non è un nuovo test remoto. Tutti i test futuri dell'agente sono solo locali.
+La [consegna finale](chiusura-finale.md) chiude sviluppo e collaudo.
+
+| Requisiti | Disposizione finale nel perimetro dello sviluppo |
+| --- | --- |
+| V01–V18 | Chiusi con evidenze locali già registrate e accettazione live dell'utente. I limiti specifici sotto restano documentati, senza richiedere ulteriori test live all'agente |
+| V19 | Tooling e test locali già verificati; nessuna nuova installazione distruttiva richiesta per gli asset |
+| V20 | Runbook e consegna dello sviluppo conclusi. Cestino/Cron, prima esecuzione retention e prova completa di ripristino sono operazioni manuali separate e non eseguite |
 
 Sequenza locale concordata: **16F Home**, **16G Annunci** e
 **16H Registro/chiusura locale** sono **Conclusi: verifiche locali terminate**. Integrazione Supabase effettiva e
@@ -49,10 +53,7 @@ autenticati, renderer differito e recupero da chunk fallito. Chrome ha escluso
 la BFcache con motivi registrati: il ripristino nativo rimane non attestato.
 Nessuna nuova fase locale viene aggiunta; condizioni esterne finite nella scheda 16H.
 
-La colonna «Non eseguito» rimane aperta anche se tutte le prove locali passano.
-Nessun residuo degli step 03–15 viene eliminato o promosso a superato soltanto
-perché PGlite non richiede Docker. I dettagli originali restano nelle rispettive
-schede e nella checklist completa dello step 16.
+La colonna dei limiti conserva i risultati effettivi e le prove non eseguite dall’agente. La disposizione finale sopra prevale sugli stati storici: accettazione live dell’utente e operazioni manuali non diventano prove tecniche inventate o nuovi blocchi allo sviluppo.
 
 ## Requisiti, copertura locale e limiti
 
@@ -75,7 +76,7 @@ il viewer sintetico senza mapping. Nessun deploy/HTTPS/CDN, Storage, test del
 gate del sito, attivazione cestino, Cron o ripristino completo è compreso.
 Le righe seguenti mantengono i limiti generali: IN03 non conclude lo step 16.
 
-| ID / step | Requisito e prove locali | Suite di riferimento in `tests/` | Non eseguito / limite |
+| ID / step | Requisito e prove locali | Suite di riferimento in `tests/` | Limite storico / operatività manuale |
 | --- | --- | --- | --- |
 | V01 · 01–02 | Confini Web/Admin, route protette, cookie separati, header/noindex e assenza di link pubblici; build Admin e HTML anonimo private/no-store in produzione locale, sentinella assente dagli asset client; 16H conferma build aggiornata e header autenticati Home/Registro/API Registro | `admin-web-boundary`, `admin-dashboard`, `admin-auth-server`, [16D](16d-produzione-locale.md), [16H](16h-chiusura-locale.md) | Deploy Vercel, host effettivi, cache HTTPS/CDN, altre pagine autenticate in produzione e limiti della scansione sentinella |
 | V02 · 03 | Accesso soltanto con `tipologia_utente` esattamente `Admin`; varianti, utente ordinario, mapping assente e account non ammessi negati; ruolo non modificabile dai writer ordinari | `admin-authorization-database`, `admin-auth-server` | Varianti ruolo/email e utente ordinario registrato contro gateway; ACL completo oltre al perimetro strutturale e alle chiamate IN03 |

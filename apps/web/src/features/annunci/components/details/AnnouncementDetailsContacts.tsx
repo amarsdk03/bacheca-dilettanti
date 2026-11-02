@@ -1,6 +1,7 @@
 import {InfoIcon, MailIcon, PhoneIcon, TriangleAlertIcon} from "lucide-react";
 
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {InterestDialogTrigger} from "@/features/interessi/InterestDialog";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import ContactAccessPrompt from "@/components/data-info/ContactAccessPrompt";
@@ -22,7 +23,7 @@ export default function AnnouncementDetailsContacts({
 			<Card>
 				<CardHeader>
 					<CardTitle><h2 id="announcement-contacts-title" className="text-start font-home-display text-xl uppercase lg:text-2xl">Contatta</h2></CardTitle>
-					<CardDescription>{authenticated ? "Usa uno dei recapiti pubblicati per questo annuncio." : "Accedi per visualizzare i recapiti pubblicati per questo annuncio."}</CardDescription>
+					<CardDescription>{!unavailable && contacts.length === 0 ? "L’autore non ha indicato recapiti pubblici per questo annuncio." : authenticated ? "Usa uno dei recapiti pubblicati per questo annuncio." : "Accedi per visualizzare i recapiti pubblicati per questo annuncio."}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					{unavailable ? (
@@ -32,11 +33,7 @@ export default function AnnouncementDetailsContacts({
 							<AlertDescription>Riprova tra poco per consultare i recapiti pubblici dell’annuncio.</AlertDescription>
 						</Alert>
 					) : contacts.length === 0 ? (
-						<Alert>
-							<InfoIcon aria-hidden="true" />
-							<AlertTitle>Contatti non disponibili</AlertTitle>
-							<AlertDescription>L’autore non ha indicato metodi di contatto pubblici per questo annuncio.</AlertDescription>
-						</Alert>
+						<InterestDialogTrigger />
 					) : !authenticated && contacts.length > 0 ? (
 						<ContactAccessPrompt returnTo={returnTo} />
 					) : (

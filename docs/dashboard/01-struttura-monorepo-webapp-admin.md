@@ -76,7 +76,13 @@ Sono previsti due progetti Vercel collegati alla stessa repository. Il deploy de
 | Webapp | `https://www.bachecadilettanti.it` | Sessione della piattaforma pubblica |
 | Dashboard | `https://dashboard-bacheca.vercel.app` | Sessione indipendente, dedicata all’Admin |
 
-L’indirizzo della dashboard è una decisione di progetto, non un dominio già assegnato o configurato: la disponibilità e l’assegnazione andranno verificate durante la configurazione Vercel.
+Il 28 ottobre 2026 l'utente ha confermato il deployment Admin su
+`https://dashboard-bacheca.vercel.app/`. Verificati HTTPS, modulo di accesso,
+header noindex/private/no-store e API Home anonima negata con HTTP 403.
+L’utente ha successivamente confermato la ridistribuzione di Web/Admin e
+accettato le ultime verifiche live. Per sua scelta, i test futuri dell’agente
+sono soltanto locali. La consegna dello sviluppo è chiusa; attivazioni
+cestino/Cron e prova completa di ripristino restano operazioni manuali.
 
 All’interno dello stesso ambiente, le due app usano lo stesso progetto Supabase. Le credenziali privilegiate restano esclusivamente sul server: la webapp le usa già per alcuni flussi, quindi non sono riservate alla sola dashboard. Non devono finire in variabili `NEXT_PUBLIC_*`, bundle client, documentazione o pacchetti condivisi accessibili al browser.
 
@@ -201,7 +207,7 @@ Il piano funzionale della prima versione è ora definito nel [master plan](maste
 | Operazioni sensibili | Motivazione per rifiuto, oscuramento e cestino; controllo di concorrenza e audit atomico. Cestino recuperabile distinto da Nascondi, senza cancellazione definitiva né pubblicazione automatica al ripristino. Verificare tutti i consumatori e webhook nello step 10. |
 | Provisioning e permessi | Step 03: procedura manuale, compatibilità di vincoli/trigger con Admin, protezione del ruolo e privilegi minimi. Nessuna registrazione Admin pubblica. |
 | Recupero accesso | Step 05: procedura riservata di recupero password e revoca sessioni. MFA resta un miglioramento successivo. |
-| Ambienti e deploy | Step 02 e 16: ambiente sintetico isolato, identificativi e host effettivi, configurazioni Vercel/Auth e destinazioni di test. Nessun servizio o host è dichiarato già creato. |
+| Ambienti e deploy | Web/Admin ridistribuite e accettate dall'utente il 28 ottobre 2026. Test futuri dell'agente soltanto locali; dettagli di consegna nello step 16. |
 | Audit e monitoraggio | Step 04 e 12: accessi/modifiche/export/errori, 12 mesi di conservazione, registro read only e gestione esplicita dei guasti audit. Step 16: misure di chiamate e prestazioni su dati sintetici. |
 | Rilascio e ripristino | Step 16: runbook concreto, configurazioni e migrazioni con ordine di applicazione, backup e recupero coordinato. Produzione distinta dalle prove. |
 

@@ -10,6 +10,7 @@ import AnnouncementViewLink from "@/features/annunci/AnnouncementViewLink";
 import AnnouncementPreviewCard from "@/features/pubblica-annuncio/components/AnnouncementPreviewCard";
 import type {PublishConfirmationResult} from "@/features/pubblica-annuncio/server/confirmation";
 import {cn} from "@/lib/utils";
+import {formatPreviewStatus} from "./announcement-preview";
 
 function MissingConfirmation({error}: {error: boolean}) {
 	return (
@@ -39,7 +40,7 @@ export default function ConfermaPubblicazione({result}: {result: PublishConfirma
 								{result.awaitingPayment ? <CrownIcon className="size-8" /> : <CheckCircle2Icon className="size-8" />}
 							</div>
 							<p className="mt-5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-brand-indigo">{result.awaitingPayment ? "Bozza salvata" : "Invio completato"}</p>
-							<h1 className="mt-5 font-home-display text-3xl uppercase tracking-tight sm:text-5xl">{result.awaitingPayment ? "Completa il pagamento." : "Il tuo annuncio è stato inviato."}</h1>
+							<h1 className="mt-5 font-home-display text-3xl uppercase tracking-tight sm:text-5xl">{result.awaitingPayment ? "Completa il pagamento." : (result.regionalAnnouncements?.length ?? 0) > 1 ? "I tuoi annunci sono stati inviati." : "Il tuo annuncio è stato inviato."}</h1>
 							<p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
 								{result.awaitingPayment
 									? "L’annuncio è consultabile tramite link, ma non compare nelle ricerche e non entra in revisione finché il pagamento non è confermato."
@@ -54,6 +55,10 @@ export default function ConfermaPubblicazione({result}: {result: PublishConfirma
 						</section>
 
 						<section className="mx-auto mt-12 max-w-3xl" aria-label="Riepilogo annuncio">
+							{result.publicationId && result.regionalAnnouncements && result.regionalAnnouncements.length > 1 && <nav className="mb-6 flex flex-col gap-3" aria-label="Annunci regionali inviati">
+								<p className="text-sm">{result.regionalAnnouncements.length} annunci indipendenti. Seleziona una regione per verificarne il riepilogo e lo stato.</p>
+								<div className="flex flex-wrap gap-2">{result.regionalAnnouncements.map(item => <Link key={item.id} href={`/pubblica-annuncio/conferma?${new URLSearchParams({publication: result.publicationId!, id: item.id})}`} aria-current={item.id === result.preview.id ? "page" : undefined} className={buttonVariants({variant: item.id === result.preview.id ? "default" : "outline"})}>{item.region ?? "Sede della squadra"}{item.status && ` · ${formatPreviewStatus(item.status)}`}</Link>)}</div>
+							</nav>}
 							<ExternalNavigationProvider>
 								<AnnouncementPreviewCard preview={result.preview} />
 							</ExternalNavigationProvider>

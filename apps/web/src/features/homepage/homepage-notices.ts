@@ -16,10 +16,10 @@ export const HOMEPAGE_NOTICES = [
 	{
 		id: "apertura-piattaforma-settembre",
 		tipo: "notizia",
-		titolo: "Bacheca Dilettanti, presto in arrivo...",
-		testo: "Bacheca Dilettanti è ufficialmente online: uno spazio per giocatori, squadre, staff e professionisti che vogliono farsi trovare o scoprire nuove opportunità nel calcio dilettantistico.\n\nDurante ottobre, continueremo ad ampliare la piattaforma con nuove tipologie di profilo, strumenti per gli annunci e miglioramenti pensati per rendere più semplice il primo contatto tra le persone giuste.",
+		titolo: "Pubblica in anonimo e senza contatti pubblici",
+		testo: "Quando crei il profilo puoi scegliere di non mostrare il nome, e grazie alla funzione “Manifesta Interesse” puoi anche evitare di mettere i contatti pubblici.",
 		data: "2026-10-01",
-		azione: {etichetta: "Sfoglia gli annunci", href: "/annunci"},
+		azione: {etichetta: "Pubblica un'annuncio ora!", href: "/pubblica-annuncio"},
 	},
 	{
 		id: "founding-partner-bacheca",

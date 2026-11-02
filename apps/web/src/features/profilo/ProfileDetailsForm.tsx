@@ -73,13 +73,12 @@ import {
 import type {Json} from "@/server/supabase";
 import {normalizeOptionalTime} from "@/features/pubblica-annuncio/publish-field-validation";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
-import Link from "next/link";
 import {
 	getPlayerSpecificRoleGroups,
 	getPlayerSpecificRoleOptions,
 	normalizePlayerRoleSelection,
 } from "@/features/profilo/player-roles";
-import {TEAM_CATEGORY_GROUPS} from "@/features/profilo/team-category-catalog";
+import {isTeamCategoryForSport, teamCategoryGroupsForSport} from "@/features/profilo/team-category-catalog";
 import {
 	categoryKey,
 	categoryLabel,
@@ -313,9 +312,10 @@ interface CareerHistoryFieldsProps {
 	esperienze: EsperienzaAnnuncio[];
 	setEsperienze: Dispatch<SetStateAction<EsperienzaAnnuncio[]>>;
 	staff?: boolean;
+	referee?: boolean;
 }
 
-function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false, current}: CareerHistoryFieldsProps) {
+function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false, referee = false, current}: CareerHistoryFieldsProps) {
 	const addEsperienza = () => {
 		setEsperienze((previous) => [...previous, createEsperienzaAnnuncio()]);
 	};
@@ -340,7 +340,7 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 					<FieldLegend variant="label"
 					             className="field-legend-title mb-0">{staff ? "Lista esperienze" : "Storico carriera"}
 						<OptionalLabel /></FieldLegend>
-					<FieldDescription>{staff ? "Inserisci le società e i ruoli svolti." : "Inserisci le stagioni, le squadre e le categorie più rilevanti."}</FieldDescription>
+					<FieldDescription>{referee ? "Inserisci le categorie arbitrate e gli enti." : staff ? "Inserisci le società e i ruoli svolti." : "Inserisci le stagioni, le squadre e le categorie più rilevanti."}</FieldDescription>
 				</div>
 				<Button type="button" variant="outline" size="sm" onClick={addEsperienza}>
 					<PlusIcon data-icon="inline-start"/>
@@ -430,9 +430,15 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 
 								<Field>
 									<FieldLabel
-										htmlFor={`${idPrefix}-squadra-${esperienza.id}`}>{staff ? "Società / ente" : "Squadra"}
+										htmlFor={`${idPrefix}-squadra-${esperienza.id}`}>{referee ? "Categorie arbitrate" : staff ? "Società / ente" : "Squadra"}
 										<OptionalLabel/></FieldLabel>
-									<TeamProfileComboboxField
+									{referee ? <Input
+										id={`${idPrefix}-squadra-${esperienza.id}`}
+										value={esperienza.titolo}
+										maxLength={120}
+										onChange={(event) => updateEsperienza(esperienza.id, {titolo: event.target.value, squadraProfiloId: null, squadraIstanzaId: null})}
+										placeholder="Es. Prima Categoria, Juniores..."
+									/> : (<TeamProfileComboboxField
 										id={`${idPrefix}-squadra-${esperienza.id}`}
 										value={esperienza.titolo}
 										profileId={esperienza.squadraProfiloId}
@@ -441,14 +447,14 @@ function CareerHistoryFields({idPrefix, esperienze, setEsperienze, staff = false
 											squadraProfiloId: profileId,
 											squadraIstanzaId: item?.subprofileId ?? null,
 										})}
-									/>
+									/>)}
 								</Field>
 								<ProfileTextField
 									id={`${idPrefix}-categoria-${esperienza.id}`}
-									label={staff ? "Ruolo/i svolti" : "Categoria"}
+									label={referee ? "Ente" : staff ? "Ruolo/i svolti" : "Categoria"}
 									value={esperienza.ente}
 									onChange={(value) => updateEsperienza(esperienza.id, {ente: value})}
-									placeholder={staff ? "Dirigenza, medico sportivo, media manager..." : "Es: Under 19"}
+									placeholder={referee ? "Es. FIGC, CSI, UISP..." : staff ? "Dirigenza, medico sportivo, media manager..." : "Es: Under 19"}
 									maxLength={120}
 								/>
 							</FieldGroup>
@@ -684,7 +690,7 @@ function LocationsField({
 	const single = type !== "torneo-evento" && type !== "campi-impianti-sportivi" && type !== "creators" && type !== "servizi-consulenze";
 	const label = type === "torneo-evento"
 		? "Zona di svolgimento manifestazione"
-		: type === "squadra" ? "Dove ha sede la società?" : type === "creators" ? "Di che zona/e ti occupi" : type === "servizi-consulenze" ? "Aree di interesse per la tua attività" : single ? "In che zona vivi?" : "Regioni interessate";
+		: type === "squadra" ? "Dove ha sede la squadra?" : type === "creators" ? "Di che zona/e ti occupi" : type === "servizi-consulenze" ? "Aree di interesse per la tua attività" : single ? "In che zona vivi?" : "Regioni interessate";
 	return (
 		<ProfileLocationsField
 			allowForeignRegion={allowsForeignProfileRegion(type)}
@@ -898,11 +904,11 @@ function GiocatoreFields({
 				<LinkAnnuncioField
 					idPrefix={`${prefix}-video-highlights`}
 					label="Link video highlights"
-					placeholder={draft.richiede_caricamento_highlights || draft.highlights_privati ? "" : "https://youtu.be/dQEemdsoLDM"}
+					placeholder={draft.highlights_privati ? "" : "https://youtu.be/dQEemdsoLDM"}
 					description="Inserisci il link pubblico a un video con le tue azioni migliori"
 					value={draft.video_highlights}
 					onValueChange={(value) => onChange("giocatore", "video_highlights", value)}
-					disabled={draft.richiede_caricamento_highlights || draft.highlights_privati}
+					disabled={draft.highlights_privati}
 					labelAddon={(
 						<Tooltip>
 							<TooltipTrigger render={<button type="button"
@@ -911,32 +917,12 @@ function GiocatoreFields({
 								<CircleHelpIcon className="size-4"/>
 							</TooltipTrigger>
 							<TooltipContent className={"block"}>
-								Possiedi il video nella tua galleria ma non hai modo di caricare un link?
-								<Link href="/contatti" className="text-fuchsia-200 font-medium"> Contattaci e lo
-									caricheremo noi su YouTube per te!</Link>
+								Carica il video su una piattaforma come YouTube e inserisci qui il link pubblico.
 							</TooltipContent>
 						</Tooltip>
 					)}
 				/>
-				<Field orientation="horizontal" className={"mt-1"}>
-					<Checkbox
-						id={`${prefix}-richiede-caricamento-highlights`}
-						checked={draft.richiede_caricamento_highlights}
-						onCheckedChange={(checked) => {
-							const requested = Boolean(checked);
-							onChange("giocatore", "richiede_caricamento_highlights", requested);
-							if (requested) {
-								onChange("giocatore", "highlights_privati", false);
-								onChange("giocatore", "video_highlights", "");
-							}
-						}}
-					/>
-					<FieldContent>
-						<FieldLabel htmlFor={`${prefix}-richiede-caricamento-highlights`} className="font-normal">
-							Possiedo dei video, ma non ho possibilità di caricarli online (ti contatteremo noi!)
-						</FieldLabel>
-					</FieldContent>
-				</Field>
+
 				<Field orientation="horizontal">
 					<Checkbox
 						id={`${prefix}-highlights-privati`}
@@ -952,7 +938,7 @@ function GiocatoreFields({
 					/>
 					<FieldContent>
 						<FieldLabel htmlFor={`${prefix}-highlights-privati`} className="font-normal">
-							Possiedo dei video, ma voglio renderli disponibili solamente privatamente
+							Possiedo dei video, ma voglio renderli disponibili solo a chi mostra interesse
 						</FieldLabel>
 					</FieldContent>
 				</Field>
@@ -1046,7 +1032,14 @@ function ProfileFields({
 				                    onChange={onChange}/>
 				<ProfileSelectField id={`${prefix}-tipologia`} label="Tipologia calcio"
 				                    value={draft.tipologie_sport?.length === 1 ? draft.tipologie_sport[0] : ""}
-				                    onChange={(value) => onChange(type, "tipologie_sport", value ? [value] : [])}
+				                    onChange={(value) => {
+					                    onChange(type, "tipologie_sport", value ? [value] : []);
+					                    if (!isTeamCategoryForSport(draft.categoria_attuale, value)) {
+						                    onChange(type, "categoria_attuale", "");
+						                    onChange(type, "torneo_attuale_nome", "");
+						                    onChange(type, "torneo_attuale_id", null);
+					                    }
+				                    }}
 				                    options={TIPOLOGIA_CALCIO_OPTIONS.map((value) => ({value, label: value}))}
 				                    placeholder="Seleziona una tipologia" required={requiredFields}
 				                    error={errors.sports}/>
@@ -1059,7 +1052,7 @@ function ProfileFields({
 					                    onChange(type, "torneo_attuale_id", null);
 					                    }
 				                    }}
-				                    groups={TEAM_CATEGORY_GROUPS.map(({gruppo, opzioni}) => ({
+				                    groups={teamCategoryGroupsForSport(draft.tipologie_sport?.length === 1 ? draft.tipologie_sport[0] : "").map(({gruppo, opzioni}) => ({
 					                    label: gruppo,
 					                    options: opzioni.map(item => ({
 						                    value: categoryKey(gruppo, item),
@@ -1213,7 +1206,7 @@ function ProfileFields({
 				<ProfileTextareaField id={`${prefix}-presentazione`} label="Presentazione" value={draft.presentazione}
 				                      onChange={(value) => onChange(type, "presentazione", value)}
 				                      placeholder="Esperienza arbitrale, categorie seguite e disponibilità..."/>
-				<CareerHistoryFields idPrefix={`${prefix}-lista-esperienze`} staff
+				<CareerHistoryFields idPrefix={`${prefix}-lista-esperienze`} staff referee
 				                     esperienze={toExperiences(draft.lista_esperienze)}
 				                     setEsperienze={experienceSetter(draft.lista_esperienze, (value) => onChange(type, "lista_esperienze", value))}/>
 				<EsperienzeAnnuncioFields idPrefix={`${prefix}-qualifiche`} titolo="Qualifiche / Licenze" requireState

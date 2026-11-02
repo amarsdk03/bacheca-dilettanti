@@ -41,6 +41,8 @@ export type Database = {
     Tables: {
       annuncio: {
         Row: {
+          gruppo_pubblicazione: string | null
+          regione_pubblicazione: string | null
           eliminato_il: string | null
           eliminato_da: string | null
           oscurato_da_admin: boolean
@@ -62,6 +64,8 @@ export type Database = {
           uuid: string
         }
         Insert: {
+          gruppo_pubblicazione?: string | null
+          regione_pubblicazione?: string | null
           eliminato_il?: string | null
           eliminato_da?: string | null
           oscurato_da_admin?: boolean
@@ -83,6 +87,8 @@ export type Database = {
           uuid?: string
         }
         Update: {
+          gruppo_pubblicazione?: string | null
+          regione_pubblicazione?: string | null
           eliminato_il?: string | null
           eliminato_da?: string | null
           oscurato_da_admin?: boolean
@@ -1906,6 +1912,22 @@ export type Database = {
           p_visibility: string
         }
         Returns: Json
+      }
+      publish_announcement_v3: {
+        Args: { p_payload: Json; p_privacy_version: string; p_submission_id: string; p_terms_version: string; p_visibility: string }
+        Returns: Json
+      }
+      get_owned_regional_publication_v1: {
+        Args: { p_id: string }
+        Returns: Json
+      }
+      latest_regional_announcement_ids_v1: {
+        Args: Record<PropertyKey, never>
+        Returns: { id: string }[]
+      }
+      regional_legacy_image_cleanup_candidates_v1: {
+        Args: Record<PropertyKey, never>
+        Returns: { path: string }[]
       }
       record_priority_checkout_event_v1:
         | {

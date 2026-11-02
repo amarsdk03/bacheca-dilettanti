@@ -255,6 +255,7 @@ export type AnnouncementValidationField =
 	| "sponsorOffer"
 	| "sports"
 	| "staffCategories"
+	| "playerCategories"
 	| "staffTravel"
 	| "tournamentName"
 	| "tournamentYears"
@@ -283,6 +284,8 @@ export type PublishAnnouncementResult =
 	| {
 		status: "success";
 		announcementId: string;
+		publicationId: string;
+		announcements: import("./regional-publication").RegionalAnnouncementReference[];
 		moderationStatus: "in_revisione";
 		idempotent: boolean;
 	}
@@ -487,8 +490,8 @@ export function getAnnouncementValidationErrors(
 	const detail = getAnnouncementDetail(type, teamSubtype, drafts);
 	if (!detail) errors.type = "La tipologia di annuncio non è valida.";
 
-	if (type === "giocatore" && !nonEmpty(drafts.giocatore.descrizione_aggiuntiva)) {
-		errors.description = "Inserisci le informazioni aggiuntive dell’annuncio.";
+	if (type === "giocatore" && drafts.giocatore.categorie_ricercate.length === 0) {
+		errors.playerCategories = "Seleziona almeno una categoria ricercata.";
 	}
 	if (type === "servizi-consulenze") {
 		if (drafts.serviziConsulenze.figura_professionale.length === 0) errors.professionalRole = "Seleziona almeno una figura professionale.";
@@ -502,7 +505,6 @@ export function getAnnouncementValidationErrors(
 		if (!draft.annata_da && draft.annata_a) errors.yearTo = "Seleziona prima l'annata iniziale.";
 		if (draft.annata_a && !ANNATE_OPTIONS.includes(draft.annata_a)) errors.yearTo = "Seleziona un'annata finale valida.";
 		if (!errors.yearFrom && !errors.yearTo && draft.annata_da && draft.annata_a && Number(draft.annata_a) < Number(draft.annata_da)) errors.yearTo = "L'annata finale non può precedere quella iniziale.";
-		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci le informazioni aggiuntive della ricerca.";
 	}
 	if (type === "squadra" && teamSubtype === "cerca-staff") {
 		const draft = drafts.squadraCercaStaff;
@@ -532,12 +534,10 @@ export function getAnnouncementValidationErrors(
 		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
 		if (draft.categorie_ricercate.length > 32 || draft.categorie_ricercate.some((category) => category !== ANY_CATEGORY && !isStaffCategory(category))) errors.staffCategories = "Seleziona categorie valide dal catalogo Staff.";
 		if (draft.disponibilita_spostamento && !["Si", "No", "Da valutare"].includes(draft.disponibilita_spostamento)) errors.staffTravel = "Seleziona una disponibilità agli spostamenti valida.";
-		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci le informazioni aggiuntive dell’annuncio.";
 	}
 	if (type === "arbitro") {
 		const draft = drafts.arbitro;
 		if (draft.tipologie_sport.length === 0) errors.sports = "Seleziona almeno una tipologia di calcio.";
-		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci le informazioni aggiuntive dell’annuncio.";
 	}
 	if (type === "torneo-evento") {
 		const draft = drafts.torneoEvento;
@@ -545,7 +545,6 @@ export function getAnnouncementValidationErrors(
 		const validYear = (value: string) => !value || (/^\d{4}$/.test(value) && Number(value) >= 1900 && Number(value) <= currentYear);
 		if (!nonEmpty(draft.nome_evento)) errors.tournamentName = "Inserisci il nome del torneo o evento.";
 		if (draft.tipologie_sport.length !== 1 || !TIPOLOGIA_CALCIO_OPTIONS.includes(draft.tipologie_sport[0] as typeof TIPOLOGIA_CALCIO_OPTIONS[number])) errors.sports = "Seleziona una tipologia di calcio valida.";
-		if (!nonEmpty(draft.descrizione_aggiuntiva)) errors.description = "Inserisci una descrizione dell’evento.";
 		if (!validYear(draft.annate_ammesse_da) || !validYear(draft.annate_ammesse_a) || (draft.annate_ammesse_da && draft.annate_ammesse_a && Number(draft.annate_ammesse_da) > Number(draft.annate_ammesse_a))) errors.tournamentYears = "L’intervallo delle annate non è valido.";
 		if (draft.numero_squadre && (!/^\d+$/.test(draft.numero_squadre) || Number(draft.numero_squadre) < 1 || Number(draft.numero_squadre) > 100_000)) errors.tournamentTeams = "Inserisci un numero di squadre valido.";
 		if (parseOptionalMoney(draft.costo_partecipazione) === undefined) errors.tournamentCost = "Inserisci un importo valido con massimo due decimali.";

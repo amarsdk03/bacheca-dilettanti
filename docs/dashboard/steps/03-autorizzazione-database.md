@@ -1,10 +1,24 @@
 # 03 — Autorizzazione Admin nel database
 
-**Stato:** Da terminare — autorizzazione verificata nelle fixture; prove Supabase complete non eseguite, percorso Docker fuori dal flusso scelto
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, high  
 **Dipendenze:** Step 02 concluso. Prima fase autorizzata su PGlite; ambiente Supabase completo ancora da verificare.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -34,7 +48,7 @@ La revoca blocca la richiesta successiva; non annulla un'operazione già iniziat
 
 Migrazioni additive per helper, grant/RLS e indici necessari, più eventuali correzioni al provisioning. Generare i file secondo il workflow della repository, registrarli qui e verificarli su dati sintetici. Produzione separata dal test e dal completamento locale dello step. Su scelta successiva dell'utente, 03A applicato/verificato su PGlite è la dipendenza di sviluppo per 04A. Il percorso 03B con Docker è oggi un'alternativa storica, non un prerequisito; le prove integrate non eseguite restano nella [matrice 16A](16-verifica-rilascio/matrice-verifiche.md).
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 ### Fase 03A implementata — 24 ottobre 2026
 
@@ -300,7 +314,7 @@ L'eventuale rilascio/recupero in produzione è un'attività separata dello step 
   riferimento per durata, `not_after` e ultimo rinnovo; il branch master consultato
   non dimostra quale versione sia installata nell'ambiente dell'utente.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 **Sviluppo attuale:** [04 — Audit persistente](04-audit-persistente.md),
 **6.1 Sol, high**, sulla base 03A verificata con PGlite.

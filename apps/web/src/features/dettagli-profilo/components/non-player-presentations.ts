@@ -23,7 +23,7 @@ export const NON_PLAYER_PRESENTATIONS = {
 		badges: [{fieldLabel: "Figure professionali"}],
 		facts: [age, {label: "Tipologie calcio", icon: ShirtIcon}, availability,
 			{label: "Disponibile da remoto", fieldLabel: "Disponibile anche da remoto", icon: WifiIcon}],
-		sections: standardSections,
+		sections: [{...locations, title: "Vive a"}, description, social],
 		ecosystemName: "staff sportivi", identifierName: "staff sportivo",
 		hasExperiences: true, careerLabel: "Esperienze e qualifiche",
 	},

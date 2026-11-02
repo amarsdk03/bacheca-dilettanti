@@ -177,10 +177,9 @@ export function parseProfileDirectoryQuery(params: RawProfileSearchParams): Prof
 	const selectedType = types.length === 1 ? types[0] : null;
 	const filters = createEmptyProfileFilters();
 
+	filters.regione = allowedValue(firstValue(params.regione), REGION_SET);
+
 	if (selectedType) {
-		if (supportsFilter(selectedType, "regione")) {
-			filters.regione = allowedValue(firstValue(params.regione), REGION_SET);
-		}
 		if (supportsFilter(selectedType, "tipologia")) {
 			filters.tipologia = allowedValue(normalizeTipologiaCalcio(firstValue(params.tipologia)), TIPOLOGIA_SET);
 		}

@@ -15,6 +15,15 @@ export const TEAM_CATEGORY_GROUPS = [
 export const TEAM_CATEGORY_OPTIONS = TEAM_CATEGORY_GROUPS.flatMap(({gruppo, opzioni}) =>
 	opzioni.map(category => ({value: categoryKey(gruppo, category), label: category === "Tornei" ? `${gruppo} — Tornei` : `${gruppo} — ${category}`})),
 );
+
+export function teamCategoryGroupsForSport(sport: string | null | undefined) {
+	return TEAM_CATEGORY_GROUPS.filter(({gruppo}) => !sport || gruppo.startsWith(`${sport.replace("Calcio ", "Calcio a ")} `));
+}
+
+export function isTeamCategoryForSport(value: unknown, sport: string | null | undefined): value is string {
+	return typeof value === "string" && teamCategoryGroupsForSport(sport).some(({gruppo, opzioni}) =>
+		opzioni.some(category => categoryKey(gruppo, category) === value));
+}
 const labels = new Map(TEAM_CATEGORY_OPTIONS.map(({value, label}) => [value, label]));
 export function isTeamCategory(value: unknown): value is string {
  return typeof value === "string" && labels.has(value);

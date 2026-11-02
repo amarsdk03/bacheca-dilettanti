@@ -96,7 +96,7 @@ export default function TeamProfileComboboxField({
 		? "Scrivi almeno 2 caratteri."
 		: loading || result.query !== query ? "Ricerca in corso..."
 			: failed ? "Ricerca non disponibile. Puoi comunque inserire il nome."
-				: "Nessun profilo trovato. Il nome verrà salvato come testo.";
+				: "Stai creando il primo profilo squadra della piattaforma con questo nome.";
 
 	return (
 		<Combobox

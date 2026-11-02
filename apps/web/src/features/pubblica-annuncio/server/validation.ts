@@ -242,8 +242,8 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 	if (type === "annuncio_giocatore") {
 		assertExactKeys(value, ["categorie_ricercate", "descrizione_aggiuntiva"], 3);
 		return {
-			categorie_ricercate: normalizeCategories(stringList(value.categorie_ricercate, 3)),
-			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
+			categorie_ricercate: normalizeCategories(stringList(value.categorie_ricercate, 3, true)),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
 		};
 	}
 	if (type === "annuncio_squadra_cerca_giocatore") {
@@ -262,7 +262,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 			annata_da: from,
 			annata_a: to,
 			stagione: textValue(value.stagione, 80, 3),
-			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
 		};
 	}
 	if (type === "annuncio_squadra_cerca_staff") {
@@ -320,7 +320,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, 3, true)),
 			categorie_ricercate: normalizedStaffCategories,
 			disponibilita_spostamento: staffTravel,
-			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
 		};
 	}
 	if (type === "annuncio_arbitro") {
@@ -329,7 +329,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, 3, true)),
 			automunito: textValue(value.automunito, 40, 3),
 			disponibilita_spostamento: textValue(value.disponibilita_spostamento, 40, 3),
-			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
 		};
 	}
 	if (type === "annuncio_servizi_consulenze") {
@@ -379,7 +379,7 @@ function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record
 			costo_partecipazione: numericValue(value.costo_partecipazione, 3, {money: true}),
 			tipo_partecipazione: participation,
 			lista_premi_trofei: normalizePrizeList(value.lista_premi_trofei),
-			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3, true),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
 		};
 	}
 

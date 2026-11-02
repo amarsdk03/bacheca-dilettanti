@@ -3,12 +3,14 @@ import type {CSSProperties} from "react";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import DetailIdentifier from "@/components/data-info/DetailIdentifier";
 import DetailActions from "@/features/interazioni/DetailActions";
+import ProfileInterestDialog from "@/features/interessi/ProfileInterestDialog";
 import AnnouncementDetailsTabs from "./AnnouncementDetailsTabs";
 import SimilarAnnouncements from "./SimilarAnnouncements";
 import AnnouncementSponsorCard from "./AnnouncementSponsorCard";
 import AnnouncementDetailsContacts from "./AnnouncementDetailsContacts";
 import AnnouncementDetailsHeader from "./AnnouncementDetailsHeader";
 import AnnouncementDetailsOverview from "./AnnouncementDetailsOverview";
+import AnnouncementDetailsRecap from "./AnnouncementDetailsRecap";
 import AnnouncementAuthorCard from "./AnnouncementAuthorCard";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {InfoIcon} from "lucide-react";
@@ -24,7 +26,8 @@ export default function AnnouncementDetailsLayout({
 	returnTo: string;
 }) {
 	const notice = announcementPreviewNotice(announcement.moderationStatus);
-	return (
+	const href = `/dettagli-annuncio?${new URLSearchParams({id: announcement.id})}`;
+	const content = (
 		<div className="public-profile-detail flex min-w-0 flex-col gap-6 font-home-body" style={{
 			"--profile-accent": getProfileAccent(announcement.profileType),
 			"--primary": "color-mix(in srgb, var(--profile-accent) 65%, black)",
@@ -36,12 +39,15 @@ export default function AnnouncementDetailsLayout({
 			</Alert>}
 			<AnnouncementDetailsHeader
 				announcement={announcement}
-				actions={<DetailActions target={{kind: "annuncio", id: announcement.id}} interestTarget={{kind: "annuncio", id: announcement.id}} href={`/dettagli-annuncio?${new URLSearchParams({id: announcement.id})}`} presentation="announcement" shareOnly={!announcement.isListed} />}
+				actions={<DetailActions target={{kind: "annuncio", id: announcement.id}} interestTarget={{kind: "annuncio", id: announcement.id}} href={href} presentation="announcement" shareOnly={!announcement.isListed} managedInterest={announcement.isListed} />}
 			/>
 			<AnnouncementDetailsTabs
 				overview={
 					<div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-						<AnnouncementDetailsOverview announcement={announcement} />
+						<div className="min-w-0">
+							<div hidden><AnnouncementDetailsOverview announcement={announcement} /></div>
+							<AnnouncementDetailsRecap announcement={announcement} />
+						</div>
 						<aside aria-label="Profilo autore, contatti e sponsor" className="flex min-w-0 flex-col gap-5">
 							<AnnouncementAuthorCard announcement={announcement} />
 							<AnnouncementDetailsContacts contacts={announcement.contacts} unavailable={announcement.contactsUnavailable} authenticated={authenticated} returnTo={returnTo} />
@@ -54,4 +60,7 @@ export default function AnnouncementDetailsLayout({
 			/>
 		</div>
 	);
+	return announcement.isListed
+		? <ProfileInterestDialog target={{kind: "annuncio", id: announcement.id}} href={href}>{content}</ProfileInterestDialog>
+		: content;
 }

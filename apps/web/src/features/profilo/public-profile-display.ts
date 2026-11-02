@@ -10,6 +10,7 @@ export function availabilityLabel(value: string | null | undefined) {
 }
 
 export function profileInitials(title: string) {
+	if (/^staff sportivo(?: anonimo)?$/i.test(title.trim())) return "ST";
 	return title
 		.split(/\s+/)
 		.filter(Boolean)

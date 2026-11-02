@@ -1,4 +1,4 @@
-import {ANY_CATEGORY, categoryKey, categoryLabel} from "./category-catalog";
+import {ANY_CATEGORY, categoryDisplayLabel, categoryKey, categoryLabel} from "./category-catalog";
 
 /** Catalogo C: categorie ricercate dagli annunci Staff sportivo. */
 export const STAFF_CATEGORY_GROUPS = [
@@ -54,5 +54,5 @@ export function normalizeStaffCategories(values: readonly string[]): string[] {
 export function staffCategoryLabel(value: string): string {
 	const normalized = normalizeStaffCategory(value);
 	const option = STAFF_CATEGORY_FILTER_OPTIONS.find(({value: key}) => key === normalized);
-	return option?.label ?? (value.includes("::") ? value.replace("::", " · ") : categoryLabel(value));
+	return categoryDisplayLabel(option?.label ?? (value.includes("::") ? value.replace("::", " · ") : categoryLabel(value)));
 }

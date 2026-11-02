@@ -246,6 +246,7 @@ export default function AnnouncementDetailsForm({
 						<div>
 							<CategorieCalcioMultiselectField
 								label="Categorie ricercate"
+								required error={errors.playerCategories}
 								items={CATEGORIE_CALCIO_GROUPS}
 								value={drafts.giocatore.categorie_ricercate}
 								onValueChangeAction={(value) => updateDraft("giocatore", "categorie_ricercate", value)}
@@ -260,7 +261,6 @@ export default function AnnouncementDetailsForm({
 							label="Informazioni aggiuntive"
 							value={drafts.giocatore.descrizione_aggiuntiva}
 							onChange={(value) => updateDraft("giocatore", "descrizione_aggiuntiva", value)}
-							required
 							error={errors.description}
 							placeholder="Descrivi disponibilità, obiettivi e tipo di opportunità che stai cercando..."
 						/>
@@ -312,7 +312,7 @@ export default function AnnouncementDetailsForm({
 							</Field>
 						</div>
 						<TextField id="team-player-season" label="Stagione" value={drafts.squadraCercaGiocatore.stagione} onChange={(value) => updateDraft("squadraCercaGiocatore", "stagione", value)} maxLength={80} placeholder="Es. 2026/2027" />
-						<DescriptionField id="team-player-description" label="Informazioni aggiuntive" value={drafts.squadraCercaGiocatore.descrizione_aggiuntiva} onChange={(value) => updateDraft("squadraCercaGiocatore", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Indica requisiti, impegno richiesto e informazioni utili..." />
+						<DescriptionField id="team-player-description" label="Informazioni aggiuntive" value={drafts.squadraCercaGiocatore.descrizione_aggiuntiva} onChange={(value) => updateDraft("squadraCercaGiocatore", "descrizione_aggiuntiva", value)} error={errors.description} placeholder="Indica requisiti, impegno richiesto e informazioni utili..." />
 					</FieldGroup>
 				)}
 
@@ -370,7 +370,7 @@ export default function AnnouncementDetailsForm({
 							</Select>
 							{errors.staffTravel && <FieldError>{errors.staffTravel}</FieldError>}
 						</Field>
-						<DescriptionField id="staff-description" label="Informazioni aggiuntive" value={drafts.staffSportivo.descrizione_aggiuntiva} onChange={(value) => updateDraft("staffSportivo", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Descrivi l’opportunità professionale che cerchi..." />
+						<DescriptionField id="staff-description" label="Informazioni aggiuntive" value={drafts.staffSportivo.descrizione_aggiuntiva} onChange={(value) => updateDraft("staffSportivo", "descrizione_aggiuntiva", value)} error={errors.description} placeholder="Descrivi l’opportunità professionale che cerchi..." />
 					</FieldGroup>
 				)}
 
@@ -393,7 +393,7 @@ export default function AnnouncementDetailsForm({
 								</Select>
 							</Field>
 						</div>
-						<DescriptionField id="referee-description" label="Informazioni aggiuntive" value={drafts.arbitro.descrizione_aggiuntiva} onChange={(value) => updateDraft("arbitro", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Descrivi disponibilità e tipo di incarichi cercati..." />
+						<DescriptionField id="referee-description" label="Informazioni aggiuntive" value={drafts.arbitro.descrizione_aggiuntiva} onChange={(value) => updateDraft("arbitro", "descrizione_aggiuntiva", value)} error={errors.description} placeholder="Descrivi disponibilità e tipo di incarichi cercati..." />
 					</FieldGroup>
 				)}
 
@@ -466,7 +466,7 @@ export default function AnnouncementDetailsForm({
 							</FieldGroup>
 						</div>
 						<PremiTrofeiFields premiTrofei={drafts.torneoEvento.lista_premi_trofei} setPremiTrofei={setPrizes} error={errors.tournamentPrizes ?? null} />
-						<DescriptionField id="tournament-description" label="Informazioni aggiuntive" value={drafts.torneoEvento.descrizione_aggiuntiva} onChange={(value) => updateDraft("torneoEvento", "descrizione_aggiuntiva", value)} required error={errors.description} placeholder="Programma, regolamento, date e altre informazioni utili..." />
+						<DescriptionField id="tournament-description" label="Informazioni aggiuntive" value={drafts.torneoEvento.descrizione_aggiuntiva} onChange={(value) => updateDraft("torneoEvento", "descrizione_aggiuntiva", value)} error={errors.description} placeholder="Programma, regolamento, date e altre informazioni utili..." />
 					</FieldGroup>
 				)}
 

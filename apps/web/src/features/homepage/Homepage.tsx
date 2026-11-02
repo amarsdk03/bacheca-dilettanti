@@ -1,8 +1,7 @@
-import {type CSSProperties, Suspense} from "react";
+import {Suspense} from "react";
 import Link from "next/link";
 import {
 	ArrowRightIcon,
-	BriefcaseBusinessIcon,
 	CalendarDaysIcon,
 	ClipboardListIcon, ExternalLink,
 	HandshakeIcon,
@@ -14,68 +13,17 @@ import {Button} from "@/components/ui/button";
 import {buttonVariants} from "@/components/ui/button-variants";
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Skeleton} from "@/components/ui/skeleton";
-import ComingSoonBadge from "@/features/profilo/ComingSoonBadge";
-import {isLimitedProfileType, type ProfileType,} from "@/features/profilo/profile-model";
+import {type ProfileType,} from "@/features/profilo/profile-model";
 import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import {cn} from "@/lib/utils";
 import {loadLatestPublicAnnouncements} from "@/features/annunci/server/queries";
+import LiveAnnouncementCardsContent, {LiveAnnouncementCardsSkeleton} from "./components/LiveAnnouncementCards";
 import HomepageTitle from "@/features/homepage/components/HomepageTitle";
 import HomepageNotices from "@/features/homepage/components/HomepageNotices";
 import {HOMEPAGE_NOTICES} from "@/features/homepage/homepage-notices";
-import HomepageWorkInProgressNotice from "@/features/homepage/components/HomepageWorkInProgressNotice";
 import ArticleImage from "@/features/aggiornamenti/ArticleImage";
 import {formatArticleDate, getAllArticles, getArticleCover} from "@/lib/articles";
-import {WHATSAPP_URL} from "@/const/contactConstants";
 import {SiWhatsapp} from "@icons-pack/react-simple-icons";
-
-interface HomepageCategory {
-	type: ProfileType;
-	label: string;
-	description: string;
-}
-
-const HOMEPAGE_CATEGORIES = [
-	{
-		type: "giocatore",
-		label: "Giocatori",
-		description: "Sfoglia i profili e trova i giocatori per la tua squadra.",
-	},
-	{
-		type: "squadra",
-		label: "Squadre",
-		description: "Scopri le squadre e trova nuove opportunità.",
-	},
-	{
-		type: "staff-sportivo",
-		label: "Staff sportivi",
-		description: "Sfoglia i profili e trova le figure giuste per il tuo staff.",
-	},
-	{
-		type: "arbitro",
-		label: "Arbitri",
-		description: "Sfoglia i profili disponibili per le tue partite ed eventi.",
-	},
-	{
-		type: "torneo-evento",
-		label: "Tornei / Eventi",
-		description: "Scopri gli eventi e le manifestazioni sportive vicino a te.",
-	},
-	{
-		type: "campi-impianti-sportivi",
-		label: "Campi / Strutture",
-		description: "Trova le infrastrutture ideali in base alle tue necessità.",
-	},
-	{
-		type: "creators",
-		label: "Creators",
-		description: "Scopri chi racconta il calcio dilettantistico nella tua zona.",
-	},
-	{
-		type: "servizi-consulenze",
-		label: "Servizi e professionisti",
-		description: "Scopri servizi e professionisti per il mondo del calcio.",
-	},
-] as const satisfies readonly HomepageCategory[];
 
 const PROFILE_LABELS: Record<ProfileType, string> = {
 	giocatore: "Giocatori",
@@ -118,16 +66,16 @@ const PROMOTIONS = [
 		href: "/annunci",
 		cta: "Vai alla bacheca",
 		icon: ClipboardListIcon,
-		accent: "#8e72ff",
+		accent: "#5292e8",
 	},
 	{
-		eyebrow: "Servizi e professionisti",
-		title: "Trova il servizio giusto",
-		description: "Scopri servizi e professionisti per le tue esigenze nel mondo del calcio.",
-		href: "/profili?type=servizi-consulenze",
-		cta: "Scopri di più",
-		icon: BriefcaseBusinessIcon,
-		accent: "#D4B21F",
+		eyebrow: "Assistenza Whatsapp",
+		title: "Per qualsiasi passaggio ci siamo noi",
+		description: "Scrivici per domande e/o chiarimenti sul funzionamento, ti aiutiamo noi in qualunque momento.",
+		href: "https://wa.me/393445325588",
+		cta: "Contattaci!",
+		icon: SiWhatsapp,
+		accent: "#67d41f",
 	},
 	{
 		eyebrow: "Partner",
@@ -343,58 +291,9 @@ export default function Homepage() {
 						id="categories-title"
 						className="font-home-display mb-3 text-lg font-normal uppercase tracking-[-0.01em] sm:text-xl"
 					>
-						Trova quello che cerchi:
+						Ricerche in diretta da tutta Italia
 					</h2>
-					<div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-4 xl:grid-cols-4">
-						{HOMEPAGE_CATEGORIES.map((category) => {
-							const accent = getProfileAccent(category.type);
-							const limited = isLimitedProfileType(category.type);
-
-							const card = (
-								<Card
-									className={cn(
-										"h-full gap-0 border bg-white/85 py-0 shadow-none ring-0 transition-transform duration-200 overflow-visible",
-										limited ? "bg-muted/45 opacity-65" : "group-hover:-translate-y-1",
-									)}
-									style={{borderColor: `${limited ? '#999999' : accent}45`} as CSSProperties}
-								>
-									<CardContent className="relative flex h-full min-h-42 flex-col px-4 py-4 overflow-visible">
-										{limited && <ComingSoonBadge className="absolute -right-1 -top-1 z-10 text-md font-semibold p-2.5 border-black bg-white text-black" />}
-										<ProfilePngIcon type={category.type} color={limited ? '#cccccc' : accent} className="size-9" />
-										<h3 className="font-home-display mt-3 text-base font-normal uppercase leading-tight text-black">
-											{category.label}
-										</h3>
-										<p className="mt-2 text-xs leading-5 text-neutral-700">{category.description}</p>
-										{!limited && (
-											<div className="mt-auto transition-transform group-hover:translate-x-1">
-												<span
-													className="mt-4 flex size-7 translate-y-1 items-center justify-center rounded-full text-white transition-transform group-hover:translate-x-px"
-													style={{backgroundColor: accent}}
-													aria-hidden="true"
-												>
-													<ArrowRightIcon className="size-3.5" />
-												</span>
-											</div>
-										)}
-									</CardContent>
-								</Card>
-							);
-
-							return limited ? (
-								<div key={category.type} aria-disabled="true" className="rounded-xl">
-									{card}
-								</div>
-							) : (
-								<Link
-									key={category.type}
-									href={`/profili?type=${category.type}`}
-									className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-brand-indigo/45 focus-visible:ring-offset-2"
-								>
-									{card}
-								</Link>
-							);
-						})}
-					</div>
+					<Suspense fallback={<LiveAnnouncementCardsSkeleton />}><LiveAnnouncementCardsContent /></Suspense>
 				</div>
 			</section>
 
@@ -417,7 +316,7 @@ export default function Homepage() {
 											Fatti conoscere
 										</h2>
 										<p className="mt-3 text-sm leading-5 text-neutral-700">
-											Crea il tuo profilo e presenta esperienza, ruolo e percorso calcistico.
+											Crea il tuo profilo su Bacheca e pubblica la tua ricerca. Richiede meno di 2 minuti.
 										</p>
 									</div>
 									<Link

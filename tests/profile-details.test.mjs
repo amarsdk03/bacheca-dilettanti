@@ -786,7 +786,7 @@ test("all seven non-player profiles show configured badges, facts, central secti
 	};
 	const sections = {
 		squadra: ["Località", "Descrizione", "Social"],
-		"staff-sportivo": ["Località", "Descrizione", "Social"],
+		"staff-sportivo": ["Vive a", "Descrizione", "Social"],
 		arbitro: ["Località", "Descrizione", "Social"],
 		"torneo-evento": ["Località", "Presentazione", "Social"],
 		"campi-impianti-sportivi": ["Località", "Tipologia campi disponibili", "Descrizione", "Informazioni aggiuntive", "Social"],
@@ -889,6 +889,58 @@ test("public directory forwards anonymity flags while concealing real profile na
 		if (anonymousName) assert.doesNotMatch(JSON.stringify(profiles), /Private Name|Private Surname|Private Team/);
 		else assert.match(JSON.stringify(profiles), /Private Name/);
 	}
+});
+
+test("profile field adjustments filter team categories, clear incompatible tournaments and keep referee text independent", () => {
+	const handlers = new Map();
+	let videoProps;
+	const wrap = ({children}) => React.createElement("div", null, children);
+	const selectUi = Object.fromEntries(["Select", "SelectContent", "SelectGroup", "SelectLabel", "SelectTrigger", "SelectValue"].map(name => [name, wrap]));
+	selectUi.Select = function TestSelect({children, onValueChange}) {
+		const trigger = React.Children.toArray(children).find(child => child?.props?.id);
+		if (trigger) handlers.set(trigger.props.id, onValueChange);
+		return React.createElement("div", null, children);
+	};
+	selectUi.SelectItem = function Option({children}) { return React.createElement("span", null, children); };
+	const formLoader = sourceLoader({
+		"@/components/ui/select": selectUi,
+		"@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField": {__esModule: true, default: props => {if (props.idPrefix?.endsWith("-video-highlights")) videoProps = props; return null;}},
+	});
+	const Form = formLoader("apps/web/src/features/profilo/ProfileDetailsForm.tsx").default;
+	const {createProfileDrafts, createProfileLocations} = formLoader("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = formLoader("apps/web/src/features/profilo/profile-social-links.ts");
+	const drafts = createProfileDrafts();
+	const render = type => renderToStaticMarkup(React.createElement(Form, {
+		type, drafts, locations: createProfileLocations(), socialLinks: createProfileSocialLinks()[type],
+		onChange: (type, field, value) => {drafts[type][field] = value;}, onLocationsChange() {}, onSocialLinksChange() {},
+	}));
+	drafts.squadra.tipologie_sport = ["Calcio 11"];
+	drafts.squadra.categoria_attuale = "Calcio a 11 maschile::Tornei";
+	drafts.squadra.torneo_attuale_nome = "Test torneo";
+	drafts.squadra.torneo_attuale_id = 1;
+	const html = render("squadra");
+	assert.match(html, /Calcio a 11 maschile/);
+	assert.match(html, /Calcio a 11 femminile/);
+	assert.doesNotMatch(html, /Calcio a (8|7|5) /);
+	const changeSport = [...handlers].find(([id]) => id.endsWith("-tipologia"))[1];
+	changeSport("Calcio 11");
+	assert.equal(drafts.squadra.torneo_attuale_id, 1);
+	changeSport("Calcio 5");
+	assert.equal(drafts.squadra.categoria_attuale, "");
+	assert.equal(drafts.squadra.torneo_attuale_nome, "");
+	assert.equal(drafts.squadra.torneo_attuale_id, null);
+	drafts.arbitro.lista_esperienze = [{id: "referee-test", titolo: "Juniores", ente: "CSI", periodoDa: "2020", periodoA: "oggi"}];
+	const refereeHtml = render("arbitro");
+	assert.match(refereeHtml, /Categorie arbitrate/);
+	assert.match(refereeHtml, /value="Juniores"/);
+	assert.match(refereeHtml, /value="CSI"/);
+	assert.doesNotMatch(refereeHtml, /Società \/ ente|Ruolo\/i svolti/);
+	const playerHtml = render("giocatore");
+	assert.doesNotMatch(playerHtml, /richiede-caricamento-highlights|ti contatteremo noi/);
+	assert.equal(videoProps.disabled, false);
+	drafts.giocatore.highlights_privati = true;
+	render("giocatore");
+	assert.equal(videoProps.disabled, true);
 });
 
 test("profile forms group foreign and Italian regions only for residence and team headquarters", () => {
@@ -1042,7 +1094,7 @@ test("directory cards keep a single profile link, badges before the avatar, and 
 	const expectedLabels = {
 		giocatore: ["Età", "Genere", "Disponibilità", "Categoria attuale"],
 		squadra: ["Tipologie", "Categoria attuale Prima Squadra", "Località"],
-		"staff-sportivo": ["Figure", "Disponibilità", "Località"],
+		"staff-sportivo": ["Figure", "Disponibilità", "Vive a"],
 		"servizi-consulenze": ["Tipo di azienda / professione", "Disponibilità", "Località"],
 		arbitro: ["Disponibilità", "Località"],
 		creators: ["Contenuti", "Località"],

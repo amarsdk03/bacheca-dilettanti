@@ -1,10 +1,24 @@
 # 14 — Home, KPI e azioni rapide
 
-**Stato:** Da terminare (sole verifiche integrate/browser; implementazione verificata)  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, medium  
 **Dipendenze:** Implementazione dello step 13 verificata; aggregazioni e lista audit disponibili. Prove integrate rinviate al gate 16.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -29,7 +43,7 @@ nessuna. Non applicare SQL al progetto reale per proseguire lo sviluppo.**
 Per il futuro ambiente isolato restano necessari i prerequisiti fino a 13,
 secondo il [runbook dati Home](13-home-dati.md).
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 ### Risultato implementato
 
@@ -139,6 +153,6 @@ in corso/blocchi tardivi, navigazione interrotta e ritorno focus nel Registro.
 Misurare guardia SSR e due RPC funzionali costanti, senza duplicazioni iniziali,
 N+1, polling o richieste grafici.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 [15 — Grafici Home](15-home-grafici.md), **6.1 Sol, medium**.

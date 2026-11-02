@@ -17,15 +17,19 @@ import {
 } from "@/features/annunci/announcement-model";
 import {loadRelatedPublicAnnouncements} from "@/features/annunci/server/queries";
 import {type AnnouncementPreviewData, formatPreviewStatus} from "@/features/pubblica-annuncio/announcement-preview";
+import {buildAnnouncementSummarySections, summaryAnnouncementTitle} from "@/features/annunci/announcement-summary";
+import {projectAnnouncementSummaryProfile} from "@/features/annunci/announcement-summary-profile";
+import {currentPlayerCareer} from "@/features/profilo/current-team";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import {experienceTeamReferences} from "@/features/profilo/team-profile";
 import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
+import {parseRegionalPublication, type RegionalAnnouncementReference} from "../regional-publication";
 
 
 
 export type PublishConfirmationResult =
-	| {status: "ok"; preview: AnnouncementPreviewData; suggestions: AnnouncementDirectoryItem[]; awaitingPayment: boolean; isListed: boolean}
+	| {status: "ok"; preview: AnnouncementPreviewData; suggestions: AnnouncementDirectoryItem[]; awaitingPayment: boolean; isListed: boolean; publicationId?: string; regionalAnnouncements?: RegionalAnnouncementReference[]}
 	| {status: "not-found"}
 	| {status: "error"};
 
@@ -59,39 +63,56 @@ const DETAIL_TABLE_BY_TYPE: Record<ActiveAnnouncementType, string> = {
 	annuncio_creators: "annuncio_creator",
 };
 
-async function loadAuthorName(profileId: string, type: ActiveAnnouncementType) {
+async function loadAuthorSummary(profileId: string, type: ActiveAnnouncementType) {
 	const admin = createAdminClient();
 	const {data, error} = await admin
 		.from("profilo")
 		.select(`
 			uuid,
-			profilo_giocatore(nominativo_anonimo, nome, cognome),
-			profilo_squadra(nominativo_anonimo, nome_societa),
-			profilo_staff_sportivo(nominativo_anonimo, nome, cognome),
-			profilo_servizi_consulenze(nome),
-			profilo_arbitro(nominativo_anonimo, nome, cognome),
-			profilo_torneo_evento(nome_organizzazione),
-			profilo_campi_impianti(nome_organizzazione)
+			uuid_utente,
+			profilo_giocatore(id, nascosto, nominativo_anonimo, nome, cognome, anno_nascita, tipologie_sport, ruoli_sport, disponibilita, categoria_attuale, squadra_attuale_nome, squadra_attuale_profilo_id, squadra_attuale_id, squadra_attuale_torneo, squadra_attuale_dal, storico_carriera),
+			profilo_squadra(id, nascosto, nominativo_anonimo, nome_societa, tipologie_sport, categoria_attuale, torneo_attuale_nome),
+			profilo_staff_sportivo(id, nascosto, nominativo_anonimo, nome, cognome, tipologie_sport, figure_professionali),
+			profilo_servizi_consulenze(id, nascosto, nome, specializzazioni, sede_professionista, disponibilita),
+			profilo_arbitro(id, nascosto, nominativo_anonimo, nome, cognome, tipologie_sport),
+			profilo_torneo_evento(id, nascosto, nome_organizzazione, tipologie_sport),
+			profilo_campi_impianti(id, nascosto, nome_organizzazione, tipologie_sport),
+			profilo_creator(id, nascosto, nome_creator, tipologia_contenuti),
+			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta)
 		`)
+		.eq("nascosto", false)
 		.eq("uuid", profileId)
 		.maybeSingle();
 	if (error || !data) return null;
 	const row = data as unknown as Record<string, unknown>;
 	const profileType = announcementOption(type).profileType;
-	const child = firstRecord(row[
+	const child = records(row[
 		profileType === "giocatore" ? "profilo_giocatore"
 			: profileType === "squadra" ? "profilo_squadra"
 				: profileType === "staff-sportivo" ? "profilo_staff_sportivo"
 					: profileType === "servizi-consulenze" ? "profilo_servizi_consulenze"
 					: profileType === "arbitro" ? "profilo_arbitro"
 						: profileType === "torneo-evento" ? "profilo_torneo_evento"
-							: "profilo_campi_impianti"
-	]);
+							: profileType === "creators" ? "profilo_creator" : "profilo_campi_impianti"
+	]).find(item => item.nascosto === false);
 	if (!child) return null;
 	const fullName = profileType === "servizi-consulenze" ? cleanText(child.nome) : [cleanText(child.nome), cleanText(child.cognome)].filter(Boolean).join(" ");
-	return publicProfileName(profileType, child.nominativo_anonimo, cleanText(child.nome_societa)
+	const name = publicProfileName(profileType, child.nominativo_anonimo, cleanText(child.nome_creator) ?? cleanText(child.nome_societa)
 		?? cleanText(child.nome_organizzazione)
 		?? (fullName || null));
+	const rawCareer = profileType === "giocatore" ? currentPlayerCareer(child) : [];
+	let teams = new Map();
+	try {
+		teams = new Map((await loadPublicTeamProfiles(admin, experienceTeamReferences(rawCareer, "titolo").map(team => team.profileId))).map(team => [team.profileId, team]));
+	} catch (error) {
+		console.error("[publish-confirmation] Profile career lookup failed", {cause: error instanceof Error ? error.name : "unknown"});
+	}
+	const career = publicTeamExperienceNames(rawCareer, teams, "titolo");
+	const locations = records(row.localita_profilo).filter(item => item.sottoprofilo === profileType && (item.id_sottoprofilo === null || item.id_sottoprofilo === child.id)).flatMap(item => {
+		const region = cleanText(item.regione);
+		return region ? [{region, city: cleanText(item.citta)}] : [];
+	});
+	return {name, registered: row.uuid_utente !== null, profile: projectAnnouncementSummaryProfile(profileType, child, locations, Array.isArray(career) ? career : [])};
 }
 
 export async function loadPublishConfirmation(id: string): Promise<PublishConfirmationResult> {
@@ -103,6 +124,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			.from("annuncio")
 			.select(`
 				uuid,
+				gruppo_pubblicazione,
 				titolo_annuncio,
 				autore_annuncio,
 				tipologia_annuncio,
@@ -122,7 +144,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 				annuncio_servizi_consulenze(figura_professionale, specializzazione, presentazione_servizi, tipologie_sport, descrizione_aggiuntiva),
 				annuncio_creator(titolo_post, descrizione_post),
 				localita_annuncio(regione, citta),
-				contatto_annuncio(tipo, valore),
+				contatto_annuncio(tipo, valore, referente),
 				link_social_annuncio(piattaforma, sublink),
 				media_annuncio(formato_media, link_media)
 			`)
@@ -143,25 +165,23 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			if (!region) return [];
 			return [{region, city: cleanText(location.citta)}];
 		});
-		let content = type === "annuncio_creators" ? {
-			title: cleanText(row.titolo_annuncio) ?? "Annuncio creator",
-			description: cleanText(detail.descrizione_post),
-			locations,
-			facts: [{kind: "location" as const, label: "Zone di ricerca", value: locations.map(({city, region}) => [city, region].filter(Boolean).join(", ")).join(", ") || "Località non specificata"}],
-			fields: [],
-			playerRoles: null,
-		} : announcementContent(type, detail, locations, true, typeof row.titolo_annuncio === "string" ? row.titolo_annuncio : null);
-		const contacts = records(row.contatto_annuncio).flatMap((contact) => cleanText(contact.valore) ?? []);
+		let content = announcementContent(type, detail, locations, true, cleanText(row.titolo_annuncio));
+		const contacts = records(row.contatto_annuncio).flatMap((contact) => {
+			const value = cleanText(contact.valore), role = cleanText(contact.referente);
+			return value ? [role ? `${value} (${role})` : value] : [];
+		});
 		const links = records(row.link_social_annuncio);
 		const genericLink = cleanText(links.find(({piattaforma}) => piattaforma === "link_annuncio")?.sublink);
 		const media = records(row.media_annuncio).find(({formato_media}) => typeof formato_media === "string" && formato_media.startsWith("image/"));
 		const imagePath = cleanText(media?.link_media);
 		const imageUrl = imagePath ? `/api/metadata/annuncio-immagine?id=${encodeURIComponent(id)}` : null;
 
-		const author = type === "annuncio_creators"
-			? cleanText(firstRecord((await createAdminClient().from("profilo_creator").select("nome_creator").eq("uuid_profilo", String(data.autore_annuncio)).maybeSingle()).data)?.nome_creator) ?? option.label
-			: await loadAuthorName(String(data.autore_annuncio), type) ?? option.label;
-		let teamReferences = experienceTeamReferences(detail.lista_esperienze, type === "annuncio_staff_sportivo" ? "titolo" : "ente");
+		const authorSummary = await loadAuthorSummary(String(data.autore_annuncio), type).catch(error => {
+			console.error("[publish-confirmation] Author summary lookup failed", {cause: error instanceof Error ? error.name : "unknown"});
+			return null;
+		});
+		const author = authorSummary?.name ?? option.label;
+		let teamReferences = experienceTeamReferences(type === "annuncio_arbitro" ? [] : detail.lista_esperienze, type === "annuncio_staff_sportivo" ? "titolo" : "ente");
 		if (type === "annuncio_giocatore") {
 			const {data: player, error: playerError} = await createAdminClient()
 				.from("profilo_giocatore")
@@ -177,7 +197,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
   const savedExperiences = detail.lista_esperienze;
   const savedQualifications = detail.qualifiche_licenze;
   if (type === "annuncio_staff_sportivo" || type === "annuncio_arbitro") {
-   detail.lista_esperienze = publicTeamExperienceNames(savedExperiences, new Map(), type === "annuncio_staff_sportivo" ? "titolo" : "ente");
+   if (type !== "annuncio_arbitro") detail.lista_esperienze = publicTeamExperienceNames(savedExperiences, new Map(), type === "annuncio_staff_sportivo" ? "titolo" : "ente");
    detail.qualifiche_licenze = publicTeamExperienceNames(savedQualifications, new Map(), "ente");
    content = announcementContent(type, detail, locations, true, cleanText(row.titolo_annuncio));
   }
@@ -190,7 +210,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			const teamsById = new Map(resolvedTeams.map((team) => [team.profileId, team]));
 			linkedTeams = teamReferences.map((reference) => teamsById.get(reference.profileId) ?? {profileId: reference.profileId, name: "Squadra"});
    if (type === "annuncio_staff_sportivo" || type === "annuncio_arbitro") {
-    detail.lista_esperienze = publicTeamExperienceNames(savedExperiences, teamsById, type === "annuncio_staff_sportivo" ? "titolo" : "ente");
+    if (type !== "annuncio_arbitro") detail.lista_esperienze = publicTeamExperienceNames(savedExperiences, teamsById, type === "annuncio_staff_sportivo" ? "titolo" : "ente");
     detail.qualifiche_licenze = publicTeamExperienceNames(savedQualifications, teamsById, "ente");
     content = announcementContent(type, detail, locations, true, cleanText(row.titolo_annuncio));
    }
@@ -201,7 +221,7 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			id,
 			announcementType: type,
 			profileType: option.profileType,
-			title: content.title,
+			title: summaryAnnouncementTitle(type, row.titolo_annuncio, content.title, authorSummary?.registered ? authorSummary.name : null),
 			typeLabel: announcementDisplayLabel(type),
 			author,
 			description: content.description,
@@ -216,8 +236,9 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 			status: formatPreviewStatus(cleanText(data.stato_annuncio)),
 			statusInfo: cleanText(data.info_stato_annuncio),
 			linkedTeams,
+			summarySections: buildAnnouncementSummarySections({type, ...content, authorProfile: authorSummary?.profile ?? null, raw: detail}),
 		};
-		const suggestions = type === "annuncio_creators" ? [] : await loadRelatedPublicAnnouncements(id, type, locations.map(({region}) => region));
+		const suggestions = type === "annuncio_creators" ? [] : await loadRelatedPublicAnnouncements(id, type, locations.map(({region}) => region), cleanText(row.gruppo_pubblicazione));
 		return {
 			status: "ok",
 			preview,
@@ -229,4 +250,19 @@ export async function loadPublishConfirmation(id: string): Promise<PublishConfir
 		console.error("[publish-confirmation] Unexpected query failure", {cause: error instanceof Error ? error.name : "unknown"});
 		return {status: "error"};
 	}
+}
+
+export async function loadRegionalPublishConfirmation(publicationId: string, selectedId?: string): Promise<PublishConfirmationResult> {
+	if (!isValidAnnouncementId(publicationId)) return {status: "not-found"};
+	try {
+		const client = await createClient();
+		const {data, error} = await client.rpc("get_owned_regional_publication_v1", {p_id: publicationId});
+		if (error) return {status: "error"};
+		const publication = parseRegionalPublication(data);
+		if (!publication) return {status: "not-found"};
+		const id = selectedId || publication.announcementId;
+		if (!publication.announcements.some(item => item.id === id)) return {status: "not-found"};
+		const result = await loadPublishConfirmation(id);
+		return result.status === "ok" ? {...result, publicationId, regionalAnnouncements: publication.announcements} : result;
+	} catch {return {status: "error"};}
 }

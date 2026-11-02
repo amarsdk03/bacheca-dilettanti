@@ -1,6 +1,6 @@
 import "server-only";
 import {PROFESSIONAL_AVAILABILITY_OPTIONS} from "@/features/profilo/professional-availability";
-import {isTeamCategory} from "@/features/profilo/team-category-catalog";
+import {isTeamCategory, isTeamCategoryForSport} from "@/features/profilo/team-category-catalog";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import {allowsForeignProfileRegion, FOREIGN_PROFILE_REGION} from "@/features/profilo/profile-location-regions";
@@ -213,7 +213,7 @@ function normalizeSocialLinks(value: unknown, profileType: ProfileType): Profile
 	) as ProfileSocialLinks;
 }
 
-function experiences(value: unknown, profileType: ProfileType): Json[] {
+function experiences(value: unknown, profileType: ProfileType, freeText = false): Json[] {
 	if (value === null || value === undefined) return [];
 	if (!Array.isArray(value) || value.length > MAX_EXPERIENCES) {
 		fail("Lo storico delle esperienze non è valido.", 3, profileType);
@@ -254,8 +254,8 @@ function experiences(value: unknown, profileType: ProfileType): Json[] {
 			periodoA: periodoDa || profileType === "giocatore" ? periodoA ?? "" : "",
 			descrizione: textValue(entry.descrizione, MAX_LONG_TEXT, profileType) ?? "",
 			stato: stato ?? "non-specificare",
-			squadraProfiloId: squadraProfiloId?.toLocaleLowerCase("en-US") ?? null,
-			...(entry.squadraIstanzaId == null ? {} : {squadraIstanzaId: subprofileInstance(entry.squadraIstanzaId, profileType)}),
+			squadraProfiloId: freeText ? null : squadraProfiloId?.toLocaleLowerCase("en-US") ?? null,
+			...(freeText ? {squadraIstanzaId: null} : entry.squadraIstanzaId == null ? {} : {squadraIstanzaId: subprofileInstance(entry.squadraIstanzaId, profileType)}),
 		};
 	});
 }
@@ -358,7 +358,7 @@ function normalizeDraft(
 		const nationality = enumText(value.nazionalita, NATIONALITIES, type);
 		const highlightsUploadRequested = value.richiede_caricamento_highlights ?? false;
 		const privateHighlights = value.highlights_privati ?? false;
-		if (typeof privateHighlights !== "boolean" || typeof highlightsUploadRequested !== "boolean" || (privateHighlights && highlightsUploadRequested)) {
+		if (typeof privateHighlights !== "boolean" || typeof highlightsUploadRequested !== "boolean" || highlightsUploadRequested) {
 			fail("La richiesta relativa agli highlights non è valida.", 3, type);
 		}
 		return {
@@ -398,7 +398,7 @@ function normalizeDraft(
 		const sports = ordinaTipologieCalcio(stringList(value.tipologie_sport, type));
 		if (sports.length !== 1) fail("Seleziona una sola tipologia di calcio.", 3, type);
 		const category = textValue(value.categoria_attuale, 120, type);
-		if (!isTeamCategory(category)) fail("Seleziona la categoria attuale della Prima Squadra.", 3, type);
+		if (!isTeamCategoryForSport(category, sports[0])) fail("Seleziona la categoria attuale della Prima Squadra.", 3, type);
 		return {
 			nominativo_anonimo: anonymousName(value.nominativo_anonimo, type),
 			categoria_attuale: category,
@@ -451,7 +451,7 @@ function normalizeDraft(
 			giorno_nascita: normalizedBirthDate.day,
 			mese_nascita: normalizedBirthDate.month,
 			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
-			lista_esperienze: experiences(value.lista_esperienze, type),
+			lista_esperienze: experiences(value.lista_esperienze, type, true),
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
 			qualifiche_licenze: experiences(value.qualifiche_licenze, type),
 			sport_principale: baseSport(value.sport_principale, type),

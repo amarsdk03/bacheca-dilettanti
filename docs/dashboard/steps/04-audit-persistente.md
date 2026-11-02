@@ -1,10 +1,24 @@
 # 04 — Audit persistente e conservazione
 
-**Stato:** Da terminare — 04A e 04B conclusi; verifiche integrate e attivazione Cron pendenti  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, high  
 **Dipendenze di sviluppo:** 03A implementato e verificato con PGlite. Prove Supabase 03B rinviate per scelta esplicita dell'utente, obbligatorie prima del rilascio.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -30,7 +44,7 @@ Testare successo atomico, errore della scrittura audit, rollback, evento di fall
 
 Previste migrazioni per archivio, permessi, indici, procedure e pianificazione della retention. Documentare disponibilità del servizio di scheduling, applicazione locale/staging e successiva attivazione in produzione. Registrare il nome effettivo del job e come verificarne l'esecuzione.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 Suddivisione approvata:
 
@@ -58,6 +72,6 @@ lettura/modifica degli env locali. Contratti per cookie e Auth collegati poi
 nello step 05 e verificati con risposte sintetiche; integrazione Supabase reale
 ancora pendente. Runbook e verifiche residue nelle schede 04B e 05.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 [05 — Accesso e sessione](05-accesso-sessione.md), **6.1 Sol, high**.

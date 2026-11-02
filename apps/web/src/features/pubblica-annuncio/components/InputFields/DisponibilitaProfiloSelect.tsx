@@ -22,7 +22,7 @@ const defaultItems = DISPONIBILITA_PROFILO_OPTIONS.map((option) => ({
 }));
 const playerItems = [
 	{value: "svincolato", label: "Svincolato"},
-	{value: "sotto-contratto", label: "Al momento sotto contratto"},
+	{value: "sotto-contratto", label: "Tesserato"},
 ];
 
 export default function DisponibilitaProfiloSelect({

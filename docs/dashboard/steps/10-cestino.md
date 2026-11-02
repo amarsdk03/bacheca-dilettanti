@@ -1,10 +1,24 @@
 # 10 — Cestino recuperabile
 
-**Stato:** Da terminare — implementazione verificata localmente; rilascio e prove integrate nel gate 16  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, high  
 **Dipendenze:** Implementazione 09 verificata; prove integrate rinviate al gate 16.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -28,7 +42,7 @@ Provare cestino/ripristino, annuncio già nascosto/privato, moderazione pendente
 
 Migrazione additiva per lo stato di eliminazione e aggiornamenti dei consumatori. Coordinare webapp e database: non abilitare l'azione in un ambiente finché tutti i percorsi pubblici rispettano il cestino. Documentare compatibilità con deploy non simultanei e rollback che non riesponga record eliminati. Collegare migrazioni e inventario dei consumatori dal documento.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 ### Integrazione esterna M07 — 26 ottobre 2026
 
@@ -207,7 +221,7 @@ Browser: focus/Annulla/Escape, dialog sopra Sheet, mobile e filtri/cronologia.
 Questi residui mantengono lo step **Da terminare**, senza bloccare lo sviluppo
 dello step 11 con le fixture disponibili.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 Avviare su nuovo prompt [M07C](../integrazione/07-cestino.md), applicazione unica e
 verifiche dopo l'installazione, **6.1 Sol, high**. M07A/M07B Conclusi.

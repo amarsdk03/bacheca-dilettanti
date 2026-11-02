@@ -6,6 +6,8 @@ Gli importi dell’annuncio mostrano il simbolo € e hanno incrementi di 5 €,
 
 Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium sono salvati subito, ma diventano pubblici soltanto con un piano a pagamento. I contatti del singolo annuncio sono obbligatori per gli utenti non registrati e facoltativi per quelli registrati; per questi ultimi, l’email dell’account viene proposta come valore iniziale. I recapiti dei profili Servizi e consulenze e Creators sono separati da quelli dell’annuncio. Le località dell'annuncio sono indipendenti da quelle del profilo. Nei profili personali, la prima località storica appare nel selettore singolo; le altre restano salvate fino a una modifica esplicita della località. Tutti i profili possono inoltre indicare un sito web, mostrato per primo e a larghezza intera nell’editor dei collegamenti social.
 
+Per questo aggiornamento applicare la migrazione `20261101120000_profile_and_announcement_field_adjustments.sql` prima del deploy Web. La migrazione disattiva le richieste pregresse di assistenza video e svuota i testi dei due campi riconvertiti nelle esperienze Arbitro, anche nelle copie degli annunci, preservando stagioni e qualifiche. Gli annunci Giocatore senza categorie richiedono una selezione al successivo salvataggio/pubblicazione.
+
 ## Giocatore
 
 | Sezione | Campo | Tipo / dato | Obbligatorio |
@@ -23,10 +25,10 @@ Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium s
 | Profilo | Altezza, peso, piede | Testi e selezione | No |
 | Profilo | Presentazione | Testo lungo | No |
 | Profilo | Storico carriera | Elenco di esperienze | No |
-| Profilo | Video highlights | URL del profilo Giocatore | No |
+| Profilo | Video highlights | URL del profilo Giocatore o video privati; assistenza al caricamento sospesa e richieste pregresse disattivate | No |
 | Profilo | In che zona vivi? | Regione singola obbligatoria; città/comune facoltativa | Sì, regione |
-| Annuncio | Categorie ricercate | Selezione multipla, incluso “Qualsiasi” come scelta esclusiva | No |
-| Annuncio | Informazioni aggiuntive | Testo lungo | Sì |
+| Annuncio | Categorie ricercate | Selezione multipla, incluso “Qualsiasi” come scelta esclusiva | Sì |
+| Annuncio | Informazioni aggiuntive | Testo lungo | No |
 | Annuncio | Link annuncio | URL HTTP/HTTPS Premium | No |
 | Annuncio | Immagine | PNG, JPEG o WebP, massimo 5 MB, Premium | No |
 | Annuncio | Contatti pubblici per questo annuncio | Email e/o telefono | Sì, almeno uno |
@@ -38,16 +40,16 @@ Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium s
 | --- | --- | --- | --- |
 | Profilo | Nome società | Testo | Sì |
 | Profilo | Tipologia di calcio | Dropdown singolo | Sì |
-| Profilo | Categoria attuale Prima Squadra | Selezione singola raggruppata, catalogo Prima Squadra | Sì |
+| Profilo | Categoria attuale Prima Squadra | Selezione singola raggruppata, catalogo Prima Squadra filtrato per tipologia calcio, maschile e femminile | Sì |
 | Profilo | Presentazione | Testo lungo | No |
-| Profilo | Dove ha sede la società? | Regione singola obbligatoria; città/comune facoltativa, riferimento pubblico della località | Sì, regione |
+| Profilo | Dove ha sede la squadra? | Regione singola obbligatoria; città/comune facoltativa, riferimento pubblico della località | Sì, regione |
 | Tipo annuncio | Ricerca | Ricerca giocatori, staff, partita amichevole o sponsor | Sì |
 | Ricerca giocatori | Gruppo squadra | Testo libero, massimo 160 caratteri | No |
 | Ricerca giocatori | Ruolo/i cercati | Selezione multipla | Sì |
 | Ricerca giocatori | Ruoli specifici | Selezione multipla raggruppata per ruolo principale | No |
 | Ricerca giocatori | Annate Dal / Al | Due dropdown: Dal parte da Qualsiasi; Al è obbligatorio se Dal è valorizzato e non può precederlo | No, se Dal è Qualsiasi |
 | Ricerca giocatori | Stagione | Testo | No |
-| Ricerca giocatori | Informazioni aggiuntive | Testo lungo | Sì |
+| Ricerca giocatori | Informazioni aggiuntive | Testo lungo | No |
 | Ricerca staff sportivo | Figure ricercate | Selezione multipla dal catalogo professionale | Sì, almeno una |
 | Ricerca staff sportivo | Gruppo squadra e compenso mensile | Testo e importo in €, incrementi di 5; centesimi ammessi | No |
 | Ricerca staff sportivo | Stagione | Testo | No |
@@ -80,7 +82,7 @@ Le tabelle descrivono i dati raccolti in `/pubblica-annuncio`. I campi Premium s
 | Annuncio | Categoria/Settore cercato | Selezione multipla dal Catalogo Staff: selezione generale e calcio a 11, 8, 7, 5 maschile/femminile; “Qualsiasi” generale esclusiva | No |
 | Annuncio | Disponibilità agli spostamenti | Sì, No o Da valutare | No |
 | Annuncio | Lista esperienze e Qualifiche / Licenze | Snapshot dei dati del profilo al momento della pubblicazione, senza editor separati | No |
-| Annuncio | Informazioni aggiuntive | Testo lungo | Sì |
+| Annuncio | Informazioni aggiuntive | Testo lungo | No |
 | Annuncio | Link annuncio e immagine | URL e file Premium | No |
 | Annuncio | Contatti pubblici per questo annuncio | Email e/o telefono | Sì, almeno uno |
 | Annuncio | Zone di ricerca | Regione obbligatoria; città/comune facoltativa | Sì, regione |
@@ -112,12 +114,12 @@ La scheda pubblica mostra la sezione «Contenuti / promozioni». I vecchi campi 
 | Profilo | Nome | Testo | Sì |
 | Profilo | Cognome e data di nascita | Testo e data (1900–anno corrente) | No |
 | Profilo | Disponibilità e presentazione | Disponibile subito o non specificata; testo lungo | No |
-| Profilo | Lista esperienze | Elenco di esperienze | No |
+| Profilo | Lista esperienze | Stagioni, Categorie arbitrate ed Ente; entrambi i campi sono testi liberi senza collegamenti a squadre | No |
 | Profilo | Qualifiche / licenze | Elenco con ente / società / organizzazione testuale e stato | No, ma Stato sì se aggiunta una voce |
 | Profilo | In che zona vivi? | Regione singola obbligatoria; città/comune facoltativa | Sì, regione |
 | Annuncio | Tipologie di calcio | Selezione multipla | Sì |
 | Annuncio | Automobile e spostamenti | Selezioni | No |
-| Annuncio | Informazioni aggiuntive | Testo lungo | Sì |
+| Annuncio | Informazioni aggiuntive | Testo lungo | No |
 | Annuncio | Link annuncio e immagine | URL e file Premium | No |
 | Annuncio | Contatti pubblici per questo annuncio | Email e/o telefono | Sì, almeno uno |
 | Annuncio | Zone di ricerca | Regione obbligatoria; città/comune facoltativa | Sì, regione |
@@ -155,7 +157,7 @@ La sede principale storica resta nel database, ma non viene più richiesta o mos
 | Annuncio | Numero squadre e costo | Numero e importo | No |
 | Annuncio | Modalità di partecipazione | Giocatore o squadra | No |
 | Annuncio | Premi e trofei | Elenco | No |
-| Annuncio | Informazioni aggiuntive | Testo lungo | Sì |
+| Annuncio | Informazioni aggiuntive | Testo lungo | No |
 | Annuncio | Link annuncio e immagine | URL e file Premium | No |
 | Annuncio | Contatti pubblici per questo annuncio | Email e/o telefono | Sì, almeno uno |
 | Annuncio | Zona/e di svolgimento per questo torneo | Regione obbligatoria; città/comune facoltativa | Sì, regione |

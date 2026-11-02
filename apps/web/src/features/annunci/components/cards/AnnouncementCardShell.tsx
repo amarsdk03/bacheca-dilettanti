@@ -80,6 +80,7 @@ export default function AnnouncementCardShell({
 						{announcement.isPriority && <SparklesIcon data-icon="inline-start" aria-hidden="true" />}
 						{humanizeValue(announcement.level)}
 					</Badge>}
+					{announcement.showRegionBadge && announcement.region && <Badge variant="outline" className="ml-auto max-w-[55%] text-right whitespace-normal wrap-anywhere" aria-label={`Regione: ${announcement.region}`}>{announcement.region}</Badge>}
 				</div>
 				<div className="flex min-w-0 flex-col gap-2">
 					<CardTitle>

@@ -72,6 +72,7 @@ test("profile payloads accept instance references, reject invalid IDs and retain
 	assert.equal(parse("giocatore").draft.squadra_attuale_nome, null);
 	Object.assign(drafts.squadra, {nome_societa: "ASD", tipologie_sport: ["Calcio 7"], categoria_attuale: "Calcio a 7 femminile::Tornei", torneo_attuale_nome: "Coppa", torneo_attuale_id: 30});
 	assert.equal(parse("squadra").draft.torneo_attuale_id, 30);
+	drafts.squadra.tipologie_sport = ["Calcio 11"];
 	drafts.squadra.categoria_attuale = TEAM_CATEGORY_OPTIONS[0].value;
 	assert.equal(parse("squadra").draft.torneo_attuale_id, null);
 	assert.equal(parse("squadra").draft.torneo_attuale_nome, null);

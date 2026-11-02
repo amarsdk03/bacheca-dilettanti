@@ -7,7 +7,7 @@ import {
 	ArrowRightIcon,
 	FlameIcon,
 	type LucideIcon,
-	MegaphoneIcon,
+	MegaphoneIcon, NewspaperIcon,
 	TriangleAlertIcon
 } from "lucide-react";
 
@@ -23,7 +23,7 @@ const NOTICE_APPEARANCE: Record<HomepageNotice["tipo"], {
 	icon: LucideIcon;
 	className: string;
 }> = {
-	notizia: {label: "Notizia", icon: AlarmClockPlusIcon, className: "homepage-notices-news"},
+	notizia: {label: "Notizia", icon: NewspaperIcon, className: "homepage-notices-news"},
 	evento: {label: "Evento", icon: MegaphoneIcon, className: "homepage-notices-event"},
 	problema: {label: "Problema", icon: TriangleAlertIcon, className: "homepage-notices-problem"},
 };

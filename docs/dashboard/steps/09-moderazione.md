@@ -1,6 +1,7 @@
 # 09 — Moderazione e visibilità
 
-**Stato:** Da terminare — implementazione verificata; prove integrate/browser e concorrenza reale rinviate al gate 16  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, high  
 **Dipendenze:** Parte implementativa 08 verificata; audit atomico e contratti di lettura disponibili. Prove integrate rinviate nel gate 16 secondo il master.
 
@@ -28,6 +29,19 @@ conservate separatamente; nessuna operazione manuale residua M06. Non ripetere
 M06, M06A o M05. Lo step 09 complessivo resta Da terminare per i gate integrati.
 SQL remoto non eseguito dall'agente; prove gateway e
 concorrenza reale restano distinte. M07 non avviato.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -59,7 +73,7 @@ Provare transizioni consentite/vietate, pagamento pendente, motivazione assente,
 
 Procedure di moderazione e, se necessario, supporto alla concorrenza con migrazioni compatibili con la webapp esistente. Documentare effetti dei trigger, ordine di applicazione e recupero; prove soltanto su dati sintetici.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 Implementato l'intero step in un solo intervento, come richiesto. Motivazioni
 visibili anche all'autore; dettaglio incompleto/legacy consente soltanto le
@@ -250,6 +264,6 @@ Browser: focus, Escape/Annulla, menu e AlertDialog sopra Sheet, cambio URL duran
 l'invio, mobile, motivazione autore e profilo Web con flag. PGlite serializza le
 chiamate e non dimostra concorrenza reale; rendering statico non dimostra DOM/focus.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 [10 — Cestino](10-cestino.md), **6.1 Sol, high**.

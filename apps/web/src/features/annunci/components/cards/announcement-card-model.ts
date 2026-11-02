@@ -9,6 +9,7 @@ export type AnnouncementCardData<Type extends AnnouncementType = AnnouncementTyp
 	"type"
 > & {
 	type: Type;
+	showRegionBadge?: boolean;
 };
 
 function isSpecifiedFact(fact: AnnouncementFact | undefined): fact is AnnouncementFact {

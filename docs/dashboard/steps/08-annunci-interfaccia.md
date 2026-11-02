@@ -1,10 +1,24 @@
 # 08 — Tabella e anteprima Annunci
 
-**Stato:** Da terminare — implementazione verificata; prove integrate/browser rinviate al gate 16  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, medium  
 **Dipendenze di sviluppo:** 07A e 07B implementati e verificati; non basta la sola lista 07A. Le prove integrate di 07 rinviate seguono il gate 16.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -35,7 +49,7 @@ URL condivisibile con filtri, back/forward, pagine vuote, reset filtri e rispost
 
 Nessuna prevista. Eventuali dipendenze UI vanno aggiunte solo se necessarie, senza cambiare la base dei componenti esistenti.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 Implementata la parte applicativa del piano approvato, in un solo step. Disponibile
 per lo sviluppo della moderazione 09; restano obbligatorie le prove integrate
@@ -165,6 +179,6 @@ I test statici e sintetici non attestano DOM, focus, viewport o Auth/PostgREST.
 Quelle preparate in 03–07 restano destinate alle prove isolate documentate e
 al runbook di rilascio: non sono state applicate né attivate da questo step.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 [09 — Moderazione](09-moderazione.md), **6.1 Sol, high**.

@@ -24,8 +24,8 @@ import {Input} from "@/components/ui/input";
 import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
 import {toast} from "@/components/ui/toast";
 import {ExternalNavigationProvider} from "@/components/navigation/ExternalNavigation";
-import type {ProfileDrafts} from "@/features/profilo/profile-model";
-import {buildPublishPreview} from "@/features/pubblica-annuncio/announcement-preview";
+import type {ProfileDrafts, ProfileLocationDraft} from "@/features/profilo/profile-model";
+import {buildRegionalPublishPreviews} from "@/features/pubblica-annuncio/announcement-preview";
 import AnnouncementPreviewCard from "@/features/pubblica-annuncio/components/AnnouncementPreviewCard";
 import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";
@@ -41,6 +41,7 @@ interface ConfermaInvioAnnuncioProps {
 	image: File | null;
 	imagePreviewUrl: string | null;
 	profileDrafts: ProfileDrafts;
+	profileLocations: ProfileLocationDraft[];
 	authenticated: boolean;
 	registered: boolean;
 	onEditStep: (step: number) => void;
@@ -67,11 +68,13 @@ export default function ConfermaInvioAnnuncio({
 	image,
 	imagePreviewUrl,
 	profileDrafts,
+	profileLocations,
 	authenticated,
 	registered,
 	onEditStep,
 }: ConfermaInvioAnnuncioProps) {
 	const router = useRouter();
+	const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
 	const [dataConfirmed, setDataConfirmed] = useState(false);
 	const [termsAccepted, setTermsAccepted] = useState(false);
 	const [privacyAccepted, setPrivacyAccepted] = useState(false);
@@ -133,7 +136,8 @@ export default function ConfermaInvioAnnuncio({
 		: null;
 	const displayedEmailError = emailError ?? validationEmailError;
 	const displayedOtpError = otpError ?? validationOtpError;
-	const preview = buildPublishPreview(payload, profileDrafts, imagePreviewUrl, image?.name ?? null);
+	const regionalPreviews = buildRegionalPublishPreviews(payload, profileDrafts, imagePreviewUrl, image?.name ?? null, profileLocations);
+	const preview = (regionalPreviews.find(item => item.region === selectedRegion) ?? regionalPreviews[0]).preview;
 
 	useEffect(() => {
 		if (!otpRetry) return;
@@ -288,12 +292,12 @@ export default function ConfermaInvioAnnuncio({
 			const result = await publishAnnouncement(formData);
 			if (result.status === "success") {
 				toast.add({
-					title: "Annuncio inviato",
-					description: "L’annuncio è stato salvato ed è ora in revisione.",
+					title: result.announcements.length > 1 ? "Annunci inviati" : "Annuncio inviato",
+					description: result.announcements.length > 1 ? `${result.announcements.length} annunci regionali sono stati salvati.` : "L’annuncio è stato salvato.",
 					type: "success",
 					timeout: 4500,
 				});
-				router.push(`/pubblica-annuncio/conferma?id=${encodeURIComponent(result.announcementId)}`);
+				router.push(`/pubblica-annuncio/conferma?publication=${encodeURIComponent(result.publicationId)}`);
 				navigating = true;
 				router.refresh();
 				return;
@@ -323,6 +327,10 @@ export default function ConfermaInvioAnnuncio({
 		<FieldGroup spacing="sections">
 			<FieldSet>
 				<FieldLegend variant="label" className="field-legend-title mb-4">Conferma e pubblica:</FieldLegend>
+				{regionalPreviews.length > 1 && <div className="flex flex-col gap-3">
+					<p className="text-sm">Questo invio creerà <strong>{regionalPreviews.length} annunci separati</strong>, uno per regione. Puoi verificarli qui prima dell’invio.</p>
+					<div className="flex flex-wrap gap-2" role="group" aria-label="Anteprime per regione">{regionalPreviews.map(item => <Button key={item.region} type="button" variant={item.preview === preview ? "default" : "outline"} aria-pressed={item.preview === preview} onClick={() => setSelectedRegion(item.region)}>{item.region}</Button>)}</div>
+				</div>}
 				<ExternalNavigationProvider>
 					<AnnouncementPreviewCard preview={preview} />
 				</ExternalNavigationProvider>

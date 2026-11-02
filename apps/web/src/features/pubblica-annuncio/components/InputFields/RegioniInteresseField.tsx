@@ -68,6 +68,7 @@ function RegioneCittaCard({
 						id={fieldId}
 						value={bozza}
 						onChange={(event) => onBozzaChange(event.target.value)}
+						onBlur={onAddCittaComune}
 						onKeyDown={(event) => {
 							if (event.key === "Enter" || event.key === ",") {
 								event.preventDefault();

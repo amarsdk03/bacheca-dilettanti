@@ -1,11 +1,31 @@
 # Runbook — rilascio e recupero della dashboard
 
-**Preparato il:** 25 ottobre 2026 · **Aggiornato il:** 27 ottobre 2026 · **Esecuzione esterna:** installazioni e prerequisiti riscontrati fino a IN02; applicazioni MCP documentate, prove reali Auth/PostgREST ancora da eseguire.
+**Preparato il:** 25 ottobre 2026 · **Aggiornato il:** 28 ottobre 2026 · **Consegna:** sviluppo concluso; operazioni manuali separate, non eseguite.
 
 [Master](../../master_plan.md) · [Step 16](README.md) · [Scheda 16B](16b-runbook.md)
 · [Matrice delle evidenze](matrice-verifiche.md)
 
-## 1. Cosa fare adesso
+## Decisione corrente e operazioni manuali
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Il collaudo futuro dell'agente è esclusivamente locale, con
+fixture e senza collegamenti al database/deployment remoto. La
+[consegna dello sviluppo](chiusura-finale.md) è chiusa; non occorre ripetere
+le vecchie checklist o richiedere SQL per concluderla.
+
+| Operazione manuale separata | Procedura esistente e stato reale |
+| --- | --- |
+| Pubblicazione degli ultimi asset | Push e redeploy Admin dopo la consegna; favicon/manifest aggiunti non sono dichiarati già distribuiti |
+| Attivazione cestino | §8.1, soltanto dopo verifica dei prerequisiti. Ultimo gate verificato disabilitato; nessuna attivazione eseguita qui |
+| Retention audit/Cron | §8.2: attivazione con backup e prerequisiti, verifica fuso e prima esecuzione pianificata. Job non dichiarato operativo |
+| Backup aggiornato e ripristino | §3 e §9: destinazione separata, mai sopra il database condiviso. Archivio M02 leggibile verificato; ripristino completo non provato |
+
+Queste operazioni non bloccano la consegna dello sviluppo, per scelta esplicita
+dell'utente. La loro esecuzione resta soggetta ai prerequisiti documentati.
+Le sezioni seguenti conservano procedure e cronologia: non autorizzano
+automaticamente mutazioni né attestano azioni mai eseguite.
+
+## 1. Applicazioni e verifiche precedenti (cronologia)
 
 **M02 — foundation audit Concluso nel registro operativo**, sul progetto identificato in
 IN01. La [guida M02](../../integrazione/02-audit.md) contiene controllo prima/dopo,
@@ -145,7 +165,7 @@ un `.env.local` o dalla selezione rimasta aperta nel browser.
 | Origine API e corrispondenza con Web/Admin nello stesso ambiente | Da confermare; non registrare chiavi |
 | Progetti Vercel Web/Admin, team e ambienti interessati | Da confermare |
 | Host Web previsto `https://www.bachecadilettanti.it` | Riferimento architetturale, configurazione effettiva non verificata qui |
-| Host Admin previsto `https://dashboard-bacheca.vercel.app` | Disponibilità/assegnazione da confermare; non dichiarato già distribuito |
+| Host Admin `https://dashboard-bacheca.vercel.app` | Deployment confermato dall'utente il 28 ottobre. HTTPS/HSTS, modulo di login, noindex/private/no-store e API Home anonima 403 verificati alle 18:01 UTC; collaudo autenticato remoto ancora aperto |
 | Revisione sorgente, lockfile e artefatti compatibili delle due app | Da fissare prima dell'intervento; nessun commit/deploy prodotto da 16B |
 | Operatore SQL autorizzato, responsabile app e finestra di intervento | Da confermare |
 | Backup, copertura Storage, prova di recupero e punto di ritorno applicativo | Da confermare, secondo §3 |
@@ -486,13 +506,12 @@ Per la baseline corrente usare il
 [verificatore IN02 READ ONLY](../../../../supabase/scripts/dashboard_admin_verify_in02.sql):
 il vincolo differisce intenzionalmente dal checkpoint M10.
 
-**Chiusura finale — decisione del 28 ottobre:** dopo IN03, una sola
-[task dello step 16](chiusura-finale.md) comprende tutte le verifiche residue,
-le correzioni e la decisione di rilascio. Nessun nuovo «procedi» per ciascuna
-voce di questo runbook. Destinazioni/accesso Vercel e connessione SQL sono
-prerequisiti ancora da rendere disponibili o confermare; sono dichiarati
-prima dell'avvio. Attivazioni dipendenti dal deploy e prima esecuzione Cron
-restano operazioni del rilascio, senza attestarne preventivamente il successo.
+**Chiusura finale — Conclusa il 28 ottobre:** la
+[consegna dello step 16](chiusura-finale.md) chiude sviluppo e collaudo locale.
+L'utente conferma ridistribuzione Web/Admin e accetta le ultime verifiche live.
+Non sono richiesti altri test remoti o accessi SQL per questa consegna.
+Attivazioni cestino/Cron e prova completa di ripristino restano operazioni
+manuali separate, senza attestarne preventivamente il successo.
 
 **IN03 — accettazione reale Auth/PostgREST e Web/Admin, Concluso:**
 30 controlli riusciti: endpoint/dinieghi, ingressi, letture protette, audit di
@@ -631,16 +650,10 @@ revisione, operatore e riferimenti alle evidenze; un dato sconosciuto resta
 | M10 | Concluso: applicazione/verifica MCP delle 22:22 UTC, confronto completo positivo, 101 test mirati e nessun nuovo riscontro advisor; prove integrate separate |
 | IN02 | Concluso: runtime pronto, policy attestata e account esistente promosso su deroga esplicita con dati conservati, vincolo limitato alla coppia e trigger originale ripristinato. 53 test/lint e verifica MCP positivi; advisor invariati. Nessuna operazione manuale residua |
 | IN03 | Concluso nel perimetro della scheda IN03 e §8: 30 controlli riusciti, isolamento Web/Admin bidirezionale e dinieghi con identità Auth senza mapping; fixture autorizzata revocata/cancellata, pulizia verificata. Residui nella sola task finale dello step 16; nessuna attivazione o rilascio implicito |
-| Chiusura finale step 16 | Perimetro consolidato su richiesta dell'utente: una sola task al prossimo procedi, esito Pronto per il rilascio o blocchi concreti. Scheda chiusura-finale.md; SQL operativo e destinazioni/accesso Vercel da confermare prima delle prove dipendenti |
+| Chiusura finale step 16 | Sviluppo e collaudo locale conclusi; live accettato dall’utente, confermata ridistribuzione Web/Admin. Favicon/manifest pronti al push/redeploy; operazioni manuali separate come nella tabella iniziale |
 | Provisioning/policy | Template presenti; compilazione della policy dichiarata dall'utente, esecuzione esterna non attestata |
 | Cestino e retention | Script presenti; nessuna attivazione esterna eseguita/attestata |
 | Copia manuale Supabase Free | Eseguita dall'utente dopo M02, archivio verificato nel report delle 18:20:16 UTC; restore non provato, Storage binario e configurazioni esterne esclusi |
-| Vercel/host/Storage e prove integrate/browser | Da confermare o non eseguiti; nessun deploy o restore effettuato |
+| Vercel/host/Storage e prove integrate/browser | Ridistribuzione Web/Admin e verifiche live accettate dall’utente; precedenti prove dell’agente conservate come evidenze storiche. Nessun nuovo test remoto o restore eseguito nella chiusura |
 
-Concludere 16B significa consegnare il documento verificato, **non concludere
-lo step 16 o autorizzare il rilascio**. La chiusura locale 16H è conclusa;
-la prossima e ultima task preparatoria è la
-[chiusura finale dello step 16](chiusura-finale.md), **6.1 Sol, high**.
-Riconciliare i residui delle condizioni esterne di 16H con le evidenze
-effettive già raccolte e distinguere le operazioni di rilascio. Non introdurre
-nuove funzionalità, ulteriori sottopassi o applicazioni automatiche degli script.
+La consegna dello sviluppo è conclusa su scelta dell’utente e nel perimetro della [scheda finale](chiusura-finale.md). Le attivazioni operative e il ripristino completo restano manuali; non costituiscono una nuova fase di sviluppo o un’autorizzazione automatica agli script.

@@ -36,6 +36,8 @@ export default function ProfileTypeSelector({selectedTypes}: ProfileTypeSelector
 		const q = searchParams.get("q")?.trim();
 
 		if (q) params.set("q", q);
+		const regione = searchParams.get("regione");
+		if (regione) params.set("regione", regione);
 		nextTypes.forEach((type) => params.append("type", type));
 
 		const suffix = params.toString();

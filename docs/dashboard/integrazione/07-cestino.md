@@ -1,6 +1,7 @@
 # M07 — Cestino recuperabile sul progetto identificato
 
-**Stato:** Da terminare — M07A, M07B e M07C Conclusi. Migrazione applicata il 26 ottobre 2026 alle 21:55 UTC, struttura verificata e 33/33 impronte invariate; gate disabilitato. Attivazione separata e rilascio pendenti.  
+**Stato:** Concluso nel perimetro dello sviluppo — installazione verificata; attivazione manuale separata.
+
 **Modello consigliato:** 6.1 Sol, high.  
 **Dipendenze:** [M06/M06A Conclusi](06-moderazione-annunci.md), report finale del 26 ottobre 2026, 10:27 UTC. [Master](../master_plan.md), [contratto e inventario funzionale](../steps/10-cestino.md).
 
@@ -10,6 +11,12 @@ Nome e ref sono identificatori da confrontare nell'interfaccia; una costante
 nel JSON non certifica la connessione. La [copia manuale acquisita dopo M02](backup-free.md)
 resta documentata separatamente, ripristino non provato. Per questo inventario
 non è richiesta una nuova copia.
+
+**Chiusura del 28 ottobre:** l'utente accetta le verifiche live e chiude lo
+sviluppo. L'attivazione del cestino resta un'operazione manuale separata;
+ultimo gate verificato disabilitato, nessuna attivazione dichiarata. Le
+indicazioni di stato successive conservano la cronologia. Vedere la
+[consegna finale](../steps/16-verifica-rilascio/chiusura-finale.md).
 
 ## Sottopassi e file
 

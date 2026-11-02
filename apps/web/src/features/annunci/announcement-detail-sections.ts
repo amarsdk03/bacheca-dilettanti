@@ -87,7 +87,7 @@ export function buildAnnouncementDetailSections({type, fields, facts, locations,
 			add("current-category", "🏆", "Categoria attuale Prima Squadra", profile?.currentCategory, undefined, "Non specificata");
 			field("visibility", "👀", "Visibilità offerta", "Visibilità offerta", "Non specificata"); info(); break;
 		case "annuncio_staff_sportivo":
-			zones(); football(); add("figures", "👤", "Figura/e profilo", null, profile?.figures, "Non specificate");
+			zones(); football(); add("figures", "👤", "Ruoli ricopribili", null, profile?.figures, "Non specificate");
 			field("categories", "🏆", "Categoria / Settore cercato", "Categoria/Settore cercato");
 			qualifications(); experience(); field("travel", "🚗", "Spostamento", "Disponibilità agli spostamenti"); info(); break;
 		case "annuncio_arbitro":

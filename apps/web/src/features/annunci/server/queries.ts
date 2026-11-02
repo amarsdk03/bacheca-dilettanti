@@ -2,6 +2,7 @@ import {publicTeamExperienceNames} from "@/features/profilo/team-profile";
 import "server-only";
 import {loadAnnouncementAuthorProfile} from "./announcement-author-profile";
 import {buildAnnouncementDetailSections} from "../announcement-detail-sections";
+import {buildAnnouncementSummarySections} from "../announcement-summary";
 import {publicProfileName} from "@/features/profilo/profile-public-name";
 import {currentCategoryLabel, currentPlayerCareer} from "@/features/profilo/current-team";
 
@@ -96,6 +97,8 @@ function announcementContentQuery(
 		.from("annuncio")
 		.select(`
 			uuid,
+			gruppo_pubblicazione,
+			regione_pubblicazione,
 			titolo_annuncio,
 			autore_annuncio,
 			tipologia_annuncio,
@@ -275,17 +278,17 @@ function detailForType(row: AnnouncementQueryRow, type: AnnouncementType) {
 
 async function sanitizeAnnouncementTeamNames(supabase: SupabaseClient<Database>, rows: AnnouncementQueryRow[]) {
  const details = rows.flatMap(row => isActiveAnnouncementType(row.tipologia_annuncio)
-  ? [{detail: detailForType(row, row.tipologia_annuncio), field: row.tipologia_annuncio === "annuncio_staff_sportivo" ? "titolo" as const : "ente" as const}]
+  ? [{type: row.tipologia_annuncio, detail: detailForType(row, row.tipologia_annuncio), field: row.tipologia_annuncio === "annuncio_staff_sportivo" ? "titolo" as const : "ente" as const}]
   : []);
- const ids = details.flatMap(({detail, field}) => experienceTeamReferences(detail.lista_esperienze, field).map(({profileId}) => profileId));
+ const ids = details.flatMap(({type, detail, field}) => experienceTeamReferences(type === "annuncio_arbitro" ? [] : detail.lista_esperienze, field).map(({profileId}) => profileId));
  let teams = new Map<string, PublicTeamProfile>();
  try {
   teams = new Map((await loadPublicTeamProfiles(supabase, ids)).map(team => [team.profileId, team]));
  } catch (error) {
   logQueryError("announcement-team-names", error);
  }
- for (const {detail, field} of details) {
-  detail.lista_esperienze = publicTeamExperienceNames(detail.lista_esperienze, teams, field);
+ for (const {type, detail, field} of details) {
+  if (type !== "annuncio_arbitro") detail.lista_esperienze = publicTeamExperienceNames(detail.lista_esperienze, teams, field);
   detail.qualifiche_licenze = publicTeamExperienceNames(detail.qualifiche_licenze, teams, "ente");
  }
  return rows;
@@ -304,7 +307,7 @@ function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 	const detail = detailForType(row, type);
 	const locations = announcementLocations(row);
 	const content = announcementContent(type, detail, locations, false, row.titolo_annuncio);
-	const teamReferences = experienceTeamReferences(detail.lista_esperienze, type === "annuncio_staff_sportivo" ? "titolo" : "ente");
+	const teamReferences = experienceTeamReferences(type === "annuncio_arbitro" ? [] : detail.lista_esperienze, type === "annuncio_staff_sportivo" ? "titolo" : "ente");
 	const searchText = normalizeAnnouncementSearchText([
 		content.title,
 		content.description,
@@ -318,6 +321,8 @@ function mapAnnouncement(row: AnnouncementQueryRow): MappedAnnouncement | null {
 	return {
 		item: {
 			id: row.uuid,
+			publicationId: row.gruppo_pubblicazione,
+			region: row.regione_pubblicazione,
 			type,
 			typeLabel: announcementDisplayLabel(type),
 			profileType: option.profileType,
@@ -603,8 +608,13 @@ export async function loadPublicAnnouncementsByIds(ids: readonly string[]): Prom
 export async function loadLatestPublicAnnouncements(): Promise<LatestAnnouncementsResult> {
 	try {
 		const supabase = createAdminClient();
+		const {data: representatives, error: representativeError} = await supabase.rpc("latest_regional_announcement_ids_v1");
+		if (representativeError) throw representativeError;
+		const ids = (representatives ?? []).map(item => item.id);
+		if (ids.length === 0) return {announcements: [], error: false};
 
 		const {data, error} = await publicAnnouncementQuery(supabase)
+			.in("uuid", ids)
 			.in("tipologia_annuncio", ACTIVE_ANNOUNCEMENT_TYPES)
 			.order("creato_il", {ascending: false, nullsFirst: false})
 			.order("uuid", {ascending: false})
@@ -723,6 +733,9 @@ function withLoadedRelations(
 ) {
 	return {
 		...withLoadedAuthor(announcement, authors, authorsUnavailable),
+		region: announcement.item.type === "annuncio_squadra_cerca_sponsor"
+			? [...new Set(announcement.cardProfile.locations.map(item => item.region))].length === 1 ? announcement.cardProfile.locations[0].region : null
+			: announcement.item.region ?? ([...new Set(announcement.locations.map(item => item.region))].length === 1 ? announcement.locations[0]?.region ?? null : null),
 		linkedTeams: announcement.teamReferences.map((reference) => teams.get(reference.profileId) ?? {profileId: reference.profileId, name: "Squadra"}),
 		cardRows: buildAnnouncementCardRows({
 			type: announcement.item.type,
@@ -752,15 +765,16 @@ export async function loadRelatedPublicAnnouncements(
 	sourceId: string,
 	sourceType: AnnouncementType,
 	sourceRegions: readonly string[],
+	sourcePublicationId?: string | null,
 ): Promise<AnnouncementDirectoryItem[]> {
 	const relatedTypes = RELATED_ANNOUNCEMENT_TYPES[sourceType];
 	if (relatedTypes.length === 0) return [];
 
 	try {
 		const supabase = createAdminClient();
-		const {data, error} = await publicAnnouncementQuery(supabase)
-			.in("tipologia_annuncio", relatedTypes)
-			.neq("uuid", sourceId)
+		let request = publicAnnouncementQuery(supabase).in("tipologia_annuncio", relatedTypes).neq("uuid", sourceId);
+		if (sourcePublicationId) request = request.or(`gruppo_pubblicazione.is.null,gruppo_pubblicazione.neq.${sourcePublicationId}`);
+		const {data, error} = await request
 			.order("creato_il", {ascending: false, nullsFirst: false})
 			.order("uuid", {ascending: false})
 			.limit(100);
@@ -911,10 +925,11 @@ export async function loadPublicAnnouncementDirectory(
 	}
 }
 
-async function loadSimilarPublicAnnouncements(supabase: SupabaseClient<Database>, id: string, type: AnnouncementType) {
+async function loadSimilarPublicAnnouncements(supabase: SupabaseClient<Database>, id: string, type: AnnouncementType, publicationId?: string | null) {
 	try {
-		const {data, error} = await publicAnnouncementQuery(supabase)
-			.eq("tipologia_annuncio", type).neq("uuid", id)
+		let request = publicAnnouncementQuery(supabase).eq("tipologia_annuncio", type).neq("uuid", id);
+		if (publicationId) request = request.or(`gruppo_pubblicazione.is.null,gruppo_pubblicazione.neq.${publicationId}`);
+		const {data, error} = await request
 			.order("creato_il", {ascending: false, nullsFirst: false})
 			.order("uuid", {ascending: false}).limit(6);
 		if (error) throw error;
@@ -1039,7 +1054,7 @@ export async function loadPublicAnnouncementDetail(
 				.like("formato_media", "image/%")
 				.limit(1),
 			isListed ? loadAnnouncementSaveCount(supabase, id) : Promise.resolve(null),
-			loadSimilarPublicAnnouncements(supabase, id, mapped.item.type),
+			loadSimilarPublicAnnouncements(supabase, id, mapped.item.type, mapped.item.publicationId),
 		]);
 
 		if (contactResult.error) logQueryError("contacts", contactResult.error);
@@ -1068,6 +1083,7 @@ export async function loadPublicAnnouncementDetail(
 				...announcement,
 				authorProfile,
 				sections,
+				summarySections: buildAnnouncementSummarySections({type: announcement.type, ...content, authorProfile, raw: detailForType(data, announcement.type)}),
 				anonymousAuthorInfo,
 				moderationStatus: data.stato_annuncio,
 				isListed,

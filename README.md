@@ -270,10 +270,11 @@ isolato non saranno concluse. Migrazione, template manuali e istruzioni:
 
 ## Versione 1.0 - Deploy prima versione
 
-Push effettuato il: ??/??/2026
+Push effettuato il: 28/10/2026
 
 ### Feature principali
 
+- Dashboard admin completa
 - Personalizzazione aumentata e miglioramento UI per le pagine dei profili e annunci
 - Ampliati i dati degli annunci con gruppi squadra, categorie, contenuti e promozioni professionali
 - Aggiunto centro notifiche con filtri per tipologia, notifiche del browser e aggiornamenti su interessi, follower e annunci seguiti

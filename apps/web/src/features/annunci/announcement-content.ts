@@ -8,6 +8,7 @@ import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles} from "@/featu
 import {ANNATE_OPTIONS, ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {
 	categoryLabel,
+	categoryDisplayLabel,
 	normalizeCategories,
 	normalizeFigures
 } from "@/features/pubblica-annuncio/types/category-catalog";
@@ -369,7 +370,7 @@ export function announcementContent(
 		searchValues = [...figures, sector ?? "", season ?? "", requirements ?? ""];
 	} else if (type === "annuncio_squadra_cerca_partita") {
 		const categoryValues = cleanStringArray(detail.categorie_avversario);
-		const categories = categoryValues.map(value => value.includes("::") ? categoryLabel(value) : value);
+		const categories = categoryValues.map(value => value.includes("::") ? categoryLabel(value) : categoryDisplayLabel(value));
 		const travel = cleanText(detail.disponibilita_trasferta, 40);
 		const period = formatPeriod(detail.periodo_dal, detail.periodo_al);
 		const time = formatTimeRange(detail.orario_dalle, detail.orario_alle);

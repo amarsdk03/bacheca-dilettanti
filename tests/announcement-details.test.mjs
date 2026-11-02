@@ -183,6 +183,10 @@ function fixture({current = row(), authors = [profile], playerCareers = [], anon
 		};
 		return query;
 	}};
+	client.rpc = async name => {
+		assert.equal(name, "latest_regional_announcement_ids_v1");
+		return {data: current && current.stato_annuncio === "pubblicato" && current.nascosto === false && current.privato === false && !current.eliminato_il ? [{id: current.uuid}] : [], error: null};
+	};
 	const load = sourceLoader({
 		"@/lib/supabase/admin": {createAdminClient: () => client},
 		"@/lib/supabase/server": {createClient: async () => client},
@@ -645,6 +649,7 @@ test("unlisted candidates cannot appear among similar announcements", async () =
 test("preview banners describe the actual state and pass share-only behavior to the actions", async () => {
 	const load = sourceLoader({
 		"@/features/interazioni/DetailActions": {__esModule: true, default: ({shareOnly}) => React.createElement("span", {"data-share-only": String(shareOnly)})},
+		"@/features/interessi/ProfileInterestDialog": {__esModule: true, default: ({children}) => children},
 	});
 	const Layout = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsLayout.tsx").default;
 	const {ANNOUNCEMENT_DETAIL_PRESENTATIONS: presentations} = load("apps/web/src/features/annunci/components/details/announcement-detail-presentation.ts");
@@ -719,13 +724,13 @@ test("publish preview stays light and compact while retaining locations, image, 
 	assert.match(html, /announcement-preview-card/);
 	assert.doesNotMatch(html, /public-profile-hero/);
 	assert.equal((html.match(/data-slot="card"/g) ?? []).length, 1);
-	for (const value of ["Roma (Lazio)", "Viterbo (Lazio)", "Tutta la regione Toscana", "Difensore", "info@example.test", "+39 333 1234567", "Annuncio ricevuto"]) {
+	for (const value of ["Roma, Viterbo", "Toscana:", "tutta la regione", "Difensore", "info@example.test", "+39 333 1234567", "Annuncio ricevuto"]) {
 		assert.ok(html.includes(value), value);
 	}
 	assert.ok(html.indexOf("Descrizione completa") < html.indexOf('src="https://example.test/immagine.webp"'));
 	assert.match(html, /href="https:\/\/example\.test\/annuncio"/);
 	assert.match(html, /Link annuncio/);
-	assert.match(html, /Categorie cercate/);
+	assert.match(html, /Categorie ricercate/);
 	assert.match(html, /Zone di ricerca/);
 });
 
@@ -743,16 +748,16 @@ test("publish preview shows the persisted facts and supporting fields for all te
 	drafts["staff-sportivo"].disponibilita = "disponibile";
 	drafts.arbitro.disponibilita = "disponibile";
 	const cases = [
-		["annuncio_giocatore", "giocatore", {categorie_ricercate: ["Eccellenza"], descrizione_aggiuntiva: "Disponibile da subito"}, ["Ricerca opportunità", "Terzino destro", "Eccellenza"]],
+		["annuncio_giocatore", "giocatore", {categorie_ricercate: ["Eccellenza"], descrizione_aggiuntiva: "Disponibile da subito"}, ["Mario", "Terzino destro", "Eccellenza"]],
 		["annuncio_squadra_cerca_giocatore", "squadra", {ruoli_principali: ["Difensore"], ruoli_secondari: ["Terzino destro"], annata_da: 2004, annata_a: 2004, stagione: "2026/27", descrizione_aggiuntiva: "Cerchiamo difensore"}, ["Ricerca Terzino destro", "2004", "2026/27"]],
 		["annuncio_squadra_cerca_staff", "squadra", {figure_ricercate: ["Allenatore"], settore: "Juniores", compenso_mensile: "1200", requisiti: "Patentino UEFA B", periodo_dal: "2026-10-01", periodo_al: "2027-06-30", descrizione_aggiuntiva: "Staff cercato"}, ["Ricerca Allenatore", "Patentino UEFA B"]],
 		["annuncio_squadra_cerca_partita", "squadra", {categorie_avversario: ["Juniores"], disponibilita_trasferta: "Regionale", periodo_dal: "2026-10-01", periodo_al: "2026-10-31", orario_dalle: "18:00", orario_alle: "20:00", descrizione_aggiuntiva: "Amichevole cercata"}, ["Ricerca partite/amichevoli", "Juniores", "Dalle 18:00 alle 20:00"]],
 		["annuncio_squadra_cerca_sponsor", "squadra", {categoria_settore: "Abbigliamento", supporto_cercato: "Materiale tecnico", offerta_fornita: "Visibilità", descrizione_aggiuntiva: "Sponsor cercato"}, ["Ricerca sponsor", "Abbigliamento", "Visibilità"]],
-		["annuncio_staff_sportivo", "staff-sportivo", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", descrizione_aggiuntiva: "Collaborazioni cercate"}, ["Ricerca opportunità", "Juniores", "Calcio 11"]],
-		["annuncio_arbitro", "arbitro", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", automunito: "Auto propria", descrizione_aggiuntiva: "Disponibile nel Lazio"}, ["Ricerca opportunità", "Auto propria", "Calcio 11"]],
-		["annuncio_creators", "creators", {titolo_post: "Collaborazione creator", descrizione_post: "Produzione video"}, ["Annuncio creator", "Produzione video", "Zone di ricerca"]],
-		["annuncio_torneo_evento", "torneo-evento", {nome_evento: "Coppa Lazio", tipologie_sport: ["Calcio a 11"], modalita_iscrizione: "online", annate_ammesse_da: "2004", annate_ammesse_a: "2008", numero_squadre: "8", costo_partecipazione: "50", tipo_partecipazione: "squadre", lista_premi_trofei: [{posto: "Primo posto", titoloPremio: "Coppa"}], descrizione_aggiuntiva: "Torneo estivo"}, ["Coppa Lazio", "Premi e trofei", "Primo posto: Coppa"]],
-		["annuncio_campo_impianto", "campi-impianti-sportivi", {tipologie_sport: ["Calcio a 11"], orari: "Lun-Ven 18-22", costo_partenza: "60", servizi_inclusi: "Spogliatoi", descrizione_aggiuntiva: "Campo disponibile"}, ["CAMPO DISPONIBILE", "Lun-Ven 18-22", "Spogliatoi"]],
+		["annuncio_staff_sportivo", "staff-sportivo", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", descrizione_aggiuntiva: "Collaborazioni cercate"}, ["Staff sportivo", "Juniores", "Calcio 11"]],
+		["annuncio_arbitro", "arbitro", {tipologie_sport: ["Calcio a 11"], categorie_ricercate: ["Juniores"], disponibilita_spostamento: "Regionale", automunito: "Auto propria", descrizione_aggiuntiva: "Disponibile nel Lazio"}, ["Arbitro", "Auto propria", "Calcio 11"]],
+		["annuncio_creators", "creators", {titolo_post: "Collaborazione creator", descrizione_post: "Produzione video"}, ["Contenuto creator", "Produzione video", "Di che zona/e ti occupi"]],
+		["annuncio_torneo_evento", "torneo-evento", {nome_evento: "Coppa Lazio", tipologie_sport: ["Calcio a 11"], modalita_iscrizione: "online", annate_ammesse_da: "2004", annate_ammesse_a: "2008", numero_squadre: "8", costo_partecipazione: "50", tipo_partecipazione: "squadre", lista_premi_trofei: [{posto: "Primo posto", titoloPremio: "Coppa"}], descrizione_aggiuntiva: "Torneo estivo"}, ["Coppa Lazio", "Premi", "Primo posto", "Coppa"]],
+		["annuncio_campo_impianto", "campi-impianti-sportivi", {tipologie_sport: ["Calcio a 11"], orari: "Lun-Ven 18-22", costo_partenza: "60", servizi_inclusi: "Spogliatoi", descrizione_aggiuntiva: "Campo disponibile"}, ["Campo o impianto", "Lun-Ven 18-22", "Spogliatoi"]],
 	];
 	for (const [type, profileType, detail, expected] of cases) {
 		const payload = {
@@ -827,7 +832,10 @@ test("all eleven types render the configured sections, author header and complet
 });
 
 test("sidebar follows central content and orders profile, contacts, sponsor and copyable UUID", async () => {
-	const load = sourceLoader({"@/features/interazioni/DetailActions": {__esModule: true, default: () => null}});
+	const load = sourceLoader({
+		"@/features/interazioni/DetailActions": {__esModule: true, default: () => null},
+		"@/features/interessi/ProfileInterestDialog": {__esModule: true, default: ({children}) => children},
+	});
 	const Layout = load("apps/web/src/features/annunci/components/details/AnnouncementDetailsLayout.tsx").default;
 	const {announcement} = await fixture().queries.loadPublicAnnouncementDetail(id);
 	const html = renderToStaticMarkup(React.createElement(Layout, {announcement, authenticated: false, returnTo: "/dettagli-annuncio?id=" + id}));
@@ -858,7 +866,7 @@ test("each announcement type preserves the requested section order including emp
 		annuncio_squadra_cerca_staff: ["Zona/e di ricerca", "Calcio", "Gruppo squadra", "Figura cercata", "Annate / Età", "Stagione", "Requisiti", "Informazioni aggiuntive"],
 		annuncio_squadra_cerca_partita: ["Zona/e di ricerca", "Calcio", "Gruppo squadra", "Categoria avvers. cercato", "Periodo", "Orario indicativo", "Informazioni aggiuntive"],
 		annuncio_squadra_cerca_sponsor: ["Sede della squadra", "Zona/e di ricerca", "Categoria attuale Prima Squadra", "Visibilità offerta", "Informazioni aggiuntive"],
-		annuncio_staff_sportivo: ["Zona/e di ricerca", "Calcio", "Figura/e profilo", "Categoria / Settore cercato", "Qualifiche", "Esperienza", "Spostamento", "Informazioni aggiuntive"],
+		annuncio_staff_sportivo: ["Zona/e di ricerca", "Calcio", "Ruoli ricopribili", "Categoria / Settore cercato", "Qualifiche", "Esperienza", "Spostamento", "Informazioni aggiuntive"],
 		annuncio_arbitro: ["Zona/e di ricerca", "Calcio", "Qualifiche", "Esperienza", "Automunito", "Disponibilità agli spostamenti", "Informazioni aggiuntive"],
 		annuncio_torneo_evento: ["Zona/e di svolgimento per questo torneo", "Calcio", "Campo", "Data / Periodo", "Orari indicativi", "Numero Squadre", "Annate ammesse", "Costo iscrizione", "Premi", "Informazioni aggiuntive"],
 		annuncio_campo_impianto: ["Località", "Tipologia del campo", "Disponibilità orari", "Prezzo orario", "Servizi inclusi", "Informazioni aggiuntive"],

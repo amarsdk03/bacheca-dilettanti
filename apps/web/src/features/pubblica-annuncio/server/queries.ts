@@ -81,7 +81,8 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 
 	const drafts = createProfileDrafts();
 	drafts.giocatore = hydrateDraft(drafts.giocatore, player.data);
-	drafts.giocatore.video_highlights = !player.data || drafts.giocatore.highlights_privati || drafts.giocatore.richiede_caricamento_highlights ? "" : playerMedia.data?.link_media ?? "";
+	drafts.giocatore.richiede_caricamento_highlights = false;
+	drafts.giocatore.video_highlights = !player.data || drafts.giocatore.highlights_privati ? "" : playerMedia.data?.link_media ?? "";
 	drafts.squadra = hydrateDraft(drafts.squadra, team.data);
 	drafts.squadra.categoria_attuale = normalizeTeamCategory(drafts.squadra.categoria_attuale);
 	drafts["staff-sportivo"] = hydrateDraft(drafts["staff-sportivo"], staff.data);

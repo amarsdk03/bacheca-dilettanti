@@ -79,7 +79,7 @@ export const DISPONIBILITA_PROFILO_OPTIONS: readonly {
 }[] = [
 	{valore: "non-specificare", etichetta: "Non specificare"},
 	{valore: "disponibile-subito", etichetta: "Disponibile subito"},
-	{valore: "sotto-contratto", etichetta: "Al momento sotto contratto"},
+	{valore: "sotto-contratto", etichetta: "Tesserato"},
 ];
 
 export const TIPOLOGIA_PRINCIPALE_SQUADRA_OPTIONS = TIPOLOGIA_CALCIO_OPTIONS.map((tipologia) => ({

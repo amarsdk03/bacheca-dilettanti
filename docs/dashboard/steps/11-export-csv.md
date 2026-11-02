@@ -1,10 +1,24 @@
 # 11 — Export CSV della pagina corrente
 
-**Stato:** Da terminare — implementazione verificata; sole prove integrate nel gate 16  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, medium  
 **Dipendenze:** Implementazione 10 verificata; prove integrate rinviate al gate 16.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -34,7 +48,7 @@ Nessuna nuova tabella, policy sui contenuti, coda, job o storage temporaneo.
 File applicato e verificato in M08 sul progetto `nsytraextbndfyprwzts`:
 versione remota `20261026220629`, contenuto locale invariato.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 ### Integrazione esterna M08 — Concluso
 
@@ -210,6 +224,6 @@ Excel/LibreOffice verificando separatore, BOM, date, multilinea e neutralizzazio
 formule senza eseguire contenuti non fidati. Header/cache effettivi del deployment.
 Queste prove non sono sostituite da PGlite o dal rendering statico.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 [12 — Registro attività](12-registro-attivita.md), **6.1 Sol, medium**.

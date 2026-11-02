@@ -281,7 +281,7 @@ async function loadProfileContent(
 					detailField("Disponibilità", availabilityValue(data.disponibilita)),
 					detailField("Presentazione", data.presentazione, true),
 				],
-				experiences: parsePlayerCareer(data.lista_esperienze),
+				experiences: parsePlayerCareer(data.lista_esperienze).map(experience => ({...experience, teamProfileId: null, teamSubprofileId: undefined})),
 				qualifications: parsePlayerCareer(data.qualifiche_licenze),
 			},
 		};

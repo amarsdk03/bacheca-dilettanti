@@ -1,10 +1,24 @@
 # 15 — Grafici Home su richiesta
 
-**Stato:** Da terminare  
+**Stato:** Concluso — sviluppo e collaudo locale; verifiche live accettate dall’utente.
+
 **Modello consigliato:** 6.1 Sol, medium  
 **Dipendenze:** Step 14 concluso; contratti grafici dello step 13 verificati.
 
 [Master plan](../master_plan.md). Si applicano il protocollo di avanzamento, i vincoli comuni e il riepilogo obbligatorio del master.
+
+## Chiusura dello sviluppo — 28 ottobre 2026
+
+L'utente ha confermato la ridistribuzione di Web/Admin e accettato le ultime
+verifiche live. Per sua scelta, i test futuri dell'agente sono esclusivamente
+locali. Sviluppo e collaudo di questo step sono chiusi; le prove realmente
+eseguite restano distinte dalla conferma dell'utente. Attivazione cestino,
+Cron e prova completa di ripristino sono operazioni manuali documentate,
+esterne alla consegna dello sviluppo e non dichiarate eseguite.
+
+Decisione e consegna nella [chiusura finale](16-verifica-rilascio/chiusura-finale.md).
+Le indicazioni di avanzamento, residui e prossimo step nella sequenza originale
+sottostante descrivono la cronologia precedente: non riaprono lo sviluppo.
 
 ## Obiettivo e attività
 
@@ -28,7 +42,7 @@ Una sola metrica richiesta per selezione, nessuna query economica, cambi rapidi 
 
 Nessuna migrazione prevista. Eventuali dipendenze grafiche aggiunte con lockfile unico e senza cambiamenti alla UI pubblica.
 
-## Avanzamento
+## Avanzamento (cronologia)
 
 Implementazione completata; restano le sole verifiche integrate e browser nel
 [gate 16](16-verifica-rilascio/README.md). Statistiche conserva la pagina futura.
@@ -101,6 +115,6 @@ richieste effettive e il bundle: nessun renderer prima del dataset o per Profitt
 una sola metrica per selezione e nessuna rilettura automatica dei KPI. I test
 React DOM e i trasporti sintetici non attestano questi controlli.
 
-## Prossimo step
+## Prossimo step nella sequenza originale (storico)
 
 [16 — Verifica e rilascio](16-verifica-rilascio/README.md), **6.1 Sol, high**.

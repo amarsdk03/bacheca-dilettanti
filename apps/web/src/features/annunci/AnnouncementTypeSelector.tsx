@@ -31,6 +31,8 @@ export default function AnnouncementTypeSelector({
 		const query = searchParams.get("q")?.trim();
 
 		if (query) params.set("q", query);
+		const regione = searchParams.get("regione");
+		if (regione) params.set("regione", regione);
 		nextTypes.forEach((type) => params.append("type", type));
 
 		const suffix = params.toString();

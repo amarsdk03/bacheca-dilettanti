@@ -211,19 +211,24 @@ export function updatePlayerCategories(previous: readonly string[], next: readon
 
 export function categoryLabel(value: string): string {
 	const pair = categoryByKey.get(normalizeCategory(value));
-	if (!pair) return value;
+	if (!pair) return categoryDisplayLabel(value);
 	if (pair.group === "Calcio a 11 femminile" && pair.category === "FIGC — Under 15 fase regionale a 9") {
 		return `Calcio femminile — ${pair.category}`;
 	}
 	const separator = pair.group.startsWith("Calcio a ") ? " — " : " · ";
-	return `${pair.group}${separator}${pair.category}`;
+	return categoryDisplayLabel(`${pair.group}${separator}${pair.category}`);
+}
+
+/** Display-only: stored catalogue keys and distinct youth categories stay intact. */
+export function categoryDisplayLabel(value: string): string {
+	return value.replace(/\s+—\s+(?:Nazionale|Regionale|Territoriale)$/iu, "");
 }
 
 export function categoryShortLabel(value: string): string {
 	const pair = categoryByKey.get(normalizeCategory(value));
-	if (pair) return pair.category;
+	if (pair) return categoryDisplayLabel(pair.category);
 	const group = CATEGORIE_CALCIO_GROUPS.find(({gruppo}) => value.startsWith(`${gruppo} — `));
-	return group ? value.slice(group.gruppo.length + 3) : value;
+	return categoryDisplayLabel(group ? value.slice(group.gruppo.length + 3) : value);
 }
 
 const FIGURE_ALIASES: Record<string, string> = {

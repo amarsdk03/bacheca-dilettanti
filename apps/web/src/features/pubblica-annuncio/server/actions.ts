@@ -31,6 +31,8 @@ import {getRegistrationEmailIdentity, setAuthEmailFlow,} from "@/features/regist
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
 import type {Json} from "@/server/supabase";
+import {parseRegionalPublication} from "@/features/pubblica-annuncio/regional-publication";
+import {removeUnreferencedAnnouncementImages} from "./image-cleanup";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const OTP_PATTERN = /^\d{6}$/;
@@ -101,27 +103,7 @@ async function uploadAnnouncementImage(
 
 async function removeUploadedImage(image: UploadedAnnouncementImage | null) {
 	if (!image?.newlyUploaded) return;
-	const {error} = await createAdminClient().storage.from(ANNOUNCEMENT_IMAGES_BUCKET).remove([image.path]);
-	if (error) console.error("[publish-announcement] Image cleanup failed", {message: error.message});
-}
-
-async function removeUnreferencedRetryImage(
-	image: UploadedAnnouncementImage | null,
-	announcementId: string,
-) {
-	if (!image?.newlyUploaded) return;
-	const admin = createAdminClient();
-	const {data, error} = await admin
-		.from("media_annuncio")
-		.select("id")
-		.eq("uuid_annuncio", announcementId)
-		.eq("link_media", image.path)
-		.limit(1);
-	if (error) {
-		console.error("[publish-announcement] Retry image lookup failed", {code: error.code});
-		return;
-	}
-	if (!data?.length) await removeUploadedImage(image);
+	await removeUnreferencedAnnouncementImages([image.path]);
 }
 
 type PublishOtpQuotaResult =
@@ -327,6 +309,7 @@ export async function verifyPublishEmailOtp(
 }
 
 function rpcErrorMessage(message: string): PublishAnnouncementResult {
+	if (message.includes("REGIONAL_PUBLICATION_NOT_ENABLED")) return {status: "error", message: "La pubblicazione è temporaneamente sospesa per un aggiornamento. Riprova tra poco."};
 	if (message.includes("PROFESSIONAL_ANNOUNCEMENT_AREA_NOT_ALLOWED")) {
 		return {status: "error", step: 3, message: PROFESSIONAL_AREA_ERROR};
 	}
@@ -481,7 +464,7 @@ export async function publishAnnouncement(
 				image_mime: uploadedImage?.mimeType ?? null,
 			},
 		} as unknown as Json;
-		const {data, error} = await supabase.rpc("publish_announcement_v2", {
+		const {data, error} = await supabase.rpc("publish_announcement_v3", {
 			p_submission_id: payload.submissionId,
 			p_payload: rpcPayload,
 			p_terms_version: TERMS_VERSION,
@@ -504,12 +487,13 @@ export async function publishAnnouncement(
 				message: "Con questo indirizzo email è già stato pubblicato un annuncio nelle ultime 24 ore.",
 			};
 		}
-		if (result?.status !== "success" || typeof result.announcementId !== "string") {
+		const publication = parseRegionalPublication(data);
+		if (!publication) {
 			await removeUploadedImage(uploadedImage);
 			return {status: "error", message: "La risposta del servizio di pubblicazione non è valida. Riprova."};
 		}
-		if (result.idempotent === true) {
-			await removeUnreferencedRetryImage(uploadedImage, result.announcementId);
+		if (result?.idempotent === true) {
+			await removeUploadedImage(uploadedImage);
 		}
 
 		revalidatePath("/il-tuo-profilo");
@@ -520,9 +504,9 @@ export async function publishAnnouncement(
 		revalidatePath("/centro-notifiche");
 		return {
 			status: "success",
-			announcementId: result.announcementId,
+			...publication,
 			moderationStatus: "in_revisione",
-			idempotent: result.idempotent === true,
+			idempotent: result?.idempotent === true,
 		};
 	} catch (error) {
 		if (error instanceof PublishPayloadError) {

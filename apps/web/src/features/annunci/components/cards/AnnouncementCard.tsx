@@ -11,7 +11,8 @@ import AnnouncementTeamStaffSearchCard from "./AnnouncementTeamStaffSearchCard";
 import AnnouncementCardShell from "./AnnouncementCardShell";
 import {getAnnouncementFacts} from "./announcement-card-model";
 
-export default function AnnouncementCard({announcement}: {announcement: AnnouncementDirectoryItem}) {
+export default function AnnouncementCard({announcement: data, showRegionBadge = false}: {announcement: AnnouncementDirectoryItem; showRegionBadge?: boolean}) {
+	const announcement = {...data, showRegionBadge};
 	switch (announcement.type) {
 		case "annuncio_giocatore":
 			return <AnnouncementPlayerCard announcement={{...announcement, type: "annuncio_giocatore"}} />;

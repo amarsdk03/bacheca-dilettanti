@@ -151,10 +151,10 @@ function AnnouncementFiltersForm({
 	idPrefix,
 }: {
 	query: AnnouncementDirectoryQuery;
-	type: AnnouncementDirectoryType;
+	type: AnnouncementDirectoryType | null;
 	idPrefix: string;
 }) {
-	const availableFilters = getAnnouncementFiltersForDirectoryType(type);
+	const availableFilters = type ? getAnnouncementFiltersForDirectoryType(type) : ["regione"] as const;
 	const resetHref = buildAnnouncementsHref(query, {
 		page: 1,
 		filters: createEmptyAnnouncementFilters(),
@@ -167,6 +167,16 @@ function AnnouncementFiltersForm({
 				includeQuery
 			/>
 			<FieldGroup className="gap-4">
+				{hasFilter(availableFilters, "regione") && (
+					<FilterSelect
+						id={`${idPrefix}-regione`}
+						name="regione"
+						label="Regione"
+						value={query.filters.regione}
+						allLabel="Tutte le regioni"
+						options={ANNOUNCEMENT_FILTER_OPTIONS.regioni.map((value) => ({value, label: value}))}
+					/>
+				)}
 				{hasFilter(availableFilters, "annoDa") && <AnnouncementYearRangeFilter from={query.filters.annoDa} to={query.filters.annoA} idPrefix={idPrefix} />}
 				{hasFilter(availableFilters, "genere") && <FilterSelect id={`${idPrefix}-genere`} name="genere" label="Genere" value={query.filters.genere} allLabel="Qualsiasi" options={ANNOUNCEMENT_FILTER_OPTIONS.generi.map(value => ({value, label: value}))} />}
 				{hasFilter(availableFilters, "categorieRicercate") && <FilterSelect id={`${idPrefix}-categorie-ricercate`} name="categorieRicercate" label="Categorie ricercate" value={query.filters.categorieRicercate} allLabel="Qualsiasi" options={ANNOUNCEMENT_FILTER_OPTIONS.categorie.map(({value, label}) => ({value, label}))} />}
@@ -181,18 +191,6 @@ function AnnouncementFiltersForm({
 						options={ANNOUNCEMENT_FILTER_OPTIONS.figure.map((value) => ({value, label: value}))}
 					/>
 				)}
-
-				{hasFilter(availableFilters, "regione") && (
-					<FilterSelect
-						id={`${idPrefix}-regione`}
-						name="regione"
-						label="Regione"
-						value={query.filters.regione}
-						allLabel="Tutte le regioni"
-						options={ANNOUNCEMENT_FILTER_OPTIONS.regioni.map((value) => ({value, label: value}))}
-					/>
-				)}
-
 				{hasFilter(availableFilters, "ruolo") && (
 					<FilterSelect
 						id={`${idPrefix}-ruolo`}
@@ -237,21 +235,6 @@ function AnnouncementFiltersForm({
 	);
 }
 
-function FiltersUnavailable({selectedCount}: {selectedCount: number}) {
-	const multiple = selectedCount > 1;
-	return (
-		<Alert>
-			<InfoIcon aria-hidden="true" />
-			<AlertTitle>{multiple ? "Filtri specifici disattivati" : "Scegli una tipologia"}</AlertTitle>
-			<AlertDescription>
-				{multiple
-					? "Mantieni un solo tipo di annuncio selezionato per attivare i filtri dedicati. La ricerca testuale resta disponibile."
-					: "Seleziona un solo tipo di annuncio per visualizzare i filtri più utili per quella categoria."}
-			</AlertDescription>
-		</Alert>
-	);
-}
-
 function AnnouncementFiltersSheet({query}: {query: AnnouncementDirectoryQuery}) {
 	const selectedType = query.types.length === 1 ? query.types[0] : null;
 	const activeCount = getActiveAnnouncementFilterCount(query.filters);
@@ -275,13 +258,11 @@ function AnnouncementFiltersSheet({query}: {query: AnnouncementDirectoryQuery}) 
 					<SheetDescription>
 						{selectedType
 							? `Opzioni dedicate a “${announcementDirectoryOption(selectedType).label}”.`
-							: "I filtri specifici richiedono una sola tipologia selezionata."}
+							: "La regione si applica a tutte le tipologie. Seleziona una sola tipologia per usare anche i filtri specifici."}
 					</SheetDescription>
 				</SheetHeader>
 				<div className="overflow-y-auto px-4 pb-6">
-					{selectedType
-						? <AnnouncementFiltersForm query={query} type={selectedType} idPrefix="sheet-filter" />
-						: <FiltersUnavailable selectedCount={query.types.length} />}
+					<AnnouncementFiltersForm query={query} type={selectedType} idPrefix="sheet-filter" />
 				</div>
 			</SheetContent>
 		</Sheet>
@@ -344,6 +325,7 @@ function EmptyDirectory({query}: {query: AnnouncementDirectoryQuery}) {
 function showAllHref(query: AnnouncementDirectoryQuery) {
 	const params = new URLSearchParams();
 	if (query.q) params.set("q", query.q);
+	if (query.filters.regione) params.set("regione", query.filters.regione);
 	const suffix = params.toString();
 	return suffix ? `/annunci?${suffix}` : "/annunci";
 }
@@ -368,7 +350,7 @@ async function AnnouncementResults({query, result: resultPromise}: AnnunciProps)
 				<div className="flex flex-col gap-6">
 					<ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 						{result.announcements.map((announcement) => (
-							<li key={announcement.id} className="h-full"><AnnouncementCard announcement={announcement} /></li>
+							<li key={announcement.id} className="h-full"><AnnouncementCard announcement={announcement} showRegionBadge /></li>
 						))}
 					</ul>
 					<DirectoryPagination query={query} result={result} />

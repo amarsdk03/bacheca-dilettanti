@@ -1,4 +1,4 @@
-import {isTeamCategory} from "@/features/profilo/team-category-catalog";
+import {isTeamCategoryForSport} from "@/features/profilo/team-category-catalog";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {isValidPhone} from "@/features/pubblica-annuncio/publish-field-validation";
 import type {ProfileLocationDraft, ProfileType} from "@/features/profilo/profile-model";
@@ -87,7 +87,7 @@ export function getProfileRequiredFieldErrors(
 		if (nonEmpty(values.nazionalita) && !isPlayerNationalityCode(values.nazionalita as string)) errors.nationality = "La nazionalità salvata non è più disponibile. Selezionane un’altra o svuota il campo.";
 	}
 	if (type === "squadra") {
-		if (!isTeamCategory(values.categoria_attuale)) errors.category = "Seleziona la categoria attuale della Prima Squadra.";
+		if (!isTeamCategoryForSport(values.categoria_attuale, Array.isArray(values.tipologie_sport) && values.tipologie_sport.length === 1 ? values.tipologie_sport[0] : "")) errors.category = "Seleziona la categoria attuale della Prima Squadra.";
 		if (!nonEmpty(values.nome_societa)) errors.name = "Inserisci il nome della società.";
 		if (!Array.isArray(values.tipologie_sport) || values.tipologie_sport.length !== 1 || !nonEmpty(values.tipologie_sport[0])) errors.sports = "Seleziona una sola tipologia di calcio.";
 	}
