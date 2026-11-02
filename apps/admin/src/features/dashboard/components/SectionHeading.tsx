@@ -1,4 +1,4 @@
-import type { DashboardSection } from "../sections";
+import type {DashboardSection} from "../sections";
 
 export function SectionHeading({ section }: { section: DashboardSection }) {
   const Icon = section.icon;

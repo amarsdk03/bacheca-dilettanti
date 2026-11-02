@@ -3,7 +3,8 @@ import Link from "next/link";
 import {
 	ArrowRightIcon,
 	CalendarDaysIcon,
-	ClipboardListIcon, ExternalLink,
+	ClipboardListIcon,
+	ExternalLink,
 	HandshakeIcon,
 	MapPinIcon,
 	UserPlusIcon,

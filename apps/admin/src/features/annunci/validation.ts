@@ -1,5 +1,11 @@
-import { ADMIN_ANNOUNCEMENT_TRASH, ADMIN_ANNOUNCEMENT_STATUSES, ADMIN_ANNOUNCEMENT_TYPES, ADMIN_ANNOUNCEMENT_VISIBILITY,
-  type AnnouncementCursor, type AnnouncementFilters } from "./contracts";
+import {
+	ADMIN_ANNOUNCEMENT_STATUSES,
+	ADMIN_ANNOUNCEMENT_TRASH,
+	ADMIN_ANNOUNCEMENT_TYPES,
+	ADMIN_ANNOUNCEMENT_VISIBILITY,
+	type AnnouncementCursor,
+	type AnnouncementFilters
+} from "./contracts";
 
 export function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

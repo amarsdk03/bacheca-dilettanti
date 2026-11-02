@@ -1,11 +1,11 @@
 import "server-only";
 
-import { createServerClient } from "@supabase/ssr";
-import type { Database } from "@bacheca/database";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE_OPTIONS, getSupabaseConfig } from "./config";
-import { createAdminCookieBuffer } from "./cookie-buffer";
-import { sessionFetch } from "./session-fetch";
+import {createServerClient} from "@supabase/ssr";
+import type {Database} from "@bacheca/database";
+import {cookies} from "next/headers";
+import {ADMIN_COOKIE_OPTIONS, getSupabaseConfig} from "./config";
+import {createAdminCookieBuffer} from "./cookie-buffer";
+import {sessionFetch} from "./session-fetch";
 
 /** Writable client for Server Actions/Route Handlers. Never use in rendering. */
 export async function createClient() {

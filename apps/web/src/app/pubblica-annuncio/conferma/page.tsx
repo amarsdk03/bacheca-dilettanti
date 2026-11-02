@@ -3,7 +3,10 @@ import type {Metadata} from "next";
 import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
 import ConfermaPubblicazione from "@/features/pubblica-annuncio/ConfermaPubblicazione";
-import {loadPublishConfirmation, loadRegionalPublishConfirmation} from "@/features/pubblica-annuncio/server/confirmation";
+import {
+	loadPublishConfirmation,
+	loadRegionalPublishConfirmation
+} from "@/features/pubblica-annuncio/server/confirmation";
 import {dynamicMetadata} from "@/server/metadata";
 
 export const metadata: Metadata = dynamicMetadata({

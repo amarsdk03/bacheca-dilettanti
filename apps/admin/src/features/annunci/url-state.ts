@@ -1,5 +1,5 @@
-import type { AnnouncementFilters } from "./contracts";
-import { normalizeFilters } from "./validation";
+import type {AnnouncementFilters} from "./contracts";
+import {normalizeFilters} from "./validation";
 
 export const DEFAULT_ANNUNCI_FILTERS: AnnouncementFilters = { search: "", status: null, type: null, visibility: "all", trash: "exclude" };
 export type AnnunciUrl = { valid: boolean; filters: AnnouncementFilters; cursor: string | null; key: string; href: string };

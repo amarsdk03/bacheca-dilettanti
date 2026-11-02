@@ -1,6 +1,6 @@
-import type { HomeChartResult, HomeMetric } from "../contracts";
-import { parseHomeChart } from "../response-validation";
-import { record } from "../../annunci/validation";
+import type {HomeChartResult, HomeMetric} from "../contracts";
+import {parseHomeChart} from "../response-validation";
+import {record} from "../../annunci/validation";
 
 export async function readHomeChart(metric: HomeMetric, signal: AbortSignal): Promise<HomeChartResult> {
   const response = await fetch(`/api/home/charts?metric=${metric}`, { signal, cache: "no-store", credentials: "same-origin", redirect: "error", headers: { Accept: "application/json" } });

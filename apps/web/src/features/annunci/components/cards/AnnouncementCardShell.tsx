@@ -1,19 +1,11 @@
 import type {CSSProperties} from "react";
 import Link from "next/link";
-import {
-	ArrowUpRightIcon,
-	CalendarDaysIcon,
-	PinIcon,
-	SparklesIcon,
-} from "lucide-react";
+import {ArrowUpRightIcon, CalendarDaysIcon, PinIcon, SparklesIcon,} from "lucide-react";
 
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import AnnouncementAuthorHoverCard from "@/features/annunci/AnnouncementAuthorHoverCard";
-import {
-	type AnnouncementFact,
-	announcementOption,
-} from "@/features/annunci/announcement-model";
+import {type AnnouncementFact, announcementOption,} from "@/features/annunci/announcement-model";
 import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
 import type {AnnouncementCardData} from "./announcement-card-model";
 import {cn} from "@/lib/utils";

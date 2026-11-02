@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { CardSkeleton, TableSkeleton } from "@/features/dashboard/components/ContentSkeletons";
+import {Skeleton} from "@/components/ui/skeleton";
+import {CardSkeleton, TableSkeleton} from "@/features/dashboard/components/ContentSkeletons";
 
 export function AnnunciSkeleton() {
   return <div className="flex min-w-0 flex-col gap-8" aria-busy="true" aria-label="Caricamento annunci"><Skeleton className="h-9 w-48" /><CardSkeleton />

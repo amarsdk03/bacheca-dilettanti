@@ -1,13 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
-import { LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Spinner } from "@/components/ui/spinner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { logoutAction } from "../server/actions";
-import type { LogoutState } from "../contracts";
+import {useActionState} from "react";
+import {LogOut} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {Alert, AlertDescription} from "@/components/ui/alert";
+import {Spinner} from "@/components/ui/spinner";
+import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
+import {logoutAction} from "../server/actions";
+import type {LogoutState} from "../contracts";
 
 const initial: LogoutState = { status: "idle" };
 

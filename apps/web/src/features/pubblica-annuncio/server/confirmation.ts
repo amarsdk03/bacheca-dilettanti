@@ -1,4 +1,4 @@
-import {publicTeamExperienceNames} from "@/features/profilo/team-profile";
+import {experienceTeamReferences, publicTeamExperienceNames} from "@/features/profilo/team-profile";
 import "server-only";
 import {publicProfileName} from "@/features/profilo/profile-public-name";
 
@@ -22,10 +22,8 @@ import {projectAnnouncementSummaryProfile} from "@/features/annunci/announcement
 import {currentPlayerCareer} from "@/features/profilo/current-team";
 import {createAdminClient} from "@/lib/supabase/admin";
 import {createClient} from "@/lib/supabase/server";
-import {experienceTeamReferences} from "@/features/profilo/team-profile";
 import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
 import {parseRegionalPublication, type RegionalAnnouncementReference} from "../regional-publication";
-
 
 
 export type PublishConfirmationResult =

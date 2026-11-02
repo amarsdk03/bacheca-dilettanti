@@ -1,12 +1,18 @@
 "use client";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Pie, PieChart, XAxis, YAxis } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EmptyState } from "@/features/dashboard/components/ContentStates";
-import { displayDate } from "../../annunci/presentation";
-import { chartLimitations, distributionRows, primaryRows, type AvailableHomeChart, type ChartRow } from "../chart-presentation";
-import { homeCount } from "../presentation";
+import {Area, AreaChart, Bar, BarChart, CartesianGrid, Pie, PieChart, XAxis, YAxis} from "recharts";
+import {ChartContainer, ChartTooltip, ChartTooltipContent} from "@/components/ui/chart";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {EmptyState} from "@/features/dashboard/components/ContentStates";
+import {displayDate} from "../../annunci/presentation";
+import {
+	type AvailableHomeChart,
+	chartLimitations,
+	type ChartRow,
+	distributionRows,
+	primaryRows
+} from "../chart-presentation";
+import {homeCount} from "../presentation";
 
 const config = { count: { label: "Totale", color: "var(--chart-1)" } };
 const formatCount = (value: unknown) => typeof value === "number" ? homeCount(value) : String(value ?? "");

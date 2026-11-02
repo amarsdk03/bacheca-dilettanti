@@ -1,7 +1,7 @@
-import { Check, Clock3, Eye, EyeOff, LockKeyhole, Trash2, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import type { AnnouncementListItem } from "../contracts";
-import { statusLabel, visibilityLabel } from "../presentation";
+import {Check, Clock3, Eye, EyeOff, LockKeyhole, Trash2, X} from "lucide-react";
+import {Badge} from "@/components/ui/badge";
+import type {AnnouncementListItem} from "../contracts";
+import {statusLabel, visibilityLabel} from "../presentation";
 
 export function AnnouncementStatusBadge({ status }: { status: string | null }) {
   const appearance = status === "pubblicato" ? { variant: "success", Icon: Check } as const :

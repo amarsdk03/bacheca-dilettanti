@@ -11,7 +11,10 @@ import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {PRIVACY_VERSION, TERMS_VERSION} from "@/features/legal/legal-versions";
 import {getRequiredBirthDateError} from "@/features/profilo/birth-date";
 import {profileFieldsDatabaseErrorMessage} from "@/features/profilo/profile-required-fields";
-import {professionalLocationsAllowed, PROFESSIONAL_REGIONS_EMPTY_MESSAGE} from "@/features/profilo/professional-regions";
+import {
+	PROFESSIONAL_REGIONS_EMPTY_MESSAGE,
+	professionalLocationsAllowed
+} from "@/features/profilo/professional-regions";
 import type {
 	PublishAnnouncementPayload,
 	PublishAnnouncementResult,
@@ -20,8 +23,8 @@ import type {
 	VerifyPublishEmailOtpResult,
 	VerifyPublishOtpActionInput,
 } from "@/features/pubblica-annuncio/publish-model";
-import {parsePublishPayload, PublishPayloadError,} from "@/features/pubblica-annuncio/server/validation";
 import {announcementRegionsAllowed, PROFESSIONAL_AREA_ERROR} from "@/features/pubblica-annuncio/publish-model";
+import {parsePublishPayload, PublishPayloadError,} from "@/features/pubblica-annuncio/server/validation";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {
 	ANNOUNCEMENT_IMAGE_MIME_TYPES,

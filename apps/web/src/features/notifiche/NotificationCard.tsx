@@ -2,7 +2,12 @@ import Link from "next/link";
 import {BadgeCheck, ClipboardCheck, Flag, Megaphone, MessageCircleMore, Newspaper, UserPlus} from "lucide-react";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Badge} from "@/components/ui/badge";
-import {NOTIFICATION_LABELS, notificationStateLabel, type NotificationItem, type NotificationReference} from "@/features/notifiche/notification-model";
+import {
+	NOTIFICATION_LABELS,
+	type NotificationItem,
+	type NotificationReference,
+	notificationStateLabel
+} from "@/features/notifiche/notification-model";
 
 const ICONS = {
 	interesse: MessageCircleMore,

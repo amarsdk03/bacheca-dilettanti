@@ -1,5 +1,6 @@
-import type { HomeActivityResult, HomeSummaryResult } from "../contracts";
-import type { HomeSession } from "./session";
+import type {HomeActivityResult, HomeSummaryResult} from "../contracts";
+import type {HomeSession} from "./session";
+
 type Result = HomeSummaryResult | HomeActivityResult;
 
 export function createHomeBlockController<T extends Result>(initialResult: T, deps: {

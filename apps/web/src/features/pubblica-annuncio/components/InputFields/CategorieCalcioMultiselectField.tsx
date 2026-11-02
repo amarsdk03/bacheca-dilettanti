@@ -18,7 +18,12 @@ import {
 } from "@/components/ui/combobox";
 import {Field, FieldError, FieldLabel} from "@/components/ui/field";
 import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
-import {ANY_CATEGORY, categoryKey, categoryLabel, updatePlayerCategories} from "@/features/pubblica-annuncio/types/category-catalog";
+import {
+	ANY_CATEGORY,
+	categoryKey,
+	categoryLabel,
+	updatePlayerCategories
+} from "@/features/pubblica-annuncio/types/category-catalog";
 
 type CategorieCalcioMultiselectFieldProps = {
 	label: string;

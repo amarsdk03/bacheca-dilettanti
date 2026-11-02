@@ -9,9 +9,7 @@ import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/Input
 import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/LinkAnnuncioField";
 import OptionalLabel from "@/features/pubblica-annuncio/components/InputFields/OptionalLabel";
 import RegioniInteresseField from "@/features/pubblica-annuncio/components/InputFields/RegioniInteresseField";
-import {
-	useAnnuncioServiziConsulenzeStore
-} from "@/features/pubblica-annuncio/state/AnnuncioServiziConsulenze.store";
+import {useAnnuncioServiziConsulenzeStore} from "@/features/pubblica-annuncio/state/AnnuncioServiziConsulenze.store";
 import {
 	DISPONIBILITA_SPOSTAMENTI_OPTIONS,
 	MODALITA_SERVIZIO_OPTIONS,

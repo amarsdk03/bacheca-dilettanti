@@ -1,8 +1,8 @@
 import "server-only";
 
-import { cache } from "react";
-import { createClient, createReadClient } from "@/lib/supabase/server";
-import { verifyAdminContext } from "./context";
+import {cache} from "react";
+import {createClient, createReadClient} from "@/lib/supabase/server";
+import {verifyAdminContext} from "./context";
 
 /** React cache is scoped to the render request, never a cross-request role cache. */
 export const getAdminContext = cache(() => verifyAdminContext(createReadClient));

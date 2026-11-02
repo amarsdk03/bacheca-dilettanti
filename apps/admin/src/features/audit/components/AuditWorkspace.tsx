@@ -1,22 +1,23 @@
 "use client";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { ArrowLeft, ArrowRight, CircleAlert, RefreshCw, Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError } from "@/components/ui/field";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { TableSkeleton, PanelSkeleton } from "@/features/dashboard/components/ContentSkeletons";
-import { EmptyState } from "@/features/dashboard/components/ContentStates";
-import { AUDIT_ACTIONS, type AuditFilters, type AuditListResult } from "../read-contracts";
-import type { AuditUrl } from "../read-url";
-import { createAuditController } from "../client/read-controller";
-import { auditTransport } from "../client/read-transport";
-import { AUDIT_LABELS } from "../read-presentation";
-import { AuditDetailContent } from "./AuditDetailContent";
-import { AuditSummaryTable } from "./AuditSummaryTable";
+import {useEffect, useRef, useState, useSyncExternalStore} from "react";
+import {ArrowLeft, ArrowRight, CircleAlert, Filter, RefreshCw} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle} from "@/components/ui/sheet";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {PanelSkeleton, TableSkeleton} from "@/features/dashboard/components/ContentSkeletons";
+import {EmptyState} from "@/features/dashboard/components/ContentStates";
+import {AUDIT_ACTIONS, type AuditFilters, type AuditListResult} from "../read-contracts";
+import type {AuditUrl} from "../read-url";
+import {createAuditController} from "../client/read-controller";
+import {auditTransport} from "../client/read-transport";
+import {AUDIT_LABELS} from "../read-presentation";
+import {AuditDetailContent} from "./AuditDetailContent";
+import {AuditSummaryTable} from "./AuditSummaryTable";
+
 function Selector({ id, label, value, items, onChange }: { id: string; label: string; value: string; items: { value: string; label: string }[]; onChange(v: string): void }) {
   return <Field><FieldLabel htmlFor={id}>{label}</FieldLabel><Select items={items} value={value} onValueChange={v => { if (v !== null) onChange(v); }}>
     <SelectTrigger id={id} className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{items.map(i => <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>)}</SelectGroup></SelectContent>

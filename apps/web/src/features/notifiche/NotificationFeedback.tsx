@@ -2,6 +2,7 @@ import {Bell} from "lucide-react";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
+
 export function NotificationsEmpty({filtered = false}: {filtered?: boolean}) {
 	return (
 		<Empty>

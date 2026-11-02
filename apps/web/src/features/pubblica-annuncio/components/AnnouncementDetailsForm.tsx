@@ -52,7 +52,11 @@ import {
 	MODALITA_ISCRIZIONE_OPTIONS,
 	RUOLI_SPECIFICI_PER_RUOLO,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {STAFF_CATEGORY_GROUPS, staffCategoryLabel, staffCategoryKey} from "@/features/pubblica-annuncio/types/staff-category-catalog";
+import {
+	STAFF_CATEGORY_GROUPS,
+	staffCategoryKey,
+	staffCategoryLabel
+} from "@/features/pubblica-annuncio/types/staff-category-catalog";
 import type {Json} from "@/server/supabase";
 import {getPlayerSpecificRoleGroups} from "@/features/profilo/player-roles";
 

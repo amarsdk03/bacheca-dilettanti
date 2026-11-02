@@ -2,9 +2,13 @@
 import {useState, useSyncExternalStore} from "react";
 import {Bell, BellOff, LoaderCircle} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {Card, CardHeader, CardTitle, CardDescription, CardContent} from "@/components/ui/card";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {cn} from "@/lib/utils";
-import {browserNotificationStatus, setBrowserNotifications, subscribeBrowserNotifications} from "./browser-notifications";
+import {
+	browserNotificationStatus,
+	setBrowserNotifications,
+	subscribeBrowserNotifications
+} from "./browser-notifications";
 
 export default function BrowserNotificationSettings({account, variant = "default"}: {account: string; variant?: "default" | "settings"}) {
 	const status = useSyncExternalStore(subscribeBrowserNotifications, () => browserNotificationStatus(account), () => "loading");

@@ -2,7 +2,14 @@
 
 import "server-only";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
-import {INTEREST_CONSENT_VERSION, interestRpcResult, isInterestTarget, validateInterestForm, type InterestResult, type InterestTarget} from "@/features/interessi/interest-model";
+import {
+	INTEREST_CONSENT_VERSION,
+	type InterestResult,
+	interestRpcResult,
+	type InterestTarget,
+	isInterestTarget,
+	validateInterestForm
+} from "@/features/interessi/interest-model";
 import {createAdminClient} from "@/lib/supabase/admin";
 
 export async function submitInterest(target: InterestTarget, form: FormData): Promise<InterestResult> {

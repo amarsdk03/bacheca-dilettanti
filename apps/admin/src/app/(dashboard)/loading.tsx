@@ -1,2 +1,3 @@
-import { SectionSkeleton } from "@/features/dashboard/components/ContentSkeletons";
+import {SectionSkeleton} from "@/features/dashboard/components/ContentSkeletons";
+
 export default SectionSkeleton;

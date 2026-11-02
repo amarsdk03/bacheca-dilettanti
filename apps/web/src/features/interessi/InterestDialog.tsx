@@ -1,19 +1,45 @@
 "use client";
 
-import {createContext, useContext, useId, useRef, useState, type FormEvent, type ReactNode} from "react";
+import {createContext, type FormEvent, type ReactNode, useContext, useId, useRef, useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {LoaderCircleIcon, MessageCircleMore} from "lucide-react";
-import {AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from "@/components/ui/alert-dialog";
+import {
+	AlertDialog,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Checkbox} from "@/components/ui/checkbox";
-import {Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {
+	Field,
+	FieldContent,
+	FieldDescription,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+	FieldLegend,
+	FieldSet
+} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import SubprofileSelect from "@/features/profilo/SubprofileSelect";
 import type {ProfileType} from "@/features/profilo/profile-model";
 import {toast} from "@/components/ui/toast";
-import {INTEREST_OWNERSHIP_CONSENT, INTEREST_SHARING_CONSENT, validateInterestForm, type InterestContext, type InterestField, type InterestResult, type InterestTarget} from "./interest-model";
+import {
+	INTEREST_OWNERSHIP_CONSENT,
+	INTEREST_SHARING_CONSENT,
+	type InterestContext,
+	type InterestField,
+	type InterestResult,
+	type InterestTarget,
+	validateInterestForm
+} from "./interest-model";
 import {submitInterest} from "./server/actions";
 
 const InterestAvailabilityContext = createContext(false);

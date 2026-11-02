@@ -1,5 +1,6 @@
-import type { HomeMetric } from "../contracts";
-import { homeMetric } from "../validation";
+import type {HomeMetric} from "../contracts";
+import {homeMetric} from "../validation";
+
 type State = { selected: HomeMetric; denied: boolean };
 type Block = { cancel(): void; clear(): void; refresh(): void };
 

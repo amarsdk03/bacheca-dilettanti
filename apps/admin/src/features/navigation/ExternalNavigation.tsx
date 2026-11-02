@@ -1,12 +1,18 @@
 "use client";
 
-import { createContext, useContext, useRef, useState, type ComponentProps, type MouseEvent, type ReactNode } from "react";
-import { ExternalLink as ExternalLinkIcon } from "lucide-react";
+import {type ComponentProps, createContext, type MouseEvent, type ReactNode, useContext, useRef, useState} from "react";
+import {ExternalLink as ExternalLinkIcon} from "lucide-react";
 import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { classifyNavigation, safeNavigationHref } from "./navigation-url";
+import {classifyNavigation, safeNavigationHref} from "./navigation-url";
 
 type RequestNavigation = (href: string, source?: HTMLElement | null) => boolean;
 const NavigationContext = createContext<RequestNavigation | null>(null);

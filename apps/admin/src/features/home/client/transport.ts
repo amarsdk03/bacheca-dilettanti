@@ -1,5 +1,6 @@
-import type { HomeActivityResult, HomeSummaryResult } from "../contracts";
-import { databaseTimestamp, record } from "../../annunci/validation";
+import type {HomeActivityResult, HomeSummaryResult} from "../contracts";
+import {databaseTimestamp, record} from "../../annunci/validation";
+
 async function read<T extends HomeActivityResult | HomeSummaryResult>(href: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(href, { signal, cache: "no-store", credentials: "same-origin", redirect: "error", headers: { Accept: "application/json" } });
   if (response.status === 403) return { status: "denied", code: "ACCESS_DENIED" } as T;

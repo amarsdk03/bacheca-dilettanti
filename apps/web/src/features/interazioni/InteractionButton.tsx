@@ -10,7 +10,15 @@ import {toast} from "@/components/ui/toast";
 import {setAnnouncementSaved, setProfileFollow} from "@/features/interazioni/server/actions";
 import type {InteractionState, InteractionTarget} from "@/features/interazioni/interaction-model";
 import {cn} from "@/lib/utils";
-import {AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from "@/components/ui/alert-dialog";
+import {
+	AlertDialog,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import {Field, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
 import SubprofileSelect from "@/features/profilo/SubprofileSelect";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";

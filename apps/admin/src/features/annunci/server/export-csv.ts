@@ -1,6 +1,6 @@
 import "server-only";
-import type { AnnouncementListItem } from "../contracts";
-import { displayDate, statusLabel, typeLabel, visibilityLabel } from "../presentation";
+import type {AnnouncementListItem} from "../contracts";
+import {displayDate, statusLabel, typeLabel, visibilityLabel} from "../presentation";
 
 export function csvCell(value: string): string {
   // Spreadsheet importers can ignore leading controls, BOM and invisible format

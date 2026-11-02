@@ -1,13 +1,13 @@
-import { Suspense } from "react";
-import { requireAdminPageContext } from "@/features/dashboard/server/guard";
-import { SectionHeading } from "@/features/dashboard/components/SectionHeading";
-import { DASHBOARD_SECTIONS } from "@/features/dashboard/sections";
-import { getAdminHomeSummary, getAdminHomeActivity } from "@/features/home/server/queries";
-import { HomeKpiSection, HomeActivitySection } from "@/features/home/server/blocks";
-import { HomeSessionProvider } from "@/features/home/components/HomeSessionProvider";
-import { HomeKpiSkeleton, HomeActivitySkeleton } from "@/features/home/components/HomeSkeletons";
-import { HomeQuickActions } from "@/features/home/components/HomeQuickActions";
-import { HomeChartPanel } from "@/features/home/components/HomeChartPanel";
+import {Suspense} from "react";
+import {requireAdminPageContext} from "@/features/dashboard/server/guard";
+import {SectionHeading} from "@/features/dashboard/components/SectionHeading";
+import {DASHBOARD_SECTIONS} from "@/features/dashboard/sections";
+import {getAdminHomeActivity, getAdminHomeSummary} from "@/features/home/server/queries";
+import {HomeActivitySection, HomeKpiSection} from "@/features/home/server/blocks";
+import {HomeSessionProvider} from "@/features/home/components/HomeSessionProvider";
+import {HomeActivitySkeleton, HomeKpiSkeleton} from "@/features/home/components/HomeSkeletons";
+import {HomeQuickActions} from "@/features/home/components/HomeQuickActions";
+import {HomeChartPanel} from "@/features/home/components/HomeChartPanel";
 
 export default async function AdminPage() {
   await requireAdminPageContext();

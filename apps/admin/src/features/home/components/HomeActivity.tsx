@@ -1,15 +1,16 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { TableSkeleton } from "@/features/dashboard/components/ContentSkeletons";
-import { EmptyState } from "@/features/dashboard/components/ContentStates";
-import { AuditSummaryTable } from "@/features/audit/components/AuditSummaryTable";
-import type { HomeActivityResult } from "../contracts";
-import { homeTransport } from "../client/transport";
-import { HomeFailure } from "./HomeFailure";
-import { useHomeBlock } from "./useHomeBlock";
+import {ArrowRight, RefreshCw} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {TableSkeleton} from "@/features/dashboard/components/ContentSkeletons";
+import {EmptyState} from "@/features/dashboard/components/ContentStates";
+import {AuditSummaryTable} from "@/features/audit/components/AuditSummaryTable";
+import type {HomeActivityResult} from "../contracts";
+import {homeTransport} from "../client/transport";
+import {HomeFailure} from "./HomeFailure";
+import {useHomeBlock} from "./useHomeBlock";
+
 const unavailable = (): HomeActivityResult => ({ status: "unavailable", code: "AUDIT_UNAVAILABLE", correlationId: "client" });
 export function HomeActivity({ initialResult }: { initialResult: HomeActivityResult }) {
   const state = useHomeBlock(initialResult, homeTransport.activity, unavailable), result = state.result;

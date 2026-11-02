@@ -1,6 +1,6 @@
 import {ExternalLink} from "@/components/navigation/ExternalNavigation";
 import type {ReactNode} from "react";
-import {ExternalLinkIcon, StarIcon, type LucideIcon} from "lucide-react";
+import {ExternalLinkIcon, type LucideIcon, StarIcon} from "lucide-react";
 import ProfileAnonymityIndicator from "@/features/profilo/ProfileAnonymityIndicator";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
@@ -12,8 +12,8 @@ import {profileInitials} from "@/features/profilo/public-profile-display";
 import {RegisteredUserBadge} from "@/features/profilo/ProfileVerificationStatus";
 import ProfileNameWithIndicators from "@/features/profilo/ProfileNameWithIndicators";
 import {
-	getProfileDetailFacts,
 	getProfileDetailBadgeValues,
+	getProfileDetailFacts,
 	getProfileDetailFields,
 	type ProfileDetailPresentation
 } from "./profile-detail-presentation";

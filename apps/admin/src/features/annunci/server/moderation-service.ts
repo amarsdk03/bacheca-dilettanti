@@ -1,9 +1,9 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
-import { verifySessionClaims, type ClaimsClient } from "../../auth/server/session-claims";
-import type { AnnouncementAuditAction, AuditFailureCode } from "../../audit/contracts";
-import { MODERATION_REASONS, parseModerationInput, type ModerationResult, type ModerationInput } from "../moderation";
-import { canonicalUuid, record } from "../validation";
+import {randomUUID} from "node:crypto";
+import {type ClaimsClient, verifySessionClaims} from "../../auth/server/session-claims";
+import type {AnnouncementAuditAction, AuditFailureCode} from "../../audit/contracts";
+import {MODERATION_REASONS, type ModerationInput, type ModerationResult, parseModerationInput} from "../moderation";
+import {canonicalUuid, record} from "../validation";
 
 type Client = ClaimsClient & { rpc(name: "admin_moderate_announcement_v1", args: { p_id: string; p_operation: string; p_fingerprint: string; p_reason: string | null }): PromiseLike<{ data: unknown; error: unknown }> };
 type Failure = { action: AnnouncementAuditAction; code: AuditFailureCode; resourceId: string; correlationId: string };

@@ -1,4 +1,10 @@
-import type {AnnouncementAuthorProfileData, AnnouncementDetailField, AnnouncementDetailSection, AnnouncementFact, AnnouncementType} from "./announcement-model";
+import type {
+	AnnouncementAuthorProfileData,
+	AnnouncementDetailField,
+	AnnouncementDetailSection,
+	AnnouncementFact,
+	AnnouncementType
+} from "./announcement-model";
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 import {getItalyDateParts} from "@/features/profilo/birth-date";
 import {buildAnnouncementSectionPresentation} from "./announcement-section-presentation";

@@ -1,4 +1,4 @@
-import { ADMIN_ANNOUNCEMENT_TYPES, type AnnouncementListItem } from "./contracts";
+import {ADMIN_ANNOUNCEMENT_TYPES, type AnnouncementListItem} from "./contracts";
 
 export const TYPE_LABELS: Record<typeof ADMIN_ANNOUNCEMENT_TYPES[number], string> = {
   annuncio_giocatore: "Giocatore", annuncio_squadra_cerca_giocatore: "Squadra cerca giocatori", annuncio_squadra_cerca_staff: "Squadra cerca staff",

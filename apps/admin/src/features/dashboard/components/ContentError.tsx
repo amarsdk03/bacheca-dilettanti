@@ -1,8 +1,8 @@
 "use client";
 
-import { CircleAlert, RotateCcw } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import {CircleAlert, RotateCcw} from "lucide-react";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {Button} from "@/components/ui/button";
 
 export function ContentError({ retry }: { retry: () => void }) {
   return <div role="region" aria-label="Errore di caricamento" className="admin-error-state">

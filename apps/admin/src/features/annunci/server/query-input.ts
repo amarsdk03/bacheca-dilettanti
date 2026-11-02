@@ -1,7 +1,7 @@
 import "server-only";
-import { Buffer } from "node:buffer";
-import type { AnnouncementCursor, AnnouncementListQuery } from "../contracts";
-import { normalizeFilters, record, validCursor } from "../validation";
+import {Buffer} from "node:buffer";
+import type {AnnouncementCursor, AnnouncementListQuery} from "../contracts";
+import {normalizeFilters, record, validCursor} from "../validation";
 
 export function parseListQuery(input: unknown): AnnouncementListQuery {
   if (!record(input) || Object.keys(input).some((key) => !["search", "status", "type", "visibility", "trash", "limit", "cursor"].includes(key))) throw new Error("INVALID_QUERY");

@@ -1,9 +1,9 @@
 import Image from "next/image";
-import { redirect } from "next/navigation";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AccessState } from "@/features/auth/components/AccessState";
-import { LoginForm } from "@/features/auth/components/LoginForm";
-import { getAdminContext } from "@/features/auth/server/queries";
+import {redirect} from "next/navigation";
+import {Alert, AlertDescription} from "@/components/ui/alert";
+import {AccessState} from "@/features/auth/components/AccessState";
+import {LoginForm} from "@/features/auth/components/LoginForm";
+import {getAdminContext} from "@/features/auth/server/queries";
 import TechText from "@/components/TechText";
 import GradientASCII from "@/components/GradientASCII";
 

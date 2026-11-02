@@ -1,5 +1,5 @@
-import type { AnnouncementDetail } from "./contracts";
-import { canonicalUuid, exactKeys, record } from "./validation";
+import type {AnnouncementDetail} from "./contracts";
+import {canonicalUuid, exactKeys, record} from "./validation";
 
 export const MODERATION_OPERATIONS = ["approve", "reject", "hide", "show", "trash", "restore"] as const;
 export type ModerationOperation = typeof MODERATION_OPERATIONS[number];

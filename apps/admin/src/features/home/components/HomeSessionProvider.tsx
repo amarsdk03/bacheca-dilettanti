@@ -1,6 +1,7 @@
 "use client";
-import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import { createHomeSession, type HomeSession } from "../client/session";
+import {createContext, type ReactNode, useContext, useEffect, useState, useSyncExternalStore} from "react";
+import {createHomeSession, type HomeSession} from "../client/session";
+
 const Context = createContext<HomeSession | null>(null);
 export function useHomeSession() {
   const session = useContext(Context);

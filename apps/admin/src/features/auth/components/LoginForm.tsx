@@ -1,16 +1,16 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { CircleAlert, Eye, EyeOff, Lock } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
-import { Spinner } from "@/components/ui/spinner";
-import { loginAction } from "../server/actions";
-import type { LoginState } from "../contracts";
-import { LogoutForm } from "./LogoutForm";
+import {useActionState, useState} from "react";
+import {CircleAlert, Eye, EyeOff, Lock} from "lucide-react";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {Button} from "@/components/ui/button";
+import {Field, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
+import {Input} from "@/components/ui/input";
+import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group";
+import {Spinner} from "@/components/ui/spinner";
+import {loginAction} from "../server/actions";
+import type {LoginState} from "../contracts";
+import {LogoutForm} from "./LogoutForm";
 
 const initial: LoginState = { status: "idle" };
 

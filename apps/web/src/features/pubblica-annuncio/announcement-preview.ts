@@ -1,6 +1,10 @@
 import {publicProfileName} from "@/features/profilo/profile-public-name";
 import {announcementContent} from "@/features/annunci/announcement-content";
-import {buildAnnouncementSummarySections, summaryAnnouncementTitle, type AnnouncementSummarySection} from "@/features/annunci/announcement-summary";
+import {
+	type AnnouncementSummarySection,
+	buildAnnouncementSummarySections,
+	summaryAnnouncementTitle
+} from "@/features/annunci/announcement-summary";
 import {projectAnnouncementSummaryProfile} from "@/features/annunci/announcement-summary-profile";
 import {
 	type AnnouncementDetailField,
@@ -9,7 +13,7 @@ import {
 	type AnnouncementPlayerRoles,
 	type AnnouncementType,
 } from "@/features/annunci/announcement-model";
-import type {ProfileDrafts, ProfileType, ProfileLocationDraft} from "@/features/profilo/profile-model";
+import type {ProfileDrafts, ProfileLocationDraft, ProfileType} from "@/features/profilo/profile-model";
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 import {experienceTeamReferences, type TeamProfileReference} from "@/features/profilo/team-profile";
 import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";

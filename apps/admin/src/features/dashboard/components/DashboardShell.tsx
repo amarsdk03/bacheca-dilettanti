@@ -1,16 +1,16 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { usePathname } from "next/navigation";
-import { MotionConfig } from "motion/react";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { ExternalNavigationProvider } from "@/features/navigation/ExternalNavigation";
-import { DashboardSidebar } from "./DashboardSidebar";
-import { DashboardThemeProvider } from "./DashboardThemeProvider";
-import { DashboardThemeToggle } from "./DashboardThemeToggle";
-import { DashboardPageTransition } from "./DashboardPageTransition";
-import { DASHBOARD_SECTIONS, isSectionActive } from "../sections";
+import type {ReactNode} from "react";
+import {usePathname} from "next/navigation";
+import {MotionConfig} from "motion/react";
+import {SidebarInset, SidebarProvider, SidebarTrigger} from "@/components/ui/sidebar";
+import {TooltipProvider} from "@/components/ui/tooltip";
+import {ExternalNavigationProvider} from "@/features/navigation/ExternalNavigation";
+import {DashboardSidebar} from "./DashboardSidebar";
+import {DashboardThemeProvider} from "./DashboardThemeProvider";
+import {DashboardThemeToggle} from "./DashboardThemeToggle";
+import {DashboardPageTransition} from "./DashboardPageTransition";
+import {DASHBOARD_SECTIONS, isSectionActive} from "../sections";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

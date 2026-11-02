@@ -1,6 +1,10 @@
 "use client";
 
-import {professionalLocationsAllowed, PROFESSIONAL_REGIONS_EMPTY_MESSAGE, PROFESSIONAL_REGIONS_ERROR} from "@/features/profilo/professional-regions";
+import {
+	PROFESSIONAL_REGIONS_EMPTY_MESSAGE,
+	PROFESSIONAL_REGIONS_ERROR,
+	professionalLocationsAllowed
+} from "@/features/profilo/professional-regions";
 import {useState, useTransition} from "react";
 import {CirclePlusIcon, LoaderCircleIcon, PencilIcon,} from "lucide-react";
 
@@ -28,7 +32,11 @@ import {
 	type ProfileLocations,
 	type ProfileType,
 } from "@/features/profilo/profile-model";
-import {createProfileSocialLinks, type ProfileSocialLinksByType, type ProfileSocialPlatform,} from "@/features/profilo/profile-social-links";
+import {
+	createProfileSocialLinks,
+	type ProfileSocialLinksByType,
+	type ProfileSocialPlatform,
+} from "@/features/profilo/profile-social-links";
 import type {ProfileEditorSavePayload, ProfileMutationResult,} from "@/features/profilo/types";
 
 interface ProfileEditorDialogProps {

@@ -1,10 +1,26 @@
 import {type Dispatch, type SetStateAction, useEffect, useRef} from "react";
 
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
-import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet} from "@/components/ui/field";
+import {
+	Field,
+	FieldDescription,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+	FieldLegend,
+	FieldSet
+} from "@/components/ui/field";
 import {PROFESSIONAL_REGIONS_EMPTY_MESSAGE} from "@/features/profilo/professional-regions";
 import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue
+} from "@/components/ui/select";
 import {FOREIGN_PROFILE_REGION} from "@/features/profilo/profile-location-regions";
 import type {ProfileLocationDraft} from "@/features/profilo/profile-model";
 import FieldRequirementIndicator from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";

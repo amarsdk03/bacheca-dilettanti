@@ -1,7 +1,7 @@
 import "server-only";
-import type { AnnouncementListItem, AnnouncementListPage, AnnouncementListQuery } from "../contracts";
-import { canonicalUuid, databaseTimestamp, record, validCursor } from "../validation";
-import { encodeListCursor } from "./query-input";
+import type {AnnouncementListItem, AnnouncementListPage, AnnouncementListQuery} from "../contracts";
+import {canonicalUuid, databaseTimestamp, record, validCursor} from "../validation";
+import {encodeListCursor} from "./query-input";
 
 const nullableId = (v: unknown) => v === null || canonicalUuid(v);
 const nullableText = (v: unknown) => v === null || typeof v === "string";

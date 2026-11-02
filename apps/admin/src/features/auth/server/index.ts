@@ -1,8 +1,8 @@
 import "server-only";
 
-import { clearAdminCookies, createCookieSession } from "@/lib/supabase/server";
-import { createAdminAuditService } from "../../audit/server";
-import { createAuthService } from "./service";
+import {clearAdminCookies, createCookieSession} from "@/lib/supabase/server";
+import {createAdminAuditService} from "../../audit/server";
+import {createAuthService} from "./service";
 
 export function createAdminAuthService() {
   return createAuthService({

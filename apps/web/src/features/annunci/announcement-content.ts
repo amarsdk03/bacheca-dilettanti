@@ -7,8 +7,8 @@ import type {
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles} from "@/features/profilo/player-roles";
 import {ANNATE_OPTIONS, ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {
-	categoryLabel,
 	categoryDisplayLabel,
+	categoryLabel,
 	normalizeCategories,
 	normalizeFigures
 } from "@/features/pubblica-annuncio/types/category-catalog";

@@ -1,6 +1,16 @@
 import {
-	AwardIcon, Building2Icon, CalendarDaysIcon, CarIcon, CheckIcon, Clock3Icon,
-	MapPinIcon, SparklesIcon, TagIcon, TargetIcon, TrophyIcon, UsersIcon,
+	AwardIcon,
+	Building2Icon,
+	CalendarDaysIcon,
+	CarIcon,
+	CheckIcon,
+	Clock3Icon,
+	MapPinIcon,
+	SparklesIcon,
+	TagIcon,
+	TargetIcon,
+	TrophyIcon,
+	UsersIcon,
 } from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import StructuredFieldList from "@/components/data-info/StructuredFieldList";

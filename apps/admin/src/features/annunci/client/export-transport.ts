@@ -1,6 +1,6 @@
-import type { ExportDownload, ExportFailure, ExportSelection } from "../export-contract";
-import type { AnnunciUrl } from "../url-state";
-import { canonicalUuid, record } from "../validation";
+import type {ExportDownload, ExportFailure, ExportSelection} from "../export-contract";
+import type {AnnunciUrl} from "../url-state";
+import {canonicalUuid, record} from "../validation";
 
 export async function requestAnnouncementExport(query: AnnunciUrl, selection: ExportSelection, signal: AbortSignal): Promise<ExportDownload | ExportFailure> {
   const response = await fetch("/api/annunci/export", { method: "POST", signal, cache: "no-store", credentials: "same-origin", redirect: "error",

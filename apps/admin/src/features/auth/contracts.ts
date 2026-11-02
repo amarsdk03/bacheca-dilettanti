@@ -1,4 +1,4 @@
-import type { SessionCleanupResult } from "../audit/contracts";
+import type {SessionCleanupResult} from "../audit/contracts";
 
 export type LoginState = {
   status: "idle" | "invalid" | "denied" | "unavailable";

@@ -1,8 +1,8 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
-import type { AnnouncementDetailResult, AnnouncementListResult } from "../contracts";
-import { parseAnnunciUrl } from "../url-state";
-import { createAnnouncementQueries } from "./service";
+import {createClient} from "@/lib/supabase/server";
+import type {AnnouncementDetailResult, AnnouncementListResult} from "../contracts";
+import {parseAnnunciUrl} from "../url-state";
+import {createAnnouncementQueries} from "./service";
 
 export function createAnnouncementHttp(queries: Pick<ReturnType<typeof createAnnouncementQueries>, "list" | "detail">) {
   const response = (result: AnnouncementListResult | AnnouncementDetailResult) => Response.json(result, {

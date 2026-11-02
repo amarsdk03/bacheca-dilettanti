@@ -13,9 +13,7 @@ import type {
 	PublicProfileExperience,
 } from "@/features/dettagli-profilo/profile-detail-model";
 import {loadPublicProfileAnnouncements} from "@/features/annunci/server/queries";
-import {
-	ordinaTipologieCalcio,
-} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
+import {ordinaTipologieCalcio,} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
 import {parsePlayerCareer, publicPlayerAge, toPublicPlayerData} from "./player-profile-data";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";

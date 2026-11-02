@@ -1,7 +1,7 @@
-import type { HomeChart, HomeLimitation } from "./contracts";
-import { HOME_PROFILE_TYPES } from "./contracts";
-import { ADMIN_ANNOUNCEMENT_STATUSES, ADMIN_ANNOUNCEMENT_TYPES } from "../annunci/contracts";
-import { STATUS_LABELS, TYPE_LABELS } from "../annunci/presentation";
+import type {HomeChart, HomeLimitation} from "./contracts";
+import {HOME_PROFILE_TYPES} from "./contracts";
+import {ADMIN_ANNOUNCEMENT_STATUSES, ADMIN_ANNOUNCEMENT_TYPES} from "../annunci/contracts";
+import {STATUS_LABELS, TYPE_LABELS} from "../annunci/presentation";
 
 export type AvailableHomeChart = Extract<HomeChart, { available: true }>;
 export type ChartRow = { key: string; label: string; count: number; fill: string };

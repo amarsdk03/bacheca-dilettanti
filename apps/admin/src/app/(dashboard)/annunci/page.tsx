@@ -1,11 +1,11 @@
-import { redirect } from "next/navigation";
-import { requireAdminPageContext } from "@/features/dashboard/server/guard";
-import { findDashboardSection } from "@/features/dashboard/sections";
-import { SectionHeading } from "@/features/dashboard/components/SectionHeading";
-import { AnnunciWorkspace } from "@/features/annunci/components/AnnunciWorkspace";
-import { listAdminAnnouncements } from "@/features/annunci/server/queries";
-import { annunciSearchParams, parseAnnunciUrl } from "@/features/annunci/url-state";
-import type { AnnouncementListResult } from "@/features/annunci/contracts";
+import {redirect} from "next/navigation";
+import {requireAdminPageContext} from "@/features/dashboard/server/guard";
+import {findDashboardSection} from "@/features/dashboard/sections";
+import {SectionHeading} from "@/features/dashboard/components/SectionHeading";
+import {AnnunciWorkspace} from "@/features/annunci/components/AnnunciWorkspace";
+import {listAdminAnnouncements} from "@/features/annunci/server/queries";
+import {annunciSearchParams, parseAnnunciUrl} from "@/features/annunci/url-state";
+import type {AnnouncementListResult} from "@/features/annunci/contracts";
 
 export default async function AnnunciPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireAdminPageContext();

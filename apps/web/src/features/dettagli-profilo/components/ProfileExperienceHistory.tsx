@@ -1,4 +1,4 @@
-import {Building2Icon, CalendarDaysIcon, RouteIcon, type LucideIcon} from "lucide-react";
+import {Building2Icon, CalendarDaysIcon, type LucideIcon, RouteIcon} from "lucide-react";
 
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";

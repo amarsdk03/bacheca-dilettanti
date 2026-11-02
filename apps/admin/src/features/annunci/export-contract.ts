@@ -1,5 +1,5 @@
-import type { AnnouncementListItem } from "./contracts";
-import { canonicalUuid, exactKeys, record } from "./validation";
+import type {AnnouncementListItem} from "./contracts";
+import {canonicalUuid, exactKeys, record} from "./validation";
 
 export type ExportSelection = { id: string; rowFingerprint: string; authorName: string }[];
 export type ExportFailure = { status: "invalid" | "denied" | "conflict" | "unavailable"; correlationId: string };

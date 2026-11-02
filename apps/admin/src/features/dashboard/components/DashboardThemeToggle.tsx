@@ -1,9 +1,9 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
-import { useAdminAppearance } from "@/components/ui/admin-appearance";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {Moon, Sun} from "lucide-react";
+import {useAdminAppearance} from "@/components/ui/admin-appearance";
+import {Button} from "@/components/ui/button";
+import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 
 export function DashboardThemeToggle() {
   const appearance = useAdminAppearance();

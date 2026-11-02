@@ -1,5 +1,10 @@
 "use client";
-import {type NotificationCursor, type NotificationPage, type NotificationType} from "@/features/notifiche/notification-model";
+import {
+	type NotificationCursor,
+	type NotificationPage,
+	type NotificationType
+} from "@/features/notifiche/notification-model";
+
 export const NOTIFICATION_COUNT_EVENT = "bd:notification-count";
 export function publishNotificationCount(unreadCount: number) {
 	window.dispatchEvent(new CustomEvent(NOTIFICATION_COUNT_EVENT, {detail: unreadCount}));

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type CSSProperties, type HTMLAttributes } from 'react';
+import {type CSSProperties, type HTMLAttributes, useEffect, useRef} from 'react';
 
 export type GradientASCIIShape = 'horizon' | 'pinch' | 'rise' | 'eclipse';
 

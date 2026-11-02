@@ -34,9 +34,9 @@ import LinkAnnuncioField from "@/features/pubblica-annuncio/components/InputFiel
 import ImmagineAnnuncioField from "@/features/pubblica-annuncio/components/InputFields/ImmagineAnnuncioField";
 import OrarioIndicativoFields from "@/features/pubblica-annuncio/components/InputFields/OrarioIndicativoFields";
 import {
-	OTHER_CATEGORY_GROUPS,
 	DISPONIBILITA_TRASFERTA_OPTIONS,
 	FIGURA_PROFESSIONALE_GROUPS,
+	OTHER_CATEGORY_GROUPS,
 	RUOLI_SPECIFICI_PER_RUOLO,
 	TIPOLOGIA_PRINCIPALE_SQUADRA_OPTIONS,
 } from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";

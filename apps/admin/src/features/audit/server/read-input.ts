@@ -1,7 +1,8 @@
 import "server-only";
-import { Buffer } from "node:buffer";
-import type { AuditCursor, AuditQuery } from "../read-contracts";
-import { FILTER_KEYS, normalizeAuditFilters, record, validAuditCursor } from "../read-validation";
+import {Buffer} from "node:buffer";
+import type {AuditCursor, AuditQuery} from "../read-contracts";
+import {FILTER_KEYS, normalizeAuditFilters, record, validAuditCursor} from "../read-validation";
+
 export function encodeAuditCursor(cursor: AuditCursor) { return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url"); }
 export function parseAuditQuery(input: unknown): AuditQuery {
   if (!record(input) || Object.keys(input).some(k => ![...FILTER_KEYS, "limit", "cursor"].includes(k))) throw new Error("INVALID_QUERY");

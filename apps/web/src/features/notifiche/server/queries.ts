@@ -1,7 +1,13 @@
 import "server-only";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {createAdminClient} from "@/lib/supabase/admin";
-import {isNotificationCursor, isNotificationType, type NotificationType, type NotificationCursor, type NotificationPage} from "@/features/notifiche/notification-model";
+import {
+	isNotificationCursor,
+	isNotificationType,
+	type NotificationCursor,
+	type NotificationPage,
+	type NotificationType
+} from "@/features/notifiche/notification-model";
 
 export async function getNotifications(limit: 0 | 3 | 20 = 20, cursor: NotificationCursor | null = null, type: NotificationType | null = null): Promise<NotificationPage> {
 	const account = await getAuthenticatedViewer();

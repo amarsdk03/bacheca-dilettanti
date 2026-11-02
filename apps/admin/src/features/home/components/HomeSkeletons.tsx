@@ -1,7 +1,8 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TableSkeleton } from "@/features/dashboard/components/ContentSkeletons";
-import { HOME_CARDS } from "../presentation";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Skeleton} from "@/components/ui/skeleton";
+import {TableSkeleton} from "@/features/dashboard/components/ContentSkeletons";
+import {HOME_CARDS} from "../presentation";
+
 export function HomeKpiSkeleton() {
   return <section aria-label="Caricamento indicatori Home" aria-busy="true" className="admin-home-block">
     <div className="admin-home-toolbar"><h2 className="admin-home-block-title">Riepilogo</h2><Skeleton className="admin-home-control-skeleton" /></div>

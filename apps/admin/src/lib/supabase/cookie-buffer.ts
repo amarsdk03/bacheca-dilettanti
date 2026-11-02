@@ -1,7 +1,7 @@
 import "server-only";
 
-import type { CookieOptions } from "@supabase/ssr";
-import { ADMIN_COOKIE_OPTIONS } from "./config";
+import type {CookieOptions} from "@supabase/ssr";
+import {ADMIN_COOKIE_OPTIONS} from "./config";
 
 type Cookie = { name: string; value: string };
 type WriteCookie = (name: string, value: string, options: CookieOptions) => void;

@@ -1,7 +1,7 @@
 import "server-only";
 
-import { auditUuid } from "../../audit/contracts";
-import { verifySessionClaims } from "./session-claims";
+import {auditUuid} from "../../audit/contracts";
+import {verifySessionClaims} from "./session-claims";
 
 export type AdminSessionClient = {
   auth: {

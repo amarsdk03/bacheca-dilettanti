@@ -1,6 +1,18 @@
 import {
-  House, Megaphone, Flag, Users, Contact, Ticket, CreditCard, BadgePercent,
-  Send, ChartNoAxesCombined, ClipboardList, Plug, History, type LucideIcon,
+	BadgePercent,
+	ChartNoAxesCombined,
+	ClipboardList,
+	Contact,
+	CreditCard,
+	Flag,
+	History,
+	House,
+	type LucideIcon,
+	Megaphone,
+	Plug,
+	Send,
+	Ticket,
+	Users,
 } from "lucide-react";
 
 type Section = { slug: string; href: string; title: string; icon: LucideIcon; group: string | null };

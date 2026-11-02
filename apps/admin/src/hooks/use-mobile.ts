@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from "react"
+import {useCallback, useSyncExternalStore} from "react"
 
 export function useIsMobile(breakpoint = 768) {
   const query = `(max-width: ${breakpoint - 1}px)`

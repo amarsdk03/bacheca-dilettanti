@@ -1,5 +1,5 @@
-import type { AnnouncementDetailResult, AnnouncementListResult } from "../contracts";
-import type { AnnunciUrl } from "../url-state";
+import type {AnnouncementDetailResult, AnnouncementListResult} from "../contracts";
+import type {AnnunciUrl} from "../url-state";
 
 type Result = AnnouncementListResult | AnnouncementDetailResult;
 async function read<T extends Result>(href: string, signal: AbortSignal): Promise<T> {

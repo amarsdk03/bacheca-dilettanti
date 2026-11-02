@@ -1,5 +1,6 @@
-import type { AuditListResult, AuditDetailResult } from "../read-contracts";
-import type { AuditUrl } from "../read-url";
+import type {AuditDetailResult, AuditListResult} from "../read-contracts";
+import type {AuditUrl} from "../read-url";
+
 async function read<T extends AuditListResult | AuditDetailResult>(href: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(href, { signal, cache: "no-store", credentials: "same-origin", headers: { Accept: "application/json" } });
   if (response.status === 403) return { status: "denied", code: "ACCESS_DENIED" } as T;

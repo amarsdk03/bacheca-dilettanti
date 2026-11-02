@@ -1,31 +1,57 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { ArrowLeft, ArrowRight, CircleAlert, Download, Ellipsis, Eye, Info, Plus, RefreshCw, Search, X } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { Field, FieldLabel, FieldError, FieldGroup } from "@/components/ui/field";
-import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "@/components/ui/input-group";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from "@/components/ui/table";
-import { EmptyState } from "@/features/dashboard/components/ContentStates";
-import { PanelSkeleton, TableSkeleton } from "@/features/dashboard/components/ContentSkeletons";
-import { ADMIN_ANNOUNCEMENT_TRASH, ADMIN_ANNOUNCEMENT_STATUSES, ADMIN_ANNOUNCEMENT_TYPES, ADMIN_ANNOUNCEMENT_VISIBILITY, type AnnouncementFilters, type AnnouncementListResult } from "../contracts";
-import { type AnnunciUrl } from "../url-state";
-import { canExportAnnouncements, createAnnunciController } from "../client/controller";
-import { announcementTransport } from "../client/transport";
-import { downloadAnnouncementExport, requestAnnouncementExport } from "../client/export-transport";
-import { displayDate, STATUS_LABELS, TYPE_LABELS, VISIBILITY_LABELS, typeLabel } from "../presentation";
-import { AnnouncementDetailContent } from "./AnnouncementDetailContent";
-import { ModerateActions, moderationIcons } from "./ModerateActions";
-import { AnnouncementStatusBadge, AnnouncementTrashBadge, AnnouncementVisibilityBadges } from "./AnnouncementBadges";
-import { ModerationDialog } from "./ModerationDialog";
-import { moderateAnnouncementAction } from "@/features/annunci/server/actions";
-import { MODERATION_LABELS, type ModerationOperation } from "../moderation";
+import {useEffect, useRef, useState, useSyncExternalStore} from "react";
+import {
+	ArrowLeft,
+	ArrowRight,
+	CircleAlert,
+	Download,
+	Ellipsis,
+	Eye,
+	Info,
+	Plus,
+	RefreshCw,
+	Search,
+	X
+} from "lucide-react";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {Button} from "@/components/ui/button";
+import {Spinner} from "@/components/ui/spinner";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {Field, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
+import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle} from "@/components/ui/sheet";
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {EmptyState} from "@/features/dashboard/components/ContentStates";
+import {PanelSkeleton, TableSkeleton} from "@/features/dashboard/components/ContentSkeletons";
+import {
+	ADMIN_ANNOUNCEMENT_STATUSES,
+	ADMIN_ANNOUNCEMENT_TRASH,
+	ADMIN_ANNOUNCEMENT_TYPES,
+	ADMIN_ANNOUNCEMENT_VISIBILITY,
+	type AnnouncementFilters,
+	type AnnouncementListResult
+} from "../contracts";
+import {type AnnunciUrl} from "../url-state";
+import {canExportAnnouncements, createAnnunciController} from "../client/controller";
+import {announcementTransport} from "../client/transport";
+import {downloadAnnouncementExport, requestAnnouncementExport} from "../client/export-transport";
+import {displayDate, STATUS_LABELS, TYPE_LABELS, typeLabel, VISIBILITY_LABELS} from "../presentation";
+import {AnnouncementDetailContent} from "./AnnouncementDetailContent";
+import {ModerateActions, moderationIcons} from "./ModerateActions";
+import {AnnouncementStatusBadge, AnnouncementTrashBadge, AnnouncementVisibilityBadges} from "./AnnouncementBadges";
+import {ModerationDialog} from "./ModerationDialog";
+import {moderateAnnouncementAction} from "@/features/annunci/server/actions";
+import {MODERATION_LABELS, type ModerationOperation} from "../moderation";
 
 function FilterSelect({ id, label, value, items, onChange }: { id: string; label: string; value: string; items: { value: string; label: string }[]; onChange(value: string): void }) {
   return <Field><FieldLabel htmlFor={id}>{label}</FieldLabel><Select items={items} value={value} onValueChange={(v) => { if (v !== null) onChange(v); }}>

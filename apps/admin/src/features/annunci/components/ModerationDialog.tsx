@@ -1,16 +1,25 @@
 "use client";
 
-import { startTransition, useRef } from "react";
-import { Check, CircleAlert, Info } from "lucide-react";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { FieldGroup, Field, FieldLabel, FieldDescription, FieldError } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
-import { Spinner } from "@/components/ui/spinner";
-import { PanelSkeleton } from "@/features/dashboard/components/ContentSkeletons";
-import type { AnnunciController, AnnunciState } from "../client/controller";
-import { capability, moderationReason, MODERATION_LABELS, needsReason } from "../moderation";
+import {startTransition, useRef} from "react";
+import {Check, CircleAlert, Info} from "lucide-react";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle
+} from "@/components/ui/alert-dialog";
+import {Alert, AlertDescription} from "@/components/ui/alert";
+import {Button} from "@/components/ui/button";
+import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
+import {Textarea} from "@/components/ui/textarea";
+import {Spinner} from "@/components/ui/spinner";
+import {PanelSkeleton} from "@/features/dashboard/components/ContentSkeletons";
+import type {AnnunciController, AnnunciState} from "../client/controller";
+import {capability, MODERATION_LABELS, moderationReason, needsReason} from "../moderation";
 
 const EFFECTS = {
   trash: "L’annuncio e i suoi contenuti saranno conservati nel cestino, esclusi dal sito e dall’area autore. Stato, privacy e pagamenti rimangono invariati.",

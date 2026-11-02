@@ -1,11 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog"
-import { cn } from "@/lib/utils"
-import { useAdminAppearance } from "@/components/ui/admin-appearance"
+import {AlertDialog as AlertDialogPrimitive} from "@base-ui/react/alert-dialog"
+import {cn} from "@/lib/utils"
+import {useAdminAppearance} from "@/components/ui/admin-appearance"
 
-import { Button } from "@/components/ui/button"
+import {Button} from "@/components/ui/button"
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />

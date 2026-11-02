@@ -1,17 +1,18 @@
 "use client";
-import { useSyncExternalStore } from "react";
-import { ToggleGroup } from "@base-ui/react/toggle-group";
-import { Toggle } from "@base-ui/react/toggle";
-import { Check, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { HomeSummaryResult } from "../contracts";
-import { HOME_CARDS, homeCount } from "../presentation";
-import { homeTransport } from "../client/transport";
-import { HomeFailure } from "./HomeFailure";
-import { useHomeSession } from "./HomeSessionProvider";
-import { useHomeBlock } from "./useHomeBlock";
+import {useSyncExternalStore} from "react";
+import {ToggleGroup} from "@base-ui/react/toggle-group";
+import {Toggle} from "@base-ui/react/toggle";
+import {Check, RefreshCw} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Skeleton} from "@/components/ui/skeleton";
+import type {HomeSummaryResult} from "../contracts";
+import {HOME_CARDS, homeCount} from "../presentation";
+import {homeTransport} from "../client/transport";
+import {HomeFailure} from "./HomeFailure";
+import {useHomeSession} from "./HomeSessionProvider";
+import {useHomeBlock} from "./useHomeBlock";
+
 const unavailable = (): HomeSummaryResult => ({ status: "unavailable", code: "HOME_UNAVAILABLE", correlationId: "client" });
 export function HomeKpis({ initialResult }: { initialResult: HomeSummaryResult }) {
   const state = useHomeBlock(initialResult, homeTransport.summary, unavailable);

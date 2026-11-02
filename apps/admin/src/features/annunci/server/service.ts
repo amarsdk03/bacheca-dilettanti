@@ -1,12 +1,12 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
-import type { Json } from "@bacheca/database";
-import { verifySessionClaims, type ClaimsClient } from "../../auth/server/session-claims";
-import type { AnnouncementDetailResult, AnnouncementListResult } from "../contracts";
-import { canonicalUuid } from "../validation";
-import { parseDetailResponse } from "./detail-response";
-import { parseListQuery } from "./query-input";
-import { parseListResponse } from "./response";
+import {randomUUID} from "node:crypto";
+import type {Json} from "@bacheca/database";
+import {type ClaimsClient, verifySessionClaims} from "../../auth/server/session-claims";
+import type {AnnouncementDetailResult, AnnouncementListResult} from "../contracts";
+import {canonicalUuid} from "../validation";
+import {parseDetailResponse} from "./detail-response";
+import {parseListQuery} from "./query-input";
+import {parseListResponse} from "./response";
 
 type Client = ClaimsClient & {
   rpc(name: "admin_list_announcements_v1" | "admin_get_announcement_v1", args: { p_query: Json } | { p_id: string }): PromiseLike<{ data: unknown; error: unknown }>;

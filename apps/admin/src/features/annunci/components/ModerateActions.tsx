@@ -1,9 +1,9 @@
 "use client";
 
-import { Check, X, EyeOff, Eye, Trash2, Undo2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { AnnouncementDetail } from "../contracts";
-import { capability, moderationReason, MODERATION_LABELS, type ModerationOperation } from "../moderation";
+import {Check, Eye, EyeOff, Trash2, Undo2, X} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import type {AnnouncementDetail} from "../contracts";
+import {capability, MODERATION_LABELS, type ModerationOperation, moderationReason} from "../moderation";
 
 export const moderationIcons = { approve: Check, reject: X, hide: EyeOff, show: Eye, trash: Trash2, restore: Undo2 };
 export function ModerateActions({ detail, disabled, onChoose }: { detail: AnnouncementDetail; disabled?: boolean; onChoose(operation: ModerationOperation, trigger: HTMLElement): void }) {

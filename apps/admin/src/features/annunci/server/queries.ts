@@ -1,6 +1,6 @@
 import "server-only";
-import { createReadClient } from "@/lib/supabase/server";
-import { createAnnouncementQueries } from "./service";
+import {createReadClient} from "@/lib/supabase/server";
+import {createAnnouncementQueries} from "./service";
 
 /** Rendering reads only. Future actions/handlers must supply a writable session
  * client to createAnnouncementQueries so refreshed cookies can be persisted.

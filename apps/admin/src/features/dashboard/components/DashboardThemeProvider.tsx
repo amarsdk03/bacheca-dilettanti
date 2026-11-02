@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { AdminAppearanceContext, type DashboardTheme } from "@/components/ui/admin-appearance";
-import { cn } from "@/lib/utils";
+import {type ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState} from "react";
+import {AdminAppearanceContext, type DashboardTheme} from "@/components/ui/admin-appearance";
+import {cn} from "@/lib/utils";
 
 const STORAGE_KEY = "bd-admin-theme";
 

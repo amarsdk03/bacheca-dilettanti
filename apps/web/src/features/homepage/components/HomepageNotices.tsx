@@ -3,11 +3,11 @@
 import {useId} from "react";
 import Link from "next/link";
 import {
-	AlarmClockPlusIcon,
 	ArrowRightIcon,
 	FlameIcon,
 	type LucideIcon,
-	MegaphoneIcon, NewspaperIcon,
+	MegaphoneIcon,
+	NewspaperIcon,
 	TriangleAlertIcon
 } from "lucide-react";
 

@@ -1,10 +1,10 @@
 "use client";
-import { Eye } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from "@/components/ui/table";
-import type { AuditSummary } from "../read-contracts";
-import { AUDIT_LABELS, auditActorLabel, auditDate } from "../read-presentation";
+import {Eye} from "lucide-react";
+import {Badge} from "@/components/ui/badge";
+import {Button} from "@/components/ui/button";
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import type {AuditSummary} from "../read-contracts";
+import {AUDIT_LABELS, auditActorLabel, auditDate} from "../read-presentation";
 
 /** Presentation only. Callers own authorization, requests, limits and overlays. */
 export function AuditSummaryTable({ items, caption, onShowDetails }: {

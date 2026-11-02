@@ -1,6 +1,9 @@
 "use client";
 
-import {professionalLocationsAllowed, PROFESSIONAL_REGIONS_EMPTY_MESSAGE} from "@/features/profilo/professional-regions";
+import {
+	PROFESSIONAL_REGIONS_EMPTY_MESSAGE,
+	professionalLocationsAllowed
+} from "@/features/profilo/professional-regions";
 import {type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import Link from "next/link";
 import {ClipboardPenIcon, MailCheckIcon} from "lucide-react";
@@ -29,7 +32,6 @@ import {
 	type AnnouncementContacts,
 	type AnnouncementExtras,
 	announcementRegionsAllowed,
-	PROFESSIONAL_AREA_ERROR,
 	cloneProfileDrafts,
 	cloneProfileLocations,
 	cloneProfileSocialLinks,
@@ -40,6 +42,7 @@ import {
 	getProfileValidationErrors,
 	isPublishableProfileType,
 	isTeamAnnouncementSubtype,
+	PROFESSIONAL_AREA_ERROR,
 	PUBLISH_PAYLOAD_VERSION,
 	type PublishableProfileType,
 	type PublishAnnouncementPayload,

@@ -1,14 +1,22 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { ExternalLink as ExternalLinkIcon, Info, Trash2 } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { ExternalLink } from "@/features/navigation/ExternalNavigation";
-import type { AnnouncementDetail } from "../contracts";
-import { DETAIL_FIELDS, type DetailFieldKind, type DetailFieldValue, type DetailType, type HistoryEntry, type PrizeEntry, type ScheduleEntry } from "../detail-fields";
-import { displayDate, FIELD_LABELS, issueLabel, money, typeLabel } from "../presentation";
-import { AnnouncementStatusBadge, AnnouncementVisibilityBadges } from "./AnnouncementBadges";
+import type {ReactNode} from "react";
+import {ExternalLink as ExternalLinkIcon, Info, Trash2} from "lucide-react";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {Separator} from "@/components/ui/separator";
+import {ExternalLink} from "@/features/navigation/ExternalNavigation";
+import type {AnnouncementDetail} from "../contracts";
+import {
+	DETAIL_FIELDS,
+	type DetailFieldKind,
+	type DetailFieldValue,
+	type DetailType,
+	type HistoryEntry,
+	type PrizeEntry,
+	type ScheduleEntry
+} from "../detail-fields";
+import {displayDate, FIELD_LABELS, issueLabel, money, typeLabel} from "../presentation";
+import {AnnouncementStatusBadge, AnnouncementVisibilityBadges} from "./AnnouncementBadges";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return <section className="admin-detail-section"><h3>{title}</h3>{children}</section>;

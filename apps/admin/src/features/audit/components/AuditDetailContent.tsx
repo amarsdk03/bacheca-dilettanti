@@ -1,6 +1,7 @@
-import type { AuditDetail } from "../read-contracts";
-import { Badge } from "@/components/ui/badge";
-import { AUDIT_LABELS, auditActorLabel, auditDate } from "../read-presentation";
+import type {AuditDetail} from "../read-contracts";
+import {Badge} from "@/components/ui/badge";
+import {AUDIT_LABELS, auditActorLabel, auditDate} from "../read-presentation";
+
 function Fact({ label, value, technical = false }: { label: string; value: string | null; technical?: boolean }) {
   return <div className="admin-fact" data-technical={technical}><dt>{label}</dt><dd>{value ?? "Non disponibile"}</dd></div>;
 }

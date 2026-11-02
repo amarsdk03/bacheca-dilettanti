@@ -1,6 +1,6 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import {Skeleton} from "@/components/ui/skeleton";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Table, TableBody, TableCell, TableRow} from "@/components/ui/table";
 
 export function CardSkeleton() {
   return <Card aria-busy="true" aria-label="Caricamento riepilogo">

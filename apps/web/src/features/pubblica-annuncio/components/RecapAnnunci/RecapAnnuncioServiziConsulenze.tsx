@@ -7,9 +7,7 @@ import {
 	RecapField,
 	RegioniRecap,
 } from "@/features/pubblica-annuncio/components/RecapAnnunci/RecapHelpers";
-import {
-	useAnnuncioServiziConsulenzeStore
-} from "@/features/pubblica-annuncio/state/AnnuncioServiziConsulenze.store";
+import {useAnnuncioServiziConsulenzeStore} from "@/features/pubblica-annuncio/state/AnnuncioServiziConsulenze.store";
 import {
 	DISPONIBILITA_SPOSTAMENTI_OPTIONS,
 	getOptionLabel,

@@ -1,7 +1,7 @@
-import { CircleAlert } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { LogoutForm } from "./LogoutForm";
+import {CircleAlert} from "lucide-react";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {Button} from "@/components/ui/button";
+import {LogoutForm} from "./LogoutForm";
 
 export function AccessState({ unavailable }: { unavailable: boolean }) {
   return (

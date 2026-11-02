@@ -1,6 +1,6 @@
 import "server-only";
-import { redirect } from "next/navigation";
-import { getAdminContext } from "@/features/auth/server/queries";
+import {redirect} from "next/navigation";
+import {getAdminContext} from "@/features/auth/server/queries";
 
 /** Call from layout AND every page: layouts can persist across navigations. */
 export async function requireAdminPageContext() {

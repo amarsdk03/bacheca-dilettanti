@@ -1,4 +1,4 @@
-import { ANNOUNCEMENT_AUDIT_ACTIONS } from "./contracts";
+import {ANNOUNCEMENT_AUDIT_ACTIONS} from "./contracts";
 
 export const AUDIT_ACTIONS = ["auth.login", "auth.logout", "auth.access_denied", ...ANNOUNCEMENT_AUDIT_ACTIONS] as const;
 export type AuditAction = typeof AUDIT_ACTIONS[number];

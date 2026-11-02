@@ -2,15 +2,24 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import {usePathname} from "next/navigation";
+import {X} from "lucide-react";
 import {
-  Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarGroup, SidebarGroupLabel,
-  SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar,
+	Sidebar,
+	SidebarContent,
+	SidebarFooter,
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarGroupLabel,
+	SidebarHeader,
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
+	useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { LogoutForm } from "@/features/auth/components/LogoutForm";
-import { DASHBOARD_GROUPS, DASHBOARD_SECTIONS, isSectionActive } from "../sections";
+import {Button} from "@/components/ui/button";
+import {LogoutForm} from "@/features/auth/components/LogoutForm";
+import {DASHBOARD_GROUPS, DASHBOARD_SECTIONS, isSectionActive} from "../sections";
 
 export function DashboardSidebar() {
   const pathname = usePathname();

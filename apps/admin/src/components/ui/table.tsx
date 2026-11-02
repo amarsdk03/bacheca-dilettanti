@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { cn } from "@/lib/utils"
-import { useAdminAppearance } from "@/components/ui/admin-appearance"
+import {cn} from "@/lib/utils"
+import {useAdminAppearance} from "@/components/ui/admin-appearance"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   const appearance = useAdminAppearance()

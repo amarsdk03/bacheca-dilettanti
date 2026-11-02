@@ -1,2 +1,3 @@
-import { homeHttp } from "@/features/home/server/http";
+import {homeHttp} from "@/features/home/server/http";
+
 export async function GET(request: Request) { return homeHttp().chart(request); }

@@ -1,4 +1,9 @@
-import {publicTeamExperienceNames} from "@/features/profilo/team-profile";
+import {
+	experienceTeamReferences,
+	publicTeamExperienceNames,
+	type PublicTeamProfile,
+	type TeamProfileReference
+} from "@/features/profilo/team-profile";
 import "server-only";
 import {loadAnnouncementAuthorProfile} from "./announcement-author-profile";
 import {buildAnnouncementDetailSections} from "../announcement-detail-sections";
@@ -20,7 +25,6 @@ import type {QueryData, SupabaseClient} from "@supabase/supabase-js";
 
 import {
 	type AnnouncementAuthor,
-	type AnonymousAnnouncementAuthorInfo,
 	type AnnouncementContact,
 	type AnnouncementDetailField,
 	type AnnouncementDetailResult,
@@ -32,6 +36,7 @@ import {
 	type AnnouncementPlayerRoles,
 	ANNOUNCEMENTS_PER_PAGE,
 	type AnnouncementType,
+	type AnonymousAnnouncementAuthorInfo,
 	getAnnouncementFilterEntries,
 	getAnnouncementStorageTypes,
 	isValidAnnouncementId,
@@ -39,11 +44,6 @@ import {
 	normalizeAnnouncementSearchText,
 } from "@/features/annunci/announcement-model";
 import type {ProfileType} from "@/features/profilo/profile-model";
-import {
-	experienceTeamReferences,
-	type PublicTeamProfile,
-	type TeamProfileReference
-} from "@/features/profilo/team-profile";
 import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
 import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";

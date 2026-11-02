@@ -1,5 +1,5 @@
-import type { HomeChartResult, HomeMetric } from "../contracts";
-import type { HomeSession } from "./session";
+import type {HomeChartResult, HomeMetric} from "../contracts";
+import type {HomeSession} from "./session";
 
 type State = { metric: HomeMetric; pending: boolean; result: HomeChartResult | null };
 export function createHomeChartController(session: HomeSession, request: (metric: HomeMetric, signal: AbortSignal) => Promise<HomeChartResult>) {

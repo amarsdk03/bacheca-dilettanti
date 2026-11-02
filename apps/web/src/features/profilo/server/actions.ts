@@ -6,9 +6,19 @@ import {revalidatePath} from "next/cache";
 import {randomUUID} from "node:crypto";
 
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
-import {professionalLocationsAllowed, PROFESSIONAL_REGIONS_EMPTY_MESSAGE, PROFESSIONAL_REGIONS_ERROR, PROFESSIONAL_REGIONS_SUSPENDED_MESSAGE} from "@/features/profilo/professional-regions";
+import {
+	PROFESSIONAL_REGIONS_EMPTY_MESSAGE,
+	PROFESSIONAL_REGIONS_ERROR,
+	PROFESSIONAL_REGIONS_SUSPENDED_MESSAGE,
+	professionalLocationsAllowed
+} from "@/features/profilo/professional-regions";
 import {profileFieldsDatabaseErrorMessage} from "@/features/profilo/profile-required-fields";
-import {isComingSoonProfileType, isProfileType, isRestrictedProfileType, type ProfileType,} from "@/features/profilo/profile-model";
+import {
+	isComingSoonProfileType,
+	isProfileType,
+	isRestrictedProfileType,
+	type ProfileType,
+} from "@/features/profilo/profile-model";
 import {
 	isProfileImageScope,
 	PROFILE_IMAGE_FALLBACK_LINK,

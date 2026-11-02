@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { createHomeChartController } from "../client/chart-controller";
-import { readHomeChart } from "../client/chart-transport";
-import { useHomeSession } from "./HomeSessionProvider";
+import {useEffect, useState, useSyncExternalStore} from "react";
+import {createHomeChartController} from "../client/chart-controller";
+import {readHomeChart} from "../client/chart-transport";
+import {useHomeSession} from "./HomeSessionProvider";
 
 export function useHomeChart() {
   const session = useHomeSession();

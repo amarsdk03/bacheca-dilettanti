@@ -1,6 +1,27 @@
-import {BriefcaseBusinessIcon, Building2Icon, CalendarDaysIcon, CircleCheckBigIcon, ClapperboardIcon, FileTextIcon, GoalIcon, InfoIcon, ListChecksIcon, MapPinIcon, MegaphoneIcon, ShirtIcon, UsersIcon, WifiIcon} from "lucide-react";
+import {
+	BriefcaseBusinessIcon,
+	Building2Icon,
+	CalendarDaysIcon,
+	CircleCheckBigIcon,
+	ClapperboardIcon,
+	FileTextIcon,
+	GoalIcon,
+	InfoIcon,
+	ListChecksIcon,
+	MapPinIcon,
+	MegaphoneIcon,
+	ShirtIcon,
+	UsersIcon,
+	WifiIcon
+} from "lucide-react";
 import type {GenericProfileDetail, NonPlayerProfileType} from "../profile-detail-model";
-import {formatProfileFactCount, getProfileDetailFields, getProfileDetailFieldValue, type ProfileDetailPresentation, type ProfileOverviewSection} from "./profile-detail-presentation";
+import {
+	formatProfileFactCount,
+	getProfileDetailFields,
+	getProfileDetailFieldValue,
+	type ProfileDetailPresentation,
+	type ProfileOverviewSection
+} from "./profile-detail-presentation";
 
 const locations = {kind: "locations", title: "Località"} as const;
 const social = {kind: "social"} as const;

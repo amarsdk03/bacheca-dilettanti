@@ -1,13 +1,13 @@
 "use client";
-import { Component, lazy, Suspense, type ReactNode } from "react";
-import { RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { EmptyState } from "@/features/dashboard/components/ContentStates";
-import { HomeChartsSkeleton } from "./HomeSkeletons";
-import { HOME_CARDS } from "../presentation";
-import { HomeFailure } from "./HomeFailure";
-import { useHomeChart } from "./useHomeChart";
+import {Component, lazy, type ReactNode, Suspense} from "react";
+import {RefreshCw} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent} from "@/components/ui/card";
+import {EmptyState} from "@/features/dashboard/components/ContentStates";
+import {HomeChartsSkeleton} from "./HomeSkeletons";
+import {HOME_CARDS} from "../presentation";
+import {HomeFailure} from "./HomeFailure";
+import {useHomeChart} from "./useHomeChart";
 
 const Charts = lazy(() => import("./HomeCharts"));
 class ChartBoundary extends Component<{ children: ReactNode; retry(): void }, { failed: boolean }> {

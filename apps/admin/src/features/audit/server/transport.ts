@@ -1,8 +1,8 @@
 import "server-only";
 
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@bacheca/database";
-import { auditUuid, type ServerAuditEvent } from "../contracts";
+import {createClient} from "@supabase/supabase-js";
+import type {Database} from "@bacheca/database";
+import {auditUuid, type ServerAuditEvent} from "../contracts";
 
 /** Construct lazily: missing audit credentials must never prevent local logout. */
 export async function writeServerAudit(event: ServerAuditEvent): Promise<string> {

@@ -1,8 +1,8 @@
 "use server";
 
-import { redirect } from "next/navigation";
-import type { LoginState, LogoutState } from "../contracts";
-import { createAdminAuthService } from "./index";
+import {redirect} from "next/navigation";
+import type {LoginState, LogoutState} from "../contracts";
+import {createAdminAuthService} from "./index";
 
 export async function loginAction(_previous: LoginState, form: FormData): Promise<LoginState> {
   const result = await createAdminAuthService().login(form);

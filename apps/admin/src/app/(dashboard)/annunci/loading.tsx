@@ -1,3 +1,3 @@
-import { AnnunciSkeleton } from "@/features/annunci/components/AnnunciSkeleton";
+import {AnnunciSkeleton} from "@/features/annunci/components/AnnunciSkeleton";
 
 export default AnnunciSkeleton;

@@ -270,7 +270,7 @@ isolato non saranno concluse. Migrazione, template manuali e istruzioni:
 
 ## Versione 1.0 - Deploy prima versione
 
-Push effettuato il: 28/10/2026
+Push effettuato il: 02/11/2026
 
 ### Feature principali
 

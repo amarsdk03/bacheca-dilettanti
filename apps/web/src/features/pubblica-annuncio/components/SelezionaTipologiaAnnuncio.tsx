@@ -5,7 +5,16 @@ import {useState} from "react";
 import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
-import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from "@/components/ui/alert-dialog";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import {
 	Field,
 	FieldContent,

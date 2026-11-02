@@ -12,7 +12,11 @@ import {NOTIFICATION_POLL_MS, notificationBadge, type NotificationItem} from "@/
 import NotificationCard from "@/features/notifiche/NotificationCard";
 import {NotificationError, NotificationsEmpty} from "@/features/notifiche/NotificationFeedback";
 import {useNotificationRead} from "@/features/notifiche/use-notification-read";
-import {browserNotificationStatus, createBrowserNotificationDelivery, subscribeBrowserNotifications} from "./browser-notifications";
+import {
+	browserNotificationStatus,
+	createBrowserNotificationDelivery,
+	subscribeBrowserNotifications
+} from "./browser-notifications";
 
 const MOBILE_QUERY = "(width < 640px)";
 function subscribeMobile(onChange: () => void) {

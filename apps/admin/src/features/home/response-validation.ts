@@ -1,6 +1,14 @@
-import { databaseTimestamp, record } from "../annunci/validation";
-import { ADMIN_ANNOUNCEMENT_STATUSES, ADMIN_ANNOUNCEMENT_TYPES } from "../annunci/contracts";
-import { HOME_AGE_BUCKETS, HOME_PROFILE_TYPES, type HomeChart, type HomeDistribution, type HomeMetric, type HomeSummary } from "./contracts";
+import {databaseTimestamp, record} from "../annunci/validation";
+import {ADMIN_ANNOUNCEMENT_STATUSES, ADMIN_ANNOUNCEMENT_TYPES} from "../annunci/contracts";
+import {
+	HOME_AGE_BUCKETS,
+	HOME_PROFILE_TYPES,
+	type HomeChart,
+	type HomeDistribution,
+	type HomeMetric,
+	type HomeSummary
+} from "./contracts";
+
 function invalid(): never { throw new Error("INVALID_HOME_RESPONSE"); }
 const count = (v: unknown): v is number => typeof v === "number" && Number.isSafeInteger(v) && v >= 0;
 const sum = (values: number[]) => { const n = values.reduce((a, b) => a + b, 0); if (!count(n)) invalid(); return n; };

@@ -1,8 +1,8 @@
 "use client";
 
-import { useLayoutEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
-import { useAnimate, useReducedMotion } from "motion/react";
+import {type ReactNode, useLayoutEffect, useRef, useSyncExternalStore} from "react";
+import {usePathname} from "next/navigation";
+import {useAnimate, useReducedMotion} from "motion/react";
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 function subscribeReducedMotion(onChange: () => void) {

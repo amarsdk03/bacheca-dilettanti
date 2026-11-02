@@ -1,11 +1,12 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
-import type { Json } from "@bacheca/database";
-import { verifySessionClaims, type ClaimsClient } from "../../auth/server/session-claims";
-import { createAuditQueries } from "../../audit/server/read-service";
-import type { HomeActivityResult, HomeChartResult, HomeFailure, HomeSummaryResult } from "../contracts";
-import { homeMetric } from "../validation";
-import { parseHomeChart, parseHomeSummary } from "./response";
+import {randomUUID} from "node:crypto";
+import type {Json} from "@bacheca/database";
+import {type ClaimsClient, verifySessionClaims} from "../../auth/server/session-claims";
+import {createAuditQueries} from "../../audit/server/read-service";
+import type {HomeActivityResult, HomeChartResult, HomeFailure, HomeSummaryResult} from "../contracts";
+import {homeMetric} from "../validation";
+import {parseHomeChart, parseHomeSummary} from "./response";
+
 type Client = ClaimsClient & {
   rpc(name: "admin_get_home_summary_v1" | "admin_get_home_chart_v1" | "admin_list_audit_events_v1" | "admin_get_audit_event_v1",
     args: Record<string, never> | { p_metric: string } | { p_query: Json } | { p_id: string }): PromiseLike<{ data: unknown; error: unknown }>;

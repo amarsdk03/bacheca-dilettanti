@@ -1,4 +1,8 @@
-import type {AnnouncementCardRow, AnnouncementDetailField, AnnouncementType} from "@/features/annunci/announcement-model";
+import type {
+	AnnouncementCardRow,
+	AnnouncementDetailField,
+	AnnouncementType
+} from "@/features/annunci/announcement-model";
 import type {AnnouncementLocation} from "@/features/annunci/announcement-content";
 
 const LIMIT = 100;

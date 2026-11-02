@@ -1,6 +1,12 @@
 import {buildAnnouncementDetailSections} from "./announcement-detail-sections";
 import {buildAnnouncementSectionPresentation} from "./announcement-section-presentation";
-import type {AnnouncementAuthorProfileData, AnnouncementDetailField, AnnouncementDetailSection, AnnouncementFact, AnnouncementType} from "./announcement-model";
+import type {
+	AnnouncementAuthorProfileData,
+	AnnouncementDetailField,
+	AnnouncementDetailSection,
+	AnnouncementFact,
+	AnnouncementType
+} from "./announcement-model";
 import {groupPublicProfileLocations, type PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 import {availabilityLabel} from "@/features/profilo/public-profile-display";
 

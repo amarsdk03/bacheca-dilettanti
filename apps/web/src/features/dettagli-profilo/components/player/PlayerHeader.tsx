@@ -3,11 +3,11 @@ import DynamicReactFlag from "@/components/dynamic/DynamicReactFlag";
 import {
 	CalendarDaysIcon,
 	CircleCheckBigIcon,
-	TagsIcon,
 	FootprintsIcon,
 	RulerIcon,
 	ShirtIcon,
 	StarIcon,
+	TagsIcon,
 } from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";

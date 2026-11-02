@@ -1,5 +1,5 @@
 import "server-only";
-import { auditUuid, mapAuthAuditFailure } from "../../audit/contracts";
+import {auditUuid, mapAuthAuditFailure} from "../../audit/contracts";
 
 export type ClaimsClient = {
   auth: { getClaims(): Promise<{ data: { claims: Record<string, unknown> } | null; error: unknown }> };

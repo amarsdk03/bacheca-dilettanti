@@ -1,9 +1,8 @@
 import {isTeamCategoryForSport} from "@/features/profilo/team-category-catalog";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {isValidPhone} from "@/features/pubblica-annuncio/publish-field-validation";
+import {isValidPhone, parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 import type {ProfileLocationDraft, ProfileType} from "@/features/profilo/profile-model";
 import {isPlayerNationalityCode} from "@/features/profilo/player-nationalities";
-import {parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 import {getRequiredBirthDateError} from "@/features/profilo/birth-date";
 import {PROFESSIONAL_REGIONS_EMPTY_MESSAGE, PROFESSIONAL_REGIONS_ERROR} from "@/features/profilo/professional-regions";
 

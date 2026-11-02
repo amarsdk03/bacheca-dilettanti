@@ -1,7 +1,8 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
-import type { HomeActivityResult, HomeChartResult, HomeFailure, HomeSummaryResult } from "../contracts";
-import { createHomeQueries } from "./service";
+import {createClient} from "@/lib/supabase/server";
+import type {HomeActivityResult, HomeChartResult, HomeFailure, HomeSummaryResult} from "../contracts";
+import {createHomeQueries} from "./service";
+
 export function createHomeHttp(queries: ReturnType<typeof createHomeQueries>) {
   const response = (result: HomeActivityResult | HomeChartResult | HomeSummaryResult) => Response.json(result, {
     status: { ok: 200, invalid: 400, denied: 403, unavailable: 503 }[result.status],

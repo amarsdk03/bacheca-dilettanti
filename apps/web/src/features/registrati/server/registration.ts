@@ -5,8 +5,7 @@ import {isTeamCategory, isTeamCategoryForSport} from "@/features/profilo/team-ca
 import {REGIONI_ITALIANE} from "@/const/defaultConstants";
 import {allowsForeignProfileRegion, FOREIGN_PROFILE_REGION} from "@/features/profilo/profile-location-regions";
 import {getRequiredBirthDateError} from "@/features/profilo/birth-date";
-import {normalizeOptionalTime} from "@/features/pubblica-annuncio/publish-field-validation";
-import {parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
+import {normalizeOptionalTime, parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
 import {isProfileType, MAX_PROFILE_COUNT, type ProfileType,} from "@/features/profilo/profile-model";
 import {PROFILE_SOCIAL_PLATFORMS, type ProfileSocialLinks,} from "@/features/profilo/profile-social-links";
 import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";

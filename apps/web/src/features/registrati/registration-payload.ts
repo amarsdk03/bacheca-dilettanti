@@ -1,10 +1,10 @@
 import {
 	type ComingSoonProfileType,
 	isComingSoonProfileType,
+	isRestrictedProfileType,
 	type ProfileDrafts,
 	type ProfileLocations,
 	type ProfileType,
-	isRestrictedProfileType,
 	RESTRICTED_PROFILE_TYPES,
 } from "@/features/profilo/profile-model";
 import type {ProfileSocialLinks, ProfileSocialLinksByType,} from "@/features/profilo/profile-social-links";

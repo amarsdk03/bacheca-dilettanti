@@ -16,18 +16,21 @@ import {
 	type ProfileDirectoryQuery,
 	type ProfileDirectoryResult,
 } from "@/features/profili/profile-directory-model";
-import {isLimitedProfileType, PROFILE_OPTIONS, type ProfileType,} from "@/features/profilo/profile-model";
+import {
+	createProfileDrafts,
+	createProfileLocations,
+	isLimitedProfileType,
+	PROFILE_OPTIONS,
+	type ProfileType,
+} from "@/features/profilo/profile-model";
 import {resolvedProfileImageUrl} from "@/features/profilo/profile-image";
 import {loadProfileImageUrlMap} from "@/features/profilo/server/profile-images";
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {Database, Json} from "@/server/supabase";
 import {normalizePlayerPrimaryRoles, normalizePlayerSpecificRoles,} from "@/features/profilo/player-roles";
 import {ordinaTipologieCalcio} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
-import {
-	normalizeFigures
-} from "@/features/pubblica-annuncio/types/category-catalog";
+import {normalizeFigures} from "@/features/pubblica-annuncio/types/category-catalog";
 import {publicPlayerAge} from "@/features/dettagli-profilo/server/player-profile-data";
-import {createProfileDrafts, createProfileLocations} from "@/features/profilo/profile-model";
 import {getProfileCompletion} from "@/features/profilo/profile-completion";
 import {sortRankedDirectoryProfiles} from "../profile-directory-ranking";
 import {randomUUID} from "node:crypto";

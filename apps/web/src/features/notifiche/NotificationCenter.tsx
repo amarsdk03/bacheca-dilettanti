@@ -2,7 +2,14 @@
 import {useEffect, useRef, useState} from "react";
 import {BellIcon, LoaderCircle} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {appendNotifications, isNotificationType, NOTIFICATION_LABELS, NOTIFICATION_TYPES, type NotificationType, type NotificationPage} from "@/features/notifiche/notification-model";
+import {
+	appendNotifications,
+	isNotificationType,
+	NOTIFICATION_LABELS,
+	NOTIFICATION_TYPES,
+	type NotificationPage,
+	type NotificationType
+} from "@/features/notifiche/notification-model";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import BrowserNotificationSettings from "./BrowserNotificationSettings";
 import {fetchNotifications} from "@/features/notifiche/client";

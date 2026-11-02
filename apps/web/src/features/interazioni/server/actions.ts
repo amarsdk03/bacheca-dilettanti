@@ -3,7 +3,11 @@
 import "server-only";
 import {revalidatePath} from "next/cache";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
-import {type InteractionResult, type InteractionTarget, isInteractionId} from "@/features/interazioni/interaction-model";
+import {
+	type InteractionResult,
+	type InteractionTarget,
+	isInteractionId
+} from "@/features/interazioni/interaction-model";
 import {isProfileType, type ProfileType} from "@/features/profilo/profile-model";
 import {createAdminClient} from "@/lib/supabase/admin";
 

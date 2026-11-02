@@ -1,9 +1,9 @@
-import { createServerClient } from "@supabase/ssr";
-import type { Database } from "@bacheca/database";
-import { NextResponse, type NextRequest } from "next/server";
-import { ADMIN_COOKIE_OPTIONS, getSupabaseConfig } from "./config";
-import { isAdminCookie } from "./cookie-buffer";
-import { sessionFetch } from "./session-fetch";
+import {createServerClient} from "@supabase/ssr";
+import type {Database} from "@bacheca/database";
+import {type NextRequest, NextResponse} from "next/server";
+import {ADMIN_COOKIE_OPTIONS, getSupabaseConfig} from "./config";
+import {isAdminCookie} from "./cookie-buffer";
+import {sessionFetch} from "./session-fetch";
 
 /** Refresh transport only. Every protected entrypoint verifies its own context. */
 export async function updateSession(request: NextRequest) {

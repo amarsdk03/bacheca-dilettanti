@@ -1,5 +1,5 @@
 import type {AnnouncementDetail} from "@/features/annunci/announcement-model";
-import {formatPreviewStatus, type AnnouncementPreviewData} from "@/features/pubblica-annuncio/announcement-preview";
+import {type AnnouncementPreviewData, formatPreviewStatus} from "@/features/pubblica-annuncio/announcement-preview";
 import AnnouncementPreviewCard from "@/features/pubblica-annuncio/components/AnnouncementPreviewCard";
 
 export function announcementDetailPreview(announcement: AnnouncementDetail): AnnouncementPreviewData {

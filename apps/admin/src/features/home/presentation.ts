@@ -1,5 +1,6 @@
-import { Users, Megaphone, ClipboardCheck, CircleDollarSign } from "lucide-react";
-import type { HomeMetric } from "./contracts";
+import {CircleDollarSign, ClipboardCheck, Megaphone, Users} from "lucide-react";
+import type {HomeMetric} from "./contracts";
+
 export const HOME_CARDS = [
   { metric: "users", title: "Utenti totali", description: "Account Utente con registrazione completata.", icon: Users },
   { metric: "announcements", title: "Annunci totali", description: "Tutti gli stati, escluso il cestino.", icon: Megaphone },

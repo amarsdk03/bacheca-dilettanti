@@ -1,10 +1,16 @@
 import "server-only";
-import type { AnnouncementDetail } from "../contracts";
-import { DETAIL_FIELDS, type DetailContent, type DetailFieldKind, type DetailFieldValue, type DetailType } from "../detail-fields";
-import { canonicalUuid, databaseTimestamp, record } from "../validation";
-import { parseListQuery } from "./query-input";
-import { parseListResponse } from "./response";
-import { parseModerationInfo } from "../moderation";
+import type {AnnouncementDetail} from "../contracts";
+import {
+	DETAIL_FIELDS,
+	type DetailContent,
+	type DetailFieldKind,
+	type DetailFieldValue,
+	type DetailType
+} from "../detail-fields";
+import {canonicalUuid, databaseTimestamp, record} from "../validation";
+import {parseListQuery} from "./query-input";
+import {parseListResponse} from "./response";
+import {parseModerationInfo} from "../moderation";
 
 const nullableText = (v: unknown): v is string | null => v === null || typeof v === "string";
 const nullableId = (v: unknown): v is string | null => v === null || canonicalUuid(v);

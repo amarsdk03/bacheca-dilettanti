@@ -33,7 +33,7 @@ import ProfileLocationsField from "@/features/profilo/ProfileLocationsField";
 import {allowsForeignProfileRegion} from "@/features/profilo/profile-location-regions";
 import PlayerNationalityField from "@/features/profilo/PlayerNationalityField";
 import TeamProfileComboboxField from "@/features/profilo/TeamProfileComboboxField";
-import {CurrentPlayerTeamSelect, CurrentPlayerCareerFields} from "@/features/profilo/CurrentPlayerTeamFields";
+import {CurrentPlayerCareerFields, CurrentPlayerTeamSelect} from "@/features/profilo/CurrentPlayerTeamFields";
 import {currentCategoryLabel, isTournamentCategory} from "@/features/profilo/current-team";
 import type {
 	ProfileDrafts,
@@ -50,7 +50,10 @@ import {
 import {PROFILE_SOCIAL_ICONS} from "@/features/profilo/profile-social-icons";
 import DataNascitaFields from "@/features/pubblica-annuncio/components/InputFields/DataNascitaFields";
 import DisponibilitaProfiloSelect from "@/features/pubblica-annuncio/components/InputFields/DisponibilitaProfiloSelect";
-import {normalizeProfessionalAvailability, PROFESSIONAL_AVAILABILITY_OPTIONS} from "@/features/profilo/professional-availability";
+import {
+	normalizeProfessionalAvailability,
+	PROFESSIONAL_AVAILABILITY_OPTIONS
+} from "@/features/profilo/professional-availability";
 import EsperienzeAnnuncioFields, {
 	createEsperienzaAnnuncio,
 	type EsperienzaAnnuncio,
