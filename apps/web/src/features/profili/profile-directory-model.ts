@@ -48,7 +48,7 @@ export const PROFILE_FILTER_OPTIONS = {
 } as const;
 
 export interface ProfileDirectoryFilters {
-	regione: string;
+	regione: string[];
 	tipologia: string;
 	ruolo: string;
 	figura: string;
@@ -117,6 +117,7 @@ export interface DirectoryProfile {
 }
 
 export interface ProfileDirectoryResult {
+	regionCounts?: Record<string, number>;
 	profiles: DirectoryProfile[];
 	total: number;
 	currentPage: number;
@@ -135,7 +136,7 @@ const CAR_SET = new Set<string>(PROFILE_FILTER_OPTIONS.automunito.map(({value}) 
 
 export function createEmptyProfileFilters(): ProfileDirectoryFilters {
 	return {
-		regione: "",
+		regione: [],
 		tipologia: "",
 		ruolo: "",
 		figura: "",
@@ -177,7 +178,7 @@ export function parseProfileDirectoryQuery(params: RawProfileSearchParams): Prof
 	const selectedType = types.length === 1 ? types[0] : null;
 	const filters = createEmptyProfileFilters();
 
-	filters.regione = allowedValue(firstValue(params.regione), REGION_SET);
+	filters.regione = [...new Set(asValues(params.regione).filter(region => REGION_SET.has(region)))];
 
 	if (selectedType) {
 		if (supportsFilter(selectedType, "tipologia")) {
@@ -217,7 +218,7 @@ export function parseProfileDirectoryQuery(params: RawProfileSearchParams): Prof
 
 export function getProfileFilterEntries(filters: ProfileDirectoryFilters): Array<[string, string]> {
 	const entries: Array<[string, string]> = [];
-	if (filters.regione) entries.push(["regione", filters.regione]);
+	filters.regione.forEach(region => entries.push(["regione", region]));
 	if (filters.tipologia) entries.push(["tipologia", filters.tipologia]);
 	if (filters.ruolo) entries.push(["ruolo", filters.ruolo]);
 	if (filters.figura) entries.push(["figura", filters.figura]);
@@ -228,7 +229,7 @@ export function getProfileFilterEntries(filters: ProfileDirectoryFilters): Array
 }
 
 export function getActiveProfileFilterCount(filters: ProfileDirectoryFilters) {
-	return getProfileFilterEntries(filters).length;
+	return getProfileFilterEntries(filters).filter(([key]) => key !== "regione").length;
 }
 
 export function buildProfilesHref(
@@ -247,9 +248,10 @@ export function buildProfilesHref(
 
 	if (q) params.set("q", q);
 	query.types.forEach((type) => params.append("type", type));
-	getProfileFilterEntries(filters).forEach(([key, value]) => params.set(key, value));
+	getProfileFilterEntries(filters).forEach(([key, value]) => params.append(key, value));
 	if (page > 1) params.set("page", String(page));
-	if (overrides.sortSeed) params.set("seed", overrides.sortSeed);
+	const seed = overrides.sortSeed ?? query.sortSeed;
+	if (seed) params.set("seed", seed);
 
 	const suffix = params.toString();
 	return suffix ? `/profili?${suffix}` : "/profili";

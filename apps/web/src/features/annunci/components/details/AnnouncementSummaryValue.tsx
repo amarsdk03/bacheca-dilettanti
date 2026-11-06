@@ -2,9 +2,9 @@ import type {AnnouncementDetailSection} from "@/features/annunci/announcement-mo
 import {summaryLocationGroups} from "@/features/annunci/announcement-summary";
 import {Badge} from "@/components/ui/badge";
 
-export default function AnnouncementSummaryValue({section}: {section: AnnouncementDetailSection}) {
+export default function AnnouncementSummaryValue({section, compact = false}: {section: AnnouncementDetailSection; compact?: boolean}) {
 	const presentation = section.presentation;
-	const listClass = "flex min-w-0 flex-col gap-2";
+	const listClass = compact ? "flex min-w-0 flex-col gap-1" : "flex min-w-0 flex-col gap-2";
 	if (section.locations?.length) return <div className={listClass}>
 		<ul className={listClass}>{summaryLocationGroups(section.locations).map(({region, cities}) => <li key={region}>
 			<span className="font-medium">{region}:</span> {cities.length ? cities.join(", ") : "tutta la regione"}

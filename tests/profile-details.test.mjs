@@ -1057,7 +1057,7 @@ test("new announcement CTA is shown only for the profile owner", () => {
 	const base = {announcements: [], announcementsUnavailable: false};
 	const owned = renderToStaticMarkup(React.createElement(Announcements, {...base, isOwner: true}));
 	const visitor = renderToStaticMarkup(React.createElement(Announcements, {...base, isOwner: false}));
-	assert.match(owned, /href="\/pubblica-annuncio"[^>]*>Crea nuovo annuncio/);
+	assert.match(owned, /href="\/pubblica-annuncio"[^>]*>[\s\S]*?Crea nuovo annuncio/);
 	assert.doesNotMatch(visitor, /Crea nuovo annuncio/);
 });
 

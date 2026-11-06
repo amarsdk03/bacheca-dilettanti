@@ -18,6 +18,8 @@ export type AnnouncementCursor = { v: 2; id: string; createdAt: string | null; f
 export type AnnouncementListQuery = { filters: AnnouncementFilters; limit: number; cursor: AnnouncementCursor | null };
 export type AnnouncementListItem = {
   id: string; title: string | null; type: string; status: string | null;
+  /** Computed presentation only; never persisted as the custom title. Optional during rollout. */
+  displayTitle?: string;
   /** Absent only during a deployment from the previous read contract. */
   trashed?: boolean;
   hidden: boolean | null; private: boolean | null; creatorId: string | null;
@@ -41,7 +43,7 @@ export type AnnouncementDetail = {
   locations: { id: string; region: string; city: string | null }[];
   contacts: { id: string; kind: "email" | "phone" | "unknown"; value: string; referent: string | null; valid: boolean }[];
   links: { id: string; platform: string | null; value: string; url: string | null }[];
-  media: { id: string; mimeType: string | null; value: string; url: string | null }[];
+  media: { id: string; mimeType: string | null; value: string; url: string | null; destination: "url" | "storage" | "invalid" }[];
   /** Versioned full source comparison, not an authorization token. */
   contentFingerprint: string;
   complete: boolean;

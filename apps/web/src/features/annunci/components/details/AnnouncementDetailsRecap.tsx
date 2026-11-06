@@ -17,5 +17,5 @@ export function announcementDetailPreview(announcement: AnnouncementDetail): Ann
 }
 
 export default function AnnouncementDetailsRecap({announcement}: {announcement: AnnouncementDetail}) {
-	return <AnnouncementPreviewCard preview={announcementDetailPreview(announcement)} />;
+	return <AnnouncementPreviewCard presentation="detail" preview={announcementDetailPreview(announcement)} />;
 }

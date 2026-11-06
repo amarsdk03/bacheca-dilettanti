@@ -10,9 +10,26 @@ import {CheckIcon, ChevronDownIcon, XIcon} from "lucide-react"
 
 import {useDisabledFieldset} from "@/components/ui/disabled-fieldset"
 
+const ComboboxDisabledContext = React.createContext(false)
+
 function Combobox<Value, Multiple extends boolean | undefined = false>(props: ComboboxPrimitive.Root.Props<Value, Multiple>) {
   const disabled = useDisabledFieldset(props.disabled)
-  return <ComboboxPrimitive.Root {...props} disabled={disabled} />
+  const [state, setState] = React.useState({open: props.defaultOpen ?? false, disabled})
+  if (state.disabled !== disabled) setState({...state, disabled, open: disabled ? false : state.open})
+  return (
+    <ComboboxDisabledContext.Provider value={disabled}>
+      <ComboboxPrimitive.Root
+        {...props}
+        disabled={disabled}
+        open={!disabled && (props.open ?? state.open)}
+        onOpenChange={(open, details) => {
+          if (disabled && open) return
+          if (props.open === undefined) setState({open, disabled})
+          props.onOpenChange?.(open, details)
+        }}
+      />
+    </ComboboxDisabledContext.Provider>
+  )
 }
 
 function ComboboxValue({ ...props }: ComboboxPrimitive.Value.Props) {
@@ -36,9 +53,12 @@ function ComboboxTrigger({
   )
 }
 
-function ComboboxClear({ className, ...props }: ComboboxPrimitive.Clear.Props) {
+function ComboboxClear({ className, disabled, ...props }: ComboboxPrimitive.Clear.Props) {
+  const inheritedDisabled = React.useContext(ComboboxDisabledContext)
+  const locked = useDisabledFieldset(disabled) || inheritedDisabled
   return (
     <ComboboxPrimitive.Clear
+      disabled={locked}
       data-slot="combobox-clear"
       render={<InputGroupButton variant="ghost" size="icon-xs" />}
       className={cn(className)}
@@ -52,7 +72,7 @@ function ComboboxClear({ className, ...props }: ComboboxPrimitive.Clear.Props) {
 function ComboboxInput({
   className,
   children,
-  disabled = false,
+  disabled,
   showTrigger = true,
   showClear = false,
   ...props
@@ -60,10 +80,13 @@ function ComboboxInput({
   showTrigger?: boolean
   showClear?: boolean
 }) {
+  const inheritedDisabled = React.useContext(ComboboxDisabledContext)
+  const locked = useDisabledFieldset(disabled) || inheritedDisabled
   return (
     <InputGroup className={cn("w-auto", className)}>
       <ComboboxPrimitive.Input
-        render={<InputGroupInput disabled={disabled} />}
+        disabled={locked}
+        render={<InputGroupInput disabled={locked} />}
         {...props}
       />
       <InputGroupAddon align="inline-end">
@@ -74,10 +97,10 @@ function ComboboxInput({
             render={<ComboboxTrigger />}
             data-slot="input-group-button"
             className="group-has-data-[slot=combobox-clear]/input-group:hidden data-pressed:bg-transparent"
-            disabled={disabled}
+            disabled={locked}
           />
         )}
-        {showClear && <ComboboxClear disabled={disabled} />}
+        {showClear && <ComboboxClear disabled={locked} />}
       </InputGroupAddon>
       {children}
     </InputGroup>

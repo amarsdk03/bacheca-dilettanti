@@ -1,3 +1,4 @@
+import {sortExperiencesNewestFirst} from "@/features/profilo/experience-order";
 import {AwardIcon, CalendarDaysIcon, RouteIcon} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -22,7 +23,7 @@ export default function PlayerCareer({entries}: {entries: PlayerCareerEntry[]}) 
 					</Empty>
 				) : (
 					<ol className="ml-2 border-l border-border">
-						{entries.map((entry) => {
+						{sortExperiencesNewestFirst(entries).map((entry) => {
 							const period = entry.from
 								? `Dal ${entry.from}${entry.to === "oggi" ? " ad oggi" : entry.to ? ` al ${entry.to}` : ""}`
 								: entry.to === "oggi"

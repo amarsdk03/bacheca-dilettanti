@@ -88,11 +88,14 @@ test("region survives no type or multiple types, URL rebuilding and pagination i
 		const api = load(`apps/web/src/features/${module}.ts`);
 		for (const type of [undefined, [types[0]], types]) {
 			const query = api[parse]({type, regione: "Lazio", q: "test", page: "2"});
-			assert.equal(query.filters.regione, "Lazio");
+			assert.deepEqual(query.filters.regione, ["Lazio"]);
 			assert.match(api[build](query, {page: 3}), /regione=Lazio/);
 			assert.match(api[build](query, {page: 3}), /page=3/);
 		}
-		assert.equal(api[parse]({regione: "not a region"}).filters.regione, "");
+		assert.deepEqual(api[parse]({regione: "not a region"}).filters.regione, []);
+		const multiple = api[parse]({regione: ["Lazio", "Toscana", "Lazio", "invalid"]});
+		assert.deepEqual(multiple.filters.regione, ["Lazio", "Toscana"]);
+		assert.deepEqual(new URL(api[build](multiple, {page: 3}), "http://localhost").searchParams.getAll("regione"), ["Lazio", "Toscana"]);
 	}
 });
 
@@ -106,43 +109,41 @@ function findElement(tree, predicate) {
 	return null;
 }
 
-test("both filter panels expose region without requiring a single selected type", () => {
+test("both directories expose a separate region panel with generic and multiple types", () => {
 	const load = sourceLoader();
 	for (const [folder, componentName, parseName, modelFile, types] of [
-		["annunci", "Annunci", "parseAnnouncementDirectoryQuery", "announcement-model", ["annuncio_giocatore", "annuncio_squadra"]],
+		["annunci", "Annunci", "parseAnnouncementDirectoryQuery", "announcement-model", ["annuncio_giocatore", "annuncio_squadra_cerca_staff"]],
 		["profili", "Profili", "parseProfileDirectoryQuery", "profile-directory-model", ["giocatore", "squadra"]],
 	]) {
 		const Page = load(`apps/web/src/features/${folder}/${componentName}.tsx`).default;
 		const parse = load(`apps/web/src/features/${folder}/${modelFile}.ts`)[parseName];
 		for (const type of [undefined, types]) {
-			const tree = Page({query: parse({type, regione: "Lazio"})});
+			const tree = Page({query: parse({type, regione: ["Lazio", "Toscana"]}), result: Promise.resolve({})});
 			const search = findElement(tree, node => node.type?.name?.endsWith("Search"));
-			assert.ok(search);
-			const sheet = findElement(search.type(search.props), node => node.type?.name?.endsWith("FiltersSheet"));
-			assert.ok(sheet);
+			const toolbar = search.type(search.props);
+			const regions = findElement(toolbar, node => node.type?.name === "DirectoryRegionFilter");
+			assert.deepEqual(regions.props.selected, ["Lazio", "Toscana"]);
+			const sheet = findElement(toolbar, node => node.type?.name?.endsWith("FiltersSheet"));
 			const form = findElement(sheet.type(sheet.props), node => node.type?.name?.endsWith("FiltersForm"));
-			assert.ok(form, "the panel always renders its usable filter form");
-			const region = findElement(form.type(form.props), node => node.props?.name === "regione");
-			assert.equal(region.props.value, "Lazio");
-			assert.equal(region.props.label, "Regione");
+			assert.equal(form, null, "generic filters no longer contain the region selector");
 		}
 	}
 });
 
 test("changing either directory type keeps region and search while resetting pagination", () => {
 	for (const [folder, component, current, next] of [
-		["annunci", "AnnouncementTypeSelector", "annuncio_giocatore", ["annuncio_giocatore", "annuncio_squadra"]],
+		["annunci", "AnnouncementTypeSelector", "annuncio_giocatore", ["annuncio_giocatore", "annuncio_squadra_cerca_staff"]],
 		["profili", "ProfileTypeSelector", "giocatore", ["giocatore", "squadra"]],
 	]) {
 		let pushed;
 		const load = sourceLoader({react: {...React, useOptimistic: value => [value, () => {}], useTransition: () => [false, callback => callback()]},
-			"next/navigation": {usePathname: () => `/${folder}`, useSearchParams: () => new URLSearchParams({q: "test", regione: "Lazio", page: "3"}), useRouter: () => ({push: href => {pushed = href;}})}});
+			"next/navigation": {usePathname: () => `/${folder}`, useSearchParams: () => new URLSearchParams([["q", "test"], ["regione", "Lazio"], ["regione", "Toscana"], ["page", "3"]]), useRouter: () => ({push: href => {pushed = href;}})}});
 		const Selector = load(`apps/web/src/features/${folder}/${component}.tsx`).default;
 		const group = findElement(Selector({selectedTypes: [current]}), node => typeof node.props?.onValueChange === "function");
 		assert.ok(group);
 		group.props.onValueChange(next);
 		const url = new URL(pushed, "http://localhost");
-		assert.equal(url.searchParams.get("regione"), "Lazio");
+		assert.deepEqual(url.searchParams.getAll("regione"), ["Lazio", "Toscana"]);
 		assert.equal(url.searchParams.get("q"), "test");
 		assert.equal(url.searchParams.get("page"), null);
 		assert.deepEqual(url.searchParams.getAll("type"), next);

@@ -39,6 +39,7 @@ import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
 import {Spinner} from "@/components/ui/spinner";
 import {toast} from "@/components/ui/toast";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
+import InvitationCodeInfoDialog from "@/features/inviti/InvitationCodeInfoDialog";
 import ProfileDetailsForm from "@/features/profilo/ProfileDetailsForm";
 import {getProfileRequiredFieldErrors} from "@/features/profilo/profile-required-fields";
 import SignupConfirmationResend from "@/features/auth/SignupConfirmationResend";
@@ -725,7 +726,12 @@ export default function Registrati({nextPath, existingSessionEmail, initialInvit
 											<FieldError>{fieldErrors.confirmPassword}</FieldError>
 										</Field>
 										<Field data-invalid={Boolean(fieldErrors.inviteCode)}>
-											<FieldLabel htmlFor="registration-invite-code">Codice invito</FieldLabel>
+											<div className="flex items-center gap-0.5">
+												<FieldLabel htmlFor="registration-invite-code">
+													Codice invito
+												</FieldLabel>
+												<InvitationCodeInfoDialog />
+											</div>
 											<InputGroup className="h-9">
 												<InputGroupInput
 													id="registration-invite-code"

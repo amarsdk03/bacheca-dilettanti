@@ -11,6 +11,7 @@ import {canonicalUuid, databaseTimestamp, record} from "../validation";
 import {parseListQuery} from "./query-input";
 import {parseListResponse} from "./response";
 import {parseModerationInfo} from "../moderation";
+import {isAnnouncementImagePath} from "../media";
 
 const nullableText = (v: unknown): v is string | null => v === null || typeof v === "string";
 const nullableId = (v: unknown): v is string | null => v === null || canonicalUuid(v);
@@ -116,8 +117,11 @@ export function parseDetailResponse(value: unknown, requestedId: string): Announ
   });
   const media = collection("media", 30).map((row) => {
     if (!nullableText(row.mimeType) || typeof row.value !== "string") invalid();
-    const url = detailUrl(row.value); if (!url) issues.add("UNSAFE_MEDIA");
-    return { id: row.id as string, mimeType: row.mimeType, value: row.value, url };
+    const storage = isAnnouncementImagePath(row.value, row.mimeType);
+    const url = storage ? null : detailUrl(row.value);
+    if (!storage && !url) issues.add("UNSAFE_MEDIA");
+    const destination = storage ? "storage" as const : url ? "url" as const : "invalid" as const;
+    return { id: row.id as string, mimeType: row.mimeType, value: row.value, url, destination };
   });
   let trash: AnnouncementDetail["trash"];
   if (value.trash !== undefined) {

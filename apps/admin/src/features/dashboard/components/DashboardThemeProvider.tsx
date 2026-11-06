@@ -3,6 +3,7 @@
 import {type ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {AdminAppearanceContext, type DashboardTheme} from "@/components/ui/admin-appearance";
 import {cn} from "@/lib/utils";
+import {dashboardFont, dashboardMonoFont} from "../fonts";
 
 const STORAGE_KEY = "bd-admin-theme";
 
@@ -35,6 +36,7 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
     const host = document.createElement("div");
     host.id = "bd-admin-portal-root";
     host.dataset.adminScope = "portal";
+    host.className = cn(dashboardFont.variable, dashboardMonoFont.variable);
     portalRef.current = host;
     document.body.appendChild(host);
 
@@ -70,7 +72,7 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
 
   return <AdminAppearanceContext.Provider value={appearance}>
     <div ref={shellRef} data-admin-scope="dashboard" data-admin-theme={theme}
-      className={cn("admin-dashboard", theme === "dark" && "dark")}>
+      className={cn("admin-dashboard", dashboardFont.variable, dashboardMonoFont.variable, theme === "dark" && "dark")}>
       {children}
     </div>
   </AdminAppearanceContext.Provider>;

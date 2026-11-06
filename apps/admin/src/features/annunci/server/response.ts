@@ -19,6 +19,7 @@ export function parseListResponse(value: unknown, query: AnnouncementListQuery):
       (row.trashed !== undefined && typeof row.trashed !== "boolean") || !nullableText(row.status) || !nullableBool(row.hidden) || !nullableBool(row.private) || !nullableId(row.creatorId) ||
       !nullableTime(row.createdAt) || !nullableTime(row.updatedAt) || typeof row.rowFingerprint !== "string" ||
       !/^[0-9a-f]{32}$/.test(row.rowFingerprint) || !record(row.author)) invalid();
+    if (row.displayTitle !== undefined && (typeof row.displayTitle !== "string" || !row.displayTitle.trim() || row.displayTitle.length > 512)) invalid();
     const author = row.author;
     if (!nullableId(author.profileId) || !nullableId(author.userId) || typeof author.displayName !== "string" || !author.displayName.trim() ||
       !nullableBool(author.anonymous) || typeof author.available !== "boolean" ||
@@ -31,6 +32,7 @@ export function parseListResponse(value: unknown, query: AnnouncementListQuery):
     // Explicit projection: extra backend fields can never leak to client DTOs.
     const item: AnnouncementListItem = {
       id: row.id, title: row.title as string | null, type: row.type, status: row.status as string | null,
+      ...(typeof row.displayTitle === "string" ? { displayTitle: row.displayTitle } : {}),
       ...(row.trashed === undefined ? {} : { trashed: row.trashed as boolean }),
       hidden: row.hidden as boolean | null, private: row.private as boolean | null, creatorId: row.creatorId as string | null,
       createdAt: row.createdAt as string | null, updatedAt: row.updatedAt as string | null, rowFingerprint: row.rowFingerprint,

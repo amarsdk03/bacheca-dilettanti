@@ -1,3 +1,4 @@
+import {countDirectoryRegions} from "@/components/navigation/directory-region-counts";
 import {
 	experienceTeamReferences,
 	publicTeamExperienceNames,
@@ -364,11 +365,10 @@ function matchesDirectoryQuery(
 	if (!requestedTypes.includes(announcement.item.type)) return false;
 	const tokens = normalizeAnnouncementSearchText(query.q).split(/\s+/).filter(Boolean);
 	if (tokens.some((token) => !announcement.searchText.includes(token))) return false;
-	if (query.types.length !== 1) return true;
-
 	const {filters} = query;
 	const data = announcement.filterData;
-	if (filters.regione && !normalizedIncludes(data.regions, filters.regione)) return false;
+	if (filters.regione.length && !filters.regione.some(region => normalizedIncludes(data.regions, region))) return false;
+	if (query.types.length !== 1) return true;
 	if (filters.tipologia && !normalizedIncludes(data.types, filters.tipologia)) return false;
 	if (filters.ruolo && !normalizedIncludes(data.roles, filters.ruolo)) return false;
 	if (filters.annoDa && (!data.birthYear || Number(data.birthYear) < Number(filters.annoDa) || Number(data.birthYear) > Number(filters.annoA))) return false;
@@ -894,8 +894,10 @@ export async function loadPublicAnnouncementDirectory(
 			return emptyDirectoryResult(true);
 		}
 
-		const filtered = mappedRows
-			.filter((item) => matchesDirectoryQuery(item, query, requestedTypes));
+		const regionQuery = {...query, filters: {...query.filters, regione: []}};
+		const regionalCandidates = mappedRows.filter(item => matchesDirectoryQuery(item, regionQuery, requestedTypes));
+		const regionCounts = countDirectoryRegions(regionalCandidates, item => item.filterData.regions);
+		const filtered = regionalCandidates.filter(item => matchesDirectoryQuery(item, query, requestedTypes));
 		const total = filtered.length;
 		const totalPages = Math.max(1, Math.ceil(total / ANNOUNCEMENTS_PER_PAGE));
 		const currentPage = Math.min(query.page, totalPages);
@@ -908,6 +910,7 @@ export async function loadPublicAnnouncementDirectory(
 		]);
 
 		return {
+			regionCounts,
 			announcements: page.map((item) => withLoadedRelations(
 				item,
 				authorResult.authors,

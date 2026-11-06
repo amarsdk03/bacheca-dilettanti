@@ -1,5 +1,6 @@
 "use client";
 
+import {normalizePlayerMeasurement, playerMeasurementError} from "./player-measurements";
 import {useDisabledFieldset} from "@/components/ui/disabled-fieldset";
 import type {ComponentProps, Dispatch, ReactNode, SetStateAction} from "react";
 import {CircleHelpIcon, PlusIcon, Trash2Icon} from "lucide-react";
@@ -183,6 +184,24 @@ function ProfileTextField({
 			{error && <FieldError>{error}</FieldError>}
 		</Field>
 	);
+}
+
+function ProfileMeasurementField({id, label, value, onChange, kind, error}: {
+	id: string; label: string; value: string | null; onChange: (value: string) => void; kind: "height" | "weight"; error?: string;
+}) {
+	const validationError = playerMeasurementError(value, kind) ?? error;
+	return <Field data-invalid={Boolean(validationError)}>
+		<FieldLabel htmlFor={id}>{label} <OptionalLabel /></FieldLabel>
+		<Input id={id} inputMode={kind === "height" ? "numeric" : "decimal"} value={value ?? ""} maxLength={160}
+			placeholder={kind === "height" ? "Es. 180" : "Es. 75,5"}
+			onChange={event => {
+				const next = event.target.value;
+				if ((kind === "height" ? /^\d*$/ : /^\d*(?:[.,]\d?)?$/).test(next)) onChange(next);
+			}}
+			onBlur={() => {const next = normalizePlayerMeasurement(value, kind); if (next !== undefined) onChange(next ?? "");}}
+			aria-invalid={Boolean(validationError)} aria-describedby={validationError ? `${id}-error` : undefined} />
+		{validationError && <FieldError id={`${id}-error`}>{validationError}</FieldError>}
+	</Field>;
 }
 
 interface ProfileTextareaFieldProps {
@@ -556,10 +575,12 @@ export function OpeningHoursField({idPrefix, value, onChange, error}: OpeningHou
 										placeholder="HH:mm"
 										className="bg-white"
 										value={entry.dalle}
-										onChange={(event) => updateDay(entry.giorno, {dalle: event.target.value})}
+										onChange={(event) => {if (/^\d{0,2}(?::\d{0,2})?$/.test(event.target.value)) updateDay(entry.giorno, {dalle: event.target.value});}}
+										aria-invalid={entry.attivo && normalizeOptionalTime(entry.dalle) === undefined}
 										onBlur={(event) => completeTime(entry.giorno, "dalle", event.target.value)}
 										disabled={!entry.attivo}
 									/>
+								{entry.attivo && normalizeOptionalTime(entry.dalle) === undefined && <FieldError>Inserisci un orario valido (HH:mm).</FieldError>}
 								</Field>
 								<Field data-disabled={!entry.attivo}>
 									<FieldLabel
@@ -571,10 +592,12 @@ export function OpeningHoursField({idPrefix, value, onChange, error}: OpeningHou
 										placeholder="HH:mm"
 										className="bg-white"
 										value={entry.alle}
-										onChange={(event) => updateDay(entry.giorno, {alle: event.target.value})}
+										onChange={(event) => {if (/^\d{0,2}(?::\d{0,2})?$/.test(event.target.value)) updateDay(entry.giorno, {alle: event.target.value});}}
+										aria-invalid={entry.attivo && normalizeOptionalTime(entry.alle) === undefined}
 										onBlur={(event) => completeTime(entry.giorno, "alle", event.target.value)}
 										disabled={!entry.attivo}
 									/>
+								{entry.attivo && normalizeOptionalTime(entry.alle) === undefined && <FieldError>Inserisci un orario valido (HH:mm).</FieldError>}
 								</Field>
 							</FieldGroup>
 						</Field>
@@ -892,10 +915,10 @@ function GiocatoreFields({
 				placeholder={roles.principali.length > 0 ? "Seleziona i ruoli specifici..." : "Seleziona prima uno o più ruoli principali"}
 			/>
 			<FieldGroup className="grid gap-4 sm:grid-cols-3">
-				<ProfileTextField id={`${prefix}-altezza`} label="Altezza (in cm)" value={draft.altezza}
-				                  onChange={(value) => onChange("giocatore", "altezza", value)} placeholder="Es. 180"/>
-				<ProfileTextField id={`${prefix}-peso`} label="Peso (in kg)" value={draft.peso}
-				                  onChange={(value) => onChange("giocatore", "peso", value)} placeholder="Es. 75"/>
+				<ProfileMeasurementField kind="height" error={errors.height} id={`${prefix}-altezza`} label="Altezza (in cm)" value={draft.altezza}
+				                  onChange={(value) => onChange("giocatore", "altezza", value)}/>
+				<ProfileMeasurementField kind="weight" error={errors.weight} id={`${prefix}-peso`} label="Peso (in kg)" value={draft.peso}
+				                  onChange={(value) => onChange("giocatore", "peso", value)}/>
 				<ProfileSelectField id={`${prefix}-piede`} label="Piede principale" value={draft.piede_principale}
 				                    onChange={(value) => onChange("giocatore", "piede_principale", value)}
 				                    options={MAIN_FOOT_OPTIONS}/>

@@ -1,7 +1,9 @@
+import DirectoryRegionFilter from "@/components/navigation/DirectoryRegionFilter";
+import DirectoryPaginationControl from "@/components/navigation/DirectoryPagination";
 import Link from "next/link";
 import {Suspense} from "react";
 import ProfileCard from "@/features/profili/components/cards/ProfileCard";
-import {ArrowLeftIcon, ArrowRightIcon, InfoIcon, SearchIcon, SlidersHorizontalIcon,} from "lucide-react";
+import {InfoIcon, SearchIcon, SlidersHorizontalIcon,} from "lucide-react";
 
 import GradientBackground from "@/components/styling/GradientBackground";
 import {DirectoryResultsSkeleton} from "@/components/loading/PageSkeletons";
@@ -59,13 +61,13 @@ function ProfileQueryHiddenFields({query, includeQuery}: {
 			{includeQuery && query.q && <input type="hidden" name="q" value={query.q} />}
 			{query.types.map((type) => <input key={type} type="hidden" name="type" value={type} />)}
 			{getProfileFilterEntries(query.filters).map(([key, value]) => (
-				<input key={key} type="hidden" name={key} value={value} />
+				<input key={`${key}:${value}`} type="hidden" name={key} value={value} />
 			))}
 		</>
 	);
 }
 
-function ProfileSearch({query}: {query: ProfileDirectoryQuery}) {
+function ProfileSearch({query, result}: {query: ProfileDirectoryQuery; result: Promise<ProfileDirectoryResult>}) {
 	return (
 		<div className="flex items-end gap-2">
 			<DirectoryGetForm action="/profili" role="search" className="min-w-0 flex-1">
@@ -88,6 +90,7 @@ function ProfileSearch({query}: {query: ProfileDirectoryQuery}) {
 				</Field>
 			</DirectoryGetForm>
 			<ProfileFiltersSheet query={query} />
+			<DirectoryRegionFilter key={buildProfilesHref(query)} action="/profili" entries={getProfileRegionEntries(query)} selected={query.filters.regione} countsPromise={result.then(value => value.regionCounts)} />
 		</div>
 	);
 }
@@ -142,30 +145,20 @@ function ProfileFiltersForm({query, type, idPrefix}: {
 	type: ProfileType | null;
 	idPrefix: string;
 }) {
-	const availableFilters = type ? PROFILE_FILTERS_BY_TYPE[type] as readonly ProfileFilterParam[] : ["regione"] as const;
+	const availableFilters = type ? (PROFILE_FILTERS_BY_TYPE[type] as readonly ProfileFilterParam[]).filter(key => key !== "regione") : [];
+	if (availableFilters.length === 0) return <p className="text-sm text-muted-foreground">Non ci sono altri filtri per questa tipologia. Puoi restringere la ricerca dal pannello Regioni.</p>;
 	const resetHref = buildProfilesHref(query, {
 		page: 1,
-		filters: createEmptyProfileFilters(),
+		filters: {...createEmptyProfileFilters(), regione: query.filters.regione},
 	});
 
 	return (
 		<DirectoryGetForm action="/profili" className="flex flex-col gap-5">
 			<ProfileQueryHiddenFields
-				query={{...query, filters: createEmptyProfileFilters()}}
+				query={{...query, filters: {...createEmptyProfileFilters(), regione: query.filters.regione}}}
 				includeQuery
 			/>
 			<FieldGroup className="gap-4">
-				{hasFilter(availableFilters, "regione") && (
-					<FilterSelect
-						id={`${idPrefix}-regione`}
-						name="regione"
-						label="Regione"
-						value={query.filters.regione}
-						allLabel="Tutte le regioni"
-						options={PROFILE_FILTER_OPTIONS.regioni.map((value) => ({value, label: value}))}
-					/>
-				)}
-
 				{hasFilter(availableFilters, "tipologia") && (
 					<FilterSelect
 						id={`${idPrefix}-tipologia`}
@@ -267,7 +260,7 @@ function ProfileFiltersSheet({query}: {query: ProfileDirectoryQuery}) {
 			>
 				<SlidersHorizontalIcon data-icon="inline-start" aria-hidden="true" />
 				<span className="hidden sm:inline">Filtri</span>
-				{activeCount > 0 && <Badge variant="secondary">{activeCount}</Badge>}
+				{activeCount > 0 && <Badge variant="secondary" className="hidden sm:inline-flex">{activeCount}</Badge>}
 			</SheetTrigger>
 			<SheetContent side="left">
 				<SheetHeader>
@@ -275,11 +268,11 @@ function ProfileFiltersSheet({query}: {query: ProfileDirectoryQuery}) {
 					<SheetDescription>
 						{selectedType
 							? `Opzioni dedicate a “${profileTypeOption(selectedType).label}”.`
-							: "La regione si applica a tutte le tipologie. Seleziona una sola tipologia per usare anche i filtri specifici."}
+							: "Seleziona una sola tipologia per usare i filtri specifici. Le regioni si scelgono nel pannello dedicato."}
 					</SheetDescription>
 				</SheetHeader>
 				<div className="overflow-y-auto px-4 pb-6">
-					<ProfileFiltersForm query={query} type={selectedType} idPrefix="sheet-filter" />
+					{selectedType && <ProfileFiltersForm query={query} type={selectedType} idPrefix="sheet-filter" />}
 				</div>
 			</SheetContent>
 		</Sheet>
@@ -287,32 +280,13 @@ function ProfileFiltersSheet({query}: {query: ProfileDirectoryQuery}) {
 }
 
 function DirectoryPagination({query, result}: {query: ProfileDirectoryQuery; result: ProfileDirectoryResult}) {
-	if (result.totalPages <= 1) return null;
-	const previousPage = Math.max(1, result.currentPage - 1);
-	const nextPage = Math.min(result.totalPages, result.currentPage + 1);
-
-	return (
-		<nav aria-label="Paginazione dei profili" className="flex flex-wrap items-center justify-between gap-3">
-			<div>
-				{result.currentPage > 1 && (
-					<Link href={buildProfilesHref(query, {page: previousPage, sortSeed: query.sortSeed ?? undefined})} className={buttonVariants({variant: "outline"})}>
-						<ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
-						Precedente
-					</Link>
-				)}
-			</div>
-			<p className="text-sm text-muted-foreground">Pagina {result.currentPage} di {result.totalPages}</p>
-			<div>
-				{result.currentPage < result.totalPages && (
-					<Link href={buildProfilesHref(query, {page: nextPage, sortSeed: query.sortSeed ?? undefined})} className={buttonVariants({variant: "outline"})}>
-						Successiva
-						<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-					</Link>
-				)}
-			</div>
-		</nav>
-	);
+	return <DirectoryPaginationControl currentPage={result.currentPage} totalPages={result.totalPages} href={page => buildProfilesHref(query, {page})} label="Paginazione dei profili" />;
 }
+
+function getProfileRegionEntries(query: ProfileDirectoryQuery): Array<[string, string]> {
+	return [...(query.q ? [["q", query.q] as [string, string]] : []), ...query.types.map(type => ["type", type] as [string, string]), ...getProfileFilterEntries(query.filters)];
+}
+
 
 function EmptyDirectory({query}: {query: ProfileDirectoryQuery}) {
 	const resetHref = buildProfilesHref(query, {
@@ -378,7 +352,7 @@ export default function Profili({query, result}: ProfiliProps) {
 				</header>
 
 				<div className="mt-3 sm:mt-6">
-					<ProfileSearch query={query} />
+					<ProfileSearch query={query} result={result} />
 				</div>
 
 				<section aria-labelledby="profile-types-title" className="mt-1">

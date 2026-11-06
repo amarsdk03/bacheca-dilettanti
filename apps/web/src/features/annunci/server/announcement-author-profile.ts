@@ -1,3 +1,4 @@
+import {sortExperiencesNewestFirst} from "@/features/profilo/experience-order";
 import {currentCategoryLabel, currentPlayerCareer} from "@/features/profilo/current-team";
 import {experienceTeamReferences, publicTeamExperienceNames} from "@/features/profilo/team-profile";
 import {loadPublicTeamProfiles} from "@/features/profilo/server/public-team-profiles";
@@ -67,7 +68,7 @@ export async function loadAnnouncementAuthorProfile(
 			&& Number(child.anno_nascita) >= 1900 && Number(child.anno_nascita) <= new Date().getFullYear()
 			? text(child.anno_nascita) : null;
 		const roles = record(child.ruoli_sport);
-		const rawCareer = player ? currentPlayerCareer(child as Parameters<typeof currentPlayerCareer>[0]) : [];
+		const rawCareer = player ? sortExperiencesNewestFirst(currentPlayerCareer(child as Parameters<typeof currentPlayerCareer>[0])) : [];
 		const teamIds = experienceTeamReferences(rawCareer, "titolo").map(team => team.profileId);
 		const teams = await loadPublicTeamProfiles(supabase, teamIds);
 		const career = publicTeamExperienceNames(rawCareer, new Map(teams.map(team => [team.profileId, team])), "titolo");

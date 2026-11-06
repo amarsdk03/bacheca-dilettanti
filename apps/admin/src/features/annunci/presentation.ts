@@ -1,5 +1,11 @@
 import {ADMIN_ANNOUNCEMENT_TYPES, type AnnouncementListItem} from "./contracts";
 
+export const announcementTitle = (row: AnnouncementListItem) => row.displayTitle || row.title?.trim() || "Annuncio senza titolo";
+export function usesAutomaticTitle(row: AnnouncementListItem) {
+  const title = row.title?.replace(/\s+/g, " ").trim();
+  return Boolean(row.displayTitle) && (!title || /^vedi (?:il )?profilo[.!]?$/i.test(title));
+}
+
 export const TYPE_LABELS: Record<typeof ADMIN_ANNOUNCEMENT_TYPES[number], string> = {
   annuncio_giocatore: "Giocatore", annuncio_squadra_cerca_giocatore: "Squadra cerca giocatori", annuncio_squadra_cerca_staff: "Squadra cerca staff",
   annuncio_squadra_cerca_partita: "Squadra cerca partita", annuncio_squadra_cerca_sponsor: "Squadra cerca sponsor", annuncio_staff_sportivo: "Staff sportivo",
@@ -37,5 +43,6 @@ export function issueLabel(issue: string) {
   if (issue.startsWith("INVALID_FIELD:")) return "Informazioni incomplete o non interpretabili: " + (FIELD_LABELS[issue.slice(14)] ?? "contenuto");
   if (issue.startsWith("COLLECTION_TRUNCATED:")) return "Alcuni elementi superano il limite di visualizzazione.";
   if (issue === "INVALID_CONTACT") return "Alcuni recapiti non hanno un formato valido.";
+  if (issue === "UNSAFE_MEDIA") return "Un media contiene un percorso o un collegamento non valido.";
   return "Alcuni collegamenti non possono essere aperti in sicurezza.";
 }

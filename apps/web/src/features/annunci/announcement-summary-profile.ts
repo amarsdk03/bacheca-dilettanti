@@ -1,3 +1,4 @@
+import {sortExperiencesNewestFirst} from "@/features/profilo/experience-order";
 import type {AnnouncementAuthorProfileData} from "./announcement-model";
 import type {ProfileType} from "@/features/profilo/profile-model";
 import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
@@ -14,7 +15,7 @@ const strings = (value: unknown) => [...new Set((Array.isArray(value) ? value : 
 export function projectAnnouncementSummaryProfile(type: ProfileType, child: Record<string, unknown>, locations: PublicProfileLocation[], career = type === "giocatore" ? currentPlayerCareer(child) : []): AnnouncementAuthorProfileData {
 	const roles = child.ruoli_sport && typeof child.ruoli_sport === "object" ? child.ruoli_sport as Record<string, unknown> : {};
 	const birthYear = text(child.anno_nascita);
-	const previousCareer = career.flatMap(entry => {
+	const previousCareer = sortExperiencesNewestFirst(career).flatMap(entry => {
 		if (!entry || typeof entry !== "object" || Array.isArray(entry)) return [];
 		const item = entry as Record<string, unknown>;
 		const category = text(item.ente), team = text(item.titolo), from = text(item.periodoDa), to = text(item.periodoA);

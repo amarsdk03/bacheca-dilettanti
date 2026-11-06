@@ -43,22 +43,22 @@ export function AuditWorkspace({ initialQuery, initialResult }: { initialQuery: 
   }, [controller]);
   const result = state.list.result, detail = state.detail.result;
   const set = (patch: Partial<AuditFilters>) => controller.draft(patch);
-  return <div className="admin-workspace">
-    <Card className="admin-filters-card"><CardHeader><CardTitle><h2>Filtri del registro</h2></CardTitle><CardDescription>Le date comprendono l’intera giornata in Europe/Rome. L’operatore corrisponde all’email attuale o a un UUID esatto.</CardDescription></CardHeader>
+  return <div className="admin-workspace admin-audit-workspace">
+    <Card className="admin-filters-card"><CardHeader><CardTitle><h2>Filtra eventi</h2></CardTitle><CardDescription>Date per giornata intera in Europe/Rome. Cerca l’operatore tramite email attuale o UUID esatto.</CardDescription></CardHeader>
       <CardContent><form onSubmit={event => { event.preventDefault(); controller.apply(); }} className="admin-filter-form">
         <FieldGroup className="admin-audit-filters">
           <Field><FieldLabel htmlFor="audit-from">Dal</FieldLabel><Input id="audit-from" type="date" value={state.draft.from} onChange={e => set({ from: e.target.value })} /></Field>
           <Field><FieldLabel htmlFor="audit-to">Al</FieldLabel><Input id="audit-to" type="date" value={state.draft.to} onChange={e => set({ to: e.target.value })} /></Field>
           <Field className="admin-audit-operator"><FieldLabel htmlFor="audit-operator">Operatore</FieldLabel><Input id="audit-operator" value={state.draft.operator} onChange={e => set({ operator: e.target.value })} placeholder="Email o UUID" aria-describedby="audit-operator-help" />
-            <FieldDescription id="audit-operator-help">Vuoto: tutti. Usa “Non identificato” per gli eventi senza identità.</FieldDescription>
-            <Button type="button" variant="outline" size="sm" onClick={() => set({ operator: "unknown" })}>Non identificato</Button></Field>
+            <FieldDescription id="audit-operator-help">Lascia vuoto per tutti. Usa “Non identificato” per gli eventi senza identità.</FieldDescription>
+            <Button type="button" variant="ghost" size="sm" onClick={() => set({ operator: "unknown" })}>Non identificato</Button></Field>
           <Selector id="audit-action" label="Operazione" value={state.draft.action} items={[{ value: "", label: "Tutte" }, ...AUDIT_ACTIONS.map(value => ({ value, label: AUDIT_LABELS[value] }))]} onChange={action => set({ action: action as AuditFilters["action"] })} />
           <Selector id="audit-outcome" label="Esito" value={state.draft.outcome} items={[{ value: "", label: "Tutti" }, { value: "success", label: "Riuscita" }, { value: "failure", label: "Fallita" }]} onChange={outcome => set({ outcome: outcome as AuditFilters["outcome"] })} />
         </FieldGroup>{state.error && <FieldError role="alert">{state.error}</FieldError>}
-        <div className="admin-action-list"><Button type="submit"><Filter data-icon="inline-start" aria-hidden="true" />Applica filtri</Button><Button type="button" variant="outline" onClick={controller.reset}>Ripristina filtri</Button></div>
+        <div className="admin-action-list"><Button type="submit"><Filter data-icon="inline-start" aria-hidden="true" />Applica filtri</Button><Button type="button" variant="outline" onClick={controller.reset}>Azzera filtri</Button></div>
       </form></CardContent>
     </Card>
-    <Card className="admin-results-card"><CardHeader><div className="admin-workspace-toolbar"><CardTitle><h2 ref={resultsTitle} tabIndex={-1}>Operazioni registrate</h2></CardTitle>
+    <Card className="admin-results-card"><CardHeader><div className="admin-workspace-toolbar"><CardTitle><h2 ref={resultsTitle} tabIndex={-1}>Operazioni registrate{result?.status === "ok" && <span className="admin-result-count" aria-label="Eventi in questa pagina">{result.page.items.length}</span>}</h2></CardTitle>
       <Button variant="outline" size="sm" onClick={controller.refresh} disabled={state.list.pending}><RefreshCw data-icon="inline-start" aria-hidden="true" />Aggiorna</Button></div>
       <CardDescription>Fino a 30 eventi per pagina. Email attuali; gli operatori possono avere un ruolo diverso da quello al momento dell’evento.</CardDescription></CardHeader>
       <CardContent className="admin-results-body" aria-live="polite">
@@ -73,7 +73,7 @@ export function AuditWorkspace({ initialQuery, initialResult }: { initialQuery: 
       </CardContent>
     </Card>
     <Sheet open={!!state.detail.id} onOpenChange={open => { if (!open) controller.close(); }}>
-      <SheetContent side="right" className="admin-detail-sheet" initialFocus={panelTitle} finalFocus={() => trigger.current?.isConnected ? trigger.current : resultsTitle.current}>
+      <SheetContent side="right" className="admin-detail-sheet admin-audit-sheet" initialFocus={panelTitle} finalFocus={() => trigger.current?.isConnected ? trigger.current : resultsTitle.current}>
         <SheetHeader><SheetTitle ref={panelTitle} tabIndex={-1}>Dettagli dell’operazione</SheetTitle><SheetDescription>Consultazione in sola lettura dell’evento registrato.</SheetDescription></SheetHeader>
         <div className="admin-detail-body" aria-live="polite">
           {state.detail.pending ? <PanelSkeleton /> : detail?.status === "ok" ? <AuditDetailContent detail={detail.detail} /> : detail?.status === "not_found" ? <EmptyState title="Evento non più disponibile" description="L’evento potrebbe essere stato rimosso dalla conservazione del registro."><Button variant="outline" onClick={controller.refresh}>Aggiorna elenco</Button></EmptyState> : detail && <Failure title="Impossibile caricare il dettaglio" retry={() => { if (state.detail.id) controller.open(state.detail.id); }} correlationId={detail.status === "unavailable" ? detail.correlationId : undefined} />}

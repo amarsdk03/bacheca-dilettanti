@@ -1,3 +1,4 @@
+import {sortExperiencesNewestFirst} from "@/features/profilo/experience-order";
 import {Building2Icon, CalendarDaysIcon, type LucideIcon, RouteIcon} from "lucide-react";
 
 import {Badge} from "@/components/ui/badge";
@@ -22,7 +23,7 @@ export default function ProfileExperienceHistory({experiences, title = "Esperien
 						</EmptyHeader>
 					</Empty>
 				) : <ol className="ml-2 border-l border-border">
-					{experiences.map((experience) => {
+					{sortExperiencesNewestFirst(experiences).map((experience) => {
 						const period = [
 							experience.from,
 							experience.to ?? (experience.status === "in-corso" ? "In corso" : null),

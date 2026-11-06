@@ -13,8 +13,8 @@ export function ComingSoon() {
   return <Card className="admin-coming-soon"><CardContent><Empty>
     <EmptyHeader>
       <EmptyMedia><Clock3 aria-hidden="true" /></EmptyMedia>
-      <EmptyTitle>Presto in arrivo…</EmptyTitle>
-      <EmptyDescription>Tranquillo Gabbo, ti prometto che questa sezione arriverà presto...</EmptyDescription>
+      <EmptyTitle>Sezione non ancora disponibile</EmptyTitle>
+      <EmptyDescription>Questa sezione della dashboard è in preparazione</EmptyDescription>
     </EmptyHeader>
   </Empty></CardContent></Card>;
 }

@@ -11,7 +11,7 @@ export function csvCell(value: string): string {
 }
 export function announcementCsv(items: AnnouncementListItem[]): string {
   const rows = [["Titolo", "Autore / Profilo", "Tipologia", "Stato", "Visibilità", "Creazione (Europe/Rome)"],
-    ...items.map(row => [row.title || "Annuncio senza titolo", row.author.displayName, typeLabel(row.type), statusLabel(row.status),
+    ...items.map(row => [row.displayTitle || row.title || "Annuncio senza titolo", row.author.displayName, typeLabel(row.type), statusLabel(row.status),
       [...(row.trashed ? ["Nel cestino"] : []), ...visibilityLabel(row)].join(" · "), displayDate(row.createdAt)])];
   return "\uFEFF" + rows.map(row => row.map(csvCell).join(";")).join("\r\n") + "\r\n";
 }

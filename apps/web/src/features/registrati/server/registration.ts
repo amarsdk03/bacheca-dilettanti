@@ -1,3 +1,4 @@
+import {normalizePlayerMeasurement, playerMeasurementError} from "@/features/profilo/player-measurements";
 import "server-only";
 import {PROFESSIONAL_AVAILABILITY_OPTIONS} from "@/features/profilo/professional-availability";
 import {isTeamCategory, isTeamCategoryForSport} from "@/features/profilo/team-category-catalog";
@@ -335,6 +336,12 @@ function anonymousName(value: unknown, type: ProfileType): boolean {
  return enabled;
 }
 
+function playerMeasurement(value: unknown, kind: "height" | "weight"): string | null {
+	const normalized = normalizePlayerMeasurement(textValue(value, MAX_SHORT_TEXT, "giocatore"), kind);
+	if (normalized === undefined) fail(playerMeasurementError(value, kind)!, 3, "giocatore");
+	return normalized;
+}
+
 function subprofileInstance(value: unknown, type: ProfileType): number | null {
 	if (value == null) return null;
 	if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) fail("Il profilo collegato non è valido.", 3, type);
@@ -362,7 +369,7 @@ function normalizeDraft(
 		}
 		return {
 			nominativo_anonimo: anonymousName(value.nominativo_anonimo, type),
-			altezza: textValue(value.altezza, MAX_SHORT_TEXT, type),
+			altezza: playerMeasurement(value.altezza, "height"),
 			anno_nascita: normalizedBirthDate.year,
 			categoria_attuale: availability === "svincolato" ? null : category,
 			squadra_attuale_id: availability === "svincolato" ? null : subprofileInstance(value.squadra_attuale_id, type),
@@ -379,7 +386,7 @@ function normalizeDraft(
 			mese_nascita: normalizedBirthDate.month,
 			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
 			nazionalita: nationality,
-			peso: textValue(value.peso, MAX_SHORT_TEXT, type),
+			peso: playerMeasurement(value.peso, "weight"),
 			piede_principale: value.piede_principale === "Ambipiede" ? "Ambidestro" : enumText(value.piede_principale, FEET, type),
 			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
 			ruoli_sport: sportsRoles(value.ruoli_sport, type),

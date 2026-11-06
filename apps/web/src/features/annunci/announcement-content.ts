@@ -1,3 +1,4 @@
+import {sortExperiencesNewestFirst} from "@/features/profilo/experience-order";
 import type {
 	AnnouncementDetailField,
 	AnnouncementFact,
@@ -227,7 +228,7 @@ function detailField(label: string, value: string | null, wide = false): Announc
 
 function staffHistoryLines(value: unknown, qualification = false): string[] {
 	if (!Array.isArray(value)) return [];
-	return value.flatMap((entry) => {
+	return sortExperiencesNewestFirst(value).flatMap((entry) => {
 		if (!isRecord(entry)) return entry === null ? [] : [typeof entry === "string" ? entry : JSON.stringify(entry)];
 		const title = cleanText(entry.titolo, 120);
 		const organization = cleanText(entry.ente, 120);

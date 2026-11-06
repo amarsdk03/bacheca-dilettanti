@@ -22,7 +22,7 @@ export function HomeChartPanel() {
   const { selected, pending, result, refresh } = useHomeChart();
   const card = HOME_CARDS.find(c => c.metric === selected)!;
   return <section id="home-chart-panel" className="admin-home-block" role="region" aria-labelledby="home-chart-title">
-    <div className="admin-home-toolbar"><h2 id="home-chart-title" className="admin-home-block-title" aria-live="polite">Grafici - {card.title}</h2>
+    <div className="admin-home-toolbar"><h2 id="home-chart-title" className="admin-home-block-title" aria-live="polite">{card.title}</h2>
       <Button variant="outline" size="sm" disabled={pending} onClick={refresh}><RefreshCw data-icon="inline-start" aria-hidden="true" />Aggiorna grafici</Button></div>
     {pending ? <HomeChartsSkeleton /> : result?.status === "ok" ? result.chart.available ?
       <ChartBoundary key={result.chart.metric + result.chart.asOf} retry={refresh}><Suspense fallback={<HomeChartsSkeleton />}><Charts chart={result.chart} /></Suspense></ChartBoundary> :

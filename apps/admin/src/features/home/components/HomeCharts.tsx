@@ -34,13 +34,13 @@ export function DistributionChart({ rows }: { rows: ChartRow[] }) {
     <PieChart accessibilityLayer><ChartTooltip isAnimationActive={false} content={<ChartTooltipContent className="admin-home-chart-tooltip" nameKey="label" formatter={(value, _name, item) => `${item.payload.label}: ${formatCount(value)}`} />} />
       <Pie data={rows.filter(row => row.count > 0)} dataKey="count" nameKey="label" outerRadius="100%" stroke="var(--card)" strokeWidth={1} isAnimationActive={false} /></PieChart>
   </ChartContainer><ul className="admin-home-chart-legend" aria-label="Legenda distribuzione">{rows.map(row => <li key={row.key}>
-    <span className="admin-home-chart-swatch" style={{ backgroundColor: row.fill }} aria-hidden="true" /><span>{row.label}: {homeCount(row.count)}</span></li>)}</ul></>;
+    <span className="admin-home-chart-swatch" style={{ backgroundColor: row.fill }} aria-hidden="true" /><span>{row.label}<span className="sr-only">: </span></span><span className="admin-home-chart-count">{homeCount(row.count)}</span></li>)}</ul></>;
 }
 export default function HomeCharts({ chart }: { chart: AvailableHomeChart }) {
   const primary = primaryRows(chart), distribution = distributionRows(chart), pending = chart.metric === "pending";
   const primaryTitle = pending ? "Anzianità dalla creazione" : chart.metric === "users" ? "Registrazioni negli ultimi 12 mesi" : "Annunci creati negli ultimi 12 mesi";
   const distributionTitle = chart.metric === "users" ? "Profili registrati" : chart.metric === "announcements" ? "Stato attuale degli annunci" : "Tipologie da approvare";
-  return <div className="admin-home-block"><div className="admin-home-chart-notes">
+  return <div className="admin-home-block"><div className="admin-home-chart-notes admin-home-chart-context">
     <p>Dati al {displayDate(chart.asOf)} · Europe/Rome. Popolazione: {homeCount(chart.population)}.</p>
     {!pending && <p>Periodo: {displayDate(chart.period.from)} – {displayDate(chart.period.to)}. Il mese corrente è parziale.</p>}
     <p>Le card e i grafici sono aggiornati separatamente e possono riferirsi a istanti diversi.</p>

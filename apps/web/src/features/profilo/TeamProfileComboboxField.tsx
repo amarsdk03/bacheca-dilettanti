@@ -1,5 +1,6 @@
 "use client";
 
+import {useDisabledFieldset} from "@/components/ui/disabled-fieldset";
 import {useEffect, useMemo, useState} from "react";
 import {LoaderCircleIcon} from "lucide-react";
 
@@ -41,6 +42,7 @@ export default function TeamProfileComboboxField({
 	disabled = false,
 	maxLength = 120,
 }: TeamProfileComboboxFieldProps) {
+	const locked = useDisabledFieldset(disabled);
 	const query = value.replace(/\s+/g, " ").trim();
 	const [result, setResult] = useState<{query: string; items: PublicTeamProfile[]; failed: boolean}>({
 		query: "",
@@ -62,7 +64,7 @@ export default function TeamProfileComboboxField({
 	}, [items, profileId, value]);
 
 	useEffect(() => {
-		if (disabled || query.length < TEAM_PROFILE_SEARCH_MIN_LENGTH) {
+		if (locked || query.length < TEAM_PROFILE_SEARCH_MIN_LENGTH) {
 			return;
 		}
 
@@ -90,7 +92,7 @@ export default function TeamProfileComboboxField({
 			window.clearTimeout(timeoutId);
 			controller.abort();
 		};
-	}, [query, kind, disabled]);
+	}, [query, kind, locked]);
 
 	const emptyText = value.trim().length < TEAM_PROFILE_SEARCH_MIN_LENGTH
 		? "Scrivi almeno 2 caratteri."
@@ -100,7 +102,7 @@ export default function TeamProfileComboboxField({
 
 	return (
 		<Combobox
-			disabled={disabled}
+			disabled={locked}
 			items={query.length >= TEAM_PROFILE_SEARCH_MIN_LENGTH ? items : []}
 			filteredItems={query.length >= TEAM_PROFILE_SEARCH_MIN_LENGTH ? items : []}
 			filter={null}
@@ -113,14 +115,16 @@ export default function TeamProfileComboboxField({
 			onInputValueChange={(nextValue, details) => {
 				// Base UI clears the search query when an unselected combobox closes.
 				// Keep free text and only propagate edits or an explicit clear action.
+				if (locked) return;
 				if (details.reason !== "input-change" && details.reason !== "clear-press") return;
 				onValueChange(nextValue.slice(0, maxLength), null);
 			}}
 			onValueChange={(item) => {
-				if (item) onValueChange(item.name, item.profileId, item);
+				if (!locked && item) onValueChange(item.name, item.profileId, item);
 			}}
 		>
 			<ComboboxInput
+				disabled={locked}
 				id={id}
 				className="w-full"
 				placeholder={placeholder}

@@ -8,6 +8,6 @@ export function HomeQuickActions() {
   return <Card className="admin-home-quick-actions"><CardHeader><CardTitle><h2>Azioni rapide</h2></CardTitle></CardHeader><CardContent className="admin-home-action-list">
     <Button variant="secondary" nativeButton={false} render={<Link href="/annunci?status=in_revisione" prefetch={false} />}><ClipboardCheck data-icon="inline-start" aria-hidden="true" />Annunci da approvare</Button>
     <Button variant="secondary" nativeButton={false} render={<Link href="/segnalazioni" prefetch={false} />}><Flag data-icon="inline-start" aria-hidden="true" />Segnalazioni aperte</Button>
-    <Button variant="secondary" disabled><UserPlus data-icon="inline-start" aria-hidden="true" />Crea profilo limitato<Badge variant="neutral">Presto</Badge></Button>
+    <Button variant="ghost" disabled><UserPlus data-icon="inline-start" aria-hidden="true" />Crea profilo limitato<Badge variant="neutral">Non disponibile</Badge></Button>
   </CardContent></Card>;
 }

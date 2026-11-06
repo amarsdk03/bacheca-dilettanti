@@ -103,7 +103,8 @@ test("history presentation preserves qualifications, periods, statuses and legac
 		lista_esperienze: [{titolo: "Allenatore", ente: "Squadra Alfa", periodoDa: "2020", periodoA: "2023"}],
 	});
 	assert.equal(sections.find(section => section.id === "qualifications").presentation.rows.length, 3);
-	assert.equal(sections.find(section => section.id === "qualifications").presentation.rows[0].description, "Prima riga\nSeconda riga");
+	assert.deepEqual(sections.find(section => section.id === "qualifications").presentation.rows.map(row => row.title), ["Corso aggiornamento", "Patentino UEFA B", "Qualifica storica senza struttura"]);
+	assert.equal(sections.find(section => section.id === "qualifications").presentation.rows[1].description, "Prima riga\nSeconda riga");
 	for (const value of ["Patentino UEFA B", "FIGC", "2024 – 2025", "Conseguito", "In corso", "Qualifica storica senza struttura", "Squadra Alfa", "2020 – 2023"]) assert.ok(html.includes(value), value);
 	assert.match(html, /Prima riga\nSeconda riga/);
 	assert.doesNotMatch(html, /\[object Object\]/);
@@ -914,11 +915,11 @@ test("author projection exposes age and career categories without full birth dat
 	assert.equal(announcement.authorProfile.birthYear, "2005");
 	assert.deepEqual(announcement.authorProfile.previousCategories, ["Eccellenza", "Promozione"]);
 	assert.deepEqual(announcement.authorProfile.previousCareer, [
-		{category: "Eccellenza", team: "Squadra Alfa", period: "Dal 2020 al 2022"},
 		{category: "Eccellenza", team: "Squadra Beta", period: "Dal 2022 ad oggi"},
-		{category: "Promozione", team: null, period: null},
+		{category: "Eccellenza", team: "Squadra Alfa", period: "Dal 2020 al 2022"},
 		{category: null, team: "Squadra Gamma", period: "Al 2020"},
 		{category: null, team: null, period: "Dal 2018"},
+		{category: "Promozione", team: null, period: null},
 	]);
 	const careerSection = announcement.sections.find(section => section.id === "previous-categories");
 	assert.equal(careerSection.presentation.kind, "player-career");
@@ -1048,4 +1049,21 @@ test("anonymous profile names protect existing announcement details and cards wh
   assert.equal(card.author.anonymousName, true);
   assert.doesNotMatch(JSON.stringify(card), /Nome riservato|Cognome riservato|Società riservata/);
  }
+});
+
+
+test("regional directory filtering works without a type and counts ignore selected regions", async () => {
+ for (const types of [undefined, ["annuncio_giocatore"], ["annuncio_giocatore", "annuncio_staff_sportivo"]]) {
+  const {queries, load} = fixture({current: {...row(), localita_annuncio: [{regione: "Lazio", citta: "Roma"}, {regione: "Lazio", citta: "Viterbo"}]}});
+  const {parseAnnouncementDirectoryQuery: parse} = load("apps/web/src/features/annunci/announcement-model.ts");
+  const miss = await queries.loadPublicAnnouncementDirectory(parse({type: types, regione: "Toscana"}));
+  assert.equal(miss.total, 0);
+  assert.equal(miss.regionCounts.Lazio, 1);
+  const hit = await queries.loadPublicAnnouncementDirectory(parse({type: types, regione: ["Toscana", "Lazio"]}));
+  assert.equal(hit.total, 1);
+  assert.equal(hit.regionCounts.Lazio, 1);
+ }
+ const {queries, load} = fixture();
+ const result = await queries.loadPublicAnnouncementDirectory(load("apps/web/src/features/annunci/announcement-model.ts").parseAnnouncementDirectoryQuery({}));
+ assert.equal(result.regionCounts, undefined, "the unfiltered database-paginated path does not fetch data just for regional counts");
 });

@@ -1,3 +1,4 @@
+import {countDirectoryRegions} from "@/components/navigation/directory-region-counts";
 import {currentCategoryLabel} from "@/features/profilo/current-team";
 import "server-only";
 import {publicProfileName} from "@/features/profilo/profile-public-name";
@@ -442,9 +443,9 @@ function matchesDirectoryQuery(profile: DirectoryProfile, query: ProfileDirector
 	const searchTokens = normalizeDirectorySearchText(query.q).split(/\s+/).filter(Boolean);
 	if (searchTokens.some((token) => !profile.searchText.includes(token))) return false;
 
-	if (query.types.length !== 1) return true;
 	const {filters} = query;
-	if (filters.regione && !includesValue(profile.filterData.regions, filters.regione)) return false;
+	if (filters.regione.length && !filters.regione.some(region => includesValue(profile.filterData.regions, region))) return false;
+	if (query.types.length !== 1) return true;
 	if (filters.tipologia && !includesValue(profile.filterData.tipologie, filters.tipologia)) return false;
 	if (filters.ruolo && !includesValue(profile.filterData.ruoli, filters.ruolo)) return false;
 	if (filters.figura && !includesValue(profile.filterData.figure, filters.figura)) return false;
@@ -596,9 +597,12 @@ export async function getProfileDirectory(query: ProfileDirectoryQuery): Promise
 		}
 		const profileImages = await loadProfileImageUrlMap(supabase, rows.map(({uuid}) => uuid));
 
-		const candidates = rows.flatMap(row => mapProfileRow(row, profileImages)
-			.filter(profile => !isLimitedProfileType(profile.type) && matchesDirectoryQuery(profile, query))
+		const regionQuery = {...query, filters: {...query.filters, regione: []}};
+		const regionalCandidates = rows.flatMap(row => mapProfileRow(row, profileImages)
+			.filter(profile => !isLimitedProfileType(profile.type) && matchesDirectoryQuery(profile, regionQuery))
 			.map(profile => ({row, profile})));
+		const regionCounts = countDirectoryRegions(regionalCandidates, ({profile}) => profile.filterData.regions);
+		const candidates = regionalCandidates.filter(({profile}) => matchesDirectoryQuery(profile, query));
 		const ids = [...new Set(candidates.map(({profile}) => profile.id))];
 		const playerIds = [...new Set(candidates.filter(({profile}) => profile.type === "giocatore").map(({profile}) => profile.id))];
 		const [highlights, activity] = await Promise.all([
@@ -616,6 +620,7 @@ export async function getProfileDirectory(query: ProfileDirectoryQuery): Promise
 		const offset = (currentPage - 1) * PROFILE_DIRECTORY_PAGE_SIZE;
 
 		return {
+			regionCounts,
 			profiles: filteredProfiles.slice(offset, offset + PROFILE_DIRECTORY_PAGE_SIZE),
 			total,
 			currentPage,

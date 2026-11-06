@@ -1,3 +1,4 @@
+import {sortExperiencesNewestFirst} from "@/features/profilo/experience-order";
 import type {AnnouncementDetailSection, AnnouncementSectionPresentation} from "./announcement-model";
 import {finiteNumber} from "./announcement-content";
 import {FACILITY_WEEKDAYS, isValidIsoDate, isValidTime} from "@/features/pubblica-annuncio/publish-field-validation";
@@ -33,7 +34,7 @@ function time(value: unknown) {
 
 function history(value: unknown): Extract<AnnouncementSectionPresentation, {kind: "history"}>["rows"] {
 	if (!Array.isArray(value)) return [];
-	return value.flatMap((entry): Extract<AnnouncementSectionPresentation, {kind: "history"}>["rows"] => {
+	return sortExperiencesNewestFirst(value).flatMap((entry): Extract<AnnouncementSectionPresentation, {kind: "history"}>["rows"] => {
 		if (typeof entry === "string") {
 			const title = text(entry);
 			return title ? [{title, organization: null, period: null, description: null, status: null}] : [];

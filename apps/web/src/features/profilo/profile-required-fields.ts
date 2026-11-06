@@ -1,3 +1,4 @@
+import {playerMeasurementError} from "./player-measurements";
 import {isTeamCategoryForSport} from "@/features/profilo/team-category-catalog";
 import {EMAIL_PATTERN} from "@/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import {isValidPhone, parseOptionalMoney} from "@/features/pubblica-annuncio/publish-field-validation";
@@ -16,6 +17,8 @@ export type ProfileValidationField =
 	| "mainRole"
 	| "gender"
 	| "nationality"
+	| "height"
+	| "weight"
 	| "birthYear"
 	| "availability"
 	| "professionalRole"
@@ -78,6 +81,10 @@ export function getProfileRequiredFieldErrors(
 	if (locations.length === 0) errors.locations = "Seleziona almeno una località per il profilo.";
 
 	if (type === "giocatore") {
+		const heightError = playerMeasurementError(values.altezza, "height");
+		const weightError = playerMeasurementError(values.peso, "weight");
+		if (heightError) errors.height = heightError;
+		if (weightError) errors.weight = weightError;
 		if (!nonEmpty(values.nome)) errors.name = "Inserisci il nome del giocatore.";
 		if (values.genere !== "Uomo" && values.genere !== "Donna") errors.gender = "Seleziona il genere.";
 		if (values.disponibilita !== "svincolato" && values.disponibilita !== "sotto-contratto") errors.availability = "Seleziona la disponibilità.";

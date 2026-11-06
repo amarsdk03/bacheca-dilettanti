@@ -39,7 +39,9 @@ interface NavbarNavigationProps {
 const desktopLinkClassName =
 	"relative inline-flex h-11 items-center rounded-lg px-3 text-sm font-bold tracking-wide text-white/75 outline-none transition-colors hover:bg-white/8 hover:text-white focus-visible:ring-3 focus-visible:ring-[#8e72ff]/70";
 
-const ANNOUNCEMENT_NAVIGATION_OPTIONS = ANNOUNCEMENT_DIRECTORY_OPTIONS;
+const ANNOUNCEMENT_NAVIGATION_OPTIONS = ANNOUNCEMENT_DIRECTORY_OPTIONS
+	.filter(option => option.profileType !== "squadra" || option.value === "annuncio_squadra_cerca_giocatore")
+	.map(option => option.profileType === "squadra" ? {...option, value: "annuncio_squadra", label: "Squadra"} : option);
 const PROFILE_NAVIGATION_OPTIONS = PROFILE_OPTIONS.filter(
 	({value}) => !isLimitedProfileType(value),
 );

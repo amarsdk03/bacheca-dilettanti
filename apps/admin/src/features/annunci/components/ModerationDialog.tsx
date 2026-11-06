@@ -20,6 +20,7 @@ import {Spinner} from "@/components/ui/spinner";
 import {PanelSkeleton} from "@/features/dashboard/components/ContentSkeletons";
 import type {AnnunciController, AnnunciState} from "../client/controller";
 import {capability, MODERATION_LABELS, moderationReason, needsReason} from "../moderation";
+import {announcementTitle, issueLabel} from "../presentation";
 
 const EFFECTS = {
   trash: "L’annuncio e i suoi contenuti saranno conservati nel cestino, esclusi dal sito e dall’area autore. Stato, privacy e pagamenti rimangono invariati.",
@@ -40,13 +41,13 @@ export function ModerationDialog({ state, controller, finalFocus }: { state: Ann
     result?.status === "invalid" ? "La richiesta non è valida. Ricarica il dettaglio prima di riprovare." :
     result?.status === "unavailable" ? "Esito non verificabile. La modifica potrebbe essere stata salvata: ricarica il dettaglio prima di effettuare un’altra operazione." : state?.error;
   return <AlertDialog open={state !== null} onOpenChange={(open) => { if (!open && !pending) controller.closeModeration(); }}>
-    <AlertDialogContent className="admin-moderation-dialog" initialFocus={cancel} finalFocus={finalFocus}>
+    <AlertDialogContent className="admin-moderation-dialog admin-annunci-dialog" initialFocus={cancel} finalFocus={finalFocus}>
       <AlertDialogHeader><AlertDialogTitle>{state ? MODERATION_LABELS[state.operation] : "Moderazione annuncio"}</AlertDialogTitle>
         <AlertDialogDescription>{state && EFFECTS[state.operation]}</AlertDialogDescription>
       </AlertDialogHeader>
       {state?.phase === "loading" ? <PanelSkeleton /> : state && <div className="admin-detail-stack">
-        <p className="admin-dialog-subject">{state.detail?.summary.title || state.id}</p>
-        {state.detail && state.phase === "ready" && !cap?.allowed && <Alert variant="warning"><Info aria-hidden="true" /><AlertDescription>{moderationReason(cap?.reason ?? "UNAVAILABLE")}</AlertDescription></Alert>}
+        <p className="admin-dialog-subject">{state.detail ? announcementTitle(state.detail.summary) : state.id}</p>
+        {state.detail && state.phase === "ready" && !cap?.allowed && <Alert variant="warning"><Info aria-hidden="true" /><AlertDescription>{moderationReason(cap?.reason ?? "UNAVAILABLE")}{cap?.reason === "INCOMPLETE_CONTENT" && <ul>{[...new Set(state.detail.issues.map(issueLabel))].map((issue) => <li key={issue}>{issue}</li>)}</ul>}</AlertDescription></Alert>}
         {state.detail && (state.phase === "ready" || pending) && needsReason(state.operation) && <FieldGroup><Field data-invalid={Boolean(state.error)}>
           <FieldLabel htmlFor="moderation-reason">{state.operation === "trash" ? "Motivazione interna" : "Motivazione visibile all’autore"}</FieldLabel>
           <Textarea id="moderation-reason" rows={4} required value={state.reason} disabled={pending} onChange={(event) => controller.setReason(event.target.value)} aria-invalid={Boolean(state.error)} aria-describedby={state.error ? "moderation-reason-description moderation-reason-error" : "moderation-reason-description"} />
