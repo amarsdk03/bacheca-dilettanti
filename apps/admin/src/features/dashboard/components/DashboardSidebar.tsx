@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import {GuardedLink} from "@/features/navigation/UnsavedChanges";
 import {usePathname} from "next/navigation";
 import {X} from "lucide-react";
 import {
@@ -28,10 +28,10 @@ export function DashboardSidebar() {
   return <Sidebar collapsible="icon">
     <SidebarHeader>
       <div className="admin-brand-row">
-        <Link href="/" className="admin-brand" aria-label="Bacheca Dilettanti — Home" prefetch={false} onClick={() => setOpenMobile(false)}>
+        <GuardedLink href="/" className="admin-brand" aria-label="Bacheca Dilettanti — Home" prefetch={false} onLeave={() => setOpenMobile(false)}>
           {compact ? <Image src="/logo.png" alt="Bacheca Dilettanti" width={32} height={32} className="admin-brand-logo" /> :
             <Image src="/banner.png" alt="Bacheca Dilettanti" width={216} height={108} className="admin-brand-banner" priority />}
-        </Link>
+        </GuardedLink>
         {isMobile && <Button variant="ghost" size="icon" aria-label="Chiudi menu" onClick={() => setOpenMobile(false)}><X aria-hidden="true" /></Button>}
       </div>
     </SidebarHeader>
@@ -44,7 +44,7 @@ export function DashboardSidebar() {
             return <SidebarMenuItem key={section.href}>
               <SidebarMenuButton isActive={active} tooltip={section.title} aria-label={section.title}
                 aria-current={active ? "page" : undefined}
-                render={<Link href={section.href} prefetch={false} />} onClick={() => setOpenMobile(false)}>
+                render={<GuardedLink href={section.href} prefetch={false} onLeave={() => setOpenMobile(false)} />}>
                 <Icon aria-hidden="true" /><span>{section.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>;

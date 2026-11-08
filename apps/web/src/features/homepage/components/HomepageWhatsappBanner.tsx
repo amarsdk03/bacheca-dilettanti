@@ -2,7 +2,7 @@
 
 import {useState, useSyncExternalStore} from "react";
 import {createPortal} from "react-dom";
-import {AnimatePresence, MotionConfig, motion} from "motion/react";
+import {AnimatePresence, motion, MotionConfig} from "motion/react";
 import {ExternalLink, XIcon} from "lucide-react";
 import {SiWhatsapp} from "@icons-pack/react-simple-icons";
 import {Button} from "@/components/ui/button";

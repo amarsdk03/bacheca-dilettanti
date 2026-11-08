@@ -1,0 +1,17 @@
+{
+  "name": "@bacheca/announcements",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./ui/*": "./src/ui/*.tsx",
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@bacheca/database": "0.1.0",
+    "lucide-react": "^1.70.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}

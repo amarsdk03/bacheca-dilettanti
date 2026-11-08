@@ -130,7 +130,13 @@ export function parseDetailResponse(value: unknown, requestedId: string): Announ
     trash = { deletedAt: value.trash.deletedAt, deletedBy: value.trash.deletedBy };
   }
   const moderation = value.moderation === undefined ? undefined : parseModerationInfo(value.moderation);
+  let origin: AnnouncementDetail["origin"];
+  if (value.origin === null) origin = null;
+  else if (value.origin !== undefined) {
+    if (!record(value.origin) || !["manual", "whatsapp"].includes(value.origin.kind as string) || !nullableText(value.origin.messageUrl) || !nullableText(value.origin.rawText) || (value.origin.rawText?.length ?? 0) > 50_000) invalid();
+    origin = {kind: value.origin.kind as "manual" | "whatsapp", messageUrl: value.origin.messageUrl, rawText: value.origin.rawText};
+  }
   if (moderation && issues.size) for (const operation of ["approve", "show"] as const) moderation.capabilities[operation] = { allowed: false, reason: "INCOMPLETE_CONTENT" };
-  return { ...(trash ? { trash } : {}), ...(moderation ? { moderation } : {}), summary, metadata, content, locations, contacts, links, media, contentFingerprint: value.contentFingerprint,
+  return { ...(origin !== undefined ? {origin} : {}), ...(trash ? { trash } : {}), ...(moderation ? { moderation } : {}), summary, metadata, content, locations, contacts, links, media, contentFingerprint: value.contentFingerprint,
     complete: issues.size === 0, issues: [...issues] };
 }

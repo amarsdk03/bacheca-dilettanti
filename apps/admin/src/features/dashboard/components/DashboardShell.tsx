@@ -6,24 +6,30 @@ import {MotionConfig} from "motion/react";
 import {SidebarInset, SidebarProvider, SidebarTrigger} from "@/components/ui/sidebar";
 import {TooltipProvider} from "@/components/ui/tooltip";
 import {ExternalNavigationProvider} from "@/features/navigation/ExternalNavigation";
+import {GuardedLink, UnsavedChangesProvider} from "@/features/navigation/UnsavedChanges";
+import {AnnouncementDraftProvider} from "@/features/annunci/create/store";
 import {DashboardSidebar} from "./DashboardSidebar";
 import {DashboardThemeProvider} from "./DashboardThemeProvider";
 import {DashboardThemeToggle} from "./DashboardThemeToggle";
 import {DashboardPageTransition} from "./DashboardPageTransition";
 import {DASHBOARD_SECTIONS, isSectionActive} from "../sections";
 
-export function DashboardShell({ children }: { children: ReactNode }) {
+export function DashboardShell({ children, actorId }: { children: ReactNode; actorId: string }) {
   const pathname = usePathname();
   const currentSection = DASHBOARD_SECTIONS.find((section) => isSectionActive(pathname, section.href));
-  return <DashboardThemeProvider><MotionConfig reducedMotion="user"><TooltipProvider><ExternalNavigationProvider><SidebarProvider mobileBreakpoint={1024}>
+  return <DashboardThemeProvider><MotionConfig reducedMotion="user"><TooltipProvider><ExternalNavigationProvider><AnnouncementDraftProvider key={actorId} actorId={actorId}><UnsavedChangesProvider><SidebarProvider mobileBreakpoint={1024}>
     <a href="#dashboard-content" className="admin-skip-link sr-only focus:not-sr-only">Salta al contenuto</a>
     <DashboardSidebar />
     <SidebarInset className="min-w-0">
       <header className="admin-header">
-        <div className="flex min-w-0 items-center gap-3"><SidebarTrigger /><span className="min-w-0 text-sm font-medium">{currentSection?.title ?? "Dashboard amministrativa"}</span></div>
+        <div className="flex min-w-0 items-center gap-3"><SidebarTrigger />{pathname === "/crea-annuncio" ?
+          <nav aria-label="Percorso di navigazione" className="admin-create-breadcrumb"><ol>
+            <li><GuardedLink href="/annunci" prefetch={false}>Annunci</GuardedLink></li>
+            <li aria-hidden="true">/</li><li aria-current="page">Crea annuncio</li>
+          </ol></nav> : <span className="min-w-0 text-sm font-medium">{currentSection?.title ?? "Dashboard amministrativa"}</span>}</div>
         <DashboardThemeToggle />
       </header>
       <DashboardPageTransition>{children}</DashboardPageTransition>
     </SidebarInset>
-  </SidebarProvider></ExternalNavigationProvider></TooltipProvider></MotionConfig></DashboardThemeProvider>;
+  </SidebarProvider></UnsavedChangesProvider></AnnouncementDraftProvider></ExternalNavigationProvider></TooltipProvider></MotionConfig></DashboardThemeProvider>;
 }

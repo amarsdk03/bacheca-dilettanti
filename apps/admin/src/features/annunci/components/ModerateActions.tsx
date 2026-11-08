@@ -8,9 +8,10 @@ import {issueLabel} from "../presentation";
 
 export const moderationIcons = { approve: Check, reject: X, hide: EyeOff, show: Eye, trash: Trash2, restore: Undo2 };
 export function ModerateActions({ detail, disabled, onChoose }: { detail: AnnouncementDetail; disabled?: boolean; onChoose(operation: ModerationOperation, trigger: HTMLElement): void }) {
-  return <section aria-label="Moderazione annuncio" className="admin-moderation-actions">{(detail.summary.trashed ? ["restore"] as ModerationOperation[] : ["approve", "reject", detail.summary.hidden === true ? "show" : "hide", "trash"] as ModerationOperation[]).map((operation) => {
+  if (detail.summary.trashed) return null;
+  return <section aria-label="Moderazione annuncio" className="admin-moderation-actions">{(["approve", "reject", detail.summary.hidden === true ? "show" : "hide"] as ModerationOperation[]).map((operation) => {
     const cap = capability(detail, operation), Icon = moderationIcons[operation];
     const reason = cap.reason === "INCOMPLETE_CONTENT" && detail.issues.length ? [...new Set(detail.issues.map(issueLabel))].join(" ") : moderationReason(cap.reason);
-    return <div key={operation} className="admin-moderation-action"><Button size="sm" variant={(operation === "reject" || operation === "trash") ? "outline-danger" : operation === "approve" ? "default" : "secondary"} disabled={disabled || !cap.allowed} onClick={(event) => onChoose(operation, event.currentTarget)}><Icon data-icon="inline-start" aria-hidden="true" />{MODERATION_LABELS[operation]}</Button>{!cap.allowed && <p className="admin-note">{reason}</p>}</div>;
+    return <div key={operation} className="admin-moderation-action"><Button size="sm" variant={operation === "reject" ? "outline-danger" : operation === "approve" ? "default" : "secondary"} disabled={disabled || !cap.allowed} onClick={(event) => onChoose(operation, event.currentTarget)}><Icon data-icon="inline-start" aria-hidden="true" />{MODERATION_LABELS[operation]}</Button>{!cap.allowed && <p className="admin-note">{reason}</p>}</div>;
   })}</section>;
 }

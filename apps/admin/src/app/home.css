@@ -47,14 +47,16 @@
   & .admin-home-failure .ui-button { justify-self: start; }
 
   & .admin-audit-summary-table { min-width: 752px; table-layout: auto; }
-  & .admin-audit-summary-table:has([data-slot="table-head"]:nth-child(4)) { min-width: 840px; }
+  & .admin-audit-summary-table[data-has-details="true"] { min-width: 840px; }
+  & .admin-audit-summary-table[data-separate-outcome="true"] { min-width: 960px; }
   & .admin-audit-summary-table [data-slot="table-head"]:first-child { width: 176px; }
   & .admin-audit-summary-table [data-slot="table-head"]:nth-child(2) { width: 224px; }
   & .admin-audit-summary-table [data-slot="table-head"]:nth-child(3) { min-width: 280px; }
-  & .admin-audit-summary-table [data-slot="table-head"]:nth-child(4) { width: 160px; text-align: right; }
+  & .admin-audit-summary-table[data-separate-outcome="true"] [data-slot="table-head"]:nth-child(4) { width: 120px; }
+  & .admin-audit-summary-table[data-has-details="true"] [data-slot="table-head"]:last-child { width: 160px; text-align: right; }
   & .admin-audit-summary-table [data-slot="table-cell"] { white-space: normal; overflow-wrap: anywhere; }
   & .admin-audit-summary-table [data-slot="table-cell"]:first-child { white-space: nowrap; }
-  & .admin-audit-summary-table [data-slot="table-cell"]:nth-child(4) { text-align: right; }
+  & .admin-audit-summary-table[data-has-details="true"] [data-slot="table-cell"]:last-child { text-align: right; }
   & .admin-audit-summary-table .admin-audit-details-button { min-width: 0; }
   & .admin-audit-summary-table [data-slot="table-caption"] { padding-top: 8px; color: var(--muted-foreground); font-size: 12px; line-height: 18px; text-align: left; }
   & .admin-audit-summary-table [data-slot="table-cell"] { padding-block: 16px; vertical-align: top; }

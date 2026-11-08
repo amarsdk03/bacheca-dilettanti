@@ -22,8 +22,8 @@ function sourceLoader(overrides = {}) {
 		new Function("require", "module", "exports", outputText)(specifier => {
 			if (Object.hasOwn(overrides, specifier)) return overrides[specifier];
 			if (specifier === "server-only") return {};
-			if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
-			const base = specifier.startsWith("@/") ? path.join(root, "apps/web/src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
+			if (!specifier.startsWith("@/") && !specifier.startsWith(".") && !specifier.startsWith("@bacheca/announcements/")) return require(specifier);
+			const base = specifier.startsWith("@bacheca/announcements/") ? path.join(root, "packages/announcements/src", specifier.slice("@bacheca/announcements/".length)) : specifier.startsWith("@/") ? path.join(root, "apps/web/src", specifier.slice(2)) : path.resolve(path.dirname(file), specifier);
 			return load([base, base + ".ts", base + ".tsx"].find(candidate => existsSync(candidate)));
 		}, loaded, loaded.exports);
 		return loaded.exports;

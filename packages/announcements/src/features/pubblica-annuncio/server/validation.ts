@@ -1,0 +1,576 @@
+
+
+import {REGIONI_ITALIANE} from "../../../const/defaultConstants.ts";
+import {createProfileDrafts, type ProfileDrafts, type ProfileLocationDraft,} from "../../profilo/profile-model.ts";
+import type {ProfileSocialLinks} from "../../profilo/profile-social-links.ts";
+import {
+	type AnnouncementContacts,
+	type AnnouncementDetailsDrafts,
+	type AnnouncementExtras,
+	type DatabaseAnnouncementType,
+	getAnnouncementValidationMessage,
+	getDatabaseAnnouncementType,
+	getProfileValidationMessage,
+	isPublishableProfileType,
+	isPublishVisibility,
+	isTeamAnnouncementSubtype,
+	PUBLISH_PAYLOAD_VERSION,
+	type PublishableProfileType,
+	type PublishAnnouncementPayload,
+	type PublishVisibility,
+	type TeamAnnouncementSubtype,
+} from "../publish-model.ts";
+import {
+	ANNATE_OPTIONS,
+	EMAIL_PATTERN,
+	FIGURA_PROFESSIONALE_OPTIONS
+} from "../types/pubblicaAnnuncio.ts";
+import {
+	isValidIsoDate,
+	isValidPhone,
+	isValidTime,
+	normalizeFacilityOpeningHours,
+	parseOptionalMoney
+} from "../publish-field-validation.ts";
+import {isLinkAnnuncioValid} from "../types/announcementExtras.ts";
+import {ordinaTipologieCalcio, TIPOLOGIA_CALCIO_OPTIONS} from "../types/tipologie-calcio.ts";
+import {ANY_CATEGORY, normalizeCategories, normalizeFigure} from "../types/category-catalog.ts";
+import {isStaffCategory, normalizeStaffCategories} from "../types/staff-category-catalog.ts";
+import {parseProfileEditorPayload, RegistrationPayloadError,} from "../../registrati/server/registration.ts";
+import type {Json} from "@bacheca/database";
+import {
+	normalizePlayerPrimaryRole,
+	normalizePlayerPrimaryRoles,
+	normalizePlayerSpecificRole,
+	normalizePlayerSpecificRoles,
+	PLAYER_PRIMARY_ROLE_BY_SPECIFIC,
+} from "../../profilo/player-roles.ts";
+
+const MAX_PAYLOAD_BYTES = 256_000;
+const MAX_SHORT_TEXT = 160;
+const MAX_LONG_TEXT = 5_000;
+const MAX_LIST_ITEMS = 32;
+const MAX_LOCATIONS = 100;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const REGIONS = new Set(REGIONI_ITALIANE.map(({nome}) => nome));
+
+export class PublishPayloadError extends Error {
+	readonly step: 1 | 2 | 3 | 4;
+
+	constructor(message: string, step: 1 | 2 | 3 | 4) {
+		super(message);
+		this.name = "PublishPayloadError";
+		this.step = step;
+	}
+}
+
+export interface NormalizedPublishPayload {
+	submissionId: string;
+	visibility: PublishVisibility;
+	profileType: PublishableProfileType;
+	teamSubtype: TeamAnnouncementSubtype | null;
+	announcementType: DatabaseAnnouncementType;
+	profileDraft: Record<string, Json> | null;
+	profileLocations: ProfileLocationDraft[];
+	profileSocialLinks: ProfileSocialLinks | null;
+	profileUpdate: {
+		type: PublishableProfileType;
+		draft: Record<string, Json>;
+		locations: ProfileLocationDraft[];
+	} | null;
+	detail: Record<string, Json>;
+	announcementTitle: string;
+	announcementLocations: ProfileLocationDraft[];
+	contacts: AnnouncementContacts;
+	extras: AnnouncementExtras;
+	newsletterSubscribed: boolean;
+}
+
+function fail(message: string, step: 1 | 2 | 3 | 4): never {
+	throw new PublishPayloadError(message, step);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function assertExactKeys(value: Record<string, unknown>, keys: readonly string[], step: 1 | 2 | 3 | 4) {
+	if (Object.keys(value).some((key) => !keys.includes(key))) fail("I dati inviati non sono validi.", step);
+}
+
+function textValue(value: unknown, maxLength: number, step: 1 | 2 | 3 | 4, required = false) {
+	if (value === null || value === undefined || value === "") {
+		if (required) fail("Completa tutti i campi obbligatori.", step);
+		return null;
+	}
+	if (typeof value !== "string" || value.length > maxLength) fail("Uno dei campi inseriti non è valido.", step);
+	const normalized = value.trim();
+	if (required && !normalized) fail("Completa tutti i campi obbligatori.", step);
+	return normalized || null;
+}
+
+function announcementTitleValue(value: unknown): string {
+	if (value === null || value === undefined) return "";
+	if (typeof value !== "string") fail("Il titolo dell’annuncio non è valido.", 3);
+	const normalized = value.trim();
+	if (normalized.length > 50) fail("Il titolo può contenere al massimo 50 caratteri.", 3);
+	return normalized;
+}
+
+function stringList(value: unknown, step: 1 | 2 | 3 | 4, required = false) {
+	if (!Array.isArray(value) || value.length > MAX_LIST_ITEMS) fail("Una delle selezioni non è valida.", step);
+	const normalized = value.map((item) => {
+		const text = textValue(item, 120, step, true);
+		if (!text) fail("Una delle selezioni non è valida.", step);
+		return text;
+	});
+	const unique = [...new Set(normalized)];
+	if (required && unique.length === 0) fail("Completa tutti i campi obbligatori.", step);
+	return unique;
+}
+
+function playerRoles(primaryValue: unknown, specificValue: unknown) {
+	const rawPrimary = stringList(primaryValue, 3, true);
+	const rawSpecific = stringList(specificValue, 3);
+	if (!rawPrimary.every(role => normalizePlayerPrimaryRole(role)) || !rawSpecific.every(role => normalizePlayerSpecificRole(role))) {
+		fail("Uno dei ruoli selezionati non è valido.", 3);
+	}
+	const primary = normalizePlayerPrimaryRoles(rawPrimary);
+	const primarySet = new Set(primary);
+	const specific = normalizePlayerSpecificRoles(rawSpecific);
+	if (specific.some(role => !primarySet.has(PLAYER_PRIMARY_ROLE_BY_SPECIFIC[role]))) {
+		fail("I ruoli specifici non corrispondono ai ruoli principali selezionati.", 3);
+	}
+	return {primary, specific};
+}
+
+function numericValue(
+	value: unknown,
+	step: 1 | 2 | 3 | 4,
+	options: {integer?: boolean; money?: boolean; min?: number; max?: number} = {},
+) {
+	if (value === null || value === undefined || value === "") return null;
+	if (options.money) {
+		const amount = parseOptionalMoney(value);
+		if (amount === undefined) fail("Inserisci un importo valido con massimo due decimali.", step);
+		return amount;
+	}
+	if (typeof value !== "string" && typeof value !== "number") fail("Uno dei valori numerici non è valido.", step);
+	const normalized = typeof value === "string" ? value.trim().replace(",", ".") : value;
+	if (normalized === "") return null;
+	const number = Number(normalized);
+	if (!Number.isFinite(number)) fail("Uno dei valori numerici non è valido.", step);
+	if (options.integer && !Number.isInteger(number)) fail("Uno dei valori numerici non è valido.", step);
+	if (options.min !== undefined && number < options.min) fail("Uno dei valori numerici non è valido.", step);
+	if (options.max !== undefined && number > options.max) fail("Uno dei valori numerici non è valido.", step);
+	return number;
+}
+
+function dateValue(value: unknown) {
+	const normalized = textValue(value, 10, 3);
+	if (!normalized) return null;
+	if (!isValidIsoDate(normalized)) {
+		fail("Una delle date inserite non è valida.", 3);
+	}
+	return normalized;
+}
+
+function timeValue(value: unknown) {
+	const normalized = textValue(value, 5, 3);
+	if (!normalized) return null;
+	if (!isValidTime(normalized)) fail("Uno degli orari inseriti non è valido.", 3);
+	return normalized;
+}
+
+function normalizeLocations(value: unknown, step: 2 | 3, allowEmpty = false) {
+	if (!Array.isArray(value) || (!allowEmpty && value.length === 0) || value.length > MAX_LOCATIONS) {
+		fail("Seleziona almeno una località valida.", step);
+	}
+	const seen = new Set<string>();
+	return value.map((entry): ProfileLocationDraft => {
+		if (!isRecord(entry)) fail("Una delle località non è valida.", step);
+		assertExactKeys(entry, ["regione", "citta"], step);
+		const regione = textValue(entry.regione, 80, step, true);
+		if (!regione || !REGIONS.has(regione)) fail("Seleziona una regione italiana valida.", step);
+		const citta = textValue(entry.citta, 120, step);
+		const key = `${regione}\u0000${citta ?? ""}`;
+		if (seen.has(key)) fail("Rimuovi le località duplicate.", step);
+		seen.add(key);
+		return {regione, citta};
+	});
+}
+
+function normalizeContacts(value: unknown, registered: boolean): AnnouncementContacts {
+	if (!isRecord(value)) fail("I contatti dell’annuncio non sono validi.", 3);
+	assertExactKeys(value, ["email", "phone", "contactRole"], 3);
+	const email = textValue(value.email, 254, 3) ?? "";
+	const phone = textValue(value.phone, 40, 3) ?? "";
+	const contactRole = textValue(value.contactRole, 120, 3) ?? "";
+	if (!registered && !email && !phone) fail("Inserisci almeno un contatto tra email e telefono.", 3);
+	if (contactRole && !email && !phone) fail("Inserisci almeno un recapito per indicare un referente o un ruolo.", 3);
+	if (email && !EMAIL_PATTERN.test(email)) fail("Inserisci un indirizzo email valido.", 3);
+	if (phone && !isValidPhone(phone)) {
+		fail("Inserisci un numero di telefono valido.", 3);
+	}
+	return {email: email.toLowerCase(), phone, contactRole};
+}
+
+function normalizeExtras(value: unknown): AnnouncementExtras {
+	if (!isRecord(value)) fail("I contenuti aggiuntivi non sono validi.", 3);
+	assertExactKeys(value, ["genericLink"], 3);
+	const genericLink = textValue(value.genericLink, 2048, 3) ?? "";
+	if (!isLinkAnnuncioValid(genericLink)) fail("Inserisci un link completo che inizi con http:// o https://.", 3);
+	return {genericLink};
+}
+
+function normalizePrizeList(value: unknown): Json[] {
+	if (!Array.isArray(value) || value.length > 20) fail("I premi inseriti non sono validi.", 3);
+	return value.map((entry) => {
+		if (!isRecord(entry)) fail("I premi inseriti non sono validi.", 3);
+		assertExactKeys(entry, ["id", "posto", "titoloPremio"], 3);
+		return {
+			id: textValue(entry.id, 100, 3) ?? crypto.randomUUID(),
+			posto: textValue(entry.posto, MAX_SHORT_TEXT, 3) ?? "",
+			titoloPremio: textValue(entry.titoloPremio, MAX_SHORT_TEXT, 3, true) ?? "",
+		};
+	});
+}
+
+function normalizeDetail(type: DatabaseAnnouncementType, value: unknown): Record<string, Json> {
+	if (!isRecord(value)) fail("I dati dell’annuncio non sono validi.", 3);
+
+	if (type === "annuncio_giocatore") {
+		assertExactKeys(value, ["categorie_ricercate", "descrizione_aggiuntiva"], 3);
+		return {
+			categorie_ricercate: normalizeCategories(stringList(value.categorie_ricercate, 3, true)),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+		};
+	}
+	if (type === "annuncio_squadra_cerca_giocatore") {
+		assertExactKeys(value, ["gruppo_squadra", "ruoli_principali", "ruoli_secondari", "annata_da", "annata_a", "stagione", "descrizione_aggiuntiva"], 3);
+		const roles = playerRoles(value.ruoli_principali, value.ruoli_secondari);
+		const from = textValue(value.annata_da, 4, 3);
+		const to = textValue(value.annata_a, 4, 3);
+		if ((from && !ANNATE_OPTIONS.includes(from)) || (to && !ANNATE_OPTIONS.includes(to)) || Boolean(from) !== Boolean(to) || (from && to && Number(to) < Number(from))) {
+			fail("L'annata non può essere inferiore rispetto al campo precedente.", 3);
+		}
+		return {
+			ruoli_principali: roles.primary,
+			gruppo_squadra: textValue(value.gruppo_squadra, MAX_SHORT_TEXT, 3),
+			ruoli_secondari: roles.specific,
+			annate_ricercate: [],
+			annata_da: from,
+			annata_a: to,
+			stagione: textValue(value.stagione, 80, 3),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+		};
+	}
+	if (type === "annuncio_squadra_cerca_staff") {
+		assertExactKeys(value, ["figure_ricercate", "settore", "compenso_mensile", "requisiti", "stagione", "descrizione_aggiuntiva"], 3);
+		const figures = stringList(value.figure_ricercate, 3, true).map(normalizeFigure);
+		if (!figures.every((figure) => FIGURA_PROFESSIONALE_OPTIONS.includes(figure as typeof FIGURA_PROFESSIONALE_OPTIONS[number]))) fail("Seleziona figure valide dal catalogo.", 3);
+		return {
+			// The existing core writer still requires one text value; the full selection is saved by the step 07 wrapper.
+			figura_ricercata: figures[0],
+			figure_ricercate: figures,
+			settore: textValue(value.settore, MAX_SHORT_TEXT, 3),
+			compenso_mensile: numericValue(value.compenso_mensile, 3, {money: true}),
+			requisiti: textValue(value.requisiti, MAX_LONG_TEXT, 3, true),
+			stagione: textValue(value.stagione, 80, 3),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+		};
+	}
+	if (type === "annuncio_squadra_cerca_partita") {
+		assertExactKeys(value, ["gruppo_squadra", "categorie_avversario", "periodo_dal", "periodo_al", "orario_dalle", "orario_alle", "disponibilita_trasferta", "descrizione_aggiuntiva"], 3);
+		if (!Array.isArray(value.categorie_avversario) || value.categorie_avversario.length !== 1) fail("Inserisci la categoria avversario cercata.", 3);
+		const opponentCategory = textValue(value.categorie_avversario[0], MAX_SHORT_TEXT, 3, true);
+		const from = dateValue(value.periodo_dal);
+		const to = dateValue(value.periodo_al);
+		if (from && to && from > to) fail("La data finale non può precedere quella iniziale.", 3);
+		const timeFrom = timeValue(value.orario_dalle);
+		const timeTo = timeValue(value.orario_alle);
+		if (Boolean(timeFrom) !== Boolean(timeTo)) fail("Completa entrambi gli orari indicativi.", 3);
+		return {
+			gruppo_squadra: textValue(value.gruppo_squadra, MAX_SHORT_TEXT, 3),
+			categorie_avversario: [opponentCategory],
+			periodo_dal: from,
+			periodo_al: to,
+			orario_dalle: timeFrom,
+			orario_alle: timeTo,
+			disponibilita_trasferta: textValue(value.disponibilita_trasferta, 40, 3),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+		};
+	}
+	if (type === "annuncio_squadra_cerca_sponsor") {
+		assertExactKeys(value, ["categoria_settore", "offerta_fornita", "descrizione_aggiuntiva"], 3);
+		return {
+			categoria_settore: textValue(value.categoria_settore, MAX_SHORT_TEXT, 3, true),
+			offerta_fornita: textValue(value.offerta_fornita, MAX_LONG_TEXT, 3, true),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+		};
+	}
+	if (type === "annuncio_staff_sportivo") {
+		assertExactKeys(value, ["tipologie_sport", "categorie_ricercate", "disponibilita_spostamento", "descrizione_aggiuntiva"], 3);
+		const staffCategories = stringList(value.categorie_ricercate, 3);
+		const normalizedStaffCategories = normalizeStaffCategories(staffCategories);
+		if (normalizedStaffCategories.some((category) => category !== ANY_CATEGORY && !isStaffCategory(category))) fail("Seleziona categorie valide dal catalogo Staff.", 3);
+		const staffTravel = textValue(value.disponibilita_spostamento, 40, 3);
+		if (staffTravel && !["Si", "No", "Da valutare"].includes(staffTravel)) fail("La disponibilità agli spostamenti non è valida.", 3);
+		return {
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, 3, true)),
+			categorie_ricercate: normalizedStaffCategories,
+			disponibilita_spostamento: staffTravel,
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+		};
+	}
+	if (type === "annuncio_arbitro") {
+		assertExactKeys(value, ["tipologie_sport", "automunito", "disponibilita_spostamento", "descrizione_aggiuntiva"], 3);
+		return {
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, 3, true)),
+			automunito: textValue(value.automunito, 40, 3),
+			disponibilita_spostamento: textValue(value.disponibilita_spostamento, 40, 3),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+		};
+	}
+	if (type === "annuncio_servizi_consulenze") {
+		assertExactKeys(value, ["figura_professionale", "specializzazione", "presentazione_servizi", "tipologie_sport", "descrizione_aggiuntiva"], 3);
+		const figures = stringList(value.figura_professionale, 3, true).map(normalizeFigure);
+		if (!figures.every((figure) => FIGURA_PROFESSIONALE_OPTIONS.includes(figure as typeof FIGURA_PROFESSIONALE_OPTIONS[number]))) fail("Seleziona figure valide dal catalogo.", 3);
+		return {
+			figura_professionale: figures,
+			specializzazione: textValue(value.specializzazione, MAX_SHORT_TEXT, 3),
+			presentazione_servizi: textValue(value.presentazione_servizi, MAX_LONG_TEXT, 3, true),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, 3)),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+		};
+	}
+	if (type === "annuncio_creators") {
+		assertExactKeys(value, ["titolo_post", "descrizione_post"], 3);
+		return {
+			titolo_post: textValue(value.titolo_post, MAX_SHORT_TEXT, 3, true),
+			descrizione_post: textValue(value.descrizione_post, MAX_LONG_TEXT, 3),
+		};
+	}
+	if (type === "annuncio_torneo_evento") {
+		assertExactKeys(value, ["nome_evento", "tipologie_sport", "modalita_iscrizione", "annate_ammesse_da", "annate_ammesse_a", "numero_squadre", "costo_partecipazione", "tipo_partecipazione", "lista_premi_trofei", "descrizione_aggiuntiva"], 3);
+		const sports = stringList(value.tipologie_sport, 3, true);
+		if (sports.length !== 1 || !TIPOLOGIA_CALCIO_OPTIONS.includes(sports[0] as typeof TIPOLOGIA_CALCIO_OPTIONS[number])) fail("Seleziona una sola tipologia di calcio.", 3);
+		const yearFrom = textValue(value.annate_ammesse_da, 4, 3);
+		const yearTo = textValue(value.annate_ammesse_a, 4, 3);
+		const currentYear = new Date().getFullYear();
+		if (
+			(yearFrom && (!/^\d{4}$/.test(yearFrom) || Number(yearFrom) < 1900 || Number(yearFrom) > currentYear))
+			|| (yearTo && (!/^\d{4}$/.test(yearTo) || Number(yearTo) < 1900 || Number(yearTo) > currentYear))
+			|| (yearFrom && yearTo && Number(yearFrom) > Number(yearTo))
+		) {
+			fail("L’intervallo delle annate non è valido.", 3);
+		}
+		const registration = textValue(value.modalita_iscrizione, 40, 3);
+		if (registration && !["libera", "posti-limitati"].includes(registration)) fail("La modalità di iscrizione non è valida.", 3);
+		const participation = textValue(value.tipo_partecipazione, 40, 3) ?? "squadra";
+		if (!["giocatore", "squadra"].includes(participation)) fail("La modalità di partecipazione non è valida.", 3);
+		return {
+			nome_evento: textValue(value.nome_evento, MAX_SHORT_TEXT, 3, true),
+			tipologie_sport: ordinaTipologieCalcio(sports),
+			modalita_iscrizione: registration,
+			annate_ammesse_da: yearFrom,
+			annate_ammesse_a: yearTo,
+			numero_squadre: numericValue(value.numero_squadre, 3, {integer: true, min: 1, max: 100_000}),
+			costo_partecipazione: numericValue(value.costo_partecipazione, 3, {money: true}),
+			tipo_partecipazione: participation,
+			lista_premi_trofei: normalizePrizeList(value.lista_premi_trofei),
+			descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+		};
+	}
+
+	assertExactKeys(value, ["tipologie_sport", "orari", "costo_partenza", "servizi_inclusi", "indirizzo", "descrizione_aggiuntiva"], 3);
+	const sports = ordinaTipologieCalcio(stringList(value.tipologie_sport, 3, true));
+	const openingHours = normalizeFacilityOpeningHours(value.orari);
+	if (sports.length !== 1 || !TIPOLOGIA_CALCIO_OPTIONS.includes(sports[0] as typeof TIPOLOGIA_CALCIO_OPTIONS[number])) fail("Seleziona una tipologia di campo valida.", 3);
+	if (!openingHours) fail("Gli orari inseriti non sono validi.", 3);
+	return {
+		tipologie_sport: sports,
+		orari: openingHours as unknown as Json,
+		costo_partenza: numericValue(value.costo_partenza, 3, {money: true}),
+		servizi_inclusi: textValue(value.servizi_inclusi, MAX_LONG_TEXT, 3),
+		indirizzo: textValue(value.indirizzo, MAX_SHORT_TEXT, 3, true),
+		descrizione_aggiuntiva: textValue(value.descrizione_aggiuntiva, MAX_LONG_TEXT, 3),
+	};
+}
+
+function assignNormalizedProfileDraft(
+	drafts: ProfileDrafts,
+	type: PublishableProfileType,
+	draft: Record<string, Json>,
+) {
+	(drafts as unknown as Record<PublishableProfileType, Record<string, Json>>)[type] = draft;
+}
+
+function assignNormalizedAnnouncementDetail(
+	drafts: AnnouncementDetailsDrafts,
+	type: DatabaseAnnouncementType,
+	detail: Record<string, Json>,
+) {
+	const key = {
+		annuncio_giocatore: "giocatore",
+		annuncio_squadra_cerca_giocatore: "squadraCercaGiocatore",
+		annuncio_squadra_cerca_staff: "squadraCercaStaff",
+		annuncio_squadra_cerca_partita: "squadraCercaPartita",
+		annuncio_squadra_cerca_sponsor: "squadraCercaSponsor",
+		annuncio_staff_sportivo: "staffSportivo",
+		annuncio_arbitro: "arbitro",
+		annuncio_creators: "creator",
+		annuncio_servizi_consulenze: "serviziConsulenze",
+		annuncio_torneo_evento: "torneoEvento",
+		annuncio_campo_impianto: "campoImpianto",
+	}[type] as keyof AnnouncementDetailsDrafts;
+	(drafts as unknown as Record<keyof AnnouncementDetailsDrafts, Record<string, Json>>)[key] = type === "annuncio_squadra_cerca_partita"
+		? {...detail, categorie_avversario: (detail.categorie_avversario as string[]).join(", ")}
+		: detail;
+}
+
+export function parsePublishPayload(rawValue: unknown, registered: boolean, consentMode: "user" | "admin-attested" = "user"): NormalizedPublishPayload {
+	let serialized: string | undefined;
+	try {
+		serialized = JSON.stringify(rawValue);
+	} catch {
+		fail("I dati dell’annuncio non sono validi.", 3);
+	}
+	if (!serialized || Buffer.byteLength(serialized, "utf8") > MAX_PAYLOAD_BYTES || !isRecord(rawValue)) {
+		fail("I dati dell’annuncio sono mancanti o troppo grandi.", 3);
+	}
+	assertExactKeys(rawValue, ["version", "submissionId", "visibility", "profileType", "teamSubtype", "anonymousProfile", "profileUpdate", "announcement", "consents"], 3);
+	if (rawValue.version !== PUBLISH_PAYLOAD_VERSION) fail("Aggiorna la pagina e ripeti la pubblicazione.", 1);
+	if (typeof rawValue.submissionId !== "string" || !UUID_PATTERN.test(rawValue.submissionId)) fail("La richiesta di pubblicazione non è valida.", 4);
+	if (!isPublishVisibility(rawValue.visibility)) fail("La pubblicazione prioritaria non è disponibile. Ricarica la pagina e riprova.", 4);
+	const visibility = rawValue.visibility;
+	if (typeof rawValue.profileType !== "string" || !isPublishableProfileType(rawValue.profileType)) fail("La tipologia di profilo non è valida.", 1);
+	const profileType = rawValue.profileType;
+	if (!registered && (profileType === "creators" || profileType === "servizi-consulenze")) fail("Questo profilo richiede l’abilitazione dell’admin.", 1);
+
+	let teamSubtype: TeamAnnouncementSubtype | null = null;
+	if (profileType === "squadra") {
+		if (typeof rawValue.teamSubtype !== "string" || !isTeamAnnouncementSubtype(rawValue.teamSubtype)) fail("Seleziona una tipologia di annuncio per la squadra.", 1);
+		teamSubtype = rawValue.teamSubtype;
+	} else if (rawValue.teamSubtype !== null) {
+		fail("La sottotipologia dell’annuncio non è valida.", 1);
+	}
+
+	const expectedAnnouncementType = getDatabaseAnnouncementType(profileType, teamSubtype);
+	if (!expectedAnnouncementType || !isRecord(rawValue.announcement)) fail("La tipologia di annuncio non è valida.", 1);
+	assertExactKeys(rawValue.announcement, ["type", "title", "detail", "locations", "contacts", "extras"], 3);
+	if (rawValue.announcement.type !== expectedAnnouncementType) fail("I dati non corrispondono alla tipologia selezionata.", 3);
+	const announcementTitle = announcementTitleValue(rawValue.announcement.title);
+
+	let profileDraft: Record<string, Json> | null = null;
+	let profileLocations: ProfileLocationDraft[] = [];
+	let profileSocialLinks: ProfileSocialLinks | null = null;
+	let profileUpdate: NormalizedPublishPayload["profileUpdate"] = null;
+	if (registered) {
+		if (rawValue.anonymousProfile !== null) fail("I dati del profilo anonimo non sono previsti per questo account.", 2);
+		if (rawValue.profileUpdate !== null) {
+			if (!isRecord(rawValue.profileUpdate)) fail("Le modifiche del profilo non sono valide.", 2);
+			try {
+				const update = parseProfileEditorPayload(rawValue.profileUpdate);
+				if (update.type !== profileType || !isPublishableProfileType(update.type)) fail("Le modifiche non corrispondono al profilo selezionato.", 2);
+				const locations = normalizeLocations(update.locations, 2);
+				const drafts = createProfileDrafts();
+				assignNormalizedProfileDraft(drafts, profileType, update.draft);
+				const profileMessage = getProfileValidationMessage(profileType, drafts, {
+					...Object.fromEntries(Object.keys(drafts).map((key) => [key, []])),
+					[profileType]: locations,
+				} as Record<keyof ProfileDrafts, ProfileLocationDraft[]>);
+				if (profileMessage) fail(profileMessage, 2);
+				profileUpdate = {type: profileType, draft: update.draft, locations};
+				profileSocialLinks = update.socialLinks;
+			} catch (error) {
+				if (error instanceof PublishPayloadError) throw error;
+				if (error instanceof RegistrationPayloadError) fail(error.message, 2);
+				throw error;
+			}
+		}
+	} else {
+		if (rawValue.profileUpdate !== null) fail("Le modifiche del profilo richiedono un account registrato.", 2);
+		if (!isRecord(rawValue.anonymousProfile)) fail("Completa i dati del profilo prima di pubblicare.", 2);
+		try {
+			const profile = parseProfileEditorPayload(rawValue.anonymousProfile);
+			if (profile.type !== profileType || !isPublishableProfileType(profile.type)) fail("I dati del profilo non corrispondono alla tipologia selezionata.", 2);
+			profileDraft = profile.draft;
+			profileLocations = normalizeLocations(profile.locations, 2);
+			profileSocialLinks = profile.socialLinks;
+			const drafts = createProfileDrafts();
+			assignNormalizedProfileDraft(drafts, profileType, profile.draft);
+			const profileMessage = getProfileValidationMessage(profileType, drafts, {
+				...Object.fromEntries(Object.keys(drafts).map((key) => [key, []])),
+				[profileType]: profileLocations,
+			} as Record<keyof ProfileDrafts, ProfileLocationDraft[]>);
+			if (profileMessage) fail(profileMessage, 2);
+		} catch (error) {
+			if (error instanceof PublishPayloadError) throw error;
+			if (error instanceof RegistrationPayloadError) fail(error.message, 2);
+			throw error;
+		}
+	}
+
+	const detail = normalizeDetail(expectedAnnouncementType, rawValue.announcement.detail);
+	const sponsorHasNoLocations = expectedAnnouncementType === "annuncio_squadra_cerca_sponsor";
+	if (sponsorHasNoLocations && (!Array.isArray(rawValue.announcement.locations) || rawValue.announcement.locations.length > 0)) {
+		fail("La ricerca sponsor non prevede località.", 3);
+	}
+	const announcementLocations = normalizeLocations(rawValue.announcement.locations, 3, sponsorHasNoLocations);
+	if (expectedAnnouncementType === "annuncio_campo_impianto"
+		&& (announcementLocations.length !== 1 || !announcementLocations[0]?.citta)) {
+		fail("Seleziona una sola Regione e inserisci la Città o il comune dell’impianto.", 3);
+	}
+	const contacts = normalizeContacts(rawValue.announcement.contacts, registered);
+	const extras = normalizeExtras(rawValue.announcement.extras);
+
+	const normalizedDrafts = {
+		giocatore: {categorie_ricercate: [], descrizione_aggiuntiva: ""},
+		squadraCercaGiocatore: {gruppo_squadra: "", ruoli_principali: [], ruoli_secondari: [], annata_da: "", annata_a: "", stagione: "", descrizione_aggiuntiva: ""},
+		squadraCercaStaff: {figure_ricercate: [], settore: "", compenso_mensile: "", requisiti: "", stagione: "", descrizione_aggiuntiva: ""},
+		squadraCercaPartita: {gruppo_squadra: "", categorie_avversario: "", periodo_dal: "", periodo_al: "", orario_dalle: "", orario_alle: "", disponibilita_trasferta: "", descrizione_aggiuntiva: ""},
+		squadraCercaSponsor: {categoria_settore: "", offerta_fornita: "", descrizione_aggiuntiva: ""},
+		staffSportivo: {tipologie_sport: [], categorie_ricercate: [], disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
+		arbitro: {tipologie_sport: [], automunito: "", disponibilita_spostamento: "", descrizione_aggiuntiva: ""},
+		creator: {titolo_post: "", descrizione_post: ""},
+		serviziConsulenze: {figura_professionale: [], specializzazione: "", presentazione_servizi: "", tipologie_sport: [], descrizione_aggiuntiva: ""},
+		torneoEvento: {nome_evento: "", tipologie_sport: [], modalita_iscrizione: "", annate_ammesse_da: "", annate_ammesse_a: "", numero_squadre: "", costo_partecipazione: "", tipo_partecipazione: "squadra", lista_premi_trofei: [], descrizione_aggiuntiva: ""},
+		campoImpianto: {tipologie_sport: [], orari: [], costo_partenza: "", servizi_inclusi: "", indirizzo: "", descrizione_aggiuntiva: ""},
+	} satisfies AnnouncementDetailsDrafts;
+	assignNormalizedAnnouncementDetail(normalizedDrafts, expectedAnnouncementType, detail);
+	const detailMessage = getAnnouncementValidationMessage(profileType, teamSubtype, normalizedDrafts, announcementLocations, contacts, extras, announcementTitle, registered);
+	if (detailMessage) fail(detailMessage, 3);
+
+	if (!isRecord(rawValue.consents)) fail("Conferma i consensi richiesti.", 4);
+	assertExactKeys(rawValue.consents, ["dataConfirmed", "termsAccepted", "privacyAccepted", "newsletterSubscribed"], 4);
+	const newsletterSubscribed = rawValue.consents.newsletterSubscribed;
+	if ((newsletterSubscribed !== undefined && typeof newsletterSubscribed !== "boolean") || (registered && newsletterSubscribed === true)) {
+		fail("La preferenza per le comunicazioni non è valida.", 4);
+	}
+	if (consentMode === "user" && (rawValue.consents.dataConfirmed !== true || rawValue.consents.termsAccepted !== true || rawValue.consents.privacyAccepted !== true)) {
+		fail("Conferma i dati, i termini e l’informativa privacy prima dell’invio.", 4);
+	}
+
+	return {
+		submissionId: rawValue.submissionId,
+		visibility,
+		profileType,
+		teamSubtype,
+		announcementType: expectedAnnouncementType,
+		profileDraft,
+		profileLocations,
+		profileSocialLinks,
+		profileUpdate,
+		detail,
+		announcementTitle,
+		announcementLocations,
+		contacts,
+		extras,
+		newsletterSubscribed: newsletterSubscribed === true,
+	};
+}
+
+export function asPublishPayload(value: PublishAnnouncementPayload) {
+	return value;
+}

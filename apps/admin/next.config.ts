@@ -6,7 +6,8 @@ const monorepoRoot = path.resolve(__dirname, "../..");
 const nextConfig: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
   turbopack: { root: monorepoRoot },
-  transpilePackages: ["@bacheca/database"],
+  transpilePackages: ["@bacheca/database", "@bacheca/announcements"],
+  experimental: {serverActions: {bodySizeLimit: "8mb"}},
   async headers() {
     return [{
       source: "/:path*",

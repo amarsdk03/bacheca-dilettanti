@@ -10,8 +10,8 @@ export function csvCell(value: string): string {
   return '"' + safe.replace(/"/g, '""') + '"';
 }
 export function announcementCsv(items: AnnouncementListItem[]): string {
-  const rows = [["Titolo", "Autore / Profilo", "Tipologia", "Stato", "Visibilità", "Creazione (Europe/Rome)"],
-    ...items.map(row => [row.displayTitle || row.title || "Annuncio senza titolo", row.author.displayName, typeLabel(row.type), statusLabel(row.status),
+  const rows = [["Titolo", "Autore / Profilo", "Tipologia", "Da WhatsApp", "Stato", "Visibilità", "Creazione (Europe/Rome)"],
+    ...items.map(row => [row.displayTitle || row.title || "Annuncio senza titolo", row.author.displayName, typeLabel(row.type), row.fromWhatsApp == null ? "—" : row.fromWhatsApp ? "Sì" : "No", statusLabel(row.status),
       [...(row.trashed ? ["Nel cestino"] : []), ...visibilityLabel(row)].join(" · "), displayDate(row.createdAt)])];
   return "\uFEFF" + rows.map(row => row.map(csvCell).join(";")).join("\r\n") + "\r\n";
 }

@@ -15,7 +15,15 @@ import {
 	type PrizeEntry,
 	type ScheduleEntry
 } from "../detail-fields";
-import {announcementTitle, displayDate, FIELD_LABELS, issueLabel, money, typeLabel, usesAutomaticTitle} from "../presentation";
+import {
+	announcementTitle,
+	displayDate,
+	FIELD_LABELS,
+	issueLabel,
+	money,
+	typeLabel,
+	usesAutomaticTitle
+} from "../presentation";
 import {AnnouncementStatusBadge, AnnouncementVisibilityBadges} from "./AnnouncementBadges";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -47,6 +55,7 @@ export function AnnouncementDetailContent({ detail }: { detail: AnnouncementDeta
   const { summary: row, metadata, content } = detail;
   const fields = content.type === "unsupported" ? null : DETAIL_FIELDS[content.type as DetailType];
   return <div className="admin-detail-stack">
+    {detail.origin?.kind === "whatsapp" && <Section title="Fonte WhatsApp · privata"><details><summary>Messaggio originale e riferimento</summary><p className="whitespace-pre-wrap break-words">{detail.origin.rawText}</p><p className="admin-technical-text">{detail.origin.messageUrl ?? "Link non indicato"}</p></details></Section>}
     {row.trashed && <Alert variant="neutral"><Trash2 aria-hidden="true" /><AlertTitle>Annuncio nel cestino</AlertTitle><AlertDescription>Conservato e non disponibile sul sito. Il ripristino manterrà l’oscuramento amministrativo.<dl className="admin-facts-grid admin-facts-in-note"><Fact label="Spostato nel cestino il">{displayDate(detail.trash?.deletedAt ?? null)}</Fact><Fact label="Operatore">{detail.trash?.deletedBy ?? "Non disponibile"}</Fact></dl></AlertDescription></Alert>}
     {!detail.complete && <Alert variant="info"><Info aria-hidden="true" /><AlertTitle>Alcune informazioni non sono disponibili</AlertTitle><AlertDescription><ul className="flex flex-col gap-1">{[...new Set(detail.issues.map(issueLabel))].map((issue) => <li key={issue}>{issue}</li>)}</ul></AlertDescription></Alert>}
     <Section title="Riepilogo e stato"><div className="admin-badge-row"><AnnouncementStatusBadge status={row.status} /><AnnouncementVisibilityBadges row={row} /></div>

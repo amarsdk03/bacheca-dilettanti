@@ -1,6 +1,6 @@
 {
   "name": "bacheca-dilettanti",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -41,5 +41,8 @@
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "dependencies": {
+    "lucide-react": "^1.70.0"
   }
 }

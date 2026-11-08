@@ -6,7 +6,7 @@ import path from "node:path";
 import {test} from "node:test";
 import ts from "typescript";
 
-const source = readFileSync(new URL("../apps/web/src/features/pubblica-annuncio/publish-field-validation.ts", import.meta.url), "utf8");
+const source = readFileSync(new URL("../packages/announcements/src/features/pubblica-annuncio/publish-field-validation.ts", import.meta.url), "utf8");
 const javascript = ts.transpileModule(source, {
 	compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022},
 }).outputText;

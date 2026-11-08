@@ -95,7 +95,7 @@ test("announcement fields migration enforces regions transactionally, stores gro
 			}
 		});
 		await t.test("all 93 Staff options match the SQL catalogue and Qualsiasi is exclusive", async () => {
-			const source = readFileSync(new URL("../apps/web/src/features/pubblica-annuncio/types/staff-category-catalog.ts", import.meta.url), "utf8");
+			const source = readFileSync(new URL("../packages/announcements/src/features/pubblica-annuncio/types/staff-category-catalog.ts", import.meta.url), "utf8");
 			const groups = Function(`return ${source.match(/STAFF_CATEGORY_GROUPS = (\[[\s\S]*?\]) as const/)[1]}`)();
 			const keys = groups.flatMap(({gruppo, opzioni}) => opzioni.map(option => gruppo === "Selezione generale" ? option : `${gruppo}::${option}`));
 			assert.equal(new Set(keys).size, 93);

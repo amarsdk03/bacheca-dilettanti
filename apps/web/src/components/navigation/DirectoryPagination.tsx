@@ -1,4 +1,12 @@
-import {Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious} from "@/components/ui/pagination";
+import {
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious
+} from "@/components/ui/pagination";
 
 export default function DirectoryPagination({currentPage, totalPages, href, label}: {
 	currentPage: number; totalPages: number; href: (page: number) => string; label: string;

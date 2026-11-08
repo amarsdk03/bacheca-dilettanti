@@ -20,6 +20,7 @@ export type AnnouncementListItem = {
   id: string; title: string | null; type: string; status: string | null;
   /** Computed presentation only; never persisted as the custom title. Optional during rollout. */
   displayTitle?: string;
+  fromWhatsApp?: boolean | null;
   /** Absent only during a deployment from the previous read contract. */
   trashed?: boolean;
   hidden: boolean | null; private: boolean | null; creatorId: string | null;
@@ -38,6 +39,7 @@ export type AnnouncementDetail = {
   moderation?: import("./moderation").ModerationInfo;
   trash?: { deletedAt: string | null; deletedBy: string | null };
   summary: AnnouncementListItem;
+  origin?: {kind: "manual" | "whatsapp"; messageUrl: string | null; rawText: string | null} | null;
   metadata: { moderationInfo: string | null; level: string | null; priorityActive: boolean; priorityStartsAt: string | null; priorityEndsAt: string | null; updatedById: string | null };
   content: import("./detail-fields").DetailContent;
   locations: { id: string; region: string; city: string | null }[];

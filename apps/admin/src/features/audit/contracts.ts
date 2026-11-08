@@ -6,7 +6,7 @@ export const AUDIT_FAILURE_CODES = [
 export type AuditFailureCode = typeof AUDIT_FAILURE_CODES[number];
 export const ANNOUNCEMENT_AUDIT_ACTIONS = [
   "announcement.approve", "announcement.reject", "announcement.hide", "announcement.show",
-  "announcement.trash", "announcement.restore", "announcement.export",
+  "announcement.trash", "announcement.restore", "announcement.export", "announcement.create",
 ] as const;
 export type AnnouncementAuditAction = typeof ANNOUNCEMENT_AUDIT_ACTIONS[number];
 export type AuthFailureAction = "auth.login" | "auth.access_denied";

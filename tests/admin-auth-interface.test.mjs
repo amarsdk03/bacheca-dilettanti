@@ -10,6 +10,8 @@ const correlationId = "dddddddd-dddd-4ddd-8ddd-000000000001";
 function uiLoader({ state = { status: "idle" }, pending = false, visible = false, context = { status: "anonymous" } } = {}) {
   return adminServerLoader({ dependencies: {
     react: { ...React, useActionState: (_action, initial) => [initial.status === "idle" ? state : initial, () => {}, pending], useState: (initial) => [typeof initial === "function" ? initial() : visible, () => {}] },
+    "@/features/navigation/UnsavedChanges": {useOptionalUnsavedChanges: () => null},
+    "@/features/annunci/create/store": {useOptionalAnnouncementDraft: () => null},
     "react/jsx-runtime": require("react/jsx-runtime"),
     "@base-ui/react/button": require("@base-ui/react/button"),
     "@base-ui/react/input": require("@base-ui/react/input"),

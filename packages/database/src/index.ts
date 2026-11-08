@@ -1829,6 +1829,18 @@ export type Database = {
         Args: { p_id: string }
         Returns: Json
       }
+      admin_search_announcement_authors_v1: {
+        Args: { p_query: string }
+        Returns: Json
+      }
+      admin_get_announcement_submission_v1: {
+        Args: { p_submission: string }
+        Returns: Json
+      }
+      admin_create_announcement_v1: {
+        Args: { p_submission: string; p_payload: Json }
+        Returns: Json
+      }
       admin_moderate_announcement_v1: {
         Args: { p_id: string; p_operation: string; p_fingerprint: string; p_reason?: string | null }
         Returns: Json

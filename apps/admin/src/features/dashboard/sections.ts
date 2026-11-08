@@ -37,5 +37,6 @@ export type DashboardSection = typeof DASHBOARD_SECTIONS[number];
 export const DASHBOARD_GROUPS = [null, "Contenuti", "Community", "Gestione", "Analitiche"] as const;
 export function findDashboardSection(slug: string) { return DASHBOARD_SECTIONS.find((section) => section.slug === slug); }
 export function isSectionActive(pathname: string, href: string) {
+  if (pathname === "/crea-annuncio") return href === "/annunci";
   return pathname === href || (href !== "/" && pathname.startsWith(href + "/"));
 }

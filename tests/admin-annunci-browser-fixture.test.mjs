@@ -68,7 +68,7 @@ test("export rechecks the exact ordered selection; native CSV parser preserves B
   const selection = page.items.map(row => ({ id: row.id, rowFingerprint: row.rowFingerprint, authorName: row.author.displayName }));
   const exported = await rpc("admin_export_announcements_v1", { p_query, p_selection: selection }); assert.equal(exported.status, "ok");
   const csv = Buffer.from(announcementCsv(exported.items)); const parsed = parseDownloadedCsv(csv);
-  assert.equal(parsed.length, 31); assert(parsed.every(row => row.length === 6)); assert.equal(parsed[2][0], '\'=SUM(1;2) "Èlite"'); assert.equal(parsed[3][0], "Riga uno;\nRiga due");
+  assert.equal(parsed.length, 31); assert(parsed.every(row => row.length === 7)); assert.equal(parsed[2][0], '\'=SUM(1;2) "Èlite"'); assert.equal(parsed[3][0], "Riga uno;\nRiga due");
   fixture.annunci.bump(selection[0].id);
   assert.equal((await rpc("admin_export_announcements_v1", { p_query, p_selection: selection })).status, "conflict");
   assert.equal(fixture.annunci.stats.events.length, 1);

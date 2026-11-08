@@ -52,8 +52,8 @@ export function parseAuditDetail(value: unknown, id: string): AuditDetail {
     const e = value.export;
     if (summary.action !== "announcement.export" || summary.outcome !== "success" || !record(e) ||
       typeof e.rowCount !== "number" || !Number.isInteger(e.rowCount) || e.rowCount < 0 || e.rowCount > 30 ||
-      !(e.columns === null || Array.isArray(e.columns) && e.columns.length > 0 && e.columns.length <= 6 &&
-        e.columns.every(c => ["title", "author", "type", "status", "visibility", "created_at"].includes(c))) ||
+      !(e.columns === null || Array.isArray(e.columns) && e.columns.length > 0 && e.columns.length <= 7 &&
+        e.columns.every(c => ["title", "author", "type", "status", "visibility", "created_at", "from_whatsapp"].includes(c))) ||
       !(e.announcementIds === null || Array.isArray(e.announcementIds) && e.announcementIds.length === e.rowCount &&
         e.announcementIds.every(canonicalUuid) && new Set(e.announcementIds).size === e.announcementIds.length)) fail();
     exported = { rowCount: e.rowCount, columns: e.columns as string[] | null, announcementIds: e.announcementIds as string[] | null };

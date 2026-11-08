@@ -25,6 +25,8 @@ export function adminServerLoader({ dependencies = {}, env = {}, globals = {}, f
       if (Object.hasOwn(dependencies, name)) return dependencies[name];
       if (name === "node:crypto" || name === "node:buffer") return requireBuiltin(name);
       if (name.startsWith(".")) return load(resolve(dirname(file), name));
+      if (name.startsWith("@bacheca/announcements/")) return load("packages/announcements/src/" + name.slice("@bacheca/announcements/".length));
+      if (name === "lucide-react") return requireBuiltin(name);
       if (name.startsWith("@/")) return load("apps/admin/src/" + name.slice(2));
       assert.fail(`Unexpected server dependency: ${name}`);
     };

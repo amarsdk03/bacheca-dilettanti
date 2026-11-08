@@ -1,0 +1,682 @@
+import {normalizePlayerMeasurement, playerMeasurementError} from "../../profilo/player-measurements.ts";
+
+import {PROFESSIONAL_AVAILABILITY_OPTIONS} from "../../profilo/professional-availability.ts";
+import {isTeamCategory, isTeamCategoryForSport} from "../../profilo/team-category-catalog.ts";
+
+import {REGIONI_ITALIANE} from "../../../const/defaultConstants.ts";
+import {allowsForeignProfileRegion, FOREIGN_PROFILE_REGION} from "../../profilo/profile-location-regions.ts";
+import {getRequiredBirthDateError} from "../../profilo/birth-date.ts";
+import {normalizeOptionalTime, parseOptionalMoney} from "../../pubblica-annuncio/publish-field-validation.ts";
+import {isProfileType, MAX_PROFILE_COUNT, type ProfileType,} from "../../profilo/profile-model.ts";
+import {PROFILE_SOCIAL_PLATFORMS, type ProfileSocialLinks,} from "../../profilo/profile-social-links.ts";
+import {getProfileRequiredFieldErrors} from "../../profilo/profile-required-fields.ts";
+import {UUID_PATTERN} from "../../profilo/team-profile.ts";
+import {
+	isRegistrableProfileType,
+	type RegistrableProfileType,
+	REGISTRATION_PAYLOAD_VERSION,
+} from "../registration-payload.ts";
+import type {Json} from "@bacheca/database";
+import {COOKIE_POLICY_VERSION, PRIVACY_VERSION, TERMS_VERSION} from "../../legal/legal-versions.ts";
+import {INVITATION_CODE_PATTERN, normalizeInvitationCode} from "../../inviti/invitation-code.ts";
+import {isLinkAnnuncioValid, MAX_LINK_ANNUNCIO_LENGTH,} from "../../pubblica-annuncio/types/announcementExtras.ts";
+import {ordinaTipologieCalcio} from "../../pubblica-annuncio/types/tipologie-calcio.ts";
+import {
+	isPlayerCurrentCategory,
+	normalizeCategories,
+	normalizeFigures
+} from "../../pubblica-annuncio/types/category-catalog.ts";
+import {PLAYER_NATIONALITIES} from "../../profilo/player-nationalities.ts";
+import {
+	normalizePlayerPrimaryRole,
+	normalizePlayerPrimaryRoles,
+	normalizePlayerSpecificRole,
+	normalizePlayerSpecificRoles,
+	PLAYER_PRIMARY_ROLE_BY_SPECIFIC,
+} from "../../profilo/player-roles.ts";
+
+const MAX_PAYLOAD_BYTES = 256_000;
+const MAX_SHORT_TEXT = 160;
+const MAX_LONG_TEXT = 5_000;
+const MAX_LIST_ITEMS = 32;
+const MAX_EXPERIENCES = 20;
+const MAX_LOCATIONS = 100;
+
+const REGIONS = new Set(REGIONI_ITALIANE.map(({nome}) => nome));
+const AVAILABILITIES = new Set(["non-specificare", "disponibile-subito", "sotto-contratto"]);
+const FEET = new Set(["", "Destro", "Sinistro", "Ambidestro", "Ambipiede"]);
+const NATIONALITIES = new Set(PLAYER_NATIONALITIES.map(({code}) => code));
+const EXPERIENCE_STATES = new Set(["non-specificare", "in-corso", "conseguito"]);
+const WEEKDAYS = new Set(["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica"]);
+const MONTHS = new Set([
+	"Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+	"Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
+]);
+const YEAR_PATTERN = /^\d{4}$/;
+const DAY_PATTERN = /^(?:0?[1-9]|[12]\d|3[01])$/;
+
+type RegistrationStep = 1 | 2 | 3;
+
+export class RegistrationPayloadError extends Error {
+	readonly step: RegistrationStep;
+	readonly profileType?: ProfileType;
+
+	constructor(message: string, step: RegistrationStep, profileType?: ProfileType) {
+		super(message);
+		this.name = "RegistrationPayloadError";
+		this.step = step;
+		this.profileType = profileType;
+	}
+}
+
+export interface NormalizedRegistrationProfile {
+	type: RegistrableProfileType;
+	draft: Record<string, Json>;
+	locations: Array<{regione: string; citta: string | null}>;
+	socialLinks: ProfileSocialLinks;
+}
+
+export interface NormalizedRegistrationPayload {
+	version: typeof REGISTRATION_PAYLOAD_VERSION;
+	inviteCode: string | null;
+	selectedProfileTypes: ProfileType[];
+	primaryProfileType: RegistrableProfileType;
+	profiles: NormalizedRegistrationProfile[];
+	consents: {
+		legalAccepted: true;
+		newsletterSubscribed: boolean;
+		termsVersion: typeof TERMS_VERSION;
+		privacyVersion: typeof PRIVACY_VERSION;
+		cookiePolicyVersion: typeof COOKIE_POLICY_VERSION;
+	};
+}
+
+function fail(
+	message: string,
+	step: RegistrationStep,
+	profileType?: ProfileType,
+): never {
+	throw new RegistrationPayloadError(message, step, profileType);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function assertExactKeys(
+	value: Record<string, unknown>,
+	keys: readonly string[],
+	profileType: ProfileType,
+) {
+	if (Object.keys(value).some((key) => !keys.includes(key))) {
+		fail("I dati del profilo non sono validi. Rivedi i campi inseriti.", 3, profileType);
+	}
+}
+
+function textValue(
+	value: unknown,
+	maxLength: number,
+	profileType: ProfileType,
+): string | null {
+	if (value === null || value === undefined || value === "") return null;
+	if (typeof value !== "string" || value.length > maxLength) {
+		fail("Uno dei campi del profilo è troppo lungo o non valido.", 3, profileType);
+	}
+	const normalized = value.trim();
+	return normalized || null;
+}
+
+function enumText(
+	value: unknown,
+	allowed: Set<string>,
+	profileType: ProfileType,
+): string | null {
+	const normalized = textValue(value, MAX_SHORT_TEXT, profileType);
+	if (normalized === null) return null;
+	if (!allowed.has(normalized)) {
+		fail("Uno dei valori selezionati per il profilo non è valido.", 3, profileType);
+	}
+	return normalized === "non-specificare" ? null : normalized;
+}
+
+function stringList(value: unknown, profileType: ProfileType): string[] {
+	if (value === null || value === undefined) return [];
+	if (!Array.isArray(value) || value.length > MAX_LIST_ITEMS) {
+		fail("Una delle selezioni del profilo non è valida.", 3, profileType);
+	}
+
+	const result = value.map((item) => {
+		const normalized = textValue(item, 120, profileType);
+		if (!normalized) fail("Una delle selezioni del profilo non è valida.", 3, profileType);
+		return normalized;
+	});
+	return [...new Set(result)];
+}
+
+function birthField(
+	value: unknown,
+	type: "day" | "month" | "year",
+	profileType: ProfileType,
+): string | null {
+	const normalized = textValue(value, 12, profileType);
+	if (normalized === null) return null;
+	const valid = type === "day"
+		? DAY_PATTERN.test(normalized)
+		: type === "month"
+			? MONTHS.has(normalized)
+			: YEAR_PATTERN.test(normalized) && Number(normalized) >= 1900 && Number(normalized) <= new Date().getFullYear();
+	if (!valid) fail("La data di nascita inserita non è valida.", 3, profileType);
+	return normalized;
+}
+
+function birthDate(
+	value: Record<string, unknown>,
+	profileType: ProfileType,
+) {
+	const normalized = {
+		day: birthField(value.giorno_nascita, "day", profileType),
+		month: birthField(value.mese_nascita, "month", profileType),
+		year: birthField(value.anno_nascita, "year", profileType),
+	};
+	const error = getRequiredBirthDateError(normalized);
+	if (error) fail(error, 3, profileType);
+	return normalized;
+}
+
+function profileVideoLink(value: unknown, profileType: ProfileType) {
+	const normalized = textValue(value, MAX_LINK_ANNUNCIO_LENGTH, profileType);
+	if (normalized && !isLinkAnnuncioValid(normalized)) {
+		fail("Inserisci un link video completo che inizi con http:// o https://.", 3, profileType);
+	}
+	return normalized;
+}
+
+function profileSocialLink(value: unknown, profileType: ProfileType) {
+	const normalized = textValue(value, MAX_LINK_ANNUNCIO_LENGTH, profileType);
+	if (normalized && !isLinkAnnuncioValid(normalized)) {
+		fail("Inserisci un link social completo che inizi con http:// o https://.", 3, profileType);
+	}
+	return normalized ?? "";
+}
+
+function normalizeSocialLinks(value: unknown, profileType: ProfileType): ProfileSocialLinks {
+	if (value === null || value === undefined) {
+		return {website: "", instagram: "", facebook: "", youtube: "", linkedin: ""};
+	}
+	if (!isRecord(value)) fail("I link social del profilo non sono validi.", 3, profileType);
+	assertExactKeys(value, PROFILE_SOCIAL_PLATFORMS, profileType);
+	return Object.fromEntries(
+		PROFILE_SOCIAL_PLATFORMS.map((platform) => [
+			platform,
+			profileSocialLink(value[platform], profileType),
+		]),
+	) as ProfileSocialLinks;
+}
+
+function experiences(value: unknown, profileType: ProfileType, freeText = false): Json[] {
+	if (value === null || value === undefined) return [];
+	if (!Array.isArray(value) || value.length > MAX_EXPERIENCES) {
+		fail("Lo storico delle esperienze non è valido.", 3, profileType);
+	}
+
+	return value.map((entry) => {
+		if (!isRecord(entry)) fail("Lo storico delle esperienze non è valido.", 3, profileType);
+		assertExactKeys(entry, ["id", "titolo", "ente", "periodoDa", "periodoA", "descrizione", "stato", "squadraProfiloId", "squadraIstanzaId"], profileType);
+		const periodoDa = textValue(entry.periodoDa, 4, profileType);
+		const periodoA = textValue(entry.periodoA, 4, profileType);
+		const currentYear = new Date().getFullYear();
+		const periodoAIsToday = periodoA === "oggi";
+		const invalidYear = (year: string | null) => Boolean(year) && (
+			!YEAR_PATTERN.test(year as string)
+			|| Number(year) < 1900
+			|| Number(year) > currentYear
+		);
+		if (
+			invalidYear(periodoDa)
+			|| (periodoAIsToday && !["giocatore", "staff-sportivo", "arbitro", "servizi-consulenze"].includes(profileType))
+			|| (!periodoAIsToday && invalidYear(periodoA))
+		) {
+			fail("Uno dei periodi inseriti non è valido.", 3, profileType);
+		}
+		if (periodoDa && periodoA && !periodoAIsToday && Number(periodoA) < Number(periodoDa)) {
+			fail("La fine di un’esperienza non può precederne l’inizio.", 3, profileType);
+		}
+		const stato = enumText(entry.stato, EXPERIENCE_STATES, profileType);
+		const squadraProfiloId = textValue(entry.squadraProfiloId, 36, profileType);
+		if (squadraProfiloId && !UUID_PATTERN.test(squadraProfiloId)) {
+			fail("La squadra collegata a un’esperienza non è valida.", 3, profileType);
+		}
+		return {
+			id: textValue(entry.id, 100, profileType) ?? crypto.randomUUID(),
+			titolo: textValue(entry.titolo, MAX_SHORT_TEXT, profileType) ?? "",
+			ente: textValue(entry.ente, MAX_SHORT_TEXT, profileType) ?? "",
+			periodoDa: periodoDa ?? "",
+			periodoA: periodoDa || profileType === "giocatore" ? periodoA ?? "" : "",
+			descrizione: textValue(entry.descrizione, MAX_LONG_TEXT, profileType) ?? "",
+			stato: stato ?? "non-specificare",
+			squadraProfiloId: freeText ? null : squadraProfiloId?.toLocaleLowerCase("en-US") ?? null,
+			...(freeText ? {squadraIstanzaId: null} : entry.squadraIstanzaId == null ? {} : {squadraIstanzaId: subprofileInstance(entry.squadraIstanzaId, profileType)}),
+		};
+	});
+}
+
+function sportsRoles(value: unknown, profileType: ProfileType): Json {
+	if (value === null || value === undefined) return {principali: [], specifici: []};
+	if (!isRecord(value)) fail("I ruoli sportivi inseriti non sono validi.", 3, profileType);
+	assertExactKeys(value, ["principali", "specifici"], profileType);
+	const rawPrimary = stringList(value.principali, profileType);
+	const rawSpecific = stringList(value.specifici, profileType);
+	if (!rawPrimary.every(role => normalizePlayerPrimaryRole(role)) || !rawSpecific.every(role => normalizePlayerSpecificRole(role))) {
+		fail("I ruoli sportivi inseriti non sono validi.", 3, profileType);
+	}
+	const primary = normalizePlayerPrimaryRoles(rawPrimary);
+	const primarySet = new Set(primary);
+	const specific = normalizePlayerSpecificRoles(rawSpecific);
+	if (specific.some(role => !primarySet.has(PLAYER_PRIMARY_ROLE_BY_SPECIFIC[role]))) {
+		fail("I ruoli specifici non corrispondono ai ruoli principali selezionati.", 3, profileType);
+	}
+	return {principali: primary, specifici: specific};
+}
+
+function openingHours(value: unknown, profileType: ProfileType): Json[] {
+	if (value === null || value === undefined) return [];
+	if (!Array.isArray(value) || value.length > WEEKDAYS.size) {
+		fail("Gli orari inseriti non sono validi.", 3, profileType);
+	}
+	const seen = new Set<string>();
+	return value.map((entry) => {
+		if (!isRecord(entry)) fail("Gli orari inseriti non sono validi.", 3, profileType);
+		assertExactKeys(entry, ["giorno", "attivo", "dalle", "alle"], profileType);
+		if (typeof entry.giorno !== "string" || !WEEKDAYS.has(entry.giorno) || seen.has(entry.giorno)) {
+			fail("Gli orari inseriti non sono validi.", 3, profileType);
+		}
+		seen.add(entry.giorno);
+		if (typeof entry.attivo !== "boolean") fail("Gli orari inseriti non sono validi.", 3, profileType);
+		const dalle = normalizeOptionalTime(entry.dalle);
+		const alle = normalizeOptionalTime(entry.alle);
+		if (dalle === undefined || alle === undefined) {
+			fail("Gli orari inseriti non sono validi.", 3, profileType);
+		}
+		return {giorno: entry.giorno, attivo: entry.attivo, dalle: dalle ?? "", alle: alle ?? ""};
+	});
+}
+
+function locations(
+	value: unknown,
+	profileType: ProfileType,
+): Array<{regione: string; citta: string | null}> {
+	if (value === null || value === undefined) return [];
+	if (!Array.isArray(value) || value.length > MAX_LOCATIONS) {
+		fail("Le località del profilo non sono valide.", 3, profileType);
+	}
+	const seen = new Set<string>();
+	return value.map((entry) => {
+		if (!isRecord(entry)) fail("Le località del profilo non sono valide.", 3, profileType);
+		assertExactKeys(entry, ["regione", "citta"], profileType);
+		const regione = textValue(entry.regione, 80, profileType);
+		if (!regione || (!REGIONS.has(regione) && !(regione === FOREIGN_PROFILE_REGION && allowsForeignProfileRegion(profileType)))) {
+			fail(allowsForeignProfileRegion(profileType) ? "Seleziona una regione italiana valida oppure Estero." : "Seleziona una regione italiana valida.", 3, profileType);
+		}
+		const citta = textValue(entry.citta, 120, profileType);
+		const key = `${regione}\u0000${citta ?? ""}`;
+		if (seen.has(key)) fail("Rimuovi le località duplicate dal profilo.", 3, profileType);
+		seen.add(key);
+		return {regione, citta};
+	});
+}
+
+function baseSport(value: unknown, profileType: ProfileType): string {
+	if (value !== "Calcio") fail("Lo sport principale selezionato non è valido.", 3, profileType);
+	return value;
+}
+
+function anonymousName(value: unknown, type: ProfileType): boolean {
+ const enabled = value === undefined ? false : value;
+ if (typeof enabled !== "boolean") fail("La preferenza sul nominativo non è valida.", 3, type);
+ return enabled;
+}
+
+function playerMeasurement(value: unknown, kind: "height" | "weight"): string | null {
+	const normalized = normalizePlayerMeasurement(textValue(value, MAX_SHORT_TEXT, "giocatore"), kind);
+	if (normalized === undefined) fail(playerMeasurementError(value, kind)!, 3, "giocatore");
+	return normalized;
+}
+
+function subprofileInstance(value: unknown, type: ProfileType): number | null {
+	if (value == null) return null;
+	if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) fail("Il profilo collegato non è valido.", 3, type);
+	return value;
+}
+
+function normalizeDraft(
+	type: ProfileType,
+	value: unknown,
+): Record<string, Json> {
+	if (!isRecord(value)) fail("I dati del profilo non sono validi.", 3, type);
+
+	if (type === "giocatore") {
+		assertExactKeys(value, ["squadra_attuale_id", "squadra_attuale_profilo_id", "squadra_attuale_nome", "squadra_attuale_categoria", "squadra_attuale_torneo", "squadra_attuale_dal", "nominativo_anonimo", "altezza", "anno_nascita", "categoria_attuale", "categorie_ricercate", "cognome", "disponibilita", "genere", "giorno_nascita", "mese_nascita", "nome", "nazionalita", "peso", "piede_principale", "presentazione", "highlights_privati", "richiede_caricamento_highlights", "ruoli_sport", "sport_principale", "storico_carriera", "tipologie_sport", "video_highlights"], type);
+		const normalizedBirthDate = birthDate(value, type);
+		const availability = value.disponibilita === "disponibile-subito" ? "svincolato" : enumText(value.disponibilita, new Set(["svincolato", "sotto-contratto"]), type);
+		const category = textValue(value.categoria_attuale, 120, type);
+		if (category && !isPlayerCurrentCategory(category) && !isTeamCategory(category)) fail("La categoria attuale non è valida.", 3, type);
+		const gender = enumText(value.genere, new Set(["Uomo", "Donna"]), type);
+		const nationality = enumText(value.nazionalita, NATIONALITIES, type);
+		const highlightsUploadRequested = value.richiede_caricamento_highlights ?? false;
+		const privateHighlights = value.highlights_privati ?? false;
+		if (typeof privateHighlights !== "boolean" || typeof highlightsUploadRequested !== "boolean" || highlightsUploadRequested) {
+			fail("La richiesta relativa agli highlights non è valida.", 3, type);
+		}
+		return {
+			nominativo_anonimo: anonymousName(value.nominativo_anonimo, type),
+			altezza: playerMeasurement(value.altezza, "height"),
+			anno_nascita: normalizedBirthDate.year,
+			categoria_attuale: availability === "svincolato" ? null : category,
+			squadra_attuale_id: availability === "svincolato" ? null : subprofileInstance(value.squadra_attuale_id, type),
+			squadra_attuale_profilo_id: null,
+			squadra_attuale_nome: availability === "svincolato" ? null : textValue(value.squadra_attuale_nome, MAX_SHORT_TEXT, type),
+			squadra_attuale_categoria: null,
+			squadra_attuale_torneo: null,
+			squadra_attuale_dal: availability === "svincolato" ? null : birthField(value.squadra_attuale_dal, "year", type),
+			categorie_ricercate: normalizeCategories(stringList(value.categorie_ricercate, type)),
+			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
+			disponibilita: availability,
+			genere: gender,
+			giorno_nascita: normalizedBirthDate.day,
+			mese_nascita: normalizedBirthDate.month,
+			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
+			nazionalita: nationality,
+			peso: playerMeasurement(value.peso, "weight"),
+			piede_principale: value.piede_principale === "Ambipiede" ? "Ambidestro" : enumText(value.piede_principale, FEET, type),
+			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
+			ruoli_sport: sportsRoles(value.ruoli_sport, type),
+			sport_principale: baseSport(value.sport_principale, type),
+			storico_carriera: experiences(value.storico_carriera, type),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
+			video_highlights: highlightsUploadRequested || privateHighlights ? "" : profileVideoLink(value.video_highlights, type),
+			richiede_caricamento_highlights: highlightsUploadRequested,
+			highlights_privati: privateHighlights,
+		};
+	}
+
+	if (type === "squadra") {
+		assertExactKeys(value, ["torneo_attuale_id", "torneo_attuale_nome", "nominativo_anonimo", "categoria_attuale", "nome_societa", "presentazione", "sport_principale", "tipologie_sport"], type);
+		const sports = ordinaTipologieCalcio(stringList(value.tipologie_sport, type));
+		if (sports.length !== 1) fail("Seleziona una sola tipologia di calcio.", 3, type);
+		const category = textValue(value.categoria_attuale, 120, type);
+		if (!isTeamCategoryForSport(category, sports[0])) fail("Seleziona la categoria attuale della Prima Squadra.", 3, type);
+		return {
+			nominativo_anonimo: anonymousName(value.nominativo_anonimo, type),
+			categoria_attuale: category,
+			torneo_attuale_id: category?.endsWith("::Tornei") ? subprofileInstance(value.torneo_attuale_id, type) : null,
+			torneo_attuale_nome: category?.endsWith("::Tornei") ? textValue(value.torneo_attuale_nome, MAX_SHORT_TEXT, type) : null,
+			nome_societa: textValue(value.nome_societa, MAX_SHORT_TEXT, type),
+			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
+			sport_principale: baseSport(value.sport_principale, type),
+			tipologie_sport: sports,
+		};
+	}
+
+	if (type === "staff-sportivo") {
+		assertExactKeys(value, ["nominativo_anonimo", "anno_nascita", "cognome", "disponibilita", "disponibile_remoto", "figure_professionali", "giorno_nascita", "lista_esperienze", "mese_nascita", "nome", "presentazione", "qualifiche_licenze", "sport_principale", "storico_esperienze", "tipologie_sport"], type);
+		const normalizedBirthDate = birthDate(value, type);
+		if (typeof value.disponibile_remoto !== "boolean") fail("La disponibilità da remoto non è valida.", 3, type);
+		if (!Array.isArray(value.qualifiche_licenze) || value.qualifiche_licenze.some((entry) => !isRecord(entry) || (entry.stato !== "in-corso" && entry.stato !== "conseguito"))) {
+			fail("Seleziona lo stato di ogni qualifica o licenza.", 3, type);
+		}
+		return {
+			nominativo_anonimo: anonymousName(value.nominativo_anonimo, type),
+			anno_nascita: normalizedBirthDate.year,
+			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
+			disponibilita: enumText(value.disponibilita, AVAILABILITIES, type),
+			disponibile_remoto: value.disponibile_remoto,
+			figure_professionali: normalizeFigures(stringList(value.figure_professionali, type)),
+			giorno_nascita: normalizedBirthDate.day,
+			mese_nascita: normalizedBirthDate.month,
+			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
+			lista_esperienze: experiences(value.lista_esperienze, type),
+			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
+			qualifiche_licenze: experiences(value.qualifiche_licenze, type),
+			sport_principale: baseSport(value.sport_principale, type),
+			storico_esperienze: [],
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
+		};
+	}
+
+	if (type === "arbitro") {
+		assertExactKeys(value, ["nominativo_anonimo", "anno_nascita", "cognome", "disponibilita", "giorno_nascita", "lista_esperienze", "mese_nascita", "nome", "presentazione", "qualifiche_licenze", "sport_principale", "storico_esperienze", "tipologie_sport"], type);
+		const normalizedBirthDate = birthDate(value, type);
+		if (!Array.isArray(value.qualifiche_licenze) || value.qualifiche_licenze.some((entry) => !isRecord(entry) || (entry.stato !== "in-corso" && entry.stato !== "conseguito"))) {
+			fail("Seleziona lo stato di ogni qualifica o licenza.", 3, type);
+		}
+		return {
+			nominativo_anonimo: anonymousName(value.nominativo_anonimo, type),
+			anno_nascita: normalizedBirthDate.year,
+			cognome: textValue(value.cognome, MAX_SHORT_TEXT, type),
+			disponibilita: enumText(value.disponibilita, new Set(["non-specificare", "disponibile-subito"]), type),
+			giorno_nascita: normalizedBirthDate.day,
+			mese_nascita: normalizedBirthDate.month,
+			nome: textValue(value.nome, MAX_SHORT_TEXT, type),
+			lista_esperienze: experiences(value.lista_esperienze, type, true),
+			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
+			qualifiche_licenze: experiences(value.qualifiche_licenze, type),
+			sport_principale: baseSport(value.sport_principale, type),
+			storico_esperienze: [],
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
+		};
+	}
+
+	if (type === "torneo-evento") {
+		assertExactKeys(value, ["nome_organizzazione", "presentazione", "sport_principale", "tipologie_sport"], type);
+		return {
+			nome_organizzazione: textValue(value.nome_organizzazione, MAX_SHORT_TEXT, type),
+			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
+			sport_principale: baseSport(value.sport_principale, type),
+			tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
+		};
+	}
+
+	if (type === "servizi-consulenze") {
+  assertExactKeys(value, ["nome", "specializzazioni", "sede_professionista", "contatto_email", "contatto_telefono", "disponibilita", "presentazione", "presentazione_servizi", "sport_principale", "tipologie_sport"], type);
+  return {
+   nome: textValue(value.nome, MAX_SHORT_TEXT, type),
+   specializzazioni: textValue(value.specializzazioni, MAX_LONG_TEXT, type),
+   sede_professionista: textValue(value.sede_professionista, MAX_SHORT_TEXT, type),
+   contatto_email: textValue(value.contatto_email, 254, type)?.toLowerCase() ?? null,
+   contatto_telefono: textValue(value.contatto_telefono, 40, type),
+   disponibilita: enumText(value.disponibilita, new Set(PROFESSIONAL_AVAILABILITY_OPTIONS.map(option => option.value)), type),
+   presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
+   presentazione_servizi: textValue(value.presentazione_servizi, MAX_LONG_TEXT, type),
+   sport_principale: baseSport(value.sport_principale, type),
+   tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
+  };
+ }
+
+	if (type === "creators") {
+		assertExactKeys(value, [
+			"nome_creator",
+			"contatto_email",
+			"presentazione",
+			"sport_principale",
+			"tipologia_contenuti",
+		], type);
+		return {
+			contatto_email: textValue(value.contatto_email, 254, type)?.toLowerCase() ?? null,
+			nome_creator: textValue(value.nome_creator, MAX_SHORT_TEXT, type),
+			presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
+			sport_principale: baseSport(value.sport_principale, type),
+			tipologia_contenuti: textValue(value.tipologia_contenuti, MAX_SHORT_TEXT, type),
+		};
+	}
+
+	assertExactKeys(value, ["costo_partenza", "indirizzo", "info_aggiuntive", "nome_organizzazione", "orari", "presentazione", "sede_principale", "servizi_inclusi", "sport_principale", "tipologie_sport"], type);
+	const cost = value.costo_partenza;
+	const normalizedCost = parseOptionalMoney(cost);
+	if ((cost !== null && cost !== undefined && typeof cost !== "number") || normalizedCost === undefined) {
+		fail("Il costo di partenza non è valido.", 3, type);
+	}
+	return {
+		costo_partenza: normalizedCost,
+		indirizzo: textValue(value.indirizzo, MAX_SHORT_TEXT, type),
+		info_aggiuntive: textValue(value.info_aggiuntive, MAX_LONG_TEXT, type),
+		nome_organizzazione: textValue(value.nome_organizzazione, MAX_SHORT_TEXT, type),
+		orari: openingHours(value.orari, type),
+		presentazione: textValue(value.presentazione, MAX_LONG_TEXT, type),
+		sede_principale: textValue(value.sede_principale, MAX_SHORT_TEXT, type),
+		servizi_inclusi: textValue(value.servizi_inclusi, MAX_LONG_TEXT, type),
+		sport_principale: baseSport(value.sport_principale, type),
+		tipologie_sport: ordinaTipologieCalcio(stringList(value.tipologie_sport, type)),
+	};
+}
+
+export interface NormalizedProfileEditorPayload {
+	type: ProfileType;
+	draft: Record<string, Json>;
+	locations: Array<{regione: string; citta: string | null}>;
+	socialLinks: ProfileSocialLinks;
+}
+
+export function parseProfileEditorPayload(
+	rawValue: unknown,
+): NormalizedProfileEditorPayload {
+	let serialized: string | undefined;
+	try {
+		serialized = JSON.stringify(rawValue);
+	} catch {
+		fail("I dati del profilo non sono validi.", 3);
+	}
+
+	if (
+		typeof serialized !== "string"
+		|| serialized.length === 0
+		|| serialized.length > MAX_PAYLOAD_BYTES
+		|| !isRecord(rawValue)
+	) {
+		fail("I dati del profilo sono mancanti o troppo grandi.", 3);
+	}
+
+	const rawType = rawValue.type;
+	if (typeof rawType !== "string" || !isProfileType(rawType)) {
+		fail("La tipologia di profilo non è valida.", 3);
+	}
+	assertExactKeys(rawValue, ["type", "draft", "locations", "socialLinks"], rawType);
+	const normalizedDraft = normalizeDraft(rawType, rawValue.draft);
+	const normalizedLocations = locations(rawValue.locations, rawType);
+	const requiredFieldError = Object.values(
+		getProfileRequiredFieldErrors(rawType, normalizedDraft, normalizedLocations),
+	)[0];
+	if (requiredFieldError) fail(requiredFieldError, 3, rawType);
+
+	return {
+		type: rawType,
+		draft: normalizedDraft,
+		locations: normalizedLocations,
+		socialLinks: normalizeSocialLinks(rawValue.socialLinks, rawType),
+	};
+}
+
+export function parseRegistrationPayload(rawValue: FormDataEntryValue | null): NormalizedRegistrationPayload {
+	if (typeof rawValue !== "string" || rawValue.length === 0 || rawValue.length > MAX_PAYLOAD_BYTES) {
+		fail("I dati della registrazione sono mancanti o troppo grandi.", 2);
+	}
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(rawValue);
+	} catch {
+		fail("I dati della registrazione non sono validi.", 2);
+	}
+	if (!isRecord(parsed)) fail("I dati della registrazione non sono validi.", 2);
+	if (Object.keys(parsed).some((key) => !["version", "inviteCode", "selectedProfileTypes", "primaryProfileType", "profiles", "consents"].includes(key))) {
+		fail("I dati della registrazione non sono validi.", 2);
+	}
+	if (parsed.version !== REGISTRATION_PAYLOAD_VERSION) {
+		fail("Aggiorna la pagina e ripeti la registrazione.", 2);
+	}
+	if (parsed.inviteCode !== null && parsed.inviteCode !== undefined && typeof parsed.inviteCode !== "string") {
+		fail("Il codice invito non è valido.", 1);
+	}
+	const inviteCode = typeof parsed.inviteCode === "string"
+		? normalizeInvitationCode(parsed.inviteCode)
+		: "";
+	if (inviteCode && !INVITATION_CODE_PATTERN.test(inviteCode)) {
+		fail("Inserisci un codice invito valido di 16 caratteri.", 1);
+	}
+	if (!isRecord(parsed.consents)) {
+		fail("Conferma di aver letto e accettato le informative obbligatorie.", 3);
+	}
+	if (Object.keys(parsed.consents).some((key) => !["legalAccepted", "newsletterSubscribed", "termsVersion", "privacyVersion", "cookiePolicyVersion"].includes(key))) {
+		fail("I consensi della registrazione non sono validi.", 3);
+	}
+	if (
+		parsed.consents.legalAccepted !== true
+		|| typeof parsed.consents.newsletterSubscribed !== "boolean"
+		|| parsed.consents.termsVersion !== TERMS_VERSION
+		|| parsed.consents.privacyVersion !== PRIVACY_VERSION
+		|| parsed.consents.cookiePolicyVersion !== COOKIE_POLICY_VERSION
+	) {
+		fail("Conferma di aver letto e accettato le informative obbligatorie.", 3);
+	}
+
+	if (!Array.isArray(parsed.selectedProfileTypes) || parsed.selectedProfileTypes.length === 0 || parsed.selectedProfileTypes.length > MAX_PROFILE_COUNT) {
+		fail(`Seleziona da 1 a ${MAX_PROFILE_COUNT} tipologie di profilo.`, 2);
+	}
+	const selectedProfileTypes = parsed.selectedProfileTypes.map((value) => {
+		if (typeof value !== "string" || !isProfileType(value)) fail("Una tipologia di profilo selezionata non è valida.", 2);
+		return value;
+	});
+	if (new Set(selectedProfileTypes).size !== selectedProfileTypes.length) {
+		fail("Le tipologie di profilo non possono essere duplicate.", 2);
+	}
+	const registrableTypes = selectedProfileTypes.filter(isRegistrableProfileType);
+	if (registrableTypes.length !== selectedProfileTypes.length) {
+		fail("Una delle tipologie selezionate non Ã¨ ancora disponibile.", 2);
+	}
+	if (registrableTypes.length === 0) {
+		fail("Seleziona almeno un profilo.", 2);
+	}
+	if (typeof parsed.primaryProfileType !== "string" || !isProfileType(parsed.primaryProfileType) || !isRegistrableProfileType(parsed.primaryProfileType) || !registrableTypes.includes(parsed.primaryProfileType)) {
+		fail("Seleziona un profilo principale valido.", 2);
+	}
+	const primaryProfileType = parsed.primaryProfileType as RegistrableProfileType;
+
+	if (!Array.isArray(parsed.profiles) || parsed.profiles.length !== registrableTypes.length) {
+		fail("Completa i dati di tutti i profili selezionati.", 3, primaryProfileType);
+	}
+	const seenProfiles = new Set<RegistrableProfileType>();
+	const profiles = parsed.profiles.map((entry): NormalizedRegistrationProfile => {
+		if (!isRecord(entry)) fail("I dati di uno dei profili non sono validi.", 3, primaryProfileType);
+		assertExactKeys(entry, ["type", "draft", "locations", "socialLinks"], primaryProfileType);
+		if (typeof entry.type !== "string" || !isProfileType(entry.type) || !isRegistrableProfileType(entry.type) || !registrableTypes.includes(entry.type) || seenProfiles.has(entry.type)) {
+			fail("I dati di uno dei profili non corrispondono alla selezione.", 3, primaryProfileType);
+		}
+		seenProfiles.add(entry.type);
+		const normalizedDraft = normalizeDraft(entry.type, entry.draft);
+		const normalizedLocations = locations(entry.locations, entry.type);
+		const requiredFieldError = Object.values(
+			getProfileRequiredFieldErrors(entry.type, normalizedDraft, normalizedLocations),
+		)[0];
+		if (requiredFieldError) fail(requiredFieldError, 3, entry.type);
+		return {
+			type: entry.type,
+			draft: normalizedDraft,
+			locations: normalizedLocations,
+			socialLinks: normalizeSocialLinks(entry.socialLinks, entry.type),
+		};
+	});
+
+	return {
+		version: REGISTRATION_PAYLOAD_VERSION,
+		inviteCode: inviteCode || null,
+		selectedProfileTypes,
+		primaryProfileType,
+		profiles,
+		consents: {
+			legalAccepted: true,
+			newsletterSubscribed: parsed.consents.newsletterSubscribed,
+			termsVersion: TERMS_VERSION,
+			privacyVersion: PRIVACY_VERSION,
+			cookiePolicyVersion: COOKIE_POLICY_VERSION,
+		},
+	};
+}

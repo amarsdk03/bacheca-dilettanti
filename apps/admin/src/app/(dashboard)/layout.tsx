@@ -3,6 +3,6 @@ import {requireAdminPageContext} from "@/features/dashboard/server/guard";
 import {DashboardShell} from "@/features/dashboard/components/DashboardShell";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  await requireAdminPageContext();
-  return <DashboardShell>{children}</DashboardShell>;
+  const context = await requireAdminPageContext();
+  return <DashboardShell actorId={context.authId!}>{children}</DashboardShell>;
 }
