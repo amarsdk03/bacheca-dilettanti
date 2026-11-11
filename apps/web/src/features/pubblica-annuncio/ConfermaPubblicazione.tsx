@@ -30,6 +30,14 @@ function MissingConfirmation({error}: {error: boolean}) {
 }
 
 export default function ConfermaPubblicazione({result}: {result: PublishConfirmationResult}) {
+	const regionalAnnouncements = result.status === "ok" ? result.regionalAnnouncements ?? [] : [];
+	const multipleAnnouncements = regionalAnnouncements.length > 1;
+	const referenceAnnouncement = result.status === "ok" ? regionalAnnouncements.find(item => item.id === result.preview.id) : undefined;
+	const statusCounts = new Map<string, number>();
+	for (const item of regionalAnnouncements) {
+		const label = formatPreviewStatus(item.status ?? null) ?? "Stato non disponibile";
+		statusCounts.set(label, (statusCounts.get(label) ?? 0) + 1);
+	}
 	return (
 		<main className="min-h-screen bg-brand-paper py-12 font-home-body text-brand-ink sm:py-16">
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -55,14 +63,17 @@ export default function ConfermaPubblicazione({result}: {result: PublishConfirma
 						</section>
 
 						<section className="mx-auto mt-12 max-w-3xl" aria-label="Riepilogo annuncio">
-							{result.publicationId && result.regionalAnnouncements && result.regionalAnnouncements.length > 1 && <nav className="mb-6 flex flex-col gap-3" aria-label="Annunci regionali inviati">
-								<p className="text-sm">{result.regionalAnnouncements.length} annunci indipendenti. Seleziona una regione per verificarne il riepilogo e lo stato.</p>
-								<div className="flex flex-wrap gap-2">{result.regionalAnnouncements.map(item => <Link key={item.id} href={`/pubblica-annuncio/conferma?${new URLSearchParams({publication: result.publicationId!, id: item.id})}`} aria-current={item.id === result.preview.id ? "page" : undefined} className={buttonVariants({variant: item.id === result.preview.id ? "default" : "outline"})}>{item.region ?? "Sede della squadra"}{item.status && ` · ${formatPreviewStatus(item.status)}`}</Link>)}</div>
-							</nav>}
+							{multipleAnnouncements && <div className="mb-6 flex flex-col gap-2 text-sm">
+								<p>Riepilogo di <strong>{regionalAnnouncements.length} annunci separati</strong>, uno per regione.</p>
+								<p>Stato degli annunci: {[...statusCounts].map(([label, count]) => `${count} ${label.toLocaleLowerCase("it-IT")}`).join(" · ")}.</p>
+							</div>}
 							<ExternalNavigationProvider>
-								<AnnouncementPreviewCard preview={result.preview} />
+								<AnnouncementPreviewCard preview={multipleAnnouncements ? {...result.preview, status: null, statusInfo: null} : result.preview} />
 							</ExternalNavigationProvider>
-							{result.preview.id && <div className="mt-4 flex justify-center">
+							{result.preview.id && <div className="mt-4 flex flex-col items-center gap-2">
+								{multipleAnnouncements && <p className="text-center text-sm text-muted-foreground">
+									{result.preview.statusInfo && <span className="mt-1 block">{result.preview.statusInfo}</span>}
+								</p>}
 								<AnnouncementViewLink id={result.preview.id} isListed={result.isListed} />
 							</div>}
 						</section>

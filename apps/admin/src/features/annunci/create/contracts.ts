@@ -13,6 +13,7 @@ export interface CreationInput {
   version: 1; submissionId: string; authorMode: "registered" | "unregistered"; profileId: string | null;
   profileType: MockProfileType; teamType: MockTeamType; profile: MockValues; announcement: MockValues;
   referenceEmail: string; authorized: boolean; provenance?: WhatsAppProvenance;
+  approveImmediately?: boolean;
   image?: {hash: string; mime: string; size: number} | null;
 }
 export interface CreationReceipt {publicationId: string; announcementId: string; announcements: {id: string; region: string | null; status: string}[]; idempotent: boolean}

@@ -21,6 +21,8 @@ export type AnnouncementListItem = {
   /** Computed presentation only; never persisted as the custom title. Optional during rollout. */
   displayTitle?: string;
   fromWhatsApp?: boolean | null;
+  whatsappStatus?: import("./whatsapp/model").WhatsAppStatus;
+  whatsappAvailable?: boolean;
   /** Absent only during a deployment from the previous read contract. */
   trashed?: boolean;
   hidden: boolean | null; private: boolean | null; creatorId: string | null;

@@ -3,6 +3,7 @@ import type {AuditAction, AuditActor} from "./read-contracts";
 export const AUDIT_LABELS: Record<AuditAction, string> = {
   "auth.login": "Accesso", "auth.logout": "Logout", "auth.access_denied": "Accesso negato",
   "announcement.approve": "Annuncio approvato", "announcement.reject": "Annuncio rifiutato", "announcement.hide": "Annuncio nascosto",
+  "announcement.whatsapp_export": "Esportazione WhatsApp",
   "announcement.create": "Annuncio creato",
   "announcement.show": "Visibilità ripristinata", "announcement.trash": "Annuncio nel cestino", "announcement.restore": "Annuncio recuperato", "announcement.export": "Esportazione annunci",
 };

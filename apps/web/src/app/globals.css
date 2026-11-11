@@ -64,6 +64,7 @@
     --font-home-display: var(--font-oswald);
     --font-home-body: var(--font-lato);
     --color-brand-indigo: var(--brand-indigo);
+    --color-brand-indigo-200: var(--brand-indigo-200);
     --color-brand-ink: var(--brand-ink);
     --color-brand-paper: var(--brand-paper);
     --color-sidebar-ring: var(--sidebar-ring);
@@ -111,6 +112,7 @@
     --font-oswald: "Oswald", Arial, sans-serif;
     --font-lato: "Lato", Arial, sans-serif;
     --brand-indigo: #8e72ff;
+    --brand-indigo-200: #d9cfff;
     --brand-indigo-light: #ad99ff;
     --brand-ink: #111111;
     --brand-paper: #FBFAFF;
@@ -349,14 +351,26 @@
     background: color-mix(in srgb, var(--notice-accent) 5%, var(--card));
 }
 
+.homepage-notices-item:hover,
+.homepage-notices-item:focus-within {
+    background: color-mix(in srgb, var(--notice-accent) 7%, var(--card));
+}
+
+.homepage-notices-item:active {
+    background: color-mix(in srgb, var(--notice-accent) 10%, var(--card));
+}
+
+.homepage-notices-item:has(:focus-visible) {
+    outline: 2px solid var(--notice-accent);
+    outline-offset: -3px;
+}
+
 .homepage-notices-trigger:hover {
     text-decoration: none;
-    background: color-mix(in srgb, var(--notice-accent) 4%, transparent);
 }
 
 .homepage-notices-trigger:focus-visible {
-    outline: 2px solid var(--notice-accent);
-    outline-offset: -3px;
+    outline: none;
     box-shadow: none;
 }
 

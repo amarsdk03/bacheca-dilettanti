@@ -46,6 +46,8 @@ import {ModerateActions, moderationIcons} from "./ModerateActions";
 import {AnnouncementStatusBadge, AnnouncementTrashBadge, AnnouncementVisibilityBadges} from "./AnnouncementBadges";
 import {ModerationDialog} from "./ModerationDialog";
 import {moderateAnnouncementAction} from "@/features/annunci/server/actions";
+import {WhatsAppExportDialog} from "../whatsapp/WhatsAppExportDialog";
+import {whatsappLabel, canPrepareWhatsApp} from "../whatsapp/model";
 import {MODERATION_LABELS, type ModerationOperation} from "../moderation";
 
 function FilterSelect({id, label, value, items, onChange}: {
@@ -93,6 +95,8 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 			window.location.replace("/accesso");
 		},
 	}));
+	const [whatsappId,setWhatsappId] = useState<string|null>(null);
+	const whatsappTrigger = useRef<HTMLElement|null>(null);
 	const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getServerSnapshot);
 	const previewTrigger = useRef<HTMLElement | null>(null), resultsTitle = useRef<HTMLHeadingElement>(null),
 		panelTitle = useRef<HTMLHeadingElement>(null);
@@ -111,7 +115,7 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 		};
 	}, [controller]);
 	const result = state.list.result, preview = state.preview;
-	const mutating = state.moderation?.phase === "submitting" || state.exporting.pending;
+	const mutating = state.moderation?.phase === "submitting" || state.exporting.pending || whatsappId !== null;
 	const filtered = Boolean(state.query.filters.search || state.query.filters.status || state.query.filters.type || state.query.filters.visibility !== "all" || state.query.filters.trash !== "exclude");
 	return <div className="admin-workspace admin-annunci-workspace">
 		<Card className="admin-filters-card"><CardContent>
@@ -207,7 +211,7 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 						</EmptyState> : <Table
 							className="admin-annunci-table"><TableCaption>{result.page.items.length} {result.page.items.length === 1 ? "annuncio in questa pagina" : "annunci in questa pagina"}.
 							Dal più recente; date in Europe/Rome.</TableCaption>
-							<TableHeader><TableRow>{["Titolo", "Autore / Profilo", "Da WhatsApp", "Stato", "Visibilità", "Creazione", "Azioni"].map((label) =>
+							<TableHeader><TableRow>{["Titolo", "Autore / Profilo", "Annuncio WhatsApp?", "Stato", "Visibilità", "Creazione", "Azioni"].map((label) =>
 								<TableHead scope="col" key={label}>{label}</TableHead>)}</TableRow></TableHeader>
 							<TableBody>{result.page.items.map((row) => <TableRow key={row.id}>
 								<TableCell><p
@@ -216,7 +220,7 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 								</TableCell>
 								<TableCell>{row.author.displayName}<p
 									className="admin-announcement-type">{typeLabel(row.type)}</p></TableCell>
-                                <TableCell>{row.fromWhatsApp == null ? "—" : row.fromWhatsApp ? "Sì" : "No"}</TableCell>
+                                <TableCell>{whatsappLabel(row)}</TableCell>
                                 <TableCell><AnnouncementStatusBadge status={row.status}/></TableCell>
 								<TableCell>
 									<div className="admin-badge-list"><AnnouncementVisibilityBadges row={row}/></div>
@@ -246,7 +250,22 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 												controller.beginModeration(row.id, operation);
 											}}><Icon aria-hidden="true"/>{MODERATION_LABELS[operation]}
 											</DropdownMenuItem>;
-										})}</DropdownMenuGroup></DropdownMenuContent>
+										})}</DropdownMenuGroup>
+										<DropdownMenuGroup>
+											<DropdownMenuLabel>WhatsApp</DropdownMenuLabel>
+											<DropdownMenuItem
+												disabled={mutating || !canPrepareWhatsApp(row)}
+												onClick={() => {
+													whatsappTrigger.current = document.getElementById(`annunci-menu-${row.id}`);
+													setWhatsappId(row.id);
+												}}>
+												<svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+													<path d="M12.04 2a9.93 9.93 0 0 0-8.52 15.04L2 22l5.11-1.48A9.94 9.94 0 1 0 12.04 2Zm0 18.2a8.2 8.2 0 0 1-4.18-1.14l-.3-.18-3.03.88.9-2.95-.2-.31a8.22 8.22 0 1 1 6.81 3.7Zm4.51-6.16c-.25-.12-1.49-.74-1.72-.82-.23-.08-.4-.12-.57.12-.17.25-.65.82-.8.99-.15.16-.3.18-.55.06-.25-.12-1.06-.39-2.02-1.24-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.38.11-.5.11-.11.25-.3.37-.44.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.44-.06-.12-.57-1.37-.78-1.87-.2-.49-.41-.42-.57-.43h-.49c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.42 1.03 2.59.12.17 1.77 2.71 4.29 3.8.6.26 1.06.42 1.42.54.6.19 1.14.16 1.57.1.48-.07 1.49-.61 1.7-1.2.21-.59.21-1.1.15-1.2-.06-.1-.23-.16-.48-.29Z"/>
+												</svg>
+												Esporta su WhatsApp
+											</DropdownMenuItem>
+										</DropdownMenuGroup>
+									</DropdownMenuContent>
                                     </DropdownMenu>}
 								</div>
 							</TableCell>
@@ -300,6 +319,7 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 				</div>
 			</SheetContent>
 		</Sheet>
+		{whatsappId && <WhatsAppExportDialog key={whatsappId} id={whatsappId} onClose={()=>setWhatsappId(null)} onSaved={()=>{controller.refresh(); if(state.preview.id)controller.retryPreview();}} finalFocus={()=>whatsappTrigger.current?.isConnected ? whatsappTrigger.current : resultsTitle.current}/>}
 		<ModerationDialog state={state.moderation} controller={controller}
 		                  finalFocus={() => moderationTrigger.current?.isConnected ? moderationTrigger.current : state.preview.id ? panelTitle.current : resultsTitle.current}/>
 	</div>;

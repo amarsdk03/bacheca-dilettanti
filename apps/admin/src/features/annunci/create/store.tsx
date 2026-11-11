@@ -21,14 +21,14 @@ export interface DraftData {
   manualAnonymousType: MockProfileType | ""; authorEmails: Record<string, string>; whatsappAnalysis: WhatsAppExtraction | null;
   whatsappAuthorMode: "registered" | "unregistered"; profileDrafts: Record<string, MockValues>;
   teamTypes: Record<string, MockTeamType>; drafts: Record<string, LocalDraft>; dirty: boolean;
-  activeTab: CreateTab; authorized: boolean; authors: AnnouncementAuthor[]; issues: FieldIssue[];
+  activeTab: CreateTab; authorized: boolean; approveImmediately: boolean; authors: AnnouncementAuthor[]; issues: FieldIssue[];
   whatsappContent: string; whatsappLink: string; whatsappManualTarget: string; whatsappResult: WhatsAppExtraction | null;
   whatsappApplied: boolean; submissionIds: Record<string, string>; receipts: Record<string, CreationReceipt>;
   whatsappRegion: string; whatsappResolvedRegion: string;
   results: Record<string, CreationResult | null>;
   lastRequest: CreationInput | null; attempted: boolean; storageError: boolean; hydrated: boolean;
 }
-export const initialDraft = (): DraftData => ({mode: "registered", search: "", userIds: {}, profilesByUser: {}, manualAnonymousType: "", authorEmails: {}, whatsappAnalysis: null, whatsappAuthorMode: "unregistered", profileDrafts: {}, teamTypes: {}, drafts: {}, dirty: false, activeTab: "author", authorized: true, authors: [], issues: [], whatsappContent: "", whatsappLink: "", whatsappManualTarget: "", whatsappRegion: "", whatsappResolvedRegion: "", whatsappResult: null, whatsappApplied: false, submissionIds: {}, receipts: {}, results: {}, lastRequest: null, attempted: false, storageError: false, hydrated: false});
+export const initialDraft = (): DraftData => ({mode: "registered", search: "", userIds: {}, profilesByUser: {}, manualAnonymousType: "", authorEmails: {}, whatsappAnalysis: null, whatsappAuthorMode: "unregistered", profileDrafts: {}, teamTypes: {}, drafts: {}, dirty: false, activeTab: "author", authorized: true, approveImmediately: false, authors: [], issues: [], whatsappContent: "", whatsappLink: "", whatsappManualTarget: "", whatsappRegion: "", whatsappResolvedRegion: "", whatsappResult: null, whatsappApplied: false, submissionIds: {}, receipts: {}, results: {}, lastRequest: null, attempted: false, storageError: false, hydrated: false});
 const tabs = new Set(["author", "profile", "announcement", "contacts", "review"]);
 export function restoredDraft(value: unknown): Partial<DraftData> {
   if (!value || typeof value !== "object" || Array.isArray(value) || JSON.stringify(value).length > 2_000_000) return {};
@@ -90,7 +90,7 @@ export function createAnnouncementDraftStore(actorId: string, storage?: Storage)
   let writeFailed = () => {};
   const store = createStore<DraftStore>()(persist((set) => ({...initialDraft(),
     setField: (key, value) => set(state => ({[key]: typeof value === "function" ? (value as (v: DraftData[typeof key]) => DraftData[typeof key])(state[key]) : value} as Partial<DraftStore>)),
-    clear: (keepChannelRegion = false) => set(state => ({...initialDraft(), whatsappRegion: keepChannelRegion ? state.whatsappRegion : "", hydrated: true})),
+    clear: (keepChannelRegion = false) => set(state => ({...initialDraft(), whatsappRegion: keepChannelRegion ? state.whatsappRegion : "", approveImmediately: keepChannelRegion ? state.approveImmediately : false, hydrated: true})),
   }), {name: `bd-admin-create-announcement:v1:${actorId}`, version: 1, skipHydration: true,
     storage: createJSONStorage(() => {
       return {getItem: (key: string) => {try {return (storage ?? sessionStorage).getItem(key);} catch {writeFailed(); return null;}},

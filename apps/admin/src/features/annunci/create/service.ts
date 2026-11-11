@@ -34,6 +34,7 @@ export function parseReceipt(raw: unknown): CreationReceipt | null {
 }
 export function validCreationInput(raw: unknown): raw is CreationInput {
   if (!record(raw) || JSON.stringify(raw).length > 400_000 || raw.version !== 1 || typeof raw.submissionId !== "string" || !UUID.test(raw.submissionId) || !["registered", "unregistered"].includes(String(raw.authorMode)) || !PROFILE_OPTIONS.some(p => p.value === raw.profileType) || !TEAM_OPTIONS.includes(raw.teamType as never) || !record(raw.profile) || !record(raw.announcement) || typeof raw.referenceEmail !== "string" || raw.referenceEmail.length > 254 || typeof raw.authorized !== "boolean") return false;
+  if (raw.approveImmediately !== undefined && typeof raw.approveImmediately !== "boolean") return false;
   const values = (v: Record<string, unknown>, depth = 0): boolean => depth < 8 && Object.entries(v).every(([k, item]) => !["__proto__", "constructor", "prototype"].includes(k) && (typeof item === "string" || Array.isArray(item) && item.length <= 100 && item.every(x => typeof x === "string" || record(x) && values(x, depth + 1))));
   if (!values(raw.profile) || !values(raw.announcement) || !(raw.profileId === null || typeof raw.profileId === "string")) return false;
   if (raw.provenance !== undefined && (!record(raw.provenance) || raw.provenance.source !== "whatsapp" || typeof raw.provenance.rawText !== "string" || !raw.provenance.rawText.trim() || raw.provenance.rawText.length > 50_000 || typeof raw.provenance.messageUrl !== "string" || whatsappLinkError(raw.provenance.messageUrl))) return false;
@@ -93,13 +94,13 @@ export function createAnnouncementCreation(deps: CreationDependencies) {
           if (!bytes) return {status: "invalid", issues: [{path: "announcement.image", severity: "error", code: "RESELECT_IMAGE", tab: "contacts", message: "Seleziona di nuovo l’immagine oppure rimuovila."}]};
           await deps.upload(path!, bytes, input.image.mime);
         }
-        const payload = {author_mode: input.authorMode, profile_id: input.profileId?.split(":")[0] ?? null,
+        const payload = {...(input.approveImmediately ? {approve_immediately: true} : {}), author_mode: input.authorMode, profile_id: input.profileId?.split(":")[0] ?? null,
           profile_type: input.profileType, profile_draft: normalized.profileDraft, profile_locations: normalized.profileLocations,
           profile_social_links: normalized.profileSocialLinks, announcement_type: normalized.announcementType,
           announcement_title: normalized.announcementTitle, detail: normalized.detail, announcement_locations: normalized.announcementLocations,
           contacts: normalized.contacts, extras, authorized: true, source: input.provenance ? "whatsapp" : "manual",
           original_text: input.provenance?.rawText ?? null, message_url: input.provenance?.messageUrl ? new URL(input.provenance.messageUrl).href : null, reference_email: input.referenceEmail || null};
-        const {data, error} = await rpc("admin_create_announcement_v1", {p_submission: input.submissionId, p_payload: payload as unknown as Json});
+        const {data, error} = await rpc(input.approveImmediately ? "admin_create_announcement_v2" : "admin_create_announcement_v1", {p_submission: input.submissionId, p_payload: payload as unknown as Json});
         if (error) {
           const failure = error as {message?: string; code?: string};
           if (failure.message === "ADMIN_CREATION_CONFLICT") return {status: "conflict"};

@@ -240,10 +240,10 @@ export default function RegioniInteresseField({
 								key={regione.nome}
 								value={regione.nome}
 								aria-label={regione.nome}
-								className="group flex min-w-0 items-center gap-2 overflow-hidden transition-all data-pressed:bg-fuchsia-200"
+								className="group flex min-w-0 items-center gap-2 overflow-hidden transition-all data-pressed:bg-brand-indigo-200 data-pressed:text-brand-ink"
 							>
 								<Check
-									className="size-3 -translate-x-2 scale-75 text-fuchsia-600 opacity-0 transition-all duration-300
+									className="size-3 -translate-x-2 scale-75 text-brand-indigo opacity-0 transition-all duration-300
 									ease-out group-data-pressed:-translate-x-1 group-data-pressed:scale-100 group-data-pressed:opacity-100 sm:size-4"
 								/>
 								<span className="-translate-x-2.5 truncate text-xs transition-all duration-300 ease-out group-data-pressed:-translate-x-1 sm:text-sm">

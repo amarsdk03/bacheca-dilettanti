@@ -1,6 +1,7 @@
 import {experienceTeamReferences, publicTeamExperienceNames} from "@/features/profilo/team-profile";
 import "server-only";
 import {publicProfileName} from "@/features/profilo/profile-public-name";
+import type {PublicProfileLocation} from "@/features/profilo/public-profile-locations";
 
 import {isAnnouncementListed} from "@/features/annunci/announcement-visibility";
 import {
@@ -17,7 +18,7 @@ import {
 } from "@/features/annunci/announcement-model";
 import {loadRelatedPublicAnnouncements} from "@/features/annunci/server/queries";
 import {type AnnouncementPreviewData, formatPreviewStatus} from "@/features/pubblica-annuncio/announcement-preview";
-import {buildAnnouncementSummarySections, summaryAnnouncementTitle} from "@/features/annunci/announcement-summary";
+import {buildAnnouncementSummarySections, summaryAnnouncementTitle, summaryLocationGroups} from "@/features/annunci/announcement-summary";
 import {projectAnnouncementSummaryProfile} from "@/features/annunci/announcement-summary-profile";
 import {currentPlayerCareer} from "@/features/profilo/current-team";
 import {createAdminClient} from "@/lib/supabase/admin";
@@ -261,6 +262,27 @@ export async function loadRegionalPublishConfirmation(publicationId: string, sel
 		const id = selectedId || publication.announcementId;
 		if (!publication.announcements.some(item => item.id === id)) return {status: "not-found"};
 		const result = await loadPublishConfirmation(id);
-		return result.status === "ok" ? {...result, publicationId, regionalAnnouncements: publication.announcements} : result;
+		if (result.status !== "ok") return result;
+		if (publication.announcements.length > 1) {
+			// Use the session client and only IDs from the ownership-checked receipt.
+			const {data: rows, error: locationsError} = await client
+				.from("annuncio")
+				.select("uuid, localita_annuncio(regione, citta)")
+				.is("eliminato_il", null)
+				.in("uuid", publication.announcements.map(item => item.id));
+			if (locationsError || !rows || rows.length !== publication.announcements.length) return {status: "error"};
+			const locations = summaryLocationGroups(rows.flatMap(row => records(row.localita_annuncio).flatMap(location => {
+				const region = cleanText(location.regione);
+				return region ? [{region, city: cleanText(location.citta)}] : [];
+			}))).flatMap<PublicProfileLocation>(({region, cities}) => cities.length ? cities.map(city => ({region, city})) : [{region, city: null}]);
+			result.preview = {
+				...result.preview,
+				locations,
+				summarySections: result.preview.summarySections?.map(section => section.id === "search-areas"
+					? {...section, locations}
+					: section),
+			};
+		}
+		return {...result, publicationId, regionalAnnouncements: publication.announcements};
 	} catch {return {status: "error"};}
 }

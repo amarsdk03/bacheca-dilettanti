@@ -234,7 +234,7 @@ function AnnouncementFiltersSheet({query}: {query: AnnouncementDirectoryQuery}) 
 				<span className="hidden sm:inline">Filtri</span>
 				{activeCount > 0 && <Badge variant="secondary" className="hidden sm:inline-flex">{activeCount}</Badge>}
 			</SheetTrigger>
-			<SheetContent side="left">
+			<SheetContent side="left" className="data-[side=left]:w-[85%] data-[side=left]:sm:max-w-md">
 				<SheetHeader>
 					<SheetTitle>Filtra gli annunci</SheetTitle>
 					<SheetDescription>

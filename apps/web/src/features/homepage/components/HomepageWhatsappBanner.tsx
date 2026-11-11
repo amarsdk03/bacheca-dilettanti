@@ -26,9 +26,9 @@ export default function HomepageWhatsappBanner() {
 					exit={{opacity: 0, transition: {duration: 0.22, ease: "easeOut"}}}
 					transition={{y: {duration: 0.95, ease: [0.16, 1, 0.3, 1]}, opacity: {duration: 0.3}}}>
 					<a href="https://www.whatsapp.com/channel/0029Vb8lng43AzNSP0YlRL3V" target="_blank" rel="noopener noreferrer"
-						className="group flex flex-col items-start justify-between gap-4 rounded-2xl border border-green-300 bg-green-50 p-5 shadow-lg outline-none transition-colors hover:border-green-400 focus-visible:ring-3 focus-visible:ring-green-700 focus-visible:ring-offset-2 md:flex-row md:items-center">
-						<div className="flex items-start gap-4">
-							<span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-700"><SiWhatsapp size={22} title="WhatsApp" /></span>
+						className="group flex flex-col items-center justify-between gap-4 rounded-2xl border border-green-300 bg-green-50 p-5 shadow-lg outline-none transition-colors hover:border-green-400 focus-visible:ring-3 focus-visible:ring-green-700 focus-visible:ring-offset-2 md:flex-row">
+						<div className="flex items-center gap-4">
+							<span className="hidden sm:flex size-11 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-700"><SiWhatsapp size={22} title="WhatsApp" /></span>
 							<div className="min-w-0">
 								<h2 id="banner-whatsapp-title" className="text-lg font-semibold text-neutral-950 md:text-xl">Non perderti nessun annuncio.</h2>
 								<p className="text-base text-neutral-600 md:text-lg"><span className="font-medium">Segui il canale WhatsApp:</span> ricevere i nuovi annunci è semplice e immediato.</p>

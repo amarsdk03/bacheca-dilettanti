@@ -25,7 +25,7 @@ import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
 import {toast} from "@/components/ui/toast";
 import {ExternalNavigationProvider} from "@/components/navigation/ExternalNavigation";
 import type {ProfileDrafts, ProfileLocationDraft} from "@/features/profilo/profile-model";
-import {buildRegionalPublishPreviews} from "@/features/pubblica-annuncio/announcement-preview";
+import {buildPublishPreview} from "@/features/pubblica-annuncio/announcement-preview";
 import AnnouncementPreviewCard from "@/features/pubblica-annuncio/components/AnnouncementPreviewCard";
 import {RequiredMark} from "@/features/pubblica-annuncio/components/InputFields/FieldRequirementIndicator";
 import type {PublishAnnouncementPayload} from "@/features/pubblica-annuncio/publish-model";
@@ -74,7 +74,6 @@ export default function ConfermaInvioAnnuncio({
 	onEditStep,
 }: ConfermaInvioAnnuncioProps) {
 	const router = useRouter();
-	const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
 	const [dataConfirmed, setDataConfirmed] = useState(false);
 	const [termsAccepted, setTermsAccepted] = useState(false);
 	const [privacyAccepted, setPrivacyAccepted] = useState(false);
@@ -136,8 +135,10 @@ export default function ConfermaInvioAnnuncio({
 		: null;
 	const displayedEmailError = emailError ?? validationEmailError;
 	const displayedOtpError = otpError ?? validationOtpError;
-	const regionalPreviews = buildRegionalPublishPreviews(payload, profileDrafts, imagePreviewUrl, image?.name ?? null, profileLocations);
-	const preview = (regionalPreviews.find(item => item.region === selectedRegion) ?? regionalPreviews[0]).preview;
+	const preview = buildPublishPreview(payload, profileDrafts, imagePreviewUrl, image?.name ?? null, profileLocations);
+	const announcementCount = payload.announcement.type === "annuncio_squadra_cerca_sponsor"
+		? 1
+		: Math.max(1, new Set(payload.announcement.locations.map(item => item.regione)).size);
 
 	useEffect(() => {
 		if (!otpRetry) return;
@@ -327,10 +328,7 @@ export default function ConfermaInvioAnnuncio({
 		<FieldGroup spacing="sections">
 			<FieldSet>
 				<FieldLegend variant="label" className="field-legend-title mb-4">Conferma e pubblica:</FieldLegend>
-				{regionalPreviews.length > 1 && <div className="flex flex-col gap-3">
-					<p className="text-sm">Questo invio creerà <strong>{regionalPreviews.length} annunci separati</strong>, uno per regione. Puoi verificarli qui prima dell’invio.</p>
-					<div className="flex flex-wrap gap-2" role="group" aria-label="Anteprime per regione">{regionalPreviews.map(item => <Button key={item.region} type="button" variant={item.preview === preview ? "default" : "outline"} aria-pressed={item.preview === preview} onClick={() => setSelectedRegion(item.region)}>{item.region}</Button>)}</div>
-				</div>}
+				{announcementCount > 1 && <p className="text-sm">Questo invio creerà <strong>{announcementCount} annunci separati</strong>, uno per regione.</p>}
 				<ExternalNavigationProvider>
 					<AnnouncementPreviewCard preview={preview} />
 				</ExternalNavigationProvider>

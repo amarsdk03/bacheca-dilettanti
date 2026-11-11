@@ -5,15 +5,20 @@ import ts from "typescript";
 
 // Execute the actual server module with synthetic Auth/database responses.
 // No environment variables, network, cookies or database services are used.
-function loadViewer(kind, lookupError = null) {
+function loadViewer(kind, lookupError = null, {
+  claims = { sub: "auth-id" },
+  emailConfirmedAt = "2026-01-01T00:00:00Z",
+  publicUser = { utente_uuid: "application-id", registrato_il: null, tipologia_utente: kind },
+  userMetadata = {},
+} = {}) {
   let profileReads = 0;
   let selected = "";
   const supabase = {
     auth: {
-      getClaims: async () => ({ data: { claims: { sub: "auth-id" } } }),
+      getClaims: async () => ({ data: { claims } }),
       getUser: async () => ({ data: { user: {
-        id: "auth-id", email: "synthetic@example.test", email_confirmed_at: "2026-01-01T00:00:00Z",
-        user_metadata: {}, app_metadata: {},
+        id: "auth-id", email: "synthetic@example.test", email_confirmed_at: emailConfirmedAt,
+        user_metadata: userMetadata, app_metadata: {},
       } } }),
     },
     from(table) {
@@ -22,9 +27,7 @@ function loadViewer(kind, lookupError = null) {
         select(columns) {
           if (table === "utente") selected = columns;
           const query = { eq: () => query, maybeSingle: async () => ({
-            data: table === "utente" ? {
-              utente_uuid: "application-id", registrato_il: null, tipologia_utente: kind,
-            } : { link_foto_profilo: null },
+            data: table === "utente" ? publicUser : { link_foto_profilo: null },
             error: table === "utente" ? lookupError : null,
           }) };
           return query;
@@ -51,6 +54,7 @@ function loadViewer(kind, lookupError = null) {
 test("dedicated Admin has no Web viewer or personal profile lookup", async () => {
   const viewer = loadViewer("Admin");
   assert.equal(await viewer.getAuthenticatedViewer(), null);
+  assert.equal(await viewer.getCurrentViewer(), null);
   assert.equal(viewer.profileReads(), 0);
   assert.match(viewer.selected(), /tipologia_utente/);
   await assert.rejects(viewer.requireAuthenticatedViewer(), /redirect:/);
@@ -66,4 +70,39 @@ test("role lookup errors deny access instead of assuming ordinary account", asyn
   const viewer = loadViewer("Utente", { code: "synthetic-error" });
   assert.equal(await viewer.getAuthenticatedViewer(), null);
   assert.equal(viewer.profileReads(), 0);
+});
+
+test("OTP-only identities stay authenticated for publication without becoming visible site accounts", async () => {
+  for (const publicUser of [null, { utente_uuid: "application-id", registrato_il: null, tipologia_utente: "Utente" }]) {
+    const viewer = loadViewer("Utente", null, { publicUser });
+    assert.equal(await viewer.getCurrentViewer(), null);
+    const account = await viewer.getAuthenticatedViewer();
+    assert.equal(account.authUserId, "auth-id");
+    assert.equal(account.registeredAt, null);
+    assert.equal(account.viewer.email, "synthetic@example.test");
+    assert.equal((await viewer.requireAuthenticatedViewer()).authUserId, "auth-id");
+  }
+});
+
+test("a registered Web account remains visible only with its application identity", async () => {
+  const registeredAt = "2026-01-02T00:00:00Z";
+  const viewer = loadViewer("Utente", null, { publicUser: { utente_uuid: "application-id", registrato_il: registeredAt, tipologia_utente: "Utente" } });
+  assert.deepEqual(await viewer.getCurrentViewer(), (await viewer.getAuthenticatedViewer()).viewer);
+  assert.equal((await viewer.getCurrentViewer()).email, "synthetic@example.test");
+  const withoutIdentity = loadViewer("Utente", null, { publicUser: { utente_uuid: null, registrato_il: registeredAt, tipologia_utente: "Utente" } });
+  assert.equal(await withoutIdentity.getCurrentViewer(), null);
+});
+
+test("missing sessions and unconfirmed emails cannot produce a visible viewer", async () => {
+  for (const overrides of [{ claims: null }, { emailConfirmedAt: null }]) {
+    const viewer = loadViewer("Utente", null, overrides);
+    assert.equal(await viewer.getCurrentViewer(), null);
+    assert.equal(await viewer.getAuthenticatedViewer(), null);
+    assert.equal(viewer.profileReads(), 0);
+  }
+});
+
+test("user-editable metadata cannot complete site registration", async () => {
+  const viewer = loadViewer("Utente", null, { userMetadata: { registeredAt: "2026-01-02T00:00:00Z", registrato_il: "2026-01-02T00:00:00Z" } });
+  assert.equal(await viewer.getCurrentViewer(), null);
 });

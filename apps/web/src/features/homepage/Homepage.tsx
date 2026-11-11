@@ -267,7 +267,7 @@ export default function Homepage() {
 							id="categories-title"
 							className="font-home-display text-lg font-normal uppercase tracking-[-0.01em] sm:text-xl"
 						>
-							Ricerche in diretta da tutta Italia
+							Ricerche in diretta da tutta Italia - Il calciomercato dei dilettanti
 						</h2>
 					</div>
 					<Suspense fallback={<LiveAnnouncementCardsSkeleton />}><LiveAnnouncementCardsContent /></Suspense>
@@ -293,7 +293,7 @@ export default function Homepage() {
 											Fatti conoscere
 										</h2>
 										<p className="mt-3 text-sm leading-5 text-neutral-700">
-											Crea il tuo profilo su Bacheca e pubblica la tua ricerca. Richiede meno di 2 minuti.
+											Crea il tuo profilo su Bacheca e pubblica la tua ricerca. Anche in anonimo. Richiede meno di 2 minuti.
 										</p>
 									</div>
 									<Link

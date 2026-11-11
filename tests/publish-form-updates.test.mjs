@@ -39,6 +39,68 @@ function payload(type, teamSubtype, detail) {
 	}, consents: {dataConfirmed: true, termsAccepted: true, privacyAccepted: true, newsletterSubscribed: false}};
 }
 
+function profileLocationPayload(type, registered, locations) {
+	const {createProfileDrafts} = load("apps/web/src/features/profilo/profile-model.ts");
+	const {createProfileSocialLinks} = load("apps/web/src/features/profilo/profile-social-links.ts");
+	const {TEAM_CATEGORY_OPTIONS} = load("apps/web/src/features/profilo/team-category-catalog.ts");
+	const profiles = createProfileDrafts();
+	for (const person of ["giocatore", "staff-sportivo", "arbitro"]) {
+		Object.assign(profiles[person], {nome: "Ada", anno_nascita: "1990", mese_nascita: "Marzo", giorno_nascita: "15"});
+	}
+	Object.assign(profiles.giocatore, {genere: "Donna", disponibilita: "svincolato", tipologie_sport: ["Calcio 11"], ruoli_sport: {principali: ["Difensore"], specifici: []}});
+	profiles["staff-sportivo"].figure_professionali = ["Allenatore"];
+	Object.assign(profiles.squadra, {nome_societa: "Squadra Test", tipologie_sport: ["Calcio 11"], categoria_attuale: TEAM_CATEGORY_OPTIONS[0].value});
+	profiles.creators.nome_creator = "Creator Test";
+	Object.assign(profiles["servizi-consulenze"], {nome: "Studio Test", contatto_email: "studio@example.com"});
+	for (const organization of ["torneo-evento", "campi-impianti-sportivi"]) {
+		Object.assign(profiles[organization], {nome_organizzazione: "Organizzazione Test", tipologie_sport: ["Calcio 11"]});
+	}
+	const drafts = model.createAnnouncementDetailsDrafts();
+	drafts.giocatore.categorie_ricercate = ["Qualsiasi"];
+	drafts.staffSportivo.tipologie_sport = ["Calcio 11"];
+	drafts.arbitro.tipologie_sport = ["Calcio 11"];
+	Object.assign(drafts.squadraCercaStaff, {figure_ricercate: ["Allenatore"], requisiti: "Esperienza"});
+	const subtype = type === "squadra" ? "cerca-staff" : null;
+	const request = payload(type, subtype, model.getAnnouncementDetail(type, subtype, drafts));
+	request.announcement.contacts.email = "pubblico@example.com";
+	request[registered ? "profileUpdate" : "anonymousProfile"] = {type, draft: profiles[type], locations, socialLinks: createProfileSocialLinks()[type]};
+	return request;
+}
+
+test("publication accepts foreign profile locations for guests and registered profile updates", () => {
+	for (const type of ["giocatore", "staff-sportivo", "arbitro", "squadra"]) {
+		for (const registered of [false, true]) {
+			for (const location of [{regione: "Estero", citta: null}, {regione: " Estero ", citta: " Parigi "}, {regione: "Lazio", citta: " Roma "}]) {
+				const request = profileLocationPayload(type, registered, [location]);
+				const normalized = parsePublishPayload(request, registered);
+				assert.deepEqual(registered ? normalized.profileUpdate.locations : normalized.profileLocations, [{regione: location.regione.trim(), citta: location.citta?.trim() ?? null}], `${type}, registered=${registered}`);
+				assert.deepEqual(normalized.announcementLocations, [{regione: "Lazio", citta: null}]);
+			}
+		}
+	}
+});
+
+test("publication still rejects invalid profile regions, duplicate locations and foreign announcement areas", () => {
+	for (const registered of [false, true]) {
+		for (const locations of [[{regione: "Regione inesistente", citta: null}], [{regione: "Estero", citta: "Parigi"}, {regione: "Estero", citta: " Parigi "}]]) {
+			assert.throws(() => parsePublishPayload(profileLocationPayload("giocatore", registered, locations), registered), error => error.step === 2 && /regione italiana valida|duplicate/.test(error.message));
+		}
+		const request = profileLocationPayload("giocatore", registered, [{regione: "Estero", citta: null}]);
+		request.announcement.locations = [{regione: "Estero", citta: "Parigi"}];
+		assert.throws(() => parsePublishPayload(request, registered), error => error.step === 3 && /regione italiana valida/.test(error.message));
+	}
+});
+
+test("publication keeps foreign profile locations unavailable to other profile types", () => {
+	for (const type of ["creators", "servizi-consulenze", "torneo-evento", "campi-impianti-sportivi"]) {
+		for (const registered of [false, true]) {
+			if (!registered && ["creators", "servizi-consulenze"].includes(type)) continue;
+			const request = profileLocationPayload(type, registered, [{regione: "Estero", citta: "Parigi"}]);
+			assert.throws(() => parsePublishPayload(request, registered), error => error.step === 2 && /regione italiana valida/.test(error.message), `${type}, registered=${registered}`);
+		}
+	}
+});
+
 test("player categories are required while additional announcement information is optional", () => {
 	const drafts = model.createAnnouncementDetailsDrafts();
 	const detail = model.getAnnouncementDetail("giocatore", null, drafts);

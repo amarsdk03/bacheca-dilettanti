@@ -2,6 +2,7 @@
 
 import {REGIONI_ITALIANE} from "../../../const/defaultConstants.ts";
 import {createProfileDrafts, type ProfileDrafts, type ProfileLocationDraft,} from "../../profilo/profile-model.ts";
+import {allowsForeignProfileRegion, FOREIGN_PROFILE_REGION} from "../../profilo/profile-location-regions.ts";
 import type {ProfileSocialLinks} from "../../profilo/profile-social-links.ts";
 import {
 	type AnnouncementContacts,
@@ -182,7 +183,7 @@ function timeValue(value: unknown) {
 	return normalized;
 }
 
-function normalizeLocations(value: unknown, step: 2 | 3, allowEmpty = false) {
+function normalizeLocations(value: unknown, step: 2 | 3, {allowEmpty = false, allowForeign = false}: {allowEmpty?: boolean; allowForeign?: boolean} = {}) {
 	if (!Array.isArray(value) || (!allowEmpty && value.length === 0) || value.length > MAX_LOCATIONS) {
 		fail("Seleziona almeno una località valida.", step);
 	}
@@ -191,7 +192,9 @@ function normalizeLocations(value: unknown, step: 2 | 3, allowEmpty = false) {
 		if (!isRecord(entry)) fail("Una delle località non è valida.", step);
 		assertExactKeys(entry, ["regione", "citta"], step);
 		const regione = textValue(entry.regione, 80, step, true);
-		if (!regione || !REGIONS.has(regione)) fail("Seleziona una regione italiana valida.", step);
+		if (!regione || (!REGIONS.has(regione) && !(allowForeign && regione === FOREIGN_PROFILE_REGION))) {
+			fail(allowForeign ? "Seleziona una regione italiana valida oppure Estero." : "Seleziona una regione italiana valida.", step);
+		}
 		const citta = textValue(entry.citta, 120, step);
 		const key = `${regione}\u0000${citta ?? ""}`;
 		if (seen.has(key)) fail("Rimuovi le località duplicate.", step);
@@ -473,7 +476,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean, cons
 			try {
 				const update = parseProfileEditorPayload(rawValue.profileUpdate);
 				if (update.type !== profileType || !isPublishableProfileType(update.type)) fail("Le modifiche non corrispondono al profilo selezionato.", 2);
-				const locations = normalizeLocations(update.locations, 2);
+				const locations = normalizeLocations(update.locations, 2, {allowForeign: allowsForeignProfileRegion(profileType)});
 				const drafts = createProfileDrafts();
 				assignNormalizedProfileDraft(drafts, profileType, update.draft);
 				const profileMessage = getProfileValidationMessage(profileType, drafts, {
@@ -496,7 +499,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean, cons
 			const profile = parseProfileEditorPayload(rawValue.anonymousProfile);
 			if (profile.type !== profileType || !isPublishableProfileType(profile.type)) fail("I dati del profilo non corrispondono alla tipologia selezionata.", 2);
 			profileDraft = profile.draft;
-			profileLocations = normalizeLocations(profile.locations, 2);
+			profileLocations = normalizeLocations(profile.locations, 2, {allowForeign: allowsForeignProfileRegion(profileType)});
 			profileSocialLinks = profile.socialLinks;
 			const drafts = createProfileDrafts();
 			assignNormalizedProfileDraft(drafts, profileType, profile.draft);
@@ -517,7 +520,7 @@ export function parsePublishPayload(rawValue: unknown, registered: boolean, cons
 	if (sponsorHasNoLocations && (!Array.isArray(rawValue.announcement.locations) || rawValue.announcement.locations.length > 0)) {
 		fail("La ricerca sponsor non prevede località.", 3);
 	}
-	const announcementLocations = normalizeLocations(rawValue.announcement.locations, 3, sponsorHasNoLocations);
+	const announcementLocations = normalizeLocations(rawValue.announcement.locations, 3, {allowEmpty: sponsorHasNoLocations});
 	if (expectedAnnouncementType === "annuncio_campo_impianto"
 		&& (announcementLocations.length !== 1 || !announcementLocations[0]?.citta)) {
 		fail("Seleziona una sola Regione e inserisci la Città o il comune dell’impianto.", 3);

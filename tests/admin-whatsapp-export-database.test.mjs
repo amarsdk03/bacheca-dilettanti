@@ -1,0 +1,77 @@
+import assert from "node:assert/strict";
+import {test} from "node:test";
+import {readFileSync} from "node:fs";
+import {createCreationFixture} from "./helpers/admin-creation-fixture.mjs";
+import {listClaims,listId} from "./helpers/admin-announcements-fixture.mjs";
+import {creationInput,creationDomain} from "./helpers/admin-creation-data.mjs";
+import {adminServerLoader} from "./helpers/admin-server-loader.mjs";
+const {createWhatsAppService}=adminServerLoader()("apps/admin/src/features/annunci/whatsapp/service.ts");
+const migration=readFileSync(new URL("../supabase/migrations/20261111163837_admin_direct_approval_whatsapp_export.sql",import.meta.url),"utf8");
+function payload(extra={}) {
+  const input=creationInput(),p=creationDomain.normalizeCreation(input);
+  return {author_mode:"unregistered",profile_id:null,profile_type:p.profileType,profile_draft:p.profileDraft,profile_locations:p.profileLocations,profile_social_links:p.profileSocialLinks,announcement_type:p.announcementType,announcement_title:p.announcementTitle,detail:p.detail,announcement_locations:[...p.announcementLocations,{regione:"Lazio",citta:"Roma"}],contacts:p.contacts,extras:{generic_link:""},authorized:true,source:"manual",original_text:null,message_url:null,reference_email:null,...extra};
+}
+test("direct approval and WhatsApp preparation are atomic, private, versioned and independently classified",async()=>{
+  const h=await createCreationFixture();
+  try {
+    await h.insert(30500);
+    await h.db.exec(migration);
+    const call=async(sql,args=[]) => (await h.callAs("authenticated",listClaims(),sql,args)).rows[0].result;
+    const create=(n,p)=>call("select public.admin_create_announcement_v1($1,$2::jsonb) result",[listId(n),JSON.stringify(p)]);
+    const read=id=>call("select public.admin_get_announcement_whatsapp_v1($1) result",[id]);
+    const save=(id,text,url,version,fp)=>call("select public.admin_save_announcement_whatsapp_v1($1,$2,$3,$4,$5,$6) result",[id,text,url,"2026-11-v1",version,fp]);
+    const approved=await create(31000,payload({approve_immediately:true}));
+    assert(approved.announcements.every(a=>a.status==="pubblicato"));
+    assert.equal(approved.announcements.length,2);
+    assert.equal((await create(31000,payload({approve_immediately:true}))).idempotent,true);
+    const audit=await h.db.query("select action,count(*)::int n from private.admin_audit_event_v1 group by action");
+    assert.equal(audit.rows.find(r=>r.action==="announcement.approve").n,2);
+    assert.equal(audit.rows.find(r=>r.action==="announcement.create").n,1);
+    const id=approved.announcementId, initial=await read(id), fp=initial.detail.contentFingerprint;
+    assert.equal((await h.db.query("select private.announcement_whatsapp_status_v1($1) result",[listId(30500)])).rows[0].result,"unknown");
+    await h.insert(30501);
+    assert.equal((await h.db.query("select private.announcement_whatsapp_status_v1($1) result",[listId(30501)])).rows[0].result,"website");
+    const service=createWhatsAppService({session:async()=>({rpc:async(name,args)=>{assert.equal(name,"admin_get_announcement_whatsapp_v1");return{data:await read(args.p_id),error:null};}})});
+    const projection=await service.read(id);assert.equal(projection.status,"ok");assert(projection.generated.text.includes("GIOCATORE CERCA SQUADRA"));assert(!projection.generated.text.includes("reference_email"));
+    assert.equal(initial.detail.summary.whatsappStatus,"website");
+    assert.equal((await save(id,"Messaggio","",0,fp)).status,"ok");
+    let loaded=await read(id);
+    assert.equal(loaded.export.text,"Messaggio");assert.equal(loaded.detail.summary.whatsappStatus,"website");
+    assert.equal((await save(id,"Pubblicato","https://whatsapp.com/channel/abc/1",loaded.export.version,fp)).status,"ok");
+    loaded=await read(id); assert.equal(loaded.detail.summary.whatsappStatus,"exported");
+    const before=(await h.db.query("select count(*)::int n from private.admin_audit_event_v1 where action='announcement.whatsapp_export'")).rows[0].n;
+    const events=await h.auditList({action:"announcement.whatsapp_export"});assert.equal(events.items.length,before);
+    assert.equal((await save(id,"Pubblicato","https://whatsapp.com/channel/abc/1",0,fp)).status,"ok");
+    assert.equal((await h.db.query("select count(*)::int n from private.admin_audit_event_v1 where action='announcement.whatsapp_export'")).rows[0].n,before);
+    assert.equal((await save(id,"Concurrent edit","",0,fp)).status,"conflict");
+    assert.equal((await save(id,"Pubblicato","javascript:bad",loaded.export.version,fp)).status,"invalid");
+    assert.equal((await save(id,"Bozza","",loaded.export.version,fp)).status,"ok");
+    assert.equal((await read(id)).detail.summary.whatsappStatus,"website");
+    await h.db.query("update public.annuncio set titolo_annuncio='Nuovo titolo' where uuid=$1",[id]);
+    assert.equal((await save(id,"Stale content","",(await read(id)).export.version,fp)).status,"conflict");
+    const pending=await create(31001,payload()); assert(pending.announcements.every(a=>a.status==="in_revisione"));
+    assert.equal((await read(pending.announcementId)).status,"ok");
+    const imported=await create(31002,payload({source:"whatsapp",original_text:"Fonte originale",message_url:"https://wa.me/1"}));
+    const original=await read(imported.announcementId);
+    assert.equal((await save(imported.announcementId,"Esportato","https://wa.me/2",0,original.detail.contentFingerprint)).status,"ok");
+    const exportedImport=await read(imported.announcementId);
+    assert.equal(exportedImport.detail.summary.whatsappStatus,"imported");
+    assert.equal(exportedImport.detail.origin.rawText,"Fonte originale");assert.equal(exportedImport.detail.origin.messageUrl,"https://wa.me/1");
+    await h.db.query("update public.annuncio set nascosto=true where uuid=$1",[id]);
+    assert.equal((await read(id)).status,"not_allowed");
+    assert.equal((await save(id,"Forbidden","",0,fp)).status,"not_allowed");
+    await assert.rejects(h.callAs("anon",{},"select public.admin_get_announcement_whatsapp_v1($1)",[id]));
+    await assert.rejects(h.callAs("service_role",listClaims(),"select public.admin_get_announcement_whatsapp_v1($1)",[id]));
+    await assert.rejects(h.callAs("authenticated",listClaims(),"select * from private.announcement_whatsapp_v1"));
+    await assert.rejects(h.callAs("authenticated",listClaims(),"select public.admin_create_announcement_before_direct_v1($1,$2::jsonb)",[listId(31900),JSON.stringify(payload())]));
+    const counts=async()=>JSON.stringify((await h.db.query("select (select count(*) from public.annuncio) a,(select count(*) from public.profilo) p,(select count(*) from private.announcement_whatsapp_v1) w,(select count(*) from private.admin_audit_event_v1) e,(select count(*) from private.admin_creation_submission_v1) s")).rows);
+    const beforeRollback=await counts();
+    await h.db.exec(`alter function private.moderate_admin_announcement_v1(uuid,text,text,text) rename to moderate_admin_announcement_test_original;
+      create function private.moderate_admin_announcement_v1(p_id uuid,p_operation text,p_fingerprint text,p_reason text) returns jsonb language plpgsql as $$ begin
+        if (select regione_pubblicazione from public.annuncio where uuid=p_id)='Lombardia' then return '{"status":"unavailable"}'::jsonb; end if;
+        return private.moderate_admin_announcement_test_original(p_id,p_operation,p_fingerprint,p_reason);
+      end $$;`);
+    await assert.rejects(create(31901,payload({approve_immediately:true})),/ADMIN_DIRECT_APPROVAL_FAILED/);
+    assert.equal(await counts(),beforeRollback,"an approval failure rolls back profiles, announcements, receipts, export metadata and audits");
+  } finally {await h.db.close();}
+});

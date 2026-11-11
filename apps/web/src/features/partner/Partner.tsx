@@ -1,6 +1,7 @@
-import {HandshakeIcon, SparklesIcon} from "lucide-react";
+import {ArrowRightIcon, HandshakeIcon, SparklesIcon} from "lucide-react";
 
 import {Badge} from "@/components/ui/badge";
+import {buttonVariants} from "@/components/ui/button-variants";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import GradientBackground from "@/components/styling/GradientBackground";
 import Link from "next/link";
@@ -27,9 +28,13 @@ export default function Partner() {
 						<CardTitle className="mt-3 font-home-display text-2xl uppercase">CONTATTACI!</CardTitle>
 					</CardHeader>
 					<CardContent className="px-6 pb-7 text-base tracking-wide leading-6 text-muted-foreground">
-						<Link href={"/contatti"}>
+						<p>
 							Vuoi far parte del nostro progetto supportandoci? Contattaci ora per scoprire le possibilità di
 							collaborazione e pubblicizzazione, presto in arrivo!
+						</p>
+						<Link href="/contatti" className={buttonVariants({variant: "brand", size: "lg", className: "mt-5 ps-4 min-h-11 max-w-full whitespace-normal"})}>
+							Vai alla pagina Contatti
+							<ArrowRightIcon data-icon="inline-end" aria-hidden="true" className="me-1.5" />
 						</Link>
 					</CardContent>
 				</Card>

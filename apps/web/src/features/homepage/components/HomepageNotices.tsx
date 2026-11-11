@@ -1,6 +1,6 @@
 "use client";
 
-import {useId} from "react";
+import {type CSSProperties, useId} from "react";
 import Link from "next/link";
 import {
 	ArrowRightIcon,
@@ -17,6 +17,7 @@ import {buttonVariants} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import type {HomepageNotice} from "@/features/homepage/homepage-notices";
 import {cn} from "@/lib/utils";
+import DynamicLucideIcon from "@/components/dynamic/DynamicLucideIcon";
 
 const NOTICE_APPEARANCE: Record<HomepageNotice["tipo"], {
 	label: string;
@@ -64,16 +65,18 @@ export default function HomepageNotices({notices}: HomepageNoticesProps) {
 					</div>
 				</CardHeader>
 				<CardContent className="px-0">
-					<Accordion defaultValue={[notices[0].id]} multiple={false}>
+					<Accordion defaultValue={notices.filter(notice => notice.testo?.trim()).slice(0, 1).map(notice => notice.id)} multiple={false}>
 						{notices.map((notice) => {
 							const appearance = NOTICE_APPEARANCE[notice.tipo];
 							const Icon = appearance.icon;
+							const hasContent = Boolean(notice.testo?.trim());
+							const NoticeHeading = hasContent ? AccordionTrigger : "div";
 
 							return (
-								<AccordionItem key={notice.id} value={notice.id} className={cn("homepage-notices-item", appearance.className)}>
-									<AccordionTrigger className="homepage-notices-trigger items-center gap-3 rounded-none px-4 py-4 sm:gap-4 sm:px-6 sm:py-5">
+								<AccordionItem key={notice.id} value={notice.id} className={cn("homepage-notices-item", appearance.className)} style={notice.colore ? {"--notice-accent": notice.colore} as CSSProperties : undefined}>
+									<NoticeHeading className="homepage-notices-trigger flex items-center gap-3 rounded-none px-4 py-4 sm:gap-4 sm:px-6 sm:py-5">
 										<span className="homepage-notices-icon flex size-10 shrink-0 items-center justify-center rounded-xl sm:size-11" aria-hidden="true">
-											<Icon className="size-5" />
+											{notice.icona ? <DynamicLucideIcon iconName={notice.icona} className="size-5" /> : <Icon className="size-5" />}
 										</span>
 										<span className="flex min-w-0 flex-1 flex-col gap-2 sm:gap-3">
 											<span className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
@@ -85,21 +88,18 @@ export default function HomepageNotices({notices}: HomepageNoticesProps) {
 											<span className="font-home-display wrap-break-word text-lg sm:text-2xl font-normal uppercase leading-tight">
 												{notice.titolo}
 											</span>
-											{
-												(!notice.testo && notice.azione) && (
-													<Link
-														href={notice.azione.href}
-														className={cn(buttonVariants({variant: "link", size: "lg"}), "homepage-notices-action text-base max-w-full justify-start gap-2 px-0 whitespace-normal")}
-													>
-														{notice.azione.etichetta}
-														<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-													</Link>
-												)
-											}
 										</span>
-									</AccordionTrigger>
+									</NoticeHeading>
+									{!hasContent && notice.azione && (
+										<div className="pr-4 pb-5 pl-17 sm:pr-16 sm:pl-21">
+											<Link href={notice.azione.href} className={cn(buttonVariants({variant: "link", size: "lg"}), "homepage-notices-action min-h-11 max-w-full justify-start gap-2 px-0 text-base whitespace-normal")}>
+												{notice.azione.etichetta}
+												<ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
+											</Link>
+										</div>
+									)}
 									{
-										notice.testo && (
+										hasContent && (
 											<AccordionContent className="h-auto px-4 pb-5 sm:pr-16 sm:pl-21">
 												<p className="max-w-2xl whitespace-pre-line wrap-break-word text-base leading-6 text-muted-foreground">
 													{notice.testo}

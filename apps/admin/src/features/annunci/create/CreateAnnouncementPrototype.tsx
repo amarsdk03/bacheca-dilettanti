@@ -5,6 +5,7 @@ import {ToggleGroup} from "@base-ui/react/toggle-group";
 import {Toggle} from "@base-ui/react/toggle";
 import {Check, Search, UserRound} from "lucide-react";
 import {Alert, AlertDescription} from "@/components/ui/alert";
+import {Checkbox} from "@/components/ui/checkbox";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Empty, EmptyDescription, EmptyHeader, EmptyTitle} from "@/components/ui/empty";
@@ -36,7 +37,7 @@ import {Tabs} from "@base-ui/react/tabs";
 import {CREATE_TABS, type CreateTab, type CreationInput, type CreationResult, type FieldIssue} from "./contracts";
 import {type LocalDraft, useAnnouncementDraft, useDraftField, useOptionalAnnouncementDraft} from "./store";
 import {validateCreation} from "./domain";
-import {getCreationReceipt, searchAnnouncementAuthors, submitAnnouncement} from "./actions";
+import {getCreationCapabilities, getCreationReceipt, searchAnnouncementAuthors, submitAnnouncement} from "./actions";
 import {
 	applyWhatsAppExtraction,
 	extractStoredMessage,
@@ -106,6 +107,9 @@ export function CreateAnnouncementPrototype() {
   const [teamTypes, setTeamTypes] = useDraftField("teamTypes");
   const [drafts, setDrafts] = useDraftField("drafts");
   const [dirty, setDirty] = useDraftField("dirty");
+  const [approveImmediately, setApproveImmediately] = useDraftField("approveImmediately");
+  const [approvalAvailable,setApprovalAvailable] = useState<boolean|null>(null);
+  useEffect(()=>{let active=true;void getCreationCapabilities().then(value=>{if(active)setApprovalAvailable(value);}).catch(()=>{if(active)setApprovalAvailable(false);});return()=>{active=false;};},[]);
   const [activeTab, setActiveTab] = useDraftField("activeTab");
   const whatsappApplied = useAnnouncementDraft(state => state.whatsappApplied);
   const [authors, setAuthors] = useDraftField("authors");
@@ -239,7 +243,7 @@ export function CreateAnnouncementPrototype() {
   const receipt = receipts[draftKey];
   const submissionId = submissionIds[draftKey] ?? "";
   const input: CreationInput | null = type ? {version: 1, submissionId, authorMode, profileId: profile?.id ?? null, profileType: type, teamType,
-    profile: authorMode === "unregistered" ? profileValues : {}, announcement: values, referenceEmail: authorMode === "unregistered" ? authorEmail : "", authorized: true, provenance: draft.provenance} : null;
+    profile: authorMode === "unregistered" ? profileValues : {}, announcement: values, referenceEmail: authorMode === "unregistered" ? authorEmail : "", authorized: true, approveImmediately, provenance: draft.provenance} : null;
   const errors = input && (attempted || Boolean(draft.provenance)) ? validateCreation(input, profile).filter(issue => attempted || issue.path !== "authorized") : [];
   const warnings: FieldIssue[] = [];
   if (draft.provenance) {
@@ -377,7 +381,9 @@ export function CreateAnnouncementPrototype() {
           <div className="admin-create-summary-content w-full">
           {input ? <CreationPreview input={input} profile={profile} image={draft.image} imageName={draft.imageMeta?.name} /> : <p>Seleziona l’autore e il profilo.</p>}
           {draft.provenance && <details><summary>Fonte WhatsApp · privata</summary><p className="whitespace-pre-wrap">{draft.provenance.rawText}</p><p>{draft.provenance.messageUrl}</p>{reextractSource(draft.provenance).unmapped.map((item,i) => <p key={i}><strong>{item.label}:</strong> {item.value}</p>)}</details>}
-          <p className="admin-create-note">L’annuncio sarà inviato in revisione. Per più regioni verrà creata una pubblicazione per regione.</p>
+          <Field orientation="horizontal"><Checkbox id="create-approve-immediately" checked={approveImmediately} disabled={busy || Boolean(receipt) || (!approveImmediately && approvalAvailable !== true) || Boolean(result && ["unknown","conflict","consumed"].includes(result.status))} onCheckedChange={checked => setApproveImmediately(checked === true)} /><FieldLabel htmlFor="create-approve-immediately">Approva direttamente l’annuncio</FieldLabel></Field>
+          {approvalAvailable === false && <p className="admin-create-note">Approvazione diretta non disponibile. Verifica la migrazione del database.</p>}
+          <p className="admin-create-note">{approveImmediately ? "L’annuncio sarà pubblicato direttamente." : "L’annuncio sarà inviato in revisione."} Per più regioni verrà creata una pubblicazione per regione.</p>
           {issues.length > 0 && <ul>{issues.map((issue,i) => <li key={`${issue.path}-${i}`}><button type="button" className={issue.severity === "error" ? "admin-create-error" : "admin-create-warning"} onClick={() => showIssues([issue])}>{issue.message}</button></li>)}</ul>}
           </div>
         </FormSection></Tabs.Panel>
@@ -387,7 +393,7 @@ export function CreateAnnouncementPrototype() {
         </div>
       </Tabs.Root>
     </form>
-    {receipt && <Alert variant="success" role="status"><AlertDescription><strong>Annuncio creato.</strong> {receipt.announcements.length} pubblicazioni inviate in revisione. La compilazione è conservata.<ul>{receipt.announcements.map(item => <li key={item.id}>{item.region ?? "Senza regione"} · {item.status}</li>)}</ul></AlertDescription></Alert>}
+    {receipt && <Alert variant="success" role="status"><AlertDescription><strong>Annuncio creato.</strong> {receipt.announcements.length} pubblicazioni {receipt.announcements.every(item => item.status === "pubblicato") ? "approvate" : "salvate"}. La compilazione è conservata.<ul>{receipt.announcements.map(item => <li key={item.id}>{item.region ?? "Senza regione"} · {item.status}</li>)}</ul></AlertDescription></Alert>}
     {result && result.status !== "ok" && result.status !== "invalid" && <Alert variant="danger" role="alert"><AlertDescription>{result.status === "unknown" ? "Esito da verificare. Premi Verifica invio prima di riprovare." : result.status === "conflict" ? "Questo invio corrisponde a una compilazione diversa. Avvia un nuovo annuncio." : result.status === "denied" ? "Accesso non autorizzato. Accedi di nuovo come Admin." : result.status === "consumed" ? "Questo invio è già stato utilizzato. Avvia un nuovo annuncio." : "Servizio non disponibile. La bozza è conservata; puoi riprovare."}</AlertDescription></Alert>}
     <div className="admin-create-step-actions"><Button type="button" variant="outline" disabled={busy || !submissionId} onClick={() => {setBusy(true); void getCreationReceipt(submissionId).then(response => {if (response.status === "ok") {setReceipts(previous => ({...previous,[draftKey]:response.receipt})); setResult(response);} else if (response.status === "absent") setResult(null); else setResult(response);}).finally(() => setBusy(false));}}>Verifica invio</Button><Button type="button" variant="outline" disabled={busy} onClick={() => setResetOpen(true)}>{receipt || result && ["conflict","consumed"].includes(result.status) ? "Nuovo annuncio" : "Svuota bozza"}</Button><GuardedLink href="/annunci" prefetch={false}>Torna agli annunci</GuardedLink></div>
     <AlertDialog open={resetOpen} onOpenChange={setResetOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Iniziare una nuova compilazione?</AlertDialogTitle><AlertDialogDescription>I campi conservati verranno svuotati. Gli annunci già creati rimangono salvati.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Annulla</AlertDialogCancel><AlertDialogAction onClick={() => {store.getState().clear(true); setResetOpen(false);}}>Nuova compilazione</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>

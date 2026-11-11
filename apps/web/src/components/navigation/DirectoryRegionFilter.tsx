@@ -2,6 +2,7 @@
 
 import {useEffect, useState, useTransition} from "react";
 import {useRouter} from "next/navigation";
+import {CheckIcon} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {FieldLegend, FieldSet} from "@/components/ui/field";
@@ -40,17 +41,19 @@ export default function DirectoryRegionFilter({action, entries, selected, counts
 			<span className="hidden sm:inline">Regioni</span>
 			{selected.length > 0 && <Badge variant="secondary" className="hidden sm:inline-flex">{selected.length}</Badge>}
 		</SheetTrigger>
-		<SheetContent side="left">
+		<SheetContent side="left" className="data-[side=left]:w-[85%] data-[side=left]:sm:max-w-md">
 			<SheetHeader><SheetTitle>Seleziona le regioni</SheetTitle><SheetDescription>Scegli una o più regioni. Senza selezioni la ricerca comprende tutta Italia.</SheetDescription></SheetHeader>
 			<div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 pb-4">
 				{(["Nord", "Centro", "Sud"] as const).map(area => <FieldSet key={area}>
 					<FieldLegend>{area}</FieldLegend>
-					<ToggleGroup multiple variant="outline" spacing={2} value={draft} onValueChange={next => {
+					<ToggleGroup multiple variant="outline" size="lg" spacing={2} value={draft} onValueChange={next => {
 						const other = draft.filter(name => !REGIONI_ITALIANE.some(region => region.area === area && region.nome === name));
 						setDraft([...other, ...next.filter(name => REGIONI_ITALIANE.some(region => region.area === area && region.nome === name))]);
-					}} aria-label={`Regioni del ${area}`} className="flex flex-wrap justify-start gap-2">
-						{REGIONI_ITALIANE.filter(region => region.area === area).map(({nome}) => <ToggleGroupItem key={nome} value={nome} className="rounded-lg px-3">
-							{nome}{regionCounts && <span className="tabular-nums text-muted-foreground">{regionCounts[nome] ?? 0}</span>}
+					}} aria-label={`Regioni del ${area}`} className="grid w-full grid-cols-2 items-stretch">
+						{REGIONI_ITALIANE.filter(region => region.area === area).map(({nome}) => <ToggleGroupItem key={nome} value={nome} className="group h-auto min-h-11 min-w-0 justify-start gap-2 px-2 py-2 text-left whitespace-normal data-pressed:bg-brand-indigo-200 data-pressed:text-brand-ink">
+							<CheckIcon aria-hidden="true" className="size-3 text-brand-indigo opacity-0 group-data-pressed:opacity-100" />
+							<span className="min-w-0 flex-1 text-xs wrap-anywhere">{nome}</span>
+							{regionCounts && <span className="shrink-0 text-xs tabular-nums opacity-70">{regionCounts[nome] ?? 0}<span className="sr-only"> risultati</span></span>}
 						</ToggleGroupItem>)}
 					</ToggleGroup>
 				</FieldSet>)}

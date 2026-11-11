@@ -28,6 +28,10 @@ function service() {
 }
 export async function searchAnnouncementAuthors(query: string) {return service().search(query);}
 export async function getCreationReceipt(id: string) {return service().receipt(id);}
+export async function getCreationCapabilities() {
+  try {const {rpc}=await verifiedSession(); const {data,error}=await rpc("admin_get_creation_capabilities_v1",{}); return !error && data === true;}
+  catch {return false;}
+}
 export async function submitAnnouncement(form: FormData) {
   let input: unknown;
   try {input = JSON.parse(String(form.get("input")));} catch {input = null;}

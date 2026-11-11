@@ -118,7 +118,9 @@ export const getAuthenticatedViewer = cache(async (): Promise<AuthenticatedViewe
 });
 
 export const getCurrentViewer = cache(async (): Promise<ViewerDTO | null> => {
-	return (await getAuthenticatedViewer())?.viewer ?? null;
+	const account = await getAuthenticatedViewer();
+	// OTP verification authenticates publishers before site registration is complete.
+	return account?.utenteId && account.registeredAt ? account.viewer : null;
 });
 
 export async function requireAuthenticatedViewer() {

@@ -112,7 +112,6 @@ export default function PubblicaAnnuncio(props: PubblicaAnnuncioProps) {
 function PublishAnnouncementForm({
 	authenticated,
 	registered,
-	initialEmail,
 	profileContext,
 }: PubblicaAnnuncioProps) {
 	const [step, setStep] = useState(1);
@@ -130,7 +129,7 @@ function PublishAnnouncementForm({
 	const [announcementDrafts, setAnnouncementDrafts] = useState(createAnnouncementDetailsDrafts);
 	const [announcementTitle, setAnnouncementTitle] = useState("");
 	const [announcementLocations, setAnnouncementLocations] = useState<ProfileLocationDraft[]>([]);
-	const [contacts, setContacts] = useState<AnnouncementContacts>({email: registered ? initialEmail : "", phone: "", contactRole: ""});
+	const [contacts, setContacts] = useState<AnnouncementContacts>({email: "", phone: "", contactRole: ""});
 	const [extras, setExtras] = useState<AnnouncementExtras>({genericLink: ""});
 	const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
 	const [announcementImagePreviewUrl, setAnnouncementImagePreviewUrl] = useState<string | null>(null);
@@ -267,7 +266,7 @@ function PublishAnnouncementForm({
 		setProfileSocialLinks(registered && profileContext ? cloneProfileSocialLinks(profileContext.socialLinks) : createProfileSocialLinks());
 		setAnnouncementDrafts(createAnnouncementDetailsDrafts());
 		setAnnouncementTitle("");
-		setContacts({email: registered ? initialEmail : "", phone: "", contactRole: ""});
+		setContacts({email: "", phone: "", contactRole: ""});
 		setExtras({genericLink: ""});
 		updateAnnouncementImage(null);
 		setSubmissionId(globalThis.crypto.randomUUID());

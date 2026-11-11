@@ -1,6 +1,7 @@
 import "server-only";
 import type {AnnouncementListItem, AnnouncementListPage, AnnouncementListQuery} from "../contracts";
 import {canonicalUuid, databaseTimestamp, record, validCursor} from "../validation";
+import {WHATSAPP_STATUSES} from "../whatsapp/model";
 import {encodeListCursor} from "./query-input";
 
 const nullableId = (v: unknown) => v === null || canonicalUuid(v);
@@ -21,6 +22,7 @@ export function parseListResponse(value: unknown, query: AnnouncementListQuery):
       !/^[0-9a-f]{32}$/.test(row.rowFingerprint) || !record(row.author)) invalid();
     if (row.displayTitle !== undefined && (typeof row.displayTitle !== "string" || !row.displayTitle.trim() || row.displayTitle.length > 512)) invalid();
     if (row.fromWhatsApp !== undefined && !nullableBool(row.fromWhatsApp)) invalid();
+    if (row.whatsappStatus !== undefined && !WHATSAPP_STATUSES.includes(row.whatsappStatus as never) || row.whatsappAvailable !== undefined && typeof row.whatsappAvailable !== "boolean") invalid();
     const author = row.author;
     if (!nullableId(author.profileId) || !nullableId(author.userId) || typeof author.displayName !== "string" || !author.displayName.trim() ||
       !nullableBool(author.anonymous) || typeof author.available !== "boolean" ||
@@ -32,6 +34,8 @@ export function parseListResponse(value: unknown, query: AnnouncementListQuery):
     }
     // Explicit projection: extra backend fields can never leak to client DTOs.
     const item: AnnouncementListItem = {
+      ...(row.whatsappStatus === undefined ? {} : {whatsappStatus: row.whatsappStatus as AnnouncementListItem["whatsappStatus"]}),
+      ...(row.whatsappAvailable === undefined ? {} : {whatsappAvailable: row.whatsappAvailable as boolean}),
       ...(row.fromWhatsApp === undefined ? {} : {fromWhatsApp: row.fromWhatsApp as boolean | null}),
       id: row.id, title: row.title as string | null, type: row.type, status: row.status as string | null,
       ...(typeof row.displayTitle === "string" ? { displayTitle: row.displayTitle } : {}),

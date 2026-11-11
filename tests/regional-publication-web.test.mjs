@@ -19,8 +19,8 @@ function sourceLoader(overrides = {}) {
 		new Function("require","module","exports",outputText)(specifier => {
 			if (Object.hasOwn(overrides,specifier)) return overrides[specifier];
 			if (specifier === "server-only") return {};
-			if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
-			const base = specifier.startsWith("@/") ? path.join(root,"apps/web/src",specifier.slice(2)) : path.resolve(path.dirname(file),specifier);
+			if (!specifier.startsWith("@/") && !specifier.startsWith(".") && !specifier.startsWith("@bacheca/announcements/")) return require(specifier);
+			const base = specifier.startsWith("@bacheca/announcements/") ? path.join(root, "packages/announcements/src", specifier.slice("@bacheca/announcements/".length)) : specifier.startsWith("@/") ? path.join(root,"apps/web/src",specifier.slice(2)) : path.resolve(path.dirname(file),specifier);
 			return load([base,base+".ts",base+".tsx"].find(candidate => existsSync(candidate)));
 		},loaded,loaded.exports);
 		return loaded.exports;
@@ -121,4 +121,93 @@ test("group confirmation rejects non-member IDs before loading any announcement"
 	const load=sourceLoader({"@/lib/supabase/server":{createClient:async()=>client},"@/lib/supabase/admin":{createAdminClient:()=>client}});
 	const {loadRegionalPublishConfirmation:confirm}=load("apps/web/src/features/pubblica-annuncio/server/confirmation.ts");
 	assert.deepEqual(await confirm(group,group),{status:"not-found"}); assert.equal(reads,0);
+});
+
+function groupedConfirmationFixture(regions, {incomplete = false, fail = false} = {}) {
+	const announcements = regions.map((region, index) => ({id: `${String(index + 1).padStart(8, "0")}-aaaa-4aaa-8aaa-aaaaaaaaaaaa`, region, status: index ? "pubblicato" : "in_revisione"}));
+	const locations = region => region === "Lazio"
+		? [{regione: region, citta: "Roma"}, {regione: region, citta: "Viterbo"}, {regione: region, citta: "roma"}]
+		: [{regione: region, citta: null}];
+	const calls = [];
+	const client = {
+		rpc: async () => ({data: {status: "success", publicationId: group, announcementId: announcements[0].id, announcements}, error: null}),
+		from(table) {
+			const call = {table, operations: []}; calls.push(call);
+			const query = {};
+			for (const method of ["select", "eq", "is"]) query[method] = (...args) => {call.operations.push([method, ...args]); return query;};
+			query.in = async (key, ids) => {
+				call.operations.push(["in", key, ids]);
+				return {data: announcements.slice(incomplete ? 1 : 0).map(item => ({uuid: item.id, localita_annuncio: locations(item.region)})), error: fail ? {code: "FIXTURE_ERROR"} : null};
+			};
+			query.maybeSingle = async () => {
+				if (table !== "annuncio") return {data: null, error: null};
+				const selected = announcements.find(item => item.id === call.operations.find(([method, key]) => method === "eq" && key === "uuid")[2]);
+				return {data: {uuid: selected.id, autore_annuncio: other, tipologia_annuncio: "annuncio_staff_sportivo", titolo_annuncio: "Ricerca", stato_annuncio: selected.status, nascosto: false, privato: false, localita_annuncio: locations(selected.region), annuncio_staff_sportivo: {}}, error: null};
+			};
+			return query;
+		},
+	};
+	const load = sourceLoader({
+		"@/lib/supabase/server": {createClient: async () => client},
+		"@/lib/supabase/admin": {createAdminClient: () => client},
+		"@/features/annunci/server/queries": {loadRelatedPublicAnnouncements: async () => []},
+		"@/features/profilo/server/public-team-profiles": {loadPublicTeamProfiles: async () => []},
+	});
+	return {load, calls, announcements};
+}
+
+test("saved confirmation shows one summary for 1, 2 or 20 regions and batches only owned locations", async () => {
+	const regions = sourceLoader()("apps/web/src/const/defaultConstants.ts").REGIONI_ITALIANE.map(item => item.nome);
+	for (const selectedRegions of [["Lazio"], ["Lazio", "Toscana"], regions]) {
+		const {load, calls, announcements} = groupedConfirmationFixture(selectedRegions);
+		const confirm = load("apps/web/src/features/pubblica-annuncio/server/confirmation.ts").loadRegionalPublishConfirmation;
+		const result = await confirm(group, announcements.at(-1).id);
+		assert.equal(result.status, "ok");
+		assert.deepEqual(new Set(result.preview.locations.map(item => item.region)), new Set(selectedRegions));
+		const areas = result.preview.summarySections.filter(section => section.id === "search-areas");
+		assert.equal(areas.length, 1);
+		assert.deepEqual(new Set(areas[0].locations.map(item => item.region)), new Set(selectedRegions));
+		const batches = calls.filter(call => call.operations.some(([method]) => method === "in"));
+		assert.equal(batches.length, selectedRegions.length > 1 ? 1 : 0);
+		if (batches.length) {
+			assert.deepEqual(batches[0].operations.find(([method]) => method === "in"), ["in", "uuid", announcements.map(item => item.id)]);
+			assert.deepEqual(result.preview.locations.filter(item => item.region === "Lazio").map(item => item.city), ["Roma", "Viterbo"]);
+		}
+		const Confirmation = load("apps/web/src/features/pubblica-annuncio/ConfermaPubblicazione.tsx").default;
+		const html = renderToStaticMarkup(React.createElement(Confirmation, {result}));
+		assert.equal((html.match(/data-summary-field="search-areas"/g) ?? []).length, 1);
+		assert.doesNotMatch(html, /Seleziona una regione|aria-current="page"|conferma\?publication=/);
+		for (const region of selectedRegions) assert.ok(html.includes(renderToStaticMarkup(React.createElement(React.Fragment, null, region))), region);
+		if (selectedRegions.length > 1) {
+			assert.match(html, /Stato degli annunci:/);
+		}
+	}
+});
+
+test("saved group summary fails instead of displaying incomplete or unavailable locations", async () => {
+	for (const options of [{incomplete: true}, {fail: true}]) {
+		const {load} = groupedConfirmationFixture(["Lazio", "Toscana"], options);
+		assert.deepEqual(await load("apps/web/src/features/pubblica-annuncio/server/confirmation.ts").loadRegionalPublishConfirmation(group), {status: "error"});
+	}
+});
+
+test("final wizard shows every search area once with a dynamic regional announcement count", () => {
+	const load = sourceLoader({
+		"next/navigation": {useRouter: () => ({})},
+		"@/features/pubblica-annuncio/server/actions": {},
+		"@/components/ui/toast": {toast: {}},
+	});
+	const Wizard = load("apps/web/src/features/pubblica-annuncio/components/ConfermaInvioAnnuncio.tsx").default;
+	const drafts = load("apps/web/src/features/profilo/profile-model.ts").createProfileDrafts();
+	const regions = load("apps/web/src/const/defaultConstants.ts").REGIONI_ITALIANE.map(item => item.nome);
+	for (const selectedRegions of [["Lazio"], ["Lazio", "Toscana"], regions]) {
+		const payload = {profileType: "giocatore", announcement: {type: "annuncio_giocatore", title: "Ricerca", detail: {}, locations: selectedRegions.flatMap(regione => regione === "Lazio" ? [{regione, citta: "Roma"}, {regione, citta: "Viterbo"}] : [{regione, citta: null}]), contacts: {email: "", phone: ""}, extras: {genericLink: ""}}};
+		const html = renderToStaticMarkup(React.createElement(Wizard, {payload, image: null, imagePreviewUrl: null, profileDrafts: drafts, profileLocations: [], authenticated: true, registered: true, onEditStep() {}}));
+		assert.equal((html.match(/data-summary-field="search-areas"/g) ?? []).length, 1);
+		for (const region of selectedRegions) assert.ok(html.includes(renderToStaticMarkup(React.createElement(React.Fragment, null, region))), region);
+		assert.match(html, /Roma, Viterbo/);
+		assert.doesNotMatch(html, /Anteprime per regione|aria-pressed|Puoi verificarli qui/);
+		if (selectedRegions.length > 1) assert.ok(html.includes(`Questo invio creerà <strong>${selectedRegions.length} annunci separati</strong>, uno per regione.`));
+		else assert.doesNotMatch(html, /Questo invio creerà/);
+	}
 });
