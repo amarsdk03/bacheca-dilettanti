@@ -87,7 +87,7 @@ export async function checkHome({ cli, pageId, evaluate, uid, waitFor, key, fill
     await metric("pending"); await settled(); await charts();
     assert.equal(await evaluate("() => !!document.querySelector('#home-chart-panel .recharts-bar') && document.querySelector('#home-chart-panel').textContent.includes('Tipologie da approvare')"), true);
     await metric("profits"); await settled();
-    assert.equal(await evaluate("() => !document.querySelector('#home-chart-panel [data-slot=chart]') && document.querySelector('#home-chart-panel').textContent.includes('I dati sui profitti non sono disponibili.')"), true);
+    assert.equal(await evaluate("() => !document.querySelector('#home-chart-panel [data-slot=chart]') && document.querySelector('#home-chart-panel').textContent.includes('I dati sui profitti non sono attualmente disponibili.')"), true);
     record("all-four-metrics-and-correct-distributions");
 
     let before = counts(); await metric("profits"); delta(before, {});

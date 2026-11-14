@@ -30,22 +30,23 @@ test("channel region is required, supplies missing regional context and never in
   store.setState({whatsappRegion: "Lombardia"});
   const result = extractStoredMessage(store.getState());
   assert.equal(result.blocked, false);
-  assert.equal(result.profile.region, "Lombardia");
-  assert.equal(result.profile.city, "");
-  assert.deepEqual(result.announcement.locations, [{region: "Lombardia", city: ""}]);
-  assert(result.issues.some(issue => /Zona/.test(issue.label)));
+  assert.equal(result.profile.region, undefined);
+  assert.equal(result.profile.city, undefined);
+  assert.deepEqual(result.announcement.locations, [{region: "Lombardia", city: "Milano"}]);
+  assert(result.issues.some(issue => issue.code === "PROFILE_LOCATION"));
 });
 
-test("conflicting and multiple message regions require an explicit valid resolution", () => {
+test("conflicting regions preserve search areas and require review independently of profile location", () => {
   for (const suffix of ["\n#Lazio", "\n#Lazio #Lombardia", "\n#Lazio #Veneto"]) {
     const result = parseWhatsAppMessage(content + suffix, "", "", {channelRegion: "Lombardia"});
-    assert.equal(result.blocked, true);
+    assert.equal(result.blocked, false);
     assert(result.regionConflict.includes("Lazio"));
-    assert.equal(result.announcement.locations, undefined);
+    assert(result.announcement.locations.length > 0);
     const resolved = parseWhatsAppMessage(content + suffix, "", "", {channelRegion: "Lombardia", resolvedRegion: "Lazio"});
     assert.equal(resolved.blocked, false);
-    assert.equal(resolved.profile.region, "Lazio");
-    assert.equal(resolved.profile.city, "");
+    assert.equal(resolved.profile.region, undefined);
+    assert.equal(resolved.profile.city, undefined);
+    assert.equal(resolved.announcement.locations[0].region, "Lazio");
     assert.equal(parseWhatsAppMessage(content + suffix, "", "", {channelRegion: "Lombardia", resolvedRegion: "Sicilia"}).blocked, true);
   }
 });
@@ -129,14 +130,15 @@ test("re-analysis cannot replace a completed or uncertain submission", () => {
   }
 });
 
-test("the server rejects unresolved regions before any upload or creation RPC", async () => {
-  const input = creationInput();
-  input.provenance = {source: "whatsapp", rawText: content + "\n#Lazio", messageUrl: "", context: {channelRegion: "Lombardia"}};
-  assert(validateCreation(input).some(issue => issue.path === "author._form"));
-  const service = createAnnouncementCreation({session: async () => ({actorId: input.submissionId, rpc: () => assert.fail("RPC must not execute")}), upload: () => assert.fail("Upload must not execute")});
-  assert.equal((await service.submit(input)).status, "invalid");
-  input.provenance.context.resolvedRegion = "Lazio";
-  assert.equal(validateCreation(input).some(issue => issue.path === "author._form"), false);
+test("the server rejects unresolved review before any upload or creation RPC", async () => {
+  const input=creationInput();input.version=2;input.canonical=load(base+"canonical-draft.ts").migrateCanonicalDraft(input);
+  input.provenance={source:"whatsapp",rawText:content+"\n#Lazio",messageUrl:"",context:{channelRegion:"Lombardia"}};
+  assert(validateCreation(input).some(issue=>issue.path.startsWith("author.review.")));
+  const service=createAnnouncementCreation({session:async()=>({actorId:input.submissionId,rpc:()=>assert.fail("RPC must not execute")}),upload:()=>assert.fail("Upload must not execute")});
+  assert.equal((await service.submit(input)).status,"invalid");
+  const {reviewBinding}=load(base+"whatsapp-review.ts");
+  input.reviewDecisions=Object.fromEntries(parseWhatsAppMessage(input.provenance.rawText,"","",input.provenance.context).issues.map(issue=>[issue.id,{action:"confirmed",binding:reviewBinding(input,issue)}]));
+  assert.equal(validateCreation(input).some(issue=>issue.path.startsWith("author.review.")),false);
 });
 
 test("Admin previews use canonical Web projections for all types and separate regional publications", () => {

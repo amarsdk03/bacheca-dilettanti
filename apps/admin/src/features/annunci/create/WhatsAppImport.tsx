@@ -34,7 +34,7 @@ export function WhatsAppImport({onChange, onApply, needsConfirmation, children}:
   const [content, setContent] = useDraftField("whatsappContent");
   const [link, setLink] = useDraftField("whatsappLink");
   const [region, setRegion] = useDraftField("whatsappRegion");
-  const [resolvedRegion, setResolvedRegion] = useDraftField("whatsappResolvedRegion");
+  const [, setResolvedRegion] = useDraftField("whatsappResolvedRegion");
   const [, setManualTarget] = useDraftField("whatsappManualTarget");
   const [result, setResult] = useDraftField("whatsappResult");
   const [analysis] = useDraftField("whatsappAnalysis");
@@ -106,10 +106,7 @@ export function WhatsAppImport({onChange, onApply, needsConfirmation, children}:
       <Alert variant={result.blocked ? "danger" : "success"} role="status"><AlertDescription>
         {result.blocked ? "Controlla i campi segnalati e la tipologia." : pending ? "Messaggio riconosciuto. Conferma la sostituzione dei dati modificati." : applied ? "Campi precompilati. Completa le informazioni segnalate." : "I dati precedenti sono conservati. Analizza il messaggio per applicare le modifiche."}
       </AlertDescription></Alert>
-      {result.regionConflict && <Field data-invalid><FieldLabel htmlFor="whatsapp-region-resolution">Regione da usare <span className="admin-create-required">*</span></FieldLabel>
-        <p className="admin-create-warning">Il canale e il messaggio indicano regioni diverse. Scegli quella corretta.</p>
-        <PrototypeSelect id="whatsapp-region-resolution" required invalid value={resolvedRegion} options={result.regionConflict.map(value => ({value,label:value}))} onChange={value => {setResolvedRegion(value); analyze();}} />
-      </Field>}
+      {result.regionConflict && <Alert variant="warning"><AlertDescription>Il messaggio e il canale indicano più regioni. Tutte le zone esplicite sono conservate: seleziona quelle corrette nella revisione del riepilogo.</AlertDescription></Alert>}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field data-invalid={!target}><FieldLabel htmlFor="whatsapp-profile-type">Tipologia profilo <span className="admin-create-required">*</span></FieldLabel>
           <PrototypeSelect id="whatsapp-profile-type" required invalid={!target} value={target?.profileType ?? ""} options={profileOptions} onChange={value => {const next=WHATSAPP_TARGETS.find(item => item.profileType===value); if(next) chooseType(next.id);}} />

@@ -90,21 +90,40 @@ test("adapters preserve integer zero, Italian year labels, category counts and s
   assert.match(p.primaryRows(pending).at(-1).label, /Data non disponibile/);
 });
 function renderer() { return homeUiLoader({ recharts: require("recharts") })(base + "components/HomeCharts.tsx"); }
+test("chart tables keep category values under their headings and totals in the last column", () => {
+  const Table = renderer().ChartDataTable;
+  for (const categories of [[], [{key:"player",label:"Giocatore"}, {key:"team",label:"Squadra"}]]) {
+    const html = renderToStaticMarkup(React.createElement(Table, {title:"Dati", categories,
+      rows:[{key:"period",label:"Periodo",count:7,category_player:2,category_team:5}]}));
+    const headings = [...html.matchAll(/<th\b[^>]*>(.*?)<\/th>/g)].map(match => match[1]);
+    const cells = [...html.matchAll(/<td\b[^>]*>(.*?)<\/td>/g)].map(match => match[1]);
+    assert.deepEqual(headings, ["Periodo / Categoria", ...categories.map(c => c.label), "Totale"]);
+    assert.deepEqual(cells, categories.length ? ["Periodo", "2", "5", "7"] : ["Periodo", "7"]);
+  }
+});
 test("empty pending population has an explicit state and never invents charts", () => {
-  const html = renderToStaticMarkup(React.createElement(renderer().default, { chart: pending })); assert.match(html, /Nessun annuncio da approvare/); assert(!html.includes('data-slot="chart"')); assert.match(html, /non dall’ingresso in revisione/);
+  const html = renderToStaticMarkup(React.createElement(renderer().default, { chart: pending })); assert.match(html, /Nessun annuncio da approvare/); assert(!html.includes('data-slot="chart"')); assert(!html.includes("Informazioni sui dati"));
 });
 test("monthly dataset renders real chart containers, separate denominators and accessible tables", () => {
   const html = renderToStaticMarkup(React.createElement(renderer().default, { chart: users }));
-  assert.equal((html.match(/data-slot="chart"/g) ?? []).length, 2); assert.equal((html.match(/<details/g) ?? []).length, 2); assert.match(html, /Totale profili: 2/); assert.match(html, /Popolazione: 1/); assert.match(html, /uno stesso utente/); assert.match(html, /Giocatore: 1/);
+  assert.equal((html.match(/data-slot="chart"/g) ?? []).length, 2); assert.equal((html.match(/<details/g) ?? []).length, 2); assert.match(html, /Totale profili: 2/); assert.match(html, /Nel periodo selezionato \(12 mesi\)/); assert(!html.includes("include periodi parziali")); assert.match(html, /aria-valuetext="1 su 2"/); assert.match(html, /Non confrontabile/);
+});
+test("chart mode icons and partial-period label reflect the visible mode", () => {
+  const chart = {...users, breakdown: users.series.map(row => ({key: row.month, counts: row.count ? [{key:"giocatore",count:row.count}] : []}))};
+  const Chart = renderer().default;
+  const total = renderToStaticMarkup(React.createElement(Chart, {chart, split:false}));
+  const separated = renderToStaticMarkup(React.createElement(Chart, {chart, split:true}));
+  assert.match(total, /lucide-chart-column-big/); assert.match(separated, /lucide-chart-column-stacked/);
+  assert.match(total, /\(\* = Periodo parziale\)/);
 });
 test("zero monthly events retain twelve rows and empty distribution does not render a dummy pie", () => {
   const value = { ...users, population: 0, distributionTotal: 0, distribution: [], series: users.series.map(r => ({ ...r, count: 0 })) };
-  const html = renderToStaticMarkup(React.createElement(renderer().default, { chart: value })); assert.equal((html.match(/data-slot="chart"/g) ?? []).length, 1); assert.match(html, /Nessun evento nel periodo/); assert.match(html, /Nessun dato nella distribuzione/); assert.equal((html.match(/<tr/g) ?? []).length, 14);
+  const html = renderToStaticMarkup(React.createElement(renderer().default, { chart: value })); assert.equal((html.match(/data-slot="chart"/g) ?? []).length, 2); assert.match(html, /Nessun evento nel periodo/); assert.match(html, /Nessun dato nella distribuzione/); assert.equal((html.match(/<tr/g) ?? []).length, 14); assert(!html.includes('role="progressbar"'));
 });
 test("profit panel and retryable failure render without importing the chart library", () => {
   for (const result of [{ status: "ok", chart: chart("profits") }, { status: "unavailable", code: "HOME_UNAVAILABLE", correlationId: "failure-id" }]) {
     const l = homeUiLoader({ "./useHomeChart": { useHomeChart: () => ({ selected: "profits", pending: false, result, refresh() {} }) } });
     const html = renderToStaticMarkup(React.createElement(l(base + "components/HomeChartPanel.tsx").HomeChartPanel));
-    assert.match(html, result.status === "ok" ? /I dati sui profitti non sono disponibili/ : /failure-id/); assert(!html.includes('data-slot="chart"'));
+    assert.match(html, result.status === "ok" ? /I dati sui profitti non sono attualmente disponibili/ : /failure-id/); assert(!html.includes('data-slot="chart"'));
   }
 });

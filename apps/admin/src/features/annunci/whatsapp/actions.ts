@@ -5,6 +5,7 @@ import {verifyAdminContext} from "@/features/auth/server/context";
 import {createAdminAuditService} from "@/features/audit/server";
 import type {CreationRpc} from "../create/service";
 import {createWhatsAppService, validWhatsAppSave} from "./service";
+
 async function session() {
   const client=await createClient(), context=await verifyAdminContext(async () => client);
   if (context.status !== "admin") throw new Error(context.status === "unavailable" ? "ADMIN_CONTEXT_UNAVAILABLE" : "ADMIN_ACCESS_DENIED");

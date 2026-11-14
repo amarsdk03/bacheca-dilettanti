@@ -1,3 +1,6 @@
+/** Legacy v1 draft vocabulary. New forms and v2 validation use canonical shared models and UI.
+ * Retained exclusively for restoring existing drafts and accepting legacy manual submissions.
+ * Do not add new UI fields here. */
 import {
 	CATEGORY_FILTER_OPTIONS,
 	categoryKey,

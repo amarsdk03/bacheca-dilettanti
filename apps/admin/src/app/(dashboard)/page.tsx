@@ -1,7 +1,5 @@
 import {Suspense} from "react";
 import {requireAdminPageContext} from "@/features/dashboard/server/guard";
-import {SectionHeading} from "@/features/dashboard/components/SectionHeading";
-import {DASHBOARD_SECTIONS} from "@/features/dashboard/sections";
 import {getAdminHomeActivity, getAdminHomeSummary} from "@/features/home/server/queries";
 import {HomeActivitySection, HomeKpiSection} from "@/features/home/server/blocks";
 import {HomeSessionProvider} from "@/features/home/components/HomeSessionProvider";
@@ -15,10 +13,10 @@ export default async function AdminPage() {
   const summary = getAdminHomeSummary(), activity = getAdminHomeActivity();
   return (
     <HomeSessionProvider><section className="admin-home">
-      <SectionHeading section={DASHBOARD_SECTIONS[0]} />
-      <Suspense fallback={<HomeKpiSkeleton />}><HomeKpiSection result={summary} /></Suspense>
+      <HomeChartPanel>
+        <Suspense fallback={<HomeKpiSkeleton />}><HomeKpiSection result={summary} /></Suspense>
+      </HomeChartPanel>
       <HomeQuickActions />
-      <HomeChartPanel />
       <Suspense fallback={<HomeActivitySkeleton />}><HomeActivitySection result={activity} /></Suspense>
     </section></HomeSessionProvider>
   );

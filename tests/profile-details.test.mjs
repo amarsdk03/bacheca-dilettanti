@@ -26,6 +26,18 @@ function sourceLoader(overrides = {}) {
 		const localRequire = (specifier) => {
 			if (Object.hasOwn(overrides, specifier)) return overrides[specifier];
 			if (specifier === "server-only") return {};
+      if (specifier.startsWith("@bacheca/announcements/")) {
+        const alias="@/"+specifier.slice("@bacheca/announcements/".length);
+        if(Object.hasOwn(overrides,alias))return overrides[alias];
+        const modulePath=specifier.slice("@bacheca/announcements/".length).replace("publication/","ui/publication/");
+        const base=path.join(root,"packages/announcements/src",modulePath);
+        return load([base,base+".ts",base+".tsx"].find(existsSync));
+      }
+      const publicationRoot=path.join(root,"packages/announcements/src/ui/publication");
+      if(file.startsWith(publicationRoot) && specifier.startsWith(".")) {
+        const alias="@/"+path.relative(publicationRoot,path.resolve(path.dirname(file),specifier)).replaceAll(path.sep,"/");
+        if(Object.hasOwn(overrides,alias))return overrides[alias];
+      }
 			if (!specifier.startsWith("@/") && !specifier.startsWith(".")) return require(specifier);
 			const base = specifier.startsWith("@/")
 				? path.join(root, "apps/web/src", specifier.slice(2))

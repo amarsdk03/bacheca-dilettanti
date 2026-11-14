@@ -2,6 +2,7 @@
 
 import {ExternalLink} from "lucide-react";
 import {Button} from "@/components/ui/button";
+import {DropdownMenuItem} from "@/components/ui/dropdown-menu";
 import {useExternalNavigation} from "@/features/navigation/ExternalNavigation";
 import {canonicalUuid} from "../validation";
 
@@ -17,9 +18,13 @@ function previewUrl(id: string): string | null {
   } catch { return null; }
 }
 
-export function AnnouncementSiteLink({ id, trashed }: { id: string; trashed?: boolean }) {
+export function AnnouncementSiteLink({ id, trashed, menu = false }: { id: string; trashed?: boolean; menu?: boolean }) {
   const request = useExternalNavigation();
   const href = previewUrl(id);
+  if (menu) return <DropdownMenuItem disabled={trashed || !href}
+    onClick={(event) => { if (href) request(href, document.getElementById(`annunci-menu-${id}`) ?? event.currentTarget); }}>
+    <ExternalLink aria-hidden="true" />Apri sul sito
+  </DropdownMenuItem>;
   return <div className="admin-site-preview">
     <Button type="button" variant="outline" size="sm" disabled={trashed || !href}
       aria-label="Apri l’annuncio sul sito in una nuova scheda"

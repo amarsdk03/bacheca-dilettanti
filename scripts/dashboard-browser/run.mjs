@@ -9,12 +9,16 @@ import { command, createAuthFixture, inspectClientAssets, isLoginRedirect, isola
 import { createSessionFixture } from "./session-fixture.mjs";
 import { checkSession } from "./session-checks.mjs";
 import { checkHome } from "./home-checks.mjs";
+import { checkHomeRedesign } from "./home-redesign-checks.mjs";
 import { checkAnnunci } from "./annunci-checks.mjs";
+import { checkAnnunciPolish } from "./annunci-polish-checks.mjs";
 import { launchAnnunciBrowser } from "./annunci-cdp.mjs";
 import { checkRegistro } from "./registro-checks.mjs";
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
-export async function runBrowserChecks({ production = false, session: authenticated = false, home = false, annunci = false, registro = false } = {}) {
+export async function runBrowserChecks({ production = false, session: authenticated = false, home = false, homeRedesign = false, annunci = false, annunciPolish = false, registro = false } = {}) {
+  if (annunciPolish) annunci = true;
+  if (homeRedesign) home = true;
   if (registro && (production || authenticated || home || annunci)) throw new Error("BROWSER_SCENARIOS_MUTUALLY_EXCLUSIVE");
   if (annunci && (home || production || authenticated)) throw new Error("BROWSER_SCENARIOS_MUTUALLY_EXCLUSIVE");
   if (home && (production || authenticated)) throw new Error("BROWSER_SCENARIOS_MUTUALLY_EXCLUSIVE");
@@ -63,7 +67,7 @@ export async function runBrowserChecks({ production = false, session: authentica
     next.stdout.pipe(log); next.stderr.pipe(log, { end: false });
     let exited = false; next.once("exit", () => { exited = true; }); next.once("error", () => { exited = true; });
     let ready = false;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 60; i++) {
       if (exited) throw new Error("NEXT_BROWSER_SERVER_EXITED: vedere next.log");
       try { const response = await fetch(origin + "/accesso", { signal: AbortSignal.timeout(90000) }); if (response.ok) { ready = true; break; } } catch {}
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -87,7 +91,7 @@ export async function runBrowserChecks({ production = false, session: authentica
       record("production-login-private-no-store", details.loginHeaders);
     }
     console.log("Next ready; opening isolated Chrome");
-    if (annunci || registro) extraBrowser = await launchAnnunciBrowser({ toolDir, chrome, workspace, env });
+    if (annunci || registro || homeRedesign) extraBrowser = await launchAnnunciBrowser({ toolDir, chrome, workspace, env });
     browserStarted = true;
     await cli(["start", ...(extraBrowser ? ["--browserUrl", extraBrowser.browserUrl] : ["--executablePath", chrome, "--headless", "--userDataDir", join(workspace.run, "chrome-profile")]), "--workspace", workspace.run, "--usageStatistics", "false", "--fileNavigations", "false", ...(authenticated || home || annunci || registro ? ["--maxNavigationSaved", "25"] : [])]);
     const created = await cli(["new_page", origin + "/accesso", "--timeout", "90000"], 100000);
@@ -130,7 +134,7 @@ export async function runBrowserChecks({ production = false, session: authentica
     await waitFor("() => !!document.querySelector('#admin-email')");
     details.browser = await evaluate("() => navigator.userAgent");
     if (authenticated || home || annunci || registro) {
-      await (registro ? checkRegistro : annunci ? checkAnnunci : home ? checkHome : checkSession)({ cli, pageId, evaluate, uid, waitFor, key, fillForm, fill, navigate, fixture, workspace, record, details, origin, extraBrowser });
+      await (registro ? checkRegistro : annunciPolish ? checkAnnunciPolish : annunci ? checkAnnunci : homeRedesign ? checkHomeRedesign : home ? checkHome : checkSession)({ cli, pageId, evaluate, uid, waitFor, key, fillForm, fill, navigate, fixture, workspace, record, details, origin, extraBrowser });
       return { passed: true, results, details, evidence: workspace.evidence };
     }
     for (const [width, height] of [[1440, 900], [390, 844]]) {
@@ -213,7 +217,7 @@ export async function runBrowserChecks({ production = false, session: authentica
   } finally {
     const errors = [];
     details.cleanup = {};
-    for (const [name, cleanup] of [["browser", () => browserStarted ? cli(["stop"]) : Promise.resolve()], ...(annunci || registro ? [["cdpBrowser", () => extraBrowser?.close()]] : []), ["next", () => stopChild(next)], ["fixture", () => fixture.close()]]) {
+    for (const [name, cleanup] of [["browser", () => browserStarted ? cli(["stop"]) : Promise.resolve()], ...(annunci || registro || homeRedesign ? [["cdpBrowser", () => extraBrowser?.close()]] : []), ["next", () => stopChild(next)], ["fixture", () => fixture.close()]]) {
       try { await cleanup(); details.cleanup[name] = true; }
       catch (error) { details.cleanup[name] = false; errors.push(error.message); }
     }
@@ -226,6 +230,6 @@ export async function runBrowserChecks({ production = false, session: authentica
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
-  if (args.length > 1 || args.some(arg => !["--production", "--session", "--home", "--annunci", "--registro"].includes(arg))) { console.error("Usage: node scripts/dashboard-browser/run.mjs [--production | --session | --home | --annunci | --registro]"); process.exitCode = 1; }
-  else runBrowserChecks({ production: args.includes("--production"), session: args.includes("--session"), home: args.includes("--home"), annunci: args.includes("--annunci"), registro: args.includes("--registro") }).then(report => { console.log(`Browser checks passed: ${report.results.length}`); }).catch(error => { console.error(error.message); process.exitCode = 1; });
+  if (args.length > 1 || args.some(arg => !["--production", "--session", "--home", "--home-redesign", "--annunci", "--annunci-polish", "--registro"].includes(arg))) { console.error("Usage: node scripts/dashboard-browser/run.mjs [--production | --session | --home | --home-redesign | --annunci | --annunci-polish | --registro]"); process.exitCode = 1; }
+  else runBrowserChecks({ production: args.includes("--production"), session: args.includes("--session"), home: args.includes("--home"), homeRedesign: args.includes("--home-redesign"), annunci: args.includes("--annunci"), annunciPolish: args.includes("--annunci-polish"), registro: args.includes("--registro") }).then(report => { console.log(`Browser checks passed: ${report.results.length}`); }).catch(error => { console.error(error.message); process.exitCode = 1; });
 }

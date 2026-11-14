@@ -1,4 +1,4 @@
-import {Check, Clock3, Eye, EyeOff, LockKeyhole, Trash2, X} from "lucide-react";
+import {Check, Clock3, Trash2, X} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import type {AnnouncementListItem} from "../contracts";
 import {statusLabel, visibilityLabel} from "../presentation";
@@ -11,10 +11,11 @@ export function AnnouncementStatusBadge({ status }: { status: string | null }) {
 }
 
 export function AnnouncementVisibilityBadges({ row }: { row: Pick<AnnouncementListItem, "hidden" | "private"> }) {
-  return <>{visibilityLabel(row).map((label, index) => {
-    const Icon = index === 0 ? row.hidden === null ? null : row.hidden ? EyeOff : Eye : row.private === true ? LockKeyhole : null;
-    return <Badge key={label} variant={index === 0 && row.hidden === true ? "warning" : "neutral"}>{Icon && <Icon aria-hidden="true" />}{label}</Badge>;
-  })}</>;
+  return <AnnouncementVisibilityBadge row={row} />;
+}
+
+export function AnnouncementVisibilityBadge({row}: {row: Pick<AnnouncementListItem, "hidden" | "private">}) {
+  return <Badge variant={row.hidden === true ? "warning" : "neutral"}>{visibilityLabel(row).join(" · ")}</Badge>;
 }
 
 export function AnnouncementTrashBadge() {

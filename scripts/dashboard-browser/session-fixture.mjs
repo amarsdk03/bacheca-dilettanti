@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { createHomeFixture } from "./home-fixture.mjs";
 import { createAnnunciFixture, OPERATIONS } from "./annunci-fixture.mjs";
 import { createAuditFixture } from "./audit-fixture.mjs";
+import {createCommunityFixture} from "../../tests/helpers/admin-community-fixture.mjs";
 
 export const FIXTURE_EMAIL = "admin@example.test";
 export const FIXTURE_PASSWORD = "Only-a-local-fixture-123";
@@ -14,14 +15,17 @@ const b64 = value => Buffer.from(JSON.stringify(value)).toString("base64url");
 /** A deliberately small HTTP double, not a Supabase server or SQL adapter.
  * It never persists request bodies, bearer tokens, keys or cookie values in logs.
  */
-export async function createSessionFixture({ home = false, annunci = false, registro = false } = {}) {
+export async function createSessionFixture({ home = false, annunci = false, registro = false, creation = false, community = false } = {}) {
   if (home && annunci || registro && (home || annunci)) throw new Error("BROWSER_FIXTURE_SCENARIOS");
-  const homeFixture = home || registro ? createHomeFixture() : null;
+  const homeFixture = home || registro || creation ? createHomeFixture() : null;
   const annunciFixture = annunci ? createAnnunciFixture() : null;
   const auditFixture = registro ? createAuditFixture() : null;
+  const communityFixture = community ? await createCommunityFixture() : null;
+  if (communityFixture) {await communityFixture.reset(); await communityFixture.report(301, {profile: true}); await communityFixture.invitation();}
   const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
   const kid = randomUUID(), secretKey = "sb_secret_browser_session_" + randomUUID().replaceAll("-", "");
   const jwk = { ...publicKey.export({ format: "jwk" }), kid, use: "sig", alg: "ES256" };
+  const creationReceipts = new Map(), creationStats={created:0,receiptReads:0};
   const sessions = new Map(), waiting = new Set(), events = [];
   const counters = { password: 0, jwks: 0, user: 0, context: 0, audit: 0, logout: 0, summary: 0, activity: 0, chart: 0, unexpected: 0, external: 0 };
   let origin, role = "Admin", auditUnavailable = false, logoutUnavailable = false, held = false;
@@ -90,7 +94,7 @@ export async function createSessionFixture({ home = false, annunci = false, regi
       if (rpc === "admin_record_server_audit_v1") {
         counters.audit++;
         const allowedAuth = ["auth.login", "auth.logout", "auth.access_denied"].includes(body.p_action) && ["success", "failure"].includes(body.p_outcome);
-        const allowedOperationFailure = annunciFixture && [...OPERATIONS.map(operation => "announcement." + operation), "announcement.export"].includes(body.p_action) && body.p_outcome === "failure" && typeof body.p_failure_code === "string";
+        const allowedOperationFailure = ((annunciFixture && [...OPERATIONS.map(operation => "announcement." + operation), "announcement.export"].includes(body.p_action)) || (communityFixture && ["report.update", "invitation.consider"].includes(body.p_action))) && body.p_outcome === "failure" && typeof body.p_failure_code === "string";
         if (request.headers.apikey !== secretKey || token !== secretKey || !(allowedAuth || allowedOperationFailure)) { denied(); return; }
         const send = () => {
           if (auditUnavailable) { reply(503, { code: "TEST_AUDIT_UNAVAILABLE", message: "Synthetic audit unavailable" }); return; }
@@ -100,6 +104,25 @@ export async function createSessionFixture({ home = false, annunci = false, regi
       }
       if (!humanKey || !session(token) || role !== "Admin") { denied(); return; }
       if (rpc === "admin_get_context_v1") { counters.context++; reply(200, [{ auth_user_uuid: AUTH_ID, utente_uuid: USER_ID }]); return; }
+      if (communityFixture) {
+        const args = {
+          admin_list_reports_v1: [JSON.stringify(body.p_query ?? {})], admin_get_report_v1: [body.p_id],
+          admin_update_report_v1: [body.p_id, body.p_status, body.p_note, body.p_version],
+          admin_list_invitation_codes_v1: [JSON.stringify(body.p_query ?? {})],
+          admin_get_invitation_code_v1: [body.p_id, JSON.stringify(body.p_query ?? {})],
+          admin_consider_invitation_v1: [body.p_id, body.p_considered, body.p_expected],
+        }[rpc];
+        if (args) {reply(200, await communityFixture.call(rpc, args)); return;}
+      }
+      if (creation) {
+        if(rpc === "admin_get_creation_capabilities_v1"){reply(200,true);return;}
+        if(rpc === "admin_search_announcement_authors_v1"){reply(200,[]);return;}
+        if(rpc === "admin_get_announcement_submission_v1"){creationStats.receiptReads++;reply(200,creationReceipts.get(body.p_submission)??null);return;}
+        if(["admin_create_announcement_v1","admin_create_announcement_v2"].includes(rpc)){
+          const previous=creationReceipts.get(body.p_submission);if(previous){reply(200,{...previous,idempotent:true});return;}
+          creationStats.created++;const receipt={status:"success",publicationId:randomUUID(),announcementId:randomUUID(),announcements:[{id:randomUUID(),region:"Lombardia",status:body.p_payload.approve_immediately?"pubblicato":"in_revisione"}],idempotent:false};creationReceipts.set(body.p_submission,receipt);reply(200,receipt);return;
+        }
+      }
       if (annunciFixture?.respond(rpc, body, response, reply)) return;
       if (auditFixture?.respond(rpc, body, response, reply)) return;
       if (homeFixture) {
@@ -124,10 +147,10 @@ export async function createSessionFixture({ home = false, annunci = false, regi
   await new Promise((accept, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", accept); });
   origin = `http://127.0.0.1:${server.address().port}`;
   annunciFixture?.setExternalOrigin(origin);
-  return { origin, secretKey, home: homeFixture, annunci: annunciFixture, registro: auditFixture,
+  return { origin, secretKey, home: homeFixture, creation:creationStats, annunci: annunciFixture, registro: auditFixture,
     get stats() { return { ...counters, activeSessions: [...sessions.values()].filter(s => s.active).length, heldAudit: waiting.size, events: events.map(e => ({ ...e })) }; },
     setRole(value) { role = value; }, revoke() { for (const s of sessions.values()) s.active = false; },
     setAuditUnavailable(value) { auditUnavailable = value; }, setLogoutUnavailable(value) { logoutUnavailable = value; },
     holdAudit() { held = true; }, releaseAudit() { held = false; for (const send of waiting) send(); waiting.clear(); },
-    close: () => new Promise(accept => { waiting.clear(); homeFixture?.close(); annunciFixture?.close(); auditFixture?.close(); server.closeAllConnections(); server.close(accept); }) };
+    close: async () => {await new Promise(accept => { waiting.clear(); homeFixture?.close(); annunciFixture?.close(); auditFixture?.close(); server.closeAllConnections(); server.close(accept); }); await communityFixture?.db.close();} };
 }

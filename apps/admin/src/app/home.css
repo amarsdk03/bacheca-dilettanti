@@ -42,7 +42,6 @@
   & .admin-home-chart-data > summary { border-radius: 4px; padding: 4px; color: var(--admin-link); font-size: 12px; line-height: 18px; cursor: pointer; overflow-wrap: anywhere; }
   & .admin-home-chart-data[open] > summary { margin-bottom: 12px; }
   & .admin-home-chart-data [data-slot="table-head"], & .admin-home-chart-data [data-slot="table-cell"] { white-space: normal; overflow-wrap: anywhere; }
-  & .admin-home-chart-data [data-slot="table-cell"]:last-child { text-align: right; }
   & .admin-home-failure [data-slot="alert-description"] { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
   & .admin-home-failure .ui-button { justify-self: start; }
 
@@ -53,10 +52,9 @@
   & .admin-audit-summary-table [data-slot="table-head"]:nth-child(2) { width: 224px; }
   & .admin-audit-summary-table [data-slot="table-head"]:nth-child(3) { min-width: 280px; }
   & .admin-audit-summary-table[data-separate-outcome="true"] [data-slot="table-head"]:nth-child(4) { width: 120px; }
-  & .admin-audit-summary-table[data-has-details="true"] [data-slot="table-head"]:last-child { width: 160px; text-align: right; }
+  & .admin-audit-summary-table[data-has-details="true"] [data-slot="table-head"]:last-child { width: 160px; }
   & .admin-audit-summary-table [data-slot="table-cell"] { white-space: normal; overflow-wrap: anywhere; }
   & .admin-audit-summary-table [data-slot="table-cell"]:first-child { white-space: nowrap; }
-  & .admin-audit-summary-table[data-has-details="true"] [data-slot="table-cell"]:last-child { text-align: right; }
   & .admin-audit-summary-table .admin-audit-details-button { min-width: 0; }
   & .admin-audit-summary-table [data-slot="table-caption"] { padding-top: 8px; color: var(--muted-foreground); font-size: 12px; line-height: 18px; text-align: left; }
   & .admin-audit-summary-table [data-slot="table-cell"] { padding-block: 16px; vertical-align: top; }

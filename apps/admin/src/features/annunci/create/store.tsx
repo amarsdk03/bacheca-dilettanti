@@ -4,6 +4,7 @@ import {createContext, type ReactNode, type SetStateAction, useCallback, useCont
 import {createStore, useStore} from "zustand";
 import {createJSONStorage, persist} from "zustand/middleware";
 import type {MockAuthorMode, MockProfileType, MockTeamType, MockValues} from "./prototype-model";
+import {isCanonicalDraft} from "./canonical-shape";
 import {REGIONS} from "./prototype-model";
 import type {WhatsAppExtraction, WhatsAppProvenance} from "./whatsapp-parser";
 import type {
@@ -15,7 +16,7 @@ import type {
 	FieldIssue
 } from "./contracts";
 
-export interface LocalDraft {values: MockValues; image: File | null; imageMeta?: {name: string; size: number; type: string}; provenance?: WhatsAppProvenance}
+export interface LocalDraft {values: MockValues; canonical?: import("./canonical-draft").CanonicalDraft; reviewDecisions?: Record<string, import("./whatsapp-review").ReviewDecision>; image: File | null; imageMeta?: {name: string; size: number; type: string}; provenance?: WhatsAppProvenance}
 export interface DraftData {
   mode: MockAuthorMode; search: string; userIds: Record<string, string>; profilesByUser: Record<string, string>;
   manualAnonymousType: MockProfileType | ""; authorEmails: Record<string, string>; whatsappAnalysis: WhatsAppExtraction | null;
@@ -59,9 +60,11 @@ export function restoredDraft(value: unknown): Partial<DraftData> {
     const imageMeta = typeof meta.name === "string" && typeof meta.size === "number" && meta.size > 0 && typeof meta.type === "string" ? {name: meta.name, size: meta.size, type: meta.type} : undefined;
     const context = records(source.context);
     const provenance = source.source === "whatsapp" && typeof source.rawText === "string" && source.rawText.length <= 50_000 && typeof source.messageUrl === "string" ? {source: "whatsapp" as const, rawText: source.rawText, messageUrl: source.messageUrl,
-      ...(REGIONS.includes(String(context.channelRegion)) ? {context: {channelRegion: String(context.channelRegion), ...(REGIONS.includes(String(context.resolvedRegion)) ? {resolvedRegion: String(context.resolvedRegion)} : {})}} : {}),
+      ...(REGIONS.includes(String(context.channelRegion)) ? {context: {channelRegion: String(context.channelRegion), ...(REGIONS.includes(String(context.resolvedRegion)) ? {resolvedRegion: String(context.resolvedRegion)} : {}), ...(Array.isArray(context.resolvedRegions) && context.resolvedRegions.every(v=>REGIONS.includes(String(v))) ? {resolvedRegions:context.resolvedRegions as string[]} : {})}} : {}),
       ...(typeof source.manualTarget === "string" ? {manualTarget: source.manualTarget} : {})} : undefined;
-    return [[key, {image: null, values: draft.values, imageMeta, provenance}]];
+    const canonical = isCanonicalDraft(draft.canonical) ? draft.canonical : undefined;
+    const reviewDecisions = Object.fromEntries(Object.entries(records(draft.reviewDecisions)).filter(([,v])=>{const d=records(v);return ["confirmed","corrected","text","discarded"].includes(String(d.action)) && typeof d.binding === "string" && d.binding.length <= 200_000;}));
+    return [[key, {image: null, values: draft.values, canonical, reviewDecisions, imageMeta, provenance}]];
   })) as Record<string, LocalDraft>;
   safe.receipts = Object.fromEntries(Object.entries(records(raw.receipts)).filter(([,v]) => {
     const receipt = records(v);

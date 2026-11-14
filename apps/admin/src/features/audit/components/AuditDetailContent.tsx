@@ -1,11 +1,13 @@
 import type {AuditDetail} from "../read-contracts";
 import {Badge} from "@/components/ui/badge";
 import {AUDIT_LABELS, auditActorLabel, auditDate} from "../read-presentation";
+import {REPORT_STATES} from "@/features/community/contracts";
 
 function Fact({ label, value, technical = false }: { label: string; value: string | null; technical?: boolean }) {
   return <div className="admin-fact" data-technical={technical}><dt>{label}</dt><dd>{value ?? "Non disponibile"}</dd></div>;
 }
 export function AuditDetailContent({ detail: d }: { detail: AuditDetail }) {
+  const changeValue = (value: string | boolean | null) => value === null ? "Non disponibile" : d.resourceType === "invitation" && typeof value === "boolean" ? value ? "Considerato" : "Da valutare" : d.resourceType === "report" && typeof value === "string" && Object.hasOwn(REPORT_STATES, value) ? REPORT_STATES[value as keyof typeof REPORT_STATES] : String(value);
   return <div className="admin-detail-stack">
     <section className="admin-detail-section"><h3>Operazione e operatore</h3><dl className="admin-facts-grid">
       <Fact label="Operazione" value={AUDIT_LABELS[d.action]} /><div className="admin-fact"><dt>Esito</dt><dd><Badge variant={d.outcome === "success" ? "success" : "danger"}>{d.outcome === "success" ? "Riuscita" : "Fallita"}</Badge></dd></div>
@@ -17,8 +19,9 @@ export function AuditDetailContent({ detail: d }: { detail: AuditDetail }) {
       <Fact label="Tipo risorsa" value={d.resourceType} /><Fact label="UUID risorsa" value={d.resourceId} technical />
     </dl></section>
     <section className="admin-detail-section"><h3>Variazioni</h3>
-      {Object.keys(d.changes).length ? <dl className="admin-detail-stack">{Object.entries(d.changes).map(([key, change]) => <Fact key={key} label={{ status: "Stato", hidden: "Nascosto", trashed: "Nel cestino" }[key]!}
-        value={`${change.before === null ? "Non disponibile" : String(change.before)} → ${String(change.after)}`} technical />)}</dl> : <p>Nessuna variazione registrata per questo evento.</p>}
+      {Object.keys(d.changes).length ? <dl className="admin-detail-stack">{Object.entries(d.changes).map(([key, change]) => <Fact key={key} label={{ status: "Stato", hidden: "Nascosto", trashed: "Nel cestino", considered: "Considerato" }[key]!}
+        value={`${changeValue(change.before)} → ${changeValue(change.after)}`} technical />)}</dl> : <p>Nessuna variazione registrata per questo evento.</p>}
+      {d.noteChanged && <p>Nota interna aggiornata. Il testo rimane nel dettaglio della segnalazione.</p>}
     </section>
     <section className="admin-detail-section"><h3>Motivazione e correlazione</h3><dl className="admin-detail-stack">
       <Fact label="Motivazione" value={d.reason} /><Fact label="Correlazione" value={d.correlationId} technical /><Fact label="Codice errore" value={d.failureCode} technical />

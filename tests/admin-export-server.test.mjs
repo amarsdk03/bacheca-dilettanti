@@ -21,11 +21,11 @@ function harness(options={}) {
 
 test("CSV uses UTF-8 BOM, seven quoted semicolon columns, CRLF and exact public presentation",()=>{
   const csv=announcementCsv([row()]);assert.equal(csv.charCodeAt(0),0xfeff);assert(csv.endsWith('\r\n'));
-  assert(csv.includes('"Titolo; ""Équipe""\nSeconda riga"'));assert(csv.includes('"Giocatore pubblico";"Giocatore";"N/A";"Pubblicato";"Non oscurato · Pubblico";"24/10/26, 12:00"'));
+  assert(csv.includes('"Titolo; ""Équipe""\nSeconda riga"'));assert(csv.includes('"Giocatore pubblico";"Giocatore";"N/A";"Pubblicato";"Pubblico";"24/10/26, 12:00"'));
   assert.equal(csvCell('one;two"three\r\nfour'),'"one;two""three\r\nfour"');
   assert.equal(exportFilename(new Date('2026-10-24T10:00:00Z')),'annunci-pagina-20261024-100000.csv');
   assert(!csv.includes('rowFingerprint'));assert(!csv.includes(id(101)));
-  assert(announcementCsv([{...row(),trashed:true,hidden:true,private:true,title:null,createdAt:null}]).includes('"Nel cestino · Oscurato · Privato";"Non specificata"'));
+  assert(announcementCsv([{...row(),trashed:true,hidden:true,private:true,title:null,createdAt:null}]).includes('"Nel cestino · Oscurato";"Non specificata"'));
 });
 for(const value of ['=1+1','+SUM(A1)','-2+3','@SUM(A1)',' \t=1','\r=1','\n=1','\u0000=1','\uFEFF=1','\u200B\u000b=1','＝1','＋1','－1','＠1'])test(`spreadsheet formula neutralization ${JSON.stringify(value)}`,()=>{
   assert(csvCell(value).startsWith('"\''));

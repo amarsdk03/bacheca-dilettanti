@@ -14,7 +14,7 @@ export function ComingSoon() {
     <EmptyHeader>
       <EmptyMedia><Clock3 aria-hidden="true" /></EmptyMedia>
       <EmptyTitle>Sezione non ancora disponibile</EmptyTitle>
-      <EmptyDescription>Questa sezione della dashboard è in preparazione</EmptyDescription>
+      <EmptyDescription>Questa sezione della dashboard sarà disponibile a breve!</EmptyDescription>
     </EmptyHeader>
   </Empty></CardContent></Card>;
 }

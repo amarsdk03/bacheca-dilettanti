@@ -93,9 +93,9 @@ test("region survives no type or multiple types, URL rebuilding and pagination i
 			assert.match(api[build](query, {page: 3}), /page=3/);
 		}
 		assert.deepEqual(api[parse]({regione: "not a region"}).filters.regione, []);
-		const multiple = api[parse]({regione: ["Lazio", "Toscana", "Lazio", "invalid"]});
-		assert.deepEqual(multiple.filters.regione, ["Lazio", "Toscana"]);
-		assert.deepEqual(new URL(api[build](multiple, {page: 3}), "http://localhost").searchParams.getAll("regione"), ["Lazio", "Toscana"]);
+		const multiple = api[parse]({regione: ["Lazio", "Estero", "Lazio", "invalid"]});
+		assert.deepEqual(multiple.filters.regione, ["Lazio", "Estero"]);
+		assert.deepEqual(new URL(api[build](multiple, {page: 3}), "http://localhost").searchParams.getAll("regione"), ["Lazio", "Estero"]);
 	}
 });
 

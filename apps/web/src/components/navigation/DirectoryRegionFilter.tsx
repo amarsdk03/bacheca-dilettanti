@@ -42,7 +42,7 @@ export default function DirectoryRegionFilter({action, entries, selected, counts
 			{selected.length > 0 && <Badge variant="secondary" className="hidden sm:inline-flex">{selected.length}</Badge>}
 		</SheetTrigger>
 		<SheetContent side="left" className="data-[side=left]:w-[85%] data-[side=left]:sm:max-w-md">
-			<SheetHeader><SheetTitle>Seleziona le regioni</SheetTitle><SheetDescription>Scegli una o più regioni. Senza selezioni la ricerca comprende tutta Italia.</SheetDescription></SheetHeader>
+			<SheetHeader><SheetTitle>Seleziona le regioni</SheetTitle><SheetDescription>Scegli una o più zone. Senza selezioni la ricerca comprende tutte le località.</SheetDescription></SheetHeader>
 			<div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 pb-4">
 				{(["Nord", "Centro", "Sud"] as const).map(area => <FieldSet key={area}>
 					<FieldLegend>{area}</FieldLegend>
@@ -57,6 +57,16 @@ export default function DirectoryRegionFilter({action, entries, selected, counts
 						</ToggleGroupItem>)}
 					</ToggleGroup>
 				</FieldSet>)}
+				<FieldSet>
+					<FieldLegend>Estero</FieldLegend>
+					<ToggleGroup multiple variant="outline" size="lg" spacing={2} value={draft.includes("Estero") ? ["Estero"] : []} onValueChange={next => setDraft([...draft.filter(name => name !== "Estero"), ...next])} aria-label="Località estere" className="grid w-full grid-cols-2 items-stretch">
+						<ToggleGroupItem value="Estero" className="group h-auto min-h-11 min-w-0 justify-start gap-2 px-2 py-2 text-left whitespace-normal data-pressed:bg-brand-indigo-200 data-pressed:text-brand-ink">
+							<CheckIcon aria-hidden="true" className="size-3 text-brand-indigo opacity-0 group-data-pressed:opacity-100" />
+							<span className="min-w-0 flex-1 text-xs wrap-anywhere">Estero</span>
+							{regionCounts && <span className="shrink-0 text-xs tabular-nums opacity-70">{regionCounts.Estero ?? 0}<span className="sr-only"> risultati</span></span>}
+						</ToggleGroupItem>
+					</ToggleGroup>
+				</FieldSet>
 			</div>
 			<div className="flex shrink-0 gap-2 border-t p-4">
 				<Button type="button" disabled={pending} onClick={() => apply(draft)} className="flex-1">{pending && <Spinner data-icon="inline-start" />}Conferma scelte</Button>

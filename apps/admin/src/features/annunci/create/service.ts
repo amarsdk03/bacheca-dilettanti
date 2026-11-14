@@ -1,6 +1,7 @@
 import "server-only";
 import {createHash} from "node:crypto";
 import type {Json} from "@bacheca/database";
+import {isCanonicalDraft} from "./canonical-shape";
 import {normalizeCreation, UUID, validateCreation} from "./domain";
 import {PROFILE_OPTIONS, REGIONS, TEAM_OPTIONS} from "./prototype-model";
 import {WHATSAPP_TARGETS, whatsappLinkError} from "./whatsapp-parser";
@@ -33,14 +34,18 @@ export function parseReceipt(raw: unknown): CreationReceipt | null {
   return raw as unknown as CreationReceipt;
 }
 export function validCreationInput(raw: unknown): raw is CreationInput {
-  if (!record(raw) || JSON.stringify(raw).length > 400_000 || raw.version !== 1 || typeof raw.submissionId !== "string" || !UUID.test(raw.submissionId) || !["registered", "unregistered"].includes(String(raw.authorMode)) || !PROFILE_OPTIONS.some(p => p.value === raw.profileType) || !TEAM_OPTIONS.includes(raw.teamType as never) || !record(raw.profile) || !record(raw.announcement) || typeof raw.referenceEmail !== "string" || raw.referenceEmail.length > 254 || typeof raw.authorized !== "boolean") return false;
+  if (!record(raw) || JSON.stringify(raw).length > 400_000 || (raw.version !== 1 && raw.version !== 2) || typeof raw.submissionId !== "string" || !UUID.test(raw.submissionId) || !["registered", "unregistered"].includes(String(raw.authorMode)) || !PROFILE_OPTIONS.some(p => p.value === raw.profileType) || !TEAM_OPTIONS.includes(raw.teamType as never) || !record(raw.profile) || !record(raw.announcement) || typeof raw.referenceEmail !== "string" || raw.referenceEmail.length > 254 || typeof raw.authorized !== "boolean") return false;
+  if (raw.version === 2 && !isCanonicalDraft(raw.canonical)) return false;
+  if (raw.reviewDecisions !== undefined && (!record(raw.reviewDecisions) || !Object.values(raw.reviewDecisions).every(d=>record(d)&&["confirmed","corrected","text","discarded"].includes(String(d.action))&&typeof d.binding === "string"))) return false;
   if (raw.approveImmediately !== undefined && typeof raw.approveImmediately !== "boolean") return false;
   const values = (v: Record<string, unknown>, depth = 0): boolean => depth < 8 && Object.entries(v).every(([k, item]) => !["__proto__", "constructor", "prototype"].includes(k) && (typeof item === "string" || Array.isArray(item) && item.length <= 100 && item.every(x => typeof x === "string" || record(x) && values(x, depth + 1))));
   if (!values(raw.profile) || !values(raw.announcement) || !(raw.profileId === null || typeof raw.profileId === "string")) return false;
-  if (raw.provenance !== undefined && (!record(raw.provenance) || raw.provenance.source !== "whatsapp" || typeof raw.provenance.rawText !== "string" || !raw.provenance.rawText.trim() || raw.provenance.rawText.length > 50_000 || typeof raw.provenance.messageUrl !== "string" || whatsappLinkError(raw.provenance.messageUrl))) return false;
+  if (raw.provenance !== undefined && (!record(raw.provenance) || raw.provenance.source !== "whatsapp" || typeof raw.provenance.rawText !== "string" || !raw.provenance.rawText.trim() || raw.provenance.rawText.length > 50_000 || typeof raw.provenance.messageUrl !== "string" || raw.provenance.messageUrl.length > 2048 || whatsappLinkError(raw.provenance.messageUrl))) return false;
   if (record(raw.provenance)) {
+    if (raw.version !== 2 || !record(raw.provenance.context)) return false;
     const {context, manualTarget} = raw.provenance;
     if (context !== undefined && (!record(context) || typeof context.channelRegion !== "string" || !REGIONS.includes(context.channelRegion) || context.resolvedRegion !== undefined && (typeof context.resolvedRegion !== "string" || !REGIONS.includes(context.resolvedRegion)))) return false;
+    if (record(context) && context.resolvedRegions !== undefined && (!Array.isArray(context.resolvedRegions) || !context.resolvedRegions.length || !context.resolvedRegions.every(v=>typeof v === "string" && REGIONS.includes(v)))) return false;
     if (manualTarget !== undefined && !WHATSAPP_TARGETS.some(target => target.id === manualTarget)) return false;
   }
   return raw.image == null || record(raw.image) && typeof raw.image.hash === "string" && /^[a-f0-9]{64}$/.test(raw.image.hash) && ["image/jpeg", "image/png", "image/webp"].includes(String(raw.image.mime)) && typeof raw.image.size === "number" && raw.image.size > 0 && raw.image.size <= 5 * 1024 * 1024;

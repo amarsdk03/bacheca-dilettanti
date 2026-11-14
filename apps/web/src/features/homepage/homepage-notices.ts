@@ -1,5 +1,3 @@
-import {getProfileAccent} from "@/features/profilo/ProfilePngIcon";
-
 export interface HomepageNotice {
 	id: string;
 	tipo: "notizia" | "evento" | "problema";

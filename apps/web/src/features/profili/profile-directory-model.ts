@@ -36,7 +36,7 @@ export const PROFILE_FILTERS_BY_TYPE = {
 } as const satisfies Record<ProfileType, readonly ProfileFilterParam[]>;
 
 export const PROFILE_FILTER_OPTIONS = {
-	regioni: REGIONI_ITALIANE.map(({nome}) => nome),
+	regioni: [...REGIONI_ITALIANE.map(({nome}) => nome), "Estero"],
 	tipologie: [...TIPOLOGIA_CALCIO_OPTIONS],
 	ruoli: [...RUOLO_PRINCIPALE_OPTIONS],
 	figure: [...FIGURA_PROFESSIONALE_OPTIONS],

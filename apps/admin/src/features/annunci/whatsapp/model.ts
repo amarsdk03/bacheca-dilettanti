@@ -1,4 +1,5 @@
 import type {AnnouncementListItem} from "../contracts";
+
 export const WHATSAPP_STATUSES = ["website", "imported", "exported", "unknown"] as const;
 export type WhatsAppStatus = typeof WHATSAPP_STATUSES[number];
 export const WHATSAPP_LABELS: Record<WhatsAppStatus, string> = {website: "Solo sito web", imported: "Da WhatsApp", exported: "Su WhatsApp", unknown: "N/A"};

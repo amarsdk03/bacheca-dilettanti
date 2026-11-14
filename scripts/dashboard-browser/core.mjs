@@ -53,6 +53,7 @@ export function prepareWorkspace(root, { production = false } = {}) {
   for (const file of COPY_FILES) copyTree(join(root, "apps", "admin", file), join(app, file));
   for (const dir of ["src", "public"]) copyTree(join(root, "apps", "admin", dir), join(app, dir));
   copyTree(join(root, "packages", "database"), join(run, "packages", "database"));
+  copyTree(join(root, "packages", "announcements"), join(run, "packages", "announcements"));
   copyTree(join(root, "package.json"), join(run, "package.json"));
   // Only dependencies are shared. Sources/config/env are separate, never a junction to the app.
   symlinkSync(join(root, "node_modules"), join(run, "node_modules"), process.platform === "win32" ? "junction" : "dir");

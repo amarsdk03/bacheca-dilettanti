@@ -30,10 +30,12 @@ test("request validation rejects malformed persisted input, source links and res
 test("creation sends normalized details, private provenance and an idempotency identifier",async()=>{
   const calls=[];
   const service=createAnnouncementCreation({session:async()=>({actorId,rpc:async(name,args)=>{calls.push([name,args]);return {data:name.includes("get_")?null:receipt,error:null}}}),upload:async()=>assert.fail("unexpected upload")});
-  const input=creationInput();input.provenance={source:"whatsapp",rawText:"Original",messageUrl:""};
+  const input=creationInput();input.version=2;input.canonical=adminServerLoader()("apps/admin/src/features/annunci/create/canonical-draft.ts").migrateCanonicalDraft(input);
+  input.provenance={source:"whatsapp",rawText:"🔵 GIOCATORE CERCA SQUADRA",messageUrl:"",context:{channelRegion:"Lombardia"}};
+  const {reviewBinding}=adminServerLoader()("apps/admin/src/features/annunci/create/whatsapp-review.ts");input.reviewDecisions=Object.fromEntries(parseWhatsAppMessage(input.provenance.rawText,"","",input.provenance.context).issues.map(issue=>[issue.id,{action:"confirmed",binding:reviewBinding(input,issue)}]));
   assert.equal((await service.submit(input)).status,"ok");
   assert.equal(calls[0][0],"admin_get_announcement_submission_v1");
-  const payload=calls[1][1].p_payload;assert.equal(payload.source,"whatsapp");assert.equal(payload.original_text,"Original");assert.equal(payload.authorized,true);assert.equal(payload.profile_id,null);
+  const payload=calls[1][1].p_payload;assert.equal(payload.source,"whatsapp");assert.equal(payload.original_text,input.provenance.rawText);assert.equal(payload.authorized,true);assert.equal(payload.profile_id,null);
   assert.deepEqual(payload.detail.categorie_ricercate,["Qualsiasi"]);
 });
 test("image bytes are checked, deterministic uploads are reused, and uncertain RPC results are recoverable",async()=>{
@@ -53,7 +55,7 @@ test("WhatsApp recognizes the nine templates and keeps missing dates and conflic
   headings.forEach((heading,i)=>assert.equal(parseWhatsAppMessage(`${heading}\n📍 Zona: Milano / Lombardia\n⚽ Calcio: 11\n📲 Contatto: test@example.test`).target?.id,targets[i]));
   const partial=parseWhatsAppMessage(`${headings[0]}\n📍 Zona: Milano / Lombardia\n⚽ Calcio: 11\n📅 Anno: 2004\n#Lazio`);
   assert.ok(partial.issues.some(i=>i.path==="profile.birthDate"));
-  assert.ok(partial.issues.some(i=>i.path==="announcement.locations"));
+  assert.ok(partial.issues.some(i=>i.code==="REGION_CONFLICT"));
   assert.equal(partial.profile.birthDate,undefined);assert.equal(partial.profile.region,undefined);
   assert.equal(parseWhatsAppMessage("Intestazione non nota").blocked,true);
 });

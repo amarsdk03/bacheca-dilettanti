@@ -1,0 +1,394 @@
+[
+  {
+    "id": 1,
+    "region": "Emilia-Romagna",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n📍 Zona: Rimini e dintorni \n⚽ Calcio: 11\n🧍 Ruolo: Centrocampista difensivo / difensore\n📅 Anno: 2003\n🏆 Categoria cercata: Terza Categoria \n🏟️ Categorie precedenti: Nessuna categoria\n📲 Contatto: +39 333 0000001\n\nFermo da qualche anno ma voglio riprendere definitivamente a giocare. 188cm piede dx\n\n#Rimini #Calcio11 #TerzaCategoria #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 2,
+    "region": "Emilia-Romagna",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n📍 Zona: Reggio Emilia\n⚽ Calcio: 11\n🧍 Ruolo: Difensore\n📅 Anno: 2003\n🏆 Categoria cercata: Bronze/Silver League CSI\n🏟️ Categorie precedenti: non indicate\n📲 Contatto: contatto1@example.test\n\n#ReggioEmilia #Calcio11 #Categoria #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 3,
+    "region": "Emilia-Romagna",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n📍 Zona di ricerca: Reggio Emilia e Modena\n⚽ Calcio: 11\n🧍 Ruolo: Difensore\n📅 Anno: 2007\n🏆 Categoria cercata: U19\n🏟️ Categorie precedenti: Non indicate\n📲 Contatto: +39 333 0000002 / contatto2@example.test\n\nHo giocato a calcio in Marocco, cerco la possibilità di farlo anche in Italia, 1,92 m. \n\n#ReggioEmilia #Calcio11 #Categoria #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 4,
+    "region": "Emilia-Romagna",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\n📍 Zona: Bologna e limitrofe\n⚽ Calcio: 11\n👤 Figura: Allenatore \n🏆 Categoria/settore cercato: Prime squadre (fino alla promozione / eccellenza), Settori Giovanili (conduzione tecnica/ruoli di staff in Settori Giovanili Élite/Regionali)\n📚 Qualifiche: UEFA B\n🏟️ Esperienza: Settore Giovanile del Bologna FC 1909 e in Prima Squadra/Settore Giovanile al Sasso Marconi\n🚗 Spostamento: Da valutare\n📲 Contatto: +39 333 0000003\n\nDopo un periodo di assenza forzata dal rettangolo verde (motivi di lavoro), durante il quale ho continuato ad aggiornarmi e a seguire l’evoluzione tecnico-tattica del calcio moderno, sono fortemente motivato a rientrare in panchina.\n\nAllenatore abilitato UEFA B con trascorsi nel Settore Giovanile del Bologna FC 1909 e in Prima Squadra/Settore Giovanile al Sasso Marconi, valuta proposte per subentri immediati in Prima Squadra (fino alla Promozione/Eccellenza) o conduzione tecnica/ruoli di staff in Settori Giovanili Élite/Regionali nella provincia di Bologna e limitrofe. Massima serietà, professionalità e flessibilità di inserimento.\n\nResto a completa disposizione per un incontro conoscitivo, utile a presentarmi di persona e a illustrarvi la mia filosofia di gioco e le mie motivazioni.\n\n#EmiliaRomagna #Calcio11 #StaffCercaOpportunità #Allenatore #SettoreGiovanile",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 5,
+    "region": "Emilia-Romagna",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n📍 Zona di ricerca: Provincia di Ferrara \n⚽ Calcio: 5\n🏆 Categoria: Serie D\n🎯 Ruoli cercati: Portiere\n📅 Annate/età: qualsiasi\n📝 Requisiti: Con o SENZA esperienza nel calcio a 5\n📌 Periodo: 26/27\n📲 Contatto: contatto3@example.test / instagram: gsariano.seried\n\n#Rovigo #Calcio5 #SerieD #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 6,
+    "region": "Emilia-Romagna",
+    "text": "🟠 SQUADRA CERCA STAFF\n📍 Zona: Forlì / Cesena\n⚽ Calcio: 11\n🏆 Categoria/squadra: Terza Categoria — Squadra Giovane\n👤 Figura cercata: Allenatore\n📅 Periodo: Subito — Stagione sportiva 26/27 per sostituzione.\n🕒 Impegno: 2 allenamenti serali a settimana e partita il sabato pomeriggio.\n📝 Requisiti: Esperienza maturata alla guida di prime squadre, preferibilmente in possesso di patentino da allenatore. Non si valutano profili alla prima esperienza o con esperienza esclusivamente nel settore giovanile. Si richiedono serietà, competenza, capacità di gestione del gruppo e valorizzazione dei giovani.\n📲 Candidature: +39 333 0000004 Esclusivamente tramite Whatsapp, inviando un messaggio scritto di presentazione con indicazione delle esperienze maturate, per una prima valutazione da parte della società.\n\nSocietà seria e organizzata, con ambizioni di crescita, ricerca un allenatore che condivida un progetto sportivo orientato al consolidamento del percorso intrapreso e alla crescita tecnica e umana di una squadra giovane.\n\n#EmiliaRomagna #Calcio11 #Staff #Allenatore #SquadraCercaStaff",
+    "expected": {
+      "target": "team-staff"
+    }
+  },
+  {
+    "id": 7,
+    "region": "Emilia-Romagna",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n📍 Zona: Parma\n⚽ Calcio: 11\n🏆 Categoria: Amatori UISP\n🎯 Ruoli cercati: Portiere\n📅 Annate/età: qualsiasi\n📝 Requisiti: -\n📌 Periodo: Subito\n📲 Contatto: +39 333 0000005\n\n#Parma #Calcio11 #Amatori #UISP #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 8,
+    "region": "Emilia-Romagna",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n📍 Zona: Ravenna / Cesena\n⚽ Calcio: 11\n🧍 Ruolo: centrocampista / esterno \n📅 Anno: 2006\n🏆 Categoria cercata: CSI / 3 / 2 categoria\n🏟️ Categorie precedenti: Terza categoria \n📲 Contatto: +39 333 0000006\n\n#Ravenna #Cesena #Calcio11 #CSI #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 9,
+    "region": "Emilia-Romagna",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\n📍 Zona: Lombardia - Piemonte - Veneto - Emilia-Romagna\n⚽ Calcio: 11\n👤 Figura: Osservatore \n🏆 Categoria/settore cercato: Eccellenza / Serie D\n📚 Qualifiche: Osservatore calcistico e Match Analyst con Scoutit \n🏟️ Esperienza: Città di Varese osservatore calcistico prima squadra in Serie D\n🚗 Spostamento: disponibile\n📲 Contatto: contatto4@example.test\n\n#Regione #Calcio11 #StaffCercaOpportunità #Osservatore",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 10,
+    "region": "Emilia-Romagna",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n📍 Zona: Piacenza\n⚽ Calcio: 11\n🧍 Ruolo: Centrocampista difensivo (Mediano)\n📅 Anno: 1993\n🏆 Categoria cercata: Eccellenza / Promozione / Prima Categoria\n🏟️ Categorie precedenti: Seconda Divisione Marocchina (Botola 2) e campionato dilettanti\n📲 Contatto: contatto5@example.test / +39 333 0000007\n\n#Piacenza #Calcio11 #PrimaCategoria #Promozione #Eccellenza #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 11,
+    "region": "Emilia-Romagna",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n👕 Nomecampione Cognomecampione \n📍 Zona: Parma / Pesaro Urbino\n⚽ Calcio: 11\n🧍 Ruolo: Centrocampista difensivo e offensivo / trequartista \n📅 Anno: 2003\n🏆 Categoria cercata: Dalla Prima categoria in su\n🏟️ Categorie precedenti: Esperienza calcistica in Tunisia\n📲 Contatto: contatto6@example.test\n\nSono un centrocampista offensivo di 23 anni, con esperienza calcistica in Tunisia. Attualmente mi trovo a Parma, e cerco una squadra in cui mettermi in gioco e dimostrare le mie qualità e dare il massimo. Disponibile per un provino.\n\n#Parma #Calcio11 #PrimaCategoria #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 12,
+    "region": "Emilia-Romagna",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\nZona: Parma- valuto Piacenza e Reggio \n⚽ Calcio: 11\n👤 Figura: Allenatore uefa B e laureato in scienze motorie \n🏆 Categoria/settore cercato: Disponibile per prime squadre dalla terza alla prima categoria, juniores e Allievi per le giovanili.\n📚 Qualifiche: UEFA B \n🚗 Spostamento: da valutare\n📲 Contatto: +39 333 0000008\n\n#EmiliaRomagna #Calcio11 #StaffCercaOpportunità #Allenatore",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 13,
+    "region": "Lombardia",
+    "text": "🟠 SQUADRA CERCA STAFF\n📍 Zona: Varese\n⚽ Calcio: 11\n🏆 Categoria/squadra: Esordienti\n👤 Figura cercata: Allenatore\n📅 Periodo: Subito\n🕒 Impegno: non specificato\n📝 Requisiti: Cerchiamo un profilo alla prima esperienza\n📲 Candidature: +39 333 0000009\n\nNon previsto rimborso spese\n\n#Varese #Calcio11 #Staff #Allenatore #SettoreGiovanile #SquadraCercaStaff",
+    "expected": {
+      "target": "team-staff"
+    }
+  },
+  {
+    "id": 14,
+    "region": "Lombardia",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n📍 Zona: Varese, zona verso Induno\n⚽ Calcio: 11 / 7\n🧍 Ruolo: Attaccante ma posso fare anche altri ruoli \n📅 Anno: 2003\n🏆 Categoria cercata: qualsiasi\n🏟️ Categorie precedenti: Seconda / Terza categoria, CSI Open D\n📲 Contatto: +39 333 0000010\n\n#Varese #Calcio11 #Categoria #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 15,
+    "region": "Lombardia",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\n📍 Zona di ricerca: Brescia e provincia\n⚽ Calcio: 11\n👤 Figura: Allenatore\n🏆 Categoria/settore cercato: Seconda o Terza categoria \n📚 Qualifiche: non indicate\n🏟️ Esperienza: non indicata\n🚗 Spostamento: da valutare\n📲 Contatto: +39 333 0000011\n\nDisponibile a lavorare con propri collaboratori e a valutare progetti seri e organizzati. Massima disponibilità, serietà e professionalità.\n\n#Brescia #Calcio11 #StaffCercaOpportunità #Allenatore",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 16,
+    "region": "Lombardia",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\n📍 Zona: Lodi\n⚽ Calcio: 11\n👤 Figura: Preparatore atletico / massoterapista\n🏆 Categoria/settore cercato: -\n📚 Qualifiche: Laurea in scienze motorie a Pavia, tra poco finisco gli studi alla Essence Academy\n🏟️ Esperienza: Tirocinio presso centro fisioterapico Delta di Boerci Roberto (Casalmaiocco), prep atletico e massaggiatore in squadra di terza categoria (1 anni), tirocinio presso ospedale Criams di Voghera\n🚗 Spostamento: da valutare \n📲 Contatto: +39 333 0000012 / contatto7@example.test\n\n#Lodi #Calcio11 #StaffCercaOpportunità #PreparatoreAtletico #Massoterapista",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 17,
+    "region": "Lombardia",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n📍 Zona: Como / Lecco\n⚽ Calcio: 11\n🧍 Ruolo: Terzino / Esterno dx\n📅 Anno: 2002\n🏆 Categoria cercata: Terza / Seconda Categoria \n🏟️ Categorie precedenti: Giocato in Seconda categoria e Calcio a 7\n📲 Contatto: contatto8@example.test\n/ +39 333 0000013\n\n#Lombardia #Calcio11 #Categoria #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 18,
+    "region": "Lombardia",
+    "text": "🟠 SQUADRA CERCA STAFF\n📍 Zona: Lecco\n⚽ Calcio: 11\n🏆 Categoria/squadra: Settore Giovanile (primi calci annate dal 2018 al 2021)\n👤 Figura cercata: Allenatore\n📅 Periodo: Subito\n🕒 Impegno settimanale: 2 pomeriggi (mer-ven) + partita del sabato \n📝 Requisiti: -\n📲 Candidature: +39 333 0000014\n\n#Lombardia #Calcio11 #Staff #Allenatore #SettoreGiovanile #SquadraCercaStaff",
+    "expected": {
+      "target": "team-staff"
+    }
+  },
+  {
+    "id": 19,
+    "region": "Lombardia",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\n📍 Zona: Milano\n⚽ Calcio: 11\n👤 Figura: Preparatore Atletico\n🏆 Categoria/settore cercato: qualsiasi\n📚 Qualifiche: Preparatore Atletico\n🏟️ Esperienza: Un anno di Futsal in C2, due anni una squadra di 2013\n🚗 Spostamento: da valutare\n📲 Contatto: contatto9@example.test\n\nMi chiamo Nomecampione,sono di Solaro provincia di Milano, preparatore Atletico Presgonistica calcio a 11,\nHo preparato e seguito una squadra di Futsal in C2,preparato una squadra di 2013 per due anni,sempre lavorato con  ragazzi e ragazze nel mondo fitness,danza,e calcio. Mi piace molto trasmette la mia passione, e motivare chi ci crede. Amo lo sport. Vorrei farlo per mestiere ma purtroppo avrò disponibilità solo alla sera dopo le 18. Possibilmente vicino a casa.\n\n#Milano #Calcio11 #StaffCercaOpportunità #PreparatoreAtletico",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 20,
+    "region": "Lombardia",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n📍 Zona di ricerca: Milano Nord-Ovest\n⚽ Calcio: 11\n🏆 Categoria: Juniores Élite \n🎯 Ruoli cercati: Portiere\n📅 Annate/età: 2009/2010\n📝 Requisiti: -\n📌 Periodo: Subito\n📲 Contatto: +39 333 0000015\n\n#Regione #Calcio11 #SettoreGiovanile #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 21,
+    "region": "Lombardia",
+    "text": "⚪ CERCASI AMICHEVOLE\n👕 Società: Zeta Milano U19\n📍 Zona: Milano\n⚽ Calcio: 11\n🏆 Categoria: U19\n📅 Data/periodo: 12/10 \n🕒 Orario: non indicato ancora\n🏟️ Campo disponibile: No\n🚗 Trasferta: disponibili zona Milano / Brianza\n🎯 Avversario cercato: Juniores o prime squadre\n📲 Contatto: Ivan +39 333 0000016\n\n#Milano #Amichevole #Calcio11 #Juniores #PrimeSquadre\n #Giocatori",
+    "expected": {
+      "target": "match"
+    }
+  },
+  {
+    "id": 22,
+    "region": "Lombardia",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\n📍 Zona: Milano\n⚽ Calcio: 11\n👤 Figura: Allenatore prima squadra e/o giovanili\n🏆 Categoria/settore cercato: Dalla promozione in su\n📚 Qualifiche: UEFA C, laurea in Sports Management, Diploma in nutrizione sportiva\n🏟️ Esperienza: Tanti anni all’estero come allenatore/giocatore\n🚗 Spostamento: da valutare \n📲 Contatto: +39 333 0000017\n\n#Lombardia #Calcio11 #StaffCercaOpportunità #Allenatore",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 23,
+    "region": "Lombardia",
+    "text": "🤝 SOCIETÀ CERCA SPONSOR\n📍 Zona: Cremona provincia\n⚽ Categoria/settore: Amatori\n🎯 Ricerca: sponsor stagione \n📣 Visibilità offerta: social, eventi ed eventualmente logo su materiale\n📲 Contatto: Scrivi a Bacheca Dilettanti su whatsapp: wa.me/393330000004\n\nSponsor per squadra amatori, con possibilità di contatti col resto delle squadre (tutto il settore giovanile più prima squadra in categoria)\n\n#Sponsor #Calcio11 #Cremona",
+    "expected": {
+      "target": "sponsor"
+    }
+  },
+  {
+    "id": 24,
+    "region": "Lombardia",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\n📍 Zona: Milano\n⚽ Calcio: 11\n👤 Figura: Allenatore\n🏆 Categoria/settore cercato: Under 17 / Prima squadra\n📚 Qualifiche: UEFA B\n🏟️ Esperienza: allenatore Under 17 nazionale professionista\n🚗 Spostamento: da valutare\n📲 Contatto: +39 333 0000018\n\nAllenatore di calcio con UEFA B, laureato in Scienze Motorie e con esperienza pluriennale nel settore giovanile professionistico dell’FC Crotone, dalle categorie Under 13 all’Under 17 Nazionale, oltre a un’esperienza come viceallenatore in Primavera 2. Vincitore di campionato dilettante da allenatore. Credo in una metodologia di lavoro che valorizzi la capacità decisionale e soprattutto la formazione umana dell’atleta.\n\n#Milano #Calcio11 #StaffCercaOpportunità #Allenatore",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 25,
+    "region": "Lombardia",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n📍 Zona: Lombardia\n⚽ Calcio: 11\n🧍 Ruolo: Portiere\n📅 Anno: 2008\n🏆 Categoria cercata: Juniores Elite / Regionale / Promozione / Prima categoria \n🏟️ Categoria attuale: Juniores Elite Lombardia \n📲 Contatto: (Padre) +39 333 0000019\n\n#Lombardia #Calcio11 #PrimaCategoria #Promozione #JunioresElite #JunioresRegionale #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 26,
+    "region": "Lombardia",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n👕 Nomecampione Cognomecampione 🇮🇹\n📍 Zona: Milano\n⚽ Calcio: 11/7\n🧍 Ruolo: Esterno Dx e Sx \n📅 Anno: 2008\n🏆 Categoria cercata: Indifferente\n🏟️ Categorie precedenti: Nessuna\n📲 Contatto: contatto10@example.test / +39 333 0000020\n\n#Milano #Calcio11 #Categoria #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 27,
+    "region": "Puglia",
+    "text": "🏆 TORNEO / EVENTO CALCISTICO\n\nBomber League 2026\n\n📍 Zona: Bari\n🏟️ Campo: Centro Sportivo All Stars Bari\n📅 Data/periodo: 21 Settembre\n🕒 Orario indicativo: 20/21/22\n⚽ Calcio: 7\n💰 Costo iscrizione: 300€ a squadra\n🎁 Premi: Primo posto 700€, Secondo Posto 500€, Terzo Posto 300€ + Premi Individuali\n📝 Modalità Iscrizioni: Tramite contatto qui sotto\n📲 Contatto: +39 333 0000021\n\n#Bari #Torneo #Calcio7",
+    "expected": {
+      "target": "event"
+    }
+  },
+  {
+    "id": 28,
+    "region": "Lombardia",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n📍 Zona: Bergamo \n⚽ Calcio: 11\n🧍 Ruolo: Punta centrale\n📅 Anno: 2007 \n🏆 Categoria cercata: juniores, under21, prima squadra o anche csi\n🏟️ Categorie precedenti: Under 21 under18 \n📲 Contatto: +39 333 0000022\n\n#Bergamo #Calcio11 #TerzaCategoria #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 29,
+    "region": "Lombardia",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n\n👕 Nome: Nomecampione \n📍 Zona: Milano Est, Monza e Brianza, Bergamo Ovest\n⚽ Calcio: 11\n🧤 Ruolo: Portiere\n📅 Anno: 1995\n🏆 Categoria cercata: Prima, Seconda e Terza Categoria FIGC, CSI Eccellenza a 11\n🏟️ Esperienze: esperienze in Prima, Seconda e terza categoria. attualmente CSI Eccellenza a 11\n📧 Contatto: +39 333 0000023\n\nPortiere di 31 anni, attualmente impegnato nel campionato CSI Eccellenza a 11.\n\nValuto proposte da squadre competitive dove poter giocare titolare e giocare con continuità. Disponibile a spostamenti fino a circa 40 minuti e a sostenere allenamenti di prova.\n\nPer motivi lavorativi potrei trasferirmi a marzo.\n\n#Milano #Monza #Bergamo #Calcio11 #PrimaCategoria #SecondaCategoria #TerzaCategoria #CSI #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 30,
+    "region": "Lombardia",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n👕 Società: Elettro Cernusco\n📍 Zona: Milano\n⚽ Calcio: 11\n🏆 Categoria: Juniores\n🎯 Ruoli cercati: Difensore e Centrocampista \n📅 Annate/età: 2006-2007-2008-2009-2010\n📝 Requisiti: -\n📌 Periodo: Subito\n📲 Contatto: +39 333 0000024 Mister\n\nBel gruppo di ragazzi motivati e ambiziosi, con progetto prima squadra, centro sportivo al TOP in provincia di Milano, campo da gioco sintetico di nuova generazione!\n\n#Milano #Calcio11 #SettoreGiovanile #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 31,
+    "region": "Lombardia",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n📍 Zona: Bergamo centro\n⚽ Calcio: 11\n🏆 Categoria: Terza Categoria\n🎯 Ruoli cercati: Portiere,Difensori centrali e attaccanti con esperienza\n📅 Annate/età: Nessuna richiesta specifica\n📝 Requisiti: garanzia di affidabilità e sicurezza sul prendere l’impegno\n📌 Periodo: subito\n📲 Contatto: +39 333 0000025\n\nUnisciti al nostro progetto giovane e ambizioso!\n\n#Bergamo #Calcio11 #TerzaCategoria #SquadraCerca #Società #Squadre",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 32,
+    "region": "Lombardia",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\n📍 Zona: Lombardia - Piemonte - Veneto - Emilia-Romagna\n⚽ Calcio: 11\n👤 Figura: Osservatore \n🏆 Categoria/settore cercato: Eccellenza / Serie D\n📚 Qualifiche: Osservatore calcistico e Match Analyst con Scoutit \n🏟️ Esperienza: Città di Varese osservatore calcistico prima squadra in Serie D\n🚗 Spostamento: disponibile\n📲 Contatto: contatto4@example.test\n\n#Regione #Calcio11 #StaffCercaOpportunità #Osservatore",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 33,
+    "region": "Toscana",
+    "text": "🟡 ARBITRO DISPONIBILE\n📍 Zona: Toscana\n⚽ Calcio: 11 / 7 / 5\n👤 Figura: Arbitro\n📚 Qualifiche: Arbitro UISP\n🚗 Spostamento: Disponibilità\n📲 Contatto: +39 333 0000026\n\n#Toscana #Calcio11/Calcio7/Calcio5 #StaffCercaOpportunità #Arbitro\n #StaffCercaOpportunità #Allenatore",
+    "expected": {
+      "target": "referee"
+    }
+  },
+  {
+    "id": 34,
+    "region": "Lombardia",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n📍 Zona: Legnano (MI)\n⚽ Calcio: 11\n🏆 Categoria: Terza Categoria\n🎯 Ruoli cercati: Portiere\n📅 Annate/età: qualsiasi\n📝 Requisiti: -\n📌 Periodo: Subito \n📲 Contatto: +39 333 0000027\n\n#Lombardia #Calcio11 #TerzaCategoria #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 35,
+    "region": "Lombardia",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n👕 Nomecampione Cognomecampione 🇮🇹\n📍 Zona: Milano\n⚽ Calcio: 11 / 7 / 5\n🧍 Ruolo: Calcio a 11 esterno d’attacco o mezz’ala, calcio a 7 qualsiasi dal centrocampo in su \n📅 Anno: 2000\n🏆 Categoria cercata: Seconda/Terza categoria, CSI\n🏟️ Categorie precedenti: Prima / Seconda categoria calcio a 11, Serie C1 Calcio a 5\n📲 Contatto: contatto11@example.test / +39 333 0000028\n\n26 anni, appena trasferito da Roma a Milano, cerco squadra. Ex giocatore di calcio a 11 fino ai 19 anni (Prima/Seconda Categoria), negli ultimi 3 anni in Serie C1 e C2 di calcio a 5. Giocatore offensivo, esterno alto o mezz’ala/trequartista, 1.74m, baricentro basso e ottima tecnica individuale. \n\n#Milano #Calcio11 #SecondaCategoria #TerzaCategoria #CSI #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 36,
+    "region": "Lombardia",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\n📍 Zona di ricerca: disponibile in tutta la Lombardia (residente a Varese)\n⚽ Calcio: 11\n👤 Figura: Allenatore\n🏆 Categoria/settore cercato: Femminile: Prime Squadre / Juniores (target principale); Maschile: Juniores Regionali/Nazionali e Categorie Agonistiche (Valutazione aperta anche per Prime Squadre come Terza Categoria o altre superiori)\n📚 Qualifiche: UEFA B (dal 2016) e UEFA C (dal 2015)\n🏟️ Esperienza: Calcio Lecco 1912 (U15 Femminile) 1º posto campionato Invernale e passaggio agli Interregionali. 24/25 Torino Club (U15 Femminile) e U17 Regionale stesso anno 2 categorie\n23/24 Città di Mascalucia (Juniores Regionale / Promozione) - Rispettivamente 3º e 7º posto.\nVanta inoltre anni di panchine nei Regionali Maschili (u15/u17) con ottimi piazzamenti nei primi posti e la gestione totale di una scuola calcio (dalla scuola calcio all’eccellenza femminile).\n🚗 Spostamento: disponibile in tutta la Lombardia\n📲 Contatto: +39 333 0000029\n\nSvincolato e disponibile da subito.\n\n#Lombardia #Calcio11 #StaffCercaOpportunità #Allenatore",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 37,
+    "region": "Lombardia",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n📍 Zona: Milano Est, Martesana\n⚽ Calcio: 8\n🏆 Categoria: Serie C Lega Calcio 8 Milano \n🎯 Ruoli cercati: difensore e attaccante \n📅 Annate/età: qualsiasi\n📝 Requisiti: buon livello \n📌 Periodo: subito\n📲 Contatto: +39 333 0000030\n\nSi gioca sempre in settimana tra lunedì e giovedì \n\n#MilanoEst #Calcio8 #Categoria #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 38,
+    "region": "Lombardia",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n📍 Zona: Bergamo \n⚽ Calcio: 11\n🏆 Categoria: Under 21\n🎯 Ruoli cercati: portiere e attaccante (punta centrale) per u21 regionale\n📅 Annate/età: u21\n📝 Requisiti: -\n📌 Periodo: 26/27\n📲 Contatto: +39 333 0000031\n\n#Bergamo #Calcio11 #SettoreGiovanile #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 39,
+    "region": "Lazio",
+    "text": "🏟️ CAMPO SPORTIVO DISPONIBILE PER AFFITTO\n📍 Località: Roma Nord\n⚽ Tipologia del campo: 11, in terra omologato\n📅 Disponibilità: quasi sempre disponibile\n🚿 Servizi inclusi: spogliatoio, docce, luci\n📝 Informazioni aggiuntive: -\n📞 Contatti per prenotazioni: +39 333 0000032",
+    "expected": {
+      "target": "facility"
+    }
+  },
+  {
+    "id": 40,
+    "region": "Lombardia",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n👕 Società: Novate Milanese U19\n📍 Zona: Milano\n⚽ Calcio: 11\n🏆 Categoria: U19\n🎯 Ruoli cercati: tutti\n📅 Annate/età: annate fuori quota 2006/2007 e in quota 2008/2009\n📝 Requisiti: -\n📌 Periodo: 26/27\n📲 Contatto: +39 333 0000033\n\nAllenamenti martedì e giovedì dalle 20 alle 21.30/45\n\nPartita in casa Domenica ore 14.45 fuori casa la maggior parte il sabato pomeriggio\n\n#Milano #Calcio11 #SettoreGiovanile #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 41,
+    "region": "Lombardia",
+    "text": "🟠 SQUADRA CERCA STAFF\n📍 Zona: Milano Ovest\n⚽ Calcio: 11\n🏆 Categoria/squadra: settore giovanile\n👤 Figura cercata: Preparatore Portieri\n📅 Periodo: subito\n🕒 Impegno: 1 pomeriggio a settimana, massimo 2 tra lunedì e mercoledì \n📝 Requisiti: -\n📲 Candidature: +39 333 0000034\n\n#Milano #Calcio11 #Staff #PreparatorePortieri #SquadraCercaStaff",
+    "expected": {
+      "target": "team-staff"
+    }
+  },
+  {
+    "id": 42,
+    "region": "Lazio",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n👕 Nomecampione Cognomecampione \n📍 Zona: Monterotondo (RM)\n⚽ Calcio: 11\n🧍 Ruolo: Difensore centrale / terzino \n📅 Anno: 2004\n🏆 Categoria cercata: Terza / Seconda categoria \n🏟️ Categorie precedenti: Juniores regionali e terza categoria \n📲 Contatto: contatto12@example.test / +39 333 0000035\n\nDopo aver giocato da sempre, mi sono fermato un anno e adesso sono in cerca di una nuova squadra per ripartire\n\n#Roma #Calcio11 #TerzaCategoria #SecondaCategoria #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 43,
+    "region": "Lazio",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n📍 Zona: Roma\n⚽ Calcio: 11\n🏆 Categoria: U15\n🎯 Ruoli cercati: tutti\n📅 Annate/età: u15\n📝 Requisiti: -\n📌 Periodo: Subito\n📲 Contatto: +39 333 0000036\n\n#Roma #Calcio11 #SettoreGiovanile #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 44,
+    "region": "Lazio",
+    "text": "🟣 STAFF CERCA OPPORTUNITÀ\n📍 Zona: Roma\n⚽ Calcio: 11\n👤 Figura: Allenatore\n🏆 Categoria/settore cercato: Terza Categoria \n📚 Qualifiche: Nessuno al momento \n🏟️ Esperienza: 1 stagione in 1a categoria, 1 in eccellenza e 2 stagioni in promozione \n🚗 Spostamento: in auto \n📲 Contatto: contatto13@example.test / +39 333 0000037\n\nMi chiamo Nomecampione, ho 24 anni e cerco una panchina di terza categoria per iniziare il mio percorso da allenatore \n\n#Roma #Calcio11 #StaffCercaOpportunità #Allenatore",
+    "expected": {
+      "target": "staff"
+    }
+  },
+  {
+    "id": 45,
+    "region": "Lazio",
+    "text": "🟢 SQUADRA CERCA PORTIERI CALCIO FEMMINILE \n📍 Zona: ROMA NORD\n⚽ Calcio: 11 \n🏆 Categorie:\n- under 17\n- under 15\n- under 12\n🎯 Ruoli cercati: PORTIERE\n📅 Annate/età: 11-17 anni\n📝 Requisiti: Disponibilità di firmare subito o eventualmente a dicembre \n📌 Periodo: 26/27\n📲 Contatto: +39 333 0000038\n\nAmbiente sano e professionale dove far crescere tecnicamente e umanamente le ragazze.\nPartecipazione ai campionati regionali di categoria.\n\n#Roma #Calcio11 #CalcioFemminile #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 46,
+    "region": "Lazio",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n👕 SSD Consalvo\n📍 Zona: Roma\n⚽ Calcio: 11\n🏆 Categoria: Under 18 Regionale \n🎯 Ruoli cercati: Difensori centrali e Centrocampisti \n📅 Annate/età: 2009\n📝 Requisiti: -\n📌 Periodo: 26/27\n📲 Contatto: +39 333 0000039 Direttore Agonistica\n\nCerchiamo urgentemente per la nostra Under 18 regionale Difensori Centrali e Centrocampisti per rafforzamento rosa già competitiva.\n\n#Roma #Calcio11 #SettoreGiovanile  #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 47,
+    "region": "Lazio",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n👕 ASD New Team RC5\n📍 Zona: Roma, Lazio\n⚽ Calcio: 5\n🏆 Categoria: Under 19 Élite, Under 17 Élite, Under 15 Élite \n🎯 Ruoli cercati: Giocatori di movimento \n📅 Annate/età: Dal 2007 al 2013\n📝 Requisiti: Passione per il calcio a 5, motivazione e voglia di mettersi in gioco.\n📌 Periodo: Subito\n📲 Contatto: \n- Emiliano: +39 333 0000040\n- ⁠Francesco: +39 333 0000041\n- ⁠Andrea: +39 333 0000042\n\nLa ASD New Team RC5 cerca ragazzi per completare le rose delle proprie squadre agonistiche. Le attività si svolgono presso lo Sporting Club Paradise, in via Capannelle 134, Roma. Un ambiente dove crescere, migliorare e condividere la passione per il futsal, nel segno dei colori verde e nero\n\n#Roma #Calcio5 #SettoreGiovanile #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  },
+  {
+    "id": 48,
+    "region": "Lazio",
+    "text": "🔵 GIOCATORE CERCA SQUADRA\n📍 Zona: Roma\n⚽ Calcio: 11\n🧍 Ruolo: Difensore centrale / terzino\n📅 Anno: classe 83\n🏆 Categoria cercata: Terza Categoria \n🏟️ Categorie precedenti: Terza Categoria \n📲 Contatto: +39 333 0000043\n\n#Roma #Calcio11 #TerzaCategoria #Giocatori",
+    "expected": {
+      "target": "player"
+    }
+  },
+  {
+    "id": 49,
+    "region": "Lazio",
+    "text": "🟢 SQUADRA CERCA GIOCATORI\n📍 Zona: Roma\n⚽ Calcio: 8\n🏆 Categoria: Calcio a 8\n🎯 Ruoli cercati: Portiere\n📅 Annate/età: qualsiasi\n📝 Requisiti: -\n📌 Periodo: Subito\n📲 Contatto: contatto14@example.test\n\nImpegno fisso o saltuario mercoledì ore 20:00\n\n#Roma #Calcio8 #Categoria #SquadraCerca #Giocatori",
+    "expected": {
+      "target": "team-player"
+    }
+  }
+]

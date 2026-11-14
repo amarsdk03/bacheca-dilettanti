@@ -12,7 +12,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {classifyNavigation, safeNavigationHref} from "./navigation-url";
+import {classifyNavigation, isTrustedPlatform, safeNavigationHref} from "./navigation-url";
 
 type RequestNavigation = (href: string, source?: HTMLElement | null) => boolean;
 const NavigationContext = createContext<RequestNavigation | null>(null);
@@ -30,6 +30,7 @@ export function ExternalNavigationProvider({ children }: { children: ReactNode }
   const request: RequestNavigation = (href, source = null) => {
     const navigation = classifyNavigation(href, window.location.origin);
     if (navigation.kind !== "external") return false;
+    if (isTrustedPlatform(navigation.url)) { window.open(navigation.url.href, "_blank", "noopener,noreferrer"); return true; }
     setPending({ href: navigation.url.href, source }); setOpen(true); return true;
   };
   return <NavigationContext.Provider value={request}>
@@ -62,11 +63,13 @@ export function ExternalLink({ href, onClick, onAuxClick, ...props }: Omit<Compo
   const intercept = (event: MouseEvent<HTMLAnchorElement>) => {
     if (event.defaultPrevented || event.button > 1) return;
     const navigation = classifyNavigation(href, window.location.origin);
-    if (navigation.kind === "internal") return;
+    if (navigation.kind === "internal" || (navigation.kind === "external" && isTrustedPlatform(navigation.url))) return;
     event.preventDefault();
     if (navigation.kind === "external") request(navigation.url.href, event.currentTarget);
   };
-  return <a {...props} href={safe} aria-disabled={!safe || undefined}
+  const trusted = safe && classifyNavigation(safe, "https://admin.invalid");
+  const direct = trusted && trusted.kind === "external" && isTrustedPlatform(trusted.url);
+  return <a {...props} href={safe} target={direct ? "_blank" : undefined} rel={direct ? "noopener noreferrer" : undefined} aria-disabled={!safe || undefined}
     onClick={(event) => { onClick?.(event); intercept(event); }}
     onAuxClick={(event) => { onAuxClick?.(event); if (event.button === 1) intercept(event); }} />;
 }

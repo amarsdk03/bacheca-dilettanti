@@ -22,7 +22,7 @@ import {
 	type ProfileLocationDraft,
 	type ProfileLocations,
 } from "@/features/profilo/profile-model";
-import {birthMonthNumber, daysInBirthMonth, getItalyDateParts} from "@/features/profilo/birth-date";
+
 import {createProfileSocialLinks, type ProfileSocialPlatform,} from "@/features/profilo/profile-social-links";
 import AnnouncementDetailsForm from "@/features/pubblica-annuncio/components/AnnouncementDetailsForm";
 import ConfermaInvioAnnuncio from "@/features/pubblica-annuncio/components/ConfermaInvioAnnuncio";
@@ -59,23 +59,7 @@ interface PubblicaAnnuncioProps {
 	profileContext: PublishProfileContext | null;
 }
 
-function getMinorContactNotice(profileType: PublishableProfileType, drafts: ProfileDrafts) {
-	if (profileType === "servizi-consulenze") return false;
-	if (
-		profileType !== "giocatore"
-		&& profileType !== "staff-sportivo"
-		&& profileType !== "arbitro"
-	) return true;
-	const draft = drafts[profileType];
-	const year = Number(draft.anno_nascita);
-	const month = birthMonthNumber(draft.mese_nascita);
-	const day = Number(draft.giorno_nascita);
-	if (!Number.isInteger(year) || year < 1900 || !month || !Number.isInteger(day) || day < 1 || day > daysInBirthMonth(year, month)) return true;
-	const today = getItalyDateParts();
-	let age = today.year - year;
-	if (today.month < month || (today.month === month && today.day < day)) age--;
-	return age < 18;
-}
+import {getMinorContactNotice} from "@bacheca/announcements/features/pubblica-annuncio/minor-contact-notice";
 
 function PublishStepTab({value, locked, reason, resetKey, children}: {
 	value: string;

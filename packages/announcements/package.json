@@ -5,11 +5,20 @@
   "type": "module",
   "exports": {
     "./ui/*": "./src/ui/*.tsx",
-    "./*": "./src/*.ts"
+    "./*": "./src/*.ts",
+    "./publication/*": "./src/ui/publication/*.tsx",
+    "./publication-lib/*": "./src/ui/publication/*.ts"
   },
   "dependencies": {
     "@bacheca/database": "0.1.0",
-    "lucide-react": "^1.70.0"
+    "lucide-react": "^1.70.0",
+    "@base-ui/react": "^1.6.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.6.0",
+    "@icons-pack/react-simple-icons": "^13.11.1",
+    "country-flag-icons": "^1.6.20",
+    "@supabase/supabase-js": "^2.110.8"
   },
   "peerDependencies": {
     "react": "^19.0.0"

@@ -1,3 +1,4 @@
+import {categoryColor} from "./chart-colors";
 import type {HomeChart, HomeLimitation} from "./contracts";
 import {HOME_PROFILE_TYPES} from "./contracts";
 import {ADMIN_ANNOUNCEMENT_STATUSES, ADMIN_ANNOUNCEMENT_TYPES} from "../annunci/contracts";
@@ -20,7 +21,7 @@ export function distributionRows(chart: AvailableHomeChart): ChartRow[] {
   const labels: Record<string, string> = chart.metric === "users" ? profiles : chart.metric === "announcements" ? STATUS_LABELS : TYPE_LABELS;
   const keys: readonly string[] = chart.metric === "users" ? HOME_PROFILE_TYPES : chart.metric === "announcements" ? ADMIN_ANNOUNCEMENT_STATUSES : ADMIN_ANNOUNCEMENT_TYPES;
   return chart.distribution.map(row => ({ ...row, label: labels[row.key] ?? (row.key === "unspecified" ? "Non specificata" : "Altro"),
-    fill: `var(--chart-${row.key === "unspecified" ? 12 : row.key === "other" ? 13 : keys.indexOf(row.key) + 1})` }));
+    fill: chart.metric !== "users" ? categoryColor(chart.metric, row.key) : `var(--chart-${row.key === "unspecified" ? 12 : row.key === "other" ? 13 : keys.indexOf(row.key) + 1})` }));
 }
 export function primaryRows(chart: AvailableHomeChart): ChartRow[] {
   return chart.metric === "pending" ? chart.age.map(row => ({ ...row, label: ages[row.key], fill: "var(--chart-1)" })) :

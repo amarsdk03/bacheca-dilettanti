@@ -1,0 +1,31 @@
+import MultiselectField from "./MultiselectField";
+import {TIPOLOGIA_CALCIO_OPTIONS} from "@bacheca/announcements/features/pubblica-annuncio/types/pubblicaAnnuncio";
+
+type TipologiaCalcioMultiselectFieldProps = {
+	value: string[];
+	onValueChange: (value: string[]) => void;
+	label?: string;
+	required?: boolean;
+	error?: string;
+};
+
+export default function TipologiaCalcioMultiselectField({
+	value,
+	onValueChange,
+	label = "Tipologia calcio",
+	required = false,
+	error,
+}: TipologiaCalcioMultiselectFieldProps) {
+	return (
+		<MultiselectField
+			label={label}
+			options={TIPOLOGIA_CALCIO_OPTIONS}
+			value={value}
+			onValueChange={onValueChange}
+			placeholder="Seleziona le tipologie..."
+			emptyText="Nessuna tipologia trovata."
+			required={required}
+			error={error}
+		/>
+	);
+}

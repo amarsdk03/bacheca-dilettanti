@@ -40,9 +40,10 @@ export async function checkAnnunci({ cli, pageId, evaluate, uid, waitFor, key, f
   };
   const filter = async (id, option) => { await press(`document.getElementById(${JSON.stringify(id)})`); await click(`option "${option}"`); await ready(); };
   const reset = async () => { await button("Ripristina filtri"); await ready(); assert.equal(await evaluate("() => location.search"), ""); };
-  const previewButton = id => `[...document.querySelectorAll('main table tbody tr')].find(r=>r.textContent.includes(${JSON.stringify(id)}))?.querySelector('button[aria-label^="Anteprima:"]')`;
+  const previewButton = id => `document.getElementById(${JSON.stringify(`annunci-menu-${id}`)})`;
+  const beginPreview = async id => { await press(previewButton(id)); await click('menuitem "Info aggiuntive"'); };
   const open = async (id, expect = "ok") => {
-    await press(previewButton(id));
+    await beginPreview(id);
     await waitFor(`() => !!${SHEET} && !(${SHEET}).querySelector('[aria-label="Caricamento dettagli"]')`);
     if (expect === "ok") assert.equal(await evaluate(`() => (${SHEET}).querySelector('[data-slot=sheet-title]').textContent`), data.inspect(id).summary.title);
   };
@@ -131,9 +132,9 @@ export async function checkAnnunci({ cli, pageId, evaluate, uid, waitFor, key, f
       assert.equal(data.stats.detail, before + 1);
       assert.equal(await evaluate(`() => (${SHEET}).textContent.includes('Contenuto sintetico') && (${SHEET}).textContent.includes('9007199254740993')`), false); // Child IDs are internal, not displayed as content.
       assert.equal(await evaluate(`() => (${SHEET}).textContent.includes('Contenuto sintetico') && (${SHEET}).textContent.includes('contatto@example.test')`), true);
-      await close(); assert.equal(await evaluate("() => document.activeElement.getAttribute('aria-label')?.startsWith('Anteprima:')"), true);
+      await close(); assert.equal(await evaluate("() => document.activeElement.getAttribute('aria-label')?.startsWith('Altre azioni:')"), true);
     }
-    data.hold("detail"); await press(previewButton(annunciId(1))); await waitHeld("detail");
+    data.hold("detail"); await beginPreview(annunciId(1)); await waitHeld("detail");
     assert.equal(await evaluate(`() => !!(${SHEET}).querySelector('[aria-label="Caricamento dettagli"]')`), true);
     await close(); data.release("detail");
     data.setMode("detail", "not_found"); await open(annunciId(1), "missing"); assert.equal(await evaluate(`() => (${SHEET}).textContent.includes('Annuncio non più disponibile')`), true); await close();

@@ -1813,6 +1813,12 @@ export type Database = {
         Args: { p_metric: string }
         Returns: Json
       }
+      admin_list_reports_v1: { Args: { p_query?: Json }; Returns: Json }
+      admin_get_report_v1: { Args: { p_id: string }; Returns: Json }
+      admin_update_report_v1: { Args: { p_id: string; p_status: string; p_note: string; p_version: number }; Returns: Json }
+      admin_list_invitation_codes_v1: { Args: { p_query?: Json }; Returns: Json }
+      admin_get_invitation_code_v1: { Args: { p_id: string; p_query?: Json }; Returns: Json }
+      admin_consider_invitation_v1: { Args: { p_id: string; p_considered: boolean; p_expected: boolean }; Returns: Json }
       admin_list_audit_events_v1: {
         Args: { p_query?: Json }
         Returns: Json

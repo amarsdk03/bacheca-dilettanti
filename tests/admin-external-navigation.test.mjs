@@ -72,14 +72,24 @@ for (const options of [{}, { ctrlKey: true }, { metaKey: true }, { shiftKey: tru
 
 test("cancellation does not navigate and focus restoration only targets connected sources", () => {
   const h = harness(); h.render();
-  h.ExternalLink({ href: "https://www.bachecadilettanti.it/annunci" }).props.onClick(h.event());
+  h.ExternalLink({ href: "https://external.example.test/annunci" }).props.onClick(h.event());
   const { dialog, header, cancel } = h.render();
   assert.equal(cancel.props.children, "Annulla");
   const description = React.Children.toArray(header.props.children)[1];
   assert(!JSON.stringify(description.props.children).includes("non è affiliato"));
-  assert(JSON.stringify(description.props.children).includes("https://www.bachecadilettanti.it/annunci"));
+  assert(JSON.stringify(description.props.children).includes("https://external.example.test/annunci"));
   dialog.props.onOpenChange(false); assert.equal(h.render().dialog.props.open, false);
   h.source.isConnected = false; assert.equal(h.render().popup.props.finalFocus(), null);
+});
+
+test("trusted platform links open directly while similar domains remain untrusted", () => {
+  const h = harness(); h.render();
+  const link = h.ExternalLink({href: "https://www.bachecadilettanti.it/annunci"});
+  const event = h.event(); link.props.onClick(event);
+  assert.equal(event.defaultPrevented, false); assert.equal(link.props.target, "_blank");
+  assert.equal(link.props.rel, "noopener noreferrer");
+  assert.equal(pure.isTrustedPlatform(new URL("https://www.bachecadilettanti.it.example.test/")), false);
+  assert.equal(pure.isTrustedPlatform(new URL("http://www.bachecadilettanti.it/")), false);
 });
 
 test("internal links retain native behavior; invalid links are disabled and prevented", () => {

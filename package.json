@@ -29,7 +29,8 @@
     "dashboard:local:start": "node scripts/dashboard-local/run.mjs start",
     "dashboard:local:stop": "node scripts/dashboard-local/run.mjs stop",
     "dashboard:local:export": "node scripts/dashboard-local/run.mjs export-schema",
-    "dashboard:local:inspect": "node scripts/dashboard-local/run.mjs inspect-schema"
+    "dashboard:local:inspect": "node scripts/dashboard-local/run.mjs inspect-schema",
+    "test:browser:admin:creation": "node scripts/dashboard-browser/creation-checks.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",

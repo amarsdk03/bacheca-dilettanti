@@ -5,6 +5,7 @@ import {Dialog as DialogPrimitive} from "@base-ui/react/dialog"
 import {XIcon} from "lucide-react"
 
 import {cn} from "@/lib/utils"
+import {useAdminAppearance} from "@/components/ui/admin-appearance"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -14,8 +15,10 @@ function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
 }
 
-function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+function DialogPortal({ container, ...props }: DialogPrimitive.Portal.Props) {
+  const appearance = useAdminAppearance()
+  if (appearance && !appearance.portalContainer) return null
+  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} container={appearance ? appearance.portalContainer : container} />
 }
 
 function DialogOverlay({

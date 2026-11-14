@@ -19,8 +19,8 @@ export function HomeActivity({ initialResult }: { initialResult: HomeActivityRes
       <div className="admin-home-action-list"><Button variant="outline" size="sm" disabled={state.pending} onClick={state.refresh}><RefreshCw data-icon="inline-start" aria-hidden="true" />Aggiorna attività</Button>
         <Button variant="outline" nativeButton={false} render={<Link href="/registro-attivita" prefetch={false} />}>Vedi registro completo<ArrowRight data-icon="inline-end" aria-hidden="true" /></Button></div></div>
     <CardDescription>Le cinque operazioni più recenti conservate nel registro. L’email dell’operatore è quella attuale dell’account.</CardDescription></CardHeader>
-    <CardContent className="min-w-0" aria-live="polite">{state.pending ? <TableSkeleton rows={5} columns={3} /> : result?.status === "ok" ?
-      result.page.items.length ? <AuditSummaryTable items={result.page.items} caption="Ultime cinque operazioni disponibili, dalla più recente. Date in Europe/Rome." /> :
+    <CardContent className="min-w-0" aria-live="polite">{state.pending ? <TableSkeleton rows={5} columns={4} /> : result?.status === "ok" ?
+      result.page.items.length ? <AuditSummaryTable separateOutcome items={result.page.items} caption="Ultime cinque operazioni disponibili, dalla più recente. Date in Europe/Rome." /> :
         <EmptyState title="Nessuna operazione registrata" description="Le operazioni conservate compariranno qui. Lo storico precedente all’attivazione dell’audit non è disponibile." /> :
       result && result.status !== "denied" ? <HomeFailure title="Impossibile caricare le ultime operazioni" retry={state.refresh} correlationId={result.status === "unavailable" ? result.correlationId : undefined} /> : null}
     </CardContent>

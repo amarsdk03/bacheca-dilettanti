@@ -1,6 +1,6 @@
-import {ANNOUNCEMENT_AUDIT_ACTIONS} from "./contracts";
+import {ANNOUNCEMENT_AUDIT_ACTIONS, COMMUNITY_AUDIT_ACTIONS} from "./contracts";
 
-export const AUDIT_ACTIONS = ["auth.login", "auth.logout", "auth.access_denied", ...ANNOUNCEMENT_AUDIT_ACTIONS] as const;
+export const AUDIT_ACTIONS = ["auth.login", "auth.logout", "auth.access_denied", ...ANNOUNCEMENT_AUDIT_ACTIONS, ...COMMUNITY_AUDIT_ACTIONS] as const;
 export type AuditAction = typeof AUDIT_ACTIONS[number];
 export type AuditFilters = { from: string; to: string; operator: string; action: "" | AuditAction; outcome: "" | "success" | "failure" };
 export type AuditCursor = { v: 1; filters: AuditFilters; id: string; occurredAt: string };
@@ -9,9 +9,10 @@ export type AuditActor = { authId: string | null; userId: string | null; email: 
 export type AuditSummary = { id: string; occurredAt: string; actor: AuditActor; action: AuditAction; outcome: "success" | "failure" };
 export type AuditPage = { items: AuditSummary[]; hasMore: boolean; nextCursor: string | null };
 export type AuditDetail = AuditSummary & {
-  resourceType: "session" | "announcement" | "announcement_export"; resourceId: string | null; correlationId: string;
+  resourceType: "session" | "announcement" | "announcement_export" | "report" | "invitation"; resourceId: string | null; correlationId: string;
   reason: string | null; failureCode: string | null;
-  changes: Partial<Record<"status" | "hidden" | "trashed", { before: string | boolean | null; after: string | boolean }>>;
+  noteChanged?: boolean | null;
+  changes: Partial<Record<"status" | "hidden" | "trashed" | "considered", { before: string | boolean | null; after: string | boolean }>>;
   export: { rowCount: number; columns: string[] | null; announcementIds: string[] | null } | null;
 };
 export type AuditFailure = { status: "invalid"; code: "INVALID_QUERY" | "INVALID_EVENT_ID" } |

@@ -117,3 +117,15 @@ API exposure, cookie, browser/deploy, correttezza su dati sintetici tramite
 gateway, concorrenza, misure su volumi rappresentativi, recupero e rilascio.
 Lo step funzionale 13 resta Da terminare per queste prove. Installazioni
 previste fino a M10 strutturalmente verificate; **IN02 non avviato**.
+
+## Aggiornamento grafici per categoria — 14 novembre 2026
+
+Applicare `20261114115027_admin_home_category_series.sql` dopo le migrazioni precedenti e prima del deploy Admin. Estende soltanto il ponte Home esistente: nessuna nuova tabella o autorizzazione. La nuova UI resta compatibile con il payload precedente, mostrando il totale e disabilitando la vista separata finché mancano i nuovi aggregati.
+
+`breakdown` contiene un elenco ordinato di `{ key, counts: [{ key, count }] }`: mese per gli annunci totali, fascia di anzianità per gli annunci in revisione. Ogni suddivisione somma al totale del relativo bucket; mesi, categorie e conteggi sono validati prima della visualizzazione. Gli stati rappresentano lo stato attuale dei record creati nel periodo, non lo storico dei cambi di stato. Gli utenti conservano la sola serie totale.
+
+La migrazione è stata verificata esclusivamente su PostgreSQL locale in memoria (fixture sintetiche), inclusi autorizzazioni, date anomale e aggregazione mensile/trimestrale/annuale. Nessuna applicazione o verifica sul progetto remoto.
+
+## Serie utenti per profilo principale
+
+Applicare `20261114135428_admin_home_user_profile_series.sql` dopo `20261114115027_admin_home_category_series.sql`. La nuova suddivisione conta ogni account registrato una sola volta secondo la tipologia principale attuale del profilo base; include profili nascosti e usa «Non specificata» per account senza profilo. È una fotografia attuale, non la tipologia storica alla registrazione. La vista totale resta disponibile quando le migrazioni non sono ancora presenti.

@@ -18,7 +18,11 @@ import {
 } from "@/features/annunci/announcement-model";
 import {loadRelatedPublicAnnouncements} from "@/features/annunci/server/queries";
 import {type AnnouncementPreviewData, formatPreviewStatus} from "@/features/pubblica-annuncio/announcement-preview";
-import {buildAnnouncementSummarySections, summaryAnnouncementTitle, summaryLocationGroups} from "@/features/annunci/announcement-summary";
+import {
+	buildAnnouncementSummarySections,
+	summaryAnnouncementTitle,
+	summaryLocationGroups
+} from "@/features/annunci/announcement-summary";
 import {projectAnnouncementSummaryProfile} from "@/features/annunci/announcement-summary-profile";
 import {currentPlayerCareer} from "@/features/profilo/current-team";
 import {createAdminClient} from "@/lib/supabase/admin";

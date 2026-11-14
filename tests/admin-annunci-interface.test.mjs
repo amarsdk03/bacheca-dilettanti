@@ -132,7 +132,7 @@ test("cleanup aborts both request types and suppresses late updates", async () =
 });
 
 function uiLoader(overrides = {}) {
-  const dependencies = { react: React, "react/jsx-runtime": require("react/jsx-runtime"), "@/features/annunci/server/actions": { moderateAnnouncementAction() { throw new Error("Unexpected mutation"); } }, ...overrides };
+  const dependencies = { react: React, "react/jsx-runtime": require("react/jsx-runtime"), "next/link": {__esModule:true,default:({href,children,...props})=>{delete props.prefetch;return React.createElement("a",{href,...props},children);}}, "./actions": {getWhatsAppExport(){throw new Error("Unexpected read");},saveWhatsAppExport(){throw new Error("Unexpected mutation");}}, "@/features/annunci/server/actions": { moderateAnnouncementAction() { throw new Error("Unexpected mutation"); } }, ...overrides };
   for (const name of ["@base-ui/react/button", "@base-ui/react/input", "@base-ui/react/separator", "@base-ui/react/tooltip", "@base-ui/react/dialog", "@base-ui/react/alert-dialog", "@base-ui/react/select", "@base-ui/react/menu", "@base-ui/react/merge-props", "@base-ui/react/use-render", "class-variance-authority", "clsx", "tailwind-merge", "lucide-react"]) dependencies[name] = require(name);
   return adminServerLoader({ dependencies });
 }
@@ -142,16 +142,33 @@ test("actual UI renders semantic seven-column table, escaped content and disable
   const html = renderToStaticMarkup(React.createElement(Workspace, { initialQuery: parseAnnunciUrl(""), initialResult: { status: "ok", page: { items: [row], hasMore: false, nextCursor: null } } }));
   assert.equal((html.match(/<th\s/g) ?? []).length, 7); assert.match(html, /&lt;script&gt;/);
   assert(!html.includes("secret-fingerprint")); assert(!html.includes("<script>"));
-  assert.match(html, /Anteprima:/); assert.match(html, /Crea annuncio/); assert.match(html, /Esporta pagina/);
+  assert.match(html, /Altre azioni:/); assert.match(html, /Distribuzione/); assert.match(html, /Legenda visibilità/); assert.match(html, /Esporta CSV/);
   assert.match(html, /disabled/); assert.match(html, /Paginazione annunci/);
+});
+test("visibility is one badge preserving privacy, hiding and unknown values", () => {
+  const Badge = uiLoader()(base + "components/AnnouncementBadges.tsx").AnnouncementVisibilityBadge;
+  for (const [row, expected] of [
+    [{hidden:false,private:false}, "Pubblico"],
+    [{hidden:false,private:true}, "Privato"],
+    [{hidden:true,private:false}, "Oscurato"],
+    [{hidden:true,private:true}, "Oscurato"],
+    [{hidden:false,private:null}, "Privacy non specificata"],
+    [{hidden:true,private:null}, "Oscurato"],
+    [{hidden:null,private:false}, "Pubblico (Oscuramento non specificato)"],
+    [{hidden:null,private:true}, "Privato (Oscuramento non specificato)"],
+    [{hidden:null,private:null}, "Privacy non specificata (Oscuramento non specificato)"],
+  ]) {
+    const html = renderToStaticMarkup(React.createElement(Badge, {row}));
+    assert(html.includes(expected)); assert.equal((html.match(/data-slot="badge"/g) ?? []).length, 1);
+  }
 });
 test("CSV export is enabled only for a nonempty current page and remains an internal button", () => {
   for(const items of [[row],[]]) {
     const Workspace=uiLoader()(base+"components/AnnunciWorkspace.tsx").AnnunciWorkspace;
     const html=renderToStaticMarkup(React.createElement(Workspace,{initialQuery:parseAnnunciUrl(""),initialResult:{status:"ok",page:{items,hasMore:false,nextCursor:null}}}));
     const buttons=[...html.matchAll(/<button\b[^>]*>[\s\S]*?<\/button>/g)].map(m=>m[0]);
-    const button=buttons.find(b=>b.includes("Esporta pagina CSV"));assert(button);assert.equal(button.includes('disabled=""'),items.length===0);
-    assert.match(html,/fino a 30 risultati/);assert(!button.includes('href='));
+    const button=buttons.find(b=>b.includes("Esporta CSV"));assert(button);assert.equal(button.includes('disabled=""'),items.length===0);
+    assert(!button.includes('href='));
   }
 });
 for (const [search, message, result] of [

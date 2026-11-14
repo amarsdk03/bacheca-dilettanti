@@ -23,6 +23,18 @@ function loader(stubs = {}) {
 		new Function("require", "module", "exports", outputText)((name) => {
 			if (name in stubs) return stubs[name];
 			if (name === "server-only") return {};
+      if (name.startsWith("@bacheca/announcements/")) {
+        const alias="@/"+name.slice("@bacheca/announcements/".length);
+        if(Object.hasOwn(stubs,alias))return stubs[alias];
+        const modulePath=name.slice("@bacheca/announcements/".length).replace("publication/","ui/publication/");
+        const base=path.join(root,"packages/announcements/src",modulePath);
+        return load([base,base+".ts",base+".tsx"].find(existsSync));
+      }
+      const publicationRoot=path.join(root,"packages/announcements/src/ui/publication");
+      if(file.startsWith(publicationRoot) && name.startsWith(".")) {
+        const alias="@/"+path.relative(publicationRoot,path.resolve(path.dirname(file),name)).replaceAll(path.sep,"/");
+        if(Object.hasOwn(stubs,alias))return stubs[alias];
+      }
 			if (name.startsWith("@/") || name.startsWith(".")) {
 				const base = name.startsWith("@/") ? path.join(root, "apps/web/src", name.slice(2)) : path.resolve(path.dirname(file), name);
 				const target = [base, `${base}.ts`, `${base}.tsx`].find((candidate) => existsSync(candidate));

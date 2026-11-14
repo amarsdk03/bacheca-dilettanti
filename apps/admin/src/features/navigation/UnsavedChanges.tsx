@@ -32,7 +32,7 @@ export function UnsavedChangesProvider({children}: {children: ReactNode}) {
   const [open, setOpen] = useState(false);
   const setDirty = useCallback((dirty: boolean) => { dirtyRef.current = dirty; }, []);
   const confirmExit = useCallback((action: () => void, source: HTMLElement | null = null) => {
-    if (pathname !== "/crea-annuncio" || !dirtyRef.current) return false;
+    if (pathname !== "/annunci/crea-annuncio" || !dirtyRef.current) return false;
     pendingRef.current = {action, source};
     setOpen(true);
     return true;

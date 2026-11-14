@@ -27,7 +27,7 @@ export function createAnnunciFixture() {
       author: { profileId: i === 34 ? null : PROFILE, userId: USER, displayName: i === 34 ? "Profilo non disponibile" : anonymous ? "Giocatore" : "Autore sintetico", anonymous, available: i !== 34 } });
     versions.set(annunciId(i), 1); if (i > 35) hiddenByAdmin.add(annunciId(i));
   }
-  const summary = row => ({ ...clone(row), rowFingerprint: hash([row, versions.get(row.id)], "md5") });
+  const summary = row => ({ ...clone(row), whatsappAvailable: true, whatsappStatus: "website", rowFingerprint: hash([row, versions.get(row.id)], "md5") });
   const capability = (row, operation) => {
     if (["trash", "restore"].includes(operation) && !gate) return "TRASH_NOT_ENABLED";
     if (row.trashed) return operation === "restore" ? null : "IN_TRASH";
@@ -91,6 +91,11 @@ export function createAnnunciFixture() {
     hold(block) { validBlock(block); held.add(block); },
     release(block) { validBlock(block); held.delete(block); for (const send of queues.get(block) ?? []) send(); },
     respond(rpc, input, response, reply) {
+      if (rpc === "admin_get_announcement_whatsapp_v1") {
+        const item = detail(input.p_id);
+        reply(200, item ? {status:"ok", detail:item, export:{text:"",url:"",version:0,templateVersion:"",contentFingerprint:null}} : {status:"not_found"});
+        return true;
+      }
       const block = { admin_list_announcements_v1: "list", admin_get_announcement_v1: "detail", admin_moderate_announcement_v1: "moderate", admin_export_announcements_v1: "export" }[rpc];
       if (!block) return false;
       counters[block]++; const mode = modes.get(block) ?? "ok";

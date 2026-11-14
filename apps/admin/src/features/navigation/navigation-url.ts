@@ -16,3 +16,7 @@ export function classifyNavigation(href: string, origin: string) {
     return { kind: url.origin === new URL(origin).origin ? "internal" as const : "external" as const, url };
   } catch { return { kind: "invalid" as const }; }
 }
+export function isTrustedPlatform(url: URL) {
+  return url.origin === "https://www.bachecadilettanti.it";
+}
+

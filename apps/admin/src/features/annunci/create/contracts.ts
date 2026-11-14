@@ -1,5 +1,7 @@
 import type {MockProfileType, MockTeamType, MockValues} from "./prototype-model";
 import type {WhatsAppProvenance} from "./whatsapp-parser";
+import type {CanonicalDraft} from "./canonical-draft";
+import type {ReviewDecision} from "./whatsapp-review";
 
 export type CreateTab = "author" | "profile" | "announcement" | "contacts" | "review";
 export const CREATE_TABS: {value: CreateTab; label: string}[] = [
@@ -10,10 +12,12 @@ export interface FieldIssue {path: string; severity: "error" | "warning"; code: 
 export interface AuthorProfile {id: string; type: MockProfileType; name: string; region: string; city: string; facts: string; sports?: string[]; draft: Record<string, unknown>; locations: {regione: string; citta: string | null}[]; allowedRegions?: string[]}
 export interface AnnouncementAuthor {id: string; name: string; email: string; profiles: AuthorProfile[]}
 export interface CreationInput {
-  version: 1; submissionId: string; authorMode: "registered" | "unregistered"; profileId: string | null;
+  version: 1 | 2; submissionId: string; authorMode: "registered" | "unregistered"; profileId: string | null;
   profileType: MockProfileType; teamType: MockTeamType; profile: MockValues; announcement: MockValues;
   referenceEmail: string; authorized: boolean; provenance?: WhatsAppProvenance;
   approveImmediately?: boolean;
+  canonical?: CanonicalDraft;
+  reviewDecisions?: Record<string, ReviewDecision>;
   image?: {hash: string; mime: string; size: number} | null;
 }
 export interface CreationReceipt {publicationId: string; announcementId: string; announcements: {id: string; region: string | null; status: string}[]; idempotent: boolean}

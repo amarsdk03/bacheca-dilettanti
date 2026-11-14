@@ -6,10 +6,11 @@ export const HOME_PROFILE_TYPES = ["giocatore", "squadra", "staff-sportivo", "ar
 export const HOME_AGE_BUCKETS = ["0_2", "3_7", "8_30", "over_30", "unknown"] as const;
 export type HomeSummary = { asOf: string; users: number; announcements: number; pending: number; profits: { available: false } };
 export type HomeDistribution = { key: string; count: number }[];
+export type HomeBreakdown = { key: string; counts: HomeDistribution }[];
 export type HomeLimitation = "CURRENT_RECORDS_ONLY" | "LEGACY_REGISTRATION_DATES" | "PROFILES_NOT_USERS" | "CREATION_NOT_REVIEW_ENTRY";
 type ChartBase = { asOf: string; timezone: "Europe/Rome"; limitations: HomeLimitation[] };
 type AvailableChart = ChartBase & { available: true; population: number; excludedDates: { missingOrNonFinite: number; future: number };
-  distributionTotal: number; distribution: HomeDistribution };
+  distributionTotal: number; distribution: HomeDistribution; breakdown?: HomeBreakdown };
 type MonthlyChart = AvailableChart & { series: { month: string; count: number }[]; period: { from: string; to: string } };
 export type HomeChart = (MonthlyChart & { metric: "users"; definition: "REGISTERED_USERS" }) |
   (MonthlyChart & { metric: "announcements"; definition: "NON_TRASHED_ANNOUNCEMENTS" }) |

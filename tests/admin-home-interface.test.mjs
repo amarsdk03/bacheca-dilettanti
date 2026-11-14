@@ -22,7 +22,8 @@ function deferred() { let resolve; const promise = new Promise(a => { resolve = 
 test("page authorizes before starting both reads and does not wait for either result", async () => {
   const s = deferred(), a = deferred(), h = setup({ summary: s.promise, activity: a.promise });
   const tree = await h.page(); assert.deepEqual(h.calls, ["guard", "summary", "activity"]);
-  const children = React.Children.toArray(tree.props.children.props.children), boundaries = children.filter(c => c.type === React.Suspense);
+  const findBoundaries = node => React.Children.toArray(node).flatMap(child => !React.isValidElement(child) ? [] : child.type === React.Suspense ? [child] : findBoundaries(child.props.children));
+  const boundaries = findBoundaries(tree);
   assert.equal(boundaries.length, 2); assert.equal(boundaries[0].props.children.props.result, s.promise); assert.equal(boundaries[1].props.children.props.result, a.promise);
   s.resolve(summary); const ready = await boundaries[0].props.children.type(boundaries[0].props.children.props); assert.equal(ready.props.initialResult, summary);
   a.resolve(activity); assert.equal((await boundaries[1].props.children.type(boundaries[1].props.children.props)).props.initialResult, activity);
@@ -33,20 +34,20 @@ for (const block of ["HomeKpiSection", "HomeActivitySection"]) test(`SSR ${block
 });
 test("complete resolved Home renders four KPI, formatted counts, exact zero and shared audit table", async () => {
   const h = setup(), html = renderToStaticMarkup(await resolveHomeServerTree(await h.page()));
-  assert.equal((html.match(/<h1\b/g) ?? []).length, 1); const heading = html.match(/<h1[^>]*>[\s\S]*?<\/h1>/)[0]; assert.match(heading, /Bentornato, admin!/); assert(!heading.includes("<svg"));
+  assert.equal((html.match(/<h1\b/g) ?? []).length, 1); const heading = html.match(/<h1[^>]*>[\s\S]*?<\/h1>/)[0]; assert.match(heading, /Bentornato, Gabriele!/); assert(!heading.includes("<svg")); assert.match(html, /Panoramica annunci, utenti e attività Bacheca Dilettanti/);
   for (const title of ["Utenti totali", "Annunci totali", "Annunci da approvare", "Profitti totali"]) assert(html.includes(title));
   assert.match(html, /1\.234/); assert.match(html, /2\.000/); assert.match(html, /id="home-pending-value"[^>]*>0<\/div>/); assert.match(html, /Non disponibile/);
-  assert.equal((html.match(/aria-pressed="true"/g) ?? []).length, 1); assert.match(html, /aria-label="Metrica dei grafici"/);
-  assert.equal((html.match(/<th\s/g) ?? []).length, 3); assert.match(html, /&lt;script&gt;/); assert(!html.includes("<script>")); assert(!html.includes("Mostra dettagli"));
+  assert.match(html, /aria-label="Metrica dei grafici"/); assert.match(html, /aria-label="Aggregazione del grafico"/);
+  assert.equal((html.match(/<th\s/g) ?? []).length, 4); assert.match(html, /&lt;script&gt;/); assert(!html.includes("<script>")); assert(!html.includes("Mostra dettagli"));
   assert(!html.includes("<form")); assert.match(html, /Date in Europe\/Rome/); assert.deepEqual(h.calls, ["guard", "summary", "activity"]);
 });
 test("quick actions and registry link navigate internally without prefetch or invented counts", async () => {
   const h = setup(), tree = await resolveHomeServerTree(await h.page()), html = renderToStaticMarkup(tree);
-  assert.match(html, /href="\/annunci\?status=in_revisione"/); assert.match(html, /href="\/segnalazioni"/); assert.match(html, /href="\/registro-attivita"/);
-  const disabled = [...html.matchAll(/<button\b[^>]*>[\s\S]*?<\/button>/g)].map(m => m[0]).find(b => b.includes("Crea profilo limitato")); assert(disabled.includes('disabled=""')); assert.match(disabled, /Presto/);
+  assert.match(html, /href="\/annunci\/crea-annuncio"/); assert.match(html, /href="\/annunci\?status=in_revisione"/); assert.match(html, /href="\/segnalazioni"/); assert.match(html, /href="\/registro-attivita"/);
+  const disabled = [...html.matchAll(/<button\b[^>]*>[\s\S]*?<\/button>/g)].map(m => m[0]).find(b => b.includes("Crea profilo limitato")); assert(disabled.includes('disabled=""')); assert(!disabled.includes("Non disponibile"));
   assert(!html.includes("href=\"http")); assert(!html.includes("Esporta")); assert(!html.includes("Segnalazioni aperte ("));
   const actions = h.l(base + "components/HomeQuickActions.tsx").HomeQuickActions();
-  const buttons = React.Children.toArray(actions.props.children[1].props.children).slice(0, 2); assert(buttons.every(b => b.props.render.props.prefetch === false));
+  const buttons = React.Children.toArray(actions.props.children[1].props.children).slice(0, 3); assert(buttons.every(b => b.props.render.props.prefetch === false));
 });
 test("summary error keeps activity and profit unavailability visible without fictitious zero", async () => {
   const h = setup({ summary: Promise.resolve(failure) }), html = renderToStaticMarkup(await resolveHomeServerTree(await h.page()));
@@ -69,13 +70,13 @@ test("five events render with no details, accounts without identity and verified
 for (const [metric, title] of [["users", "Utenti totali"], ["announcements", "Annunci totali"], ["pending", "Annunci da approvare"], ["profits", "Profitti totali"]]) test(`local selection ${metric} updates the panel with its initial loading state`, async () => {
   const h = setup(), session = h.l(base + "client/session.ts").createHomeSession(() => {}); session.select(metric);
   const l = homeUiLoader({ react: { ...React, useSyncExternalStore: (_subscribe, snapshot) => snapshot() }, "./HomeSessionProvider": { useHomeSession: () => session } }), Panel = l(base + "components/HomeChartPanel.tsx").HomeChartPanel;
-  const html = renderToStaticMarkup(React.createElement(Panel)); assert(html.includes("Grafici - " + title)); assert(!html.includes("<canvas"));
-  assert.match(html, /Caricamento grafico/); assert.match(html, /Aggiorna grafici/);
+  const html = renderToStaticMarkup(React.createElement(Panel)); assert(html.includes(title)); assert(!html.includes("<canvas"));
+  assert.match(html, /Caricamento grafici Home/); assert.match(html, /Aggiorna grafici/);
 });
-test("skeletons match KPI and five-row three-column activity blocks", () => {
+test("skeletons match KPI and five-row four-column activity blocks", () => {
   const l = homeUiLoader(), { HomeKpiSkeleton, HomeActivitySkeleton } = l(base + "components/HomeSkeletons.tsx");
   const kpis = renderToStaticMarkup(React.createElement(HomeKpiSkeleton)); assert.match(kpis, /aria-busy="true"/); assert.equal((kpis.match(/data-slot="card"/g) ?? []).length, 4); assert.match(kpis, /Non disponibile/);
-  const audit = renderToStaticMarkup(React.createElement(HomeActivitySkeleton)); assert.equal((audit.match(/<tr\b/g) ?? []).length, 5); assert.equal((audit.match(/<td\b/g) ?? []).length, 15);
+  const audit = renderToStaticMarkup(React.createElement(HomeActivitySkeleton)); assert.equal((audit.match(/<tr\b/g) ?? []).length, 5); assert.equal((audit.match(/<td\b/g) ?? []).length, 20);
 });
 test("pending KPI keeps four choices and static profits while only three values have skeletons", () => {
   const l = homeUiLoader({ "./useHomeBlock": { useHomeBlock: () => ({ pending: true, result: null, refresh() {} }) } });

@@ -31,6 +31,14 @@ function localParts(timestamp: string) {
   return Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date(timestamp)).filter(p => p.type !== "literal").map(p => [p.type, p.value]));
 }
+function breakdown(value: unknown, buckets: { key: string; count: number }[], keys: readonly string[]) {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || value.length !== buckets.length) invalid();
+  return value.map((row, i) => {
+    if (!record(row) || row.key !== buckets[i].key) invalid();
+    return { key: buckets[i].key, counts: distribution(row.counts, [...keys, "unspecified", "other"], buckets[i].count) };
+  });
+}
 function monthlySeries(value: unknown, asOf: string) {
   if (!Array.isArray(value) || value.length !== 12) invalid();
   const now = localParts(asOf), year = Number(now.year), month = Number(now.month), entries: { month: string; count: number }[] = [];
@@ -61,14 +69,14 @@ export function parseHomeChart(value: unknown, metric: HomeMetric): HomeChart {
     const age = distribution(value.age, HOME_AGE_BUCKETS, common.population);
     if (age.length !== HOME_AGE_BUCKETS.length || !age.every((e, i) => e.key === HOME_AGE_BUCKETS[i]) ||
       age.at(-1)!.count !== sum([common.excludedDates.missingOrNonFinite, common.excludedDates.future])) invalid();
-    return { ...common, metric, definition: "PENDING_BY_CREATION_DATE", limitations: ["CURRENT_RECORDS_ONLY", "CREATION_NOT_REVIEW_ENTRY"], age: age as Extract<HomeChart, { metric: "pending" }>["age"] };
+    return { ...common, breakdown: breakdown(value.breakdown, age, ADMIN_ANNOUNCEMENT_TYPES), metric, definition: "PENDING_BY_CREATION_DATE", limitations: ["CURRENT_RECORDS_ONLY", "CREATION_NOT_REVIEW_ENTRY"], age: age as Extract<HomeChart, { metric: "pending" }>["age"] };
   }
   const series = monthlySeries(value.series, base.asOf);
   if (sum(series.map(e => e.count)) > common.population - common.excludedDates.missingOrNonFinite - common.excludedDates.future ||
     !record(value.period) || !databaseTimestamp(value.period.from) || value.period.to !== base.asOf) invalid();
   const start = localParts(value.period.from);
   if (start.year.padStart(4, "0") + "-" + start.month !== series[0].month || start.day !== "01" || start.hour !== "00" || start.minute !== "00" || start.second !== "00" || !value.period.from.endsWith(".000000Z")) invalid();
-  const monthly = { ...common, series, period: { from: value.period.from, to: base.asOf } };
+  const monthly = { ...common, breakdown: breakdown(value.breakdown, series.map(row => ({key: row.month, count: row.count})), metric === "users" ? HOME_PROFILE_TYPES : ADMIN_ANNOUNCEMENT_STATUSES), series, period: { from: value.period.from, to: base.asOf } };
   return metric === "users" ? { ...monthly, metric, definition: "REGISTERED_USERS", limitations: ["CURRENT_RECORDS_ONLY", "LEGACY_REGISTRATION_DATES", "PROFILES_NOT_USERS"] } :
     { ...monthly, metric, definition: "NON_TRASHED_ANNOUNCEMENTS", limitations: ["CURRENT_RECORDS_ONLY"] };
 }

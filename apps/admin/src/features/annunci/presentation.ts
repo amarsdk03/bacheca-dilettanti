@@ -29,7 +29,10 @@ export const FIELD_LABELS: Record<string, string> = {
 export function typeLabel(value: string) { return Object.hasOwn(TYPE_LABELS, value) ? TYPE_LABELS[value as keyof typeof TYPE_LABELS] : "Tipologia non riconosciuta: " + value; }
 export function statusLabel(value: string | null) { return value === null ? "Stato non specificato" : Object.hasOwn(STATUS_LABELS, value) ? STATUS_LABELS[value as keyof typeof STATUS_LABELS] : "Stato non riconosciuto: " + value; }
 export function visibilityLabel(row: Pick<AnnouncementListItem, "hidden" | "private">) {
-  return [row.hidden === null ? "Oscuramento non specificato" : row.hidden ? "Oscurato" : "Non oscurato", row.private === null ? "Privacy non specificata" : row.private ? "Privato" : "Pubblico"];
+  if (row.hidden === true) return ["Oscurato"];
+  const privacy = row.private === null ? "Privacy non specificata" : row.private ? "Privato" : "Pubblico";
+  const hiding = row.hidden === null ? " (Oscuramento non specificato)" : "";
+  return [privacy + hiding];
 }
 export function displayDate(value: string | null) {
   if (!value) return "Non specificata";

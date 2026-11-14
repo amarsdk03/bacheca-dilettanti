@@ -263,7 +263,7 @@ export const ANNOUNCEMENT_FILTERS_BY_TYPE = {
 } as const satisfies Record<AnnouncementType, readonly AnnouncementFilterParam[]>;
 
 export const ANNOUNCEMENT_FILTER_OPTIONS = {
-	regioni: REGIONI_ITALIANE.map(({nome}) => nome),
+	regioni: [...REGIONI_ITALIANE.map(({nome}) => nome), "Estero"],
 	tipologie: [...TIPOLOGIA_CALCIO_OPTIONS],
 	ruoli: [...RUOLO_PRINCIPALE_OPTIONS],
 	annate: [...ANNATE_OPTIONS],

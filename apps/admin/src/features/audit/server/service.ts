@@ -8,7 +8,8 @@ import {
 } from "../../auth/server/context";
 import {
 	ANNOUNCEMENT_AUDIT_ACTIONS,
-	type AnnouncementAuditAction,
+	COMMUNITY_AUDIT_ACTIONS,
+	type OperationAuditAction,
 	AUDIT_FAILURE_CODES,
 	type AuditFailureCode,
 	auditUuid,
@@ -78,7 +79,7 @@ export function createAuditService(deps: Dependencies) {
     if ((input.correlationId !== undefined && !auditUuid(input.correlationId)) ||
       !AUDIT_FAILURE_CODES.some((code) => code === input.code) ||
       (kind === "auth" ? !["auth.login", "auth.access_denied"].includes(input.action) :
-        !ANNOUNCEMENT_AUDIT_ACTIONS.some((action) => action === input.action)) ||
+        ![...ANNOUNCEMENT_AUDIT_ACTIONS, ...COMMUNITY_AUDIT_ACTIONS].some((action) => action === input.action)) ||
       (input.resourceId != null && !auditUuid(input.resourceId)) ||
       (input.action === "announcement.export" && input.resourceId != null)) {
       notice("ADMIN_AUDIT_INPUT_INVALID", correlationId);
@@ -110,7 +111,7 @@ export function createAuditService(deps: Dependencies) {
       return failure(input, "auth");
     },
     /** Call only AFTER the functional database request has failed/rolled back. */
-    recordOperationFailure(input: { action: AnnouncementAuditAction; code: AuditFailureCode;
+    recordOperationFailure(input: { action: OperationAuditAction; code: AuditFailureCode;
       resourceId?: string | null; correlationId?: string }) {
       return failure(input, "operation");
     },

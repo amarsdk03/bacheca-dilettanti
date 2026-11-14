@@ -261,8 +261,8 @@ export default function Homepage() {
 
 			<section id="categorie" aria-labelledby="categories-title" className="scroll-mt-24">
 				<div className="mx-auto max-w-370 px-4 pb-7 sm:px-6 sm:pb-8 lg:px-8">
-					<div className={"flex items-center mb-2"}>
-						<span className="text-brand-indigo blink-anim me-0.5 text-2xl" aria-hidden="true">•</span>
+					<div className={"flex items-start mb-2"}>
+						<span className="text-brand-indigo blink-anim me-0.5 text-2xl -translate-y-0.75 md:-translate-y-0.5" aria-hidden="true">•</span>
 						<h2
 							id="categories-title"
 							className="font-home-display text-lg font-normal uppercase tracking-[-0.01em] sm:text-xl"

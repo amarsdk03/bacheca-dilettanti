@@ -14,9 +14,10 @@ test("browser scenarios reject conflicting modes before starting any process", a
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), "bacheca-browser-"));
   t.after(() => { assert.equal(dirname(resolve(root)), resolve(tmpdir())); assert(basename(root).startsWith("bacheca-browser-")); rmSync(root, { recursive: true }); });
-  for (const dir of ["apps/admin/src", "apps/admin/public", "packages/database/src", "node_modules"]) mkdirSync(join(root, dir), { recursive: true });
+  for (const dir of ["apps/admin/src", "apps/admin/public", "packages/database/src", "packages/announcements/src/ui", "node_modules"]) mkdirSync(join(root, dir), { recursive: true });
   for (const file of ["package.json", "tsconfig.json", "next.config.ts", "postcss.config.mjs"]) writeFileSync(join(root, "apps/admin", file), file);
   writeFileSync(join(root, "package.json"), "{}"); writeFileSync(join(root, "packages/database/src/index.ts"), "export type Id = string;");
+  writeFileSync(join(root,"packages/announcements/src/ui/form.tsx"),"export const Form = () => null;");
   return root;
 }
 test("anonymous redirects require either HTTP Location or a real streamed refresh to the same login origin", () => {
@@ -34,6 +35,7 @@ test("browser copy preserves source/config and excludes all env files and genera
   writeFileSync(join(root, "apps/admin/src/page.tsx"), "unchanged source");
   const w = prepareWorkspace(root);
   assert.equal(readFileSync(join(w.app, "src/page.tsx"), "utf8"), "unchanged source");
+  assert.equal(readFileSync(join(w.run,"packages/announcements/src/ui/form.tsx"),"utf8"),"export const Form = () => null;");
   assert(!existsSync(join(w.app, ".env.local"))); assert(!existsSync(join(w.app, "src/.env.test")));
   assert.equal(readFileSync(join(root, "apps/admin/next.config.ts"), "utf8"), "next.config.ts");
   assert(existsSync(join(w.run, "node_modules"))); assert.notEqual(prepareWorkspace(root).run, w.run);

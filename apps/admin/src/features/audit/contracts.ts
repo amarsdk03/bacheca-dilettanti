@@ -9,11 +9,13 @@ export const ANNOUNCEMENT_AUDIT_ACTIONS = [
   "announcement.trash", "announcement.restore", "announcement.export", "announcement.create", "announcement.whatsapp_export",
 ] as const;
 export type AnnouncementAuditAction = typeof ANNOUNCEMENT_AUDIT_ACTIONS[number];
+export const COMMUNITY_AUDIT_ACTIONS = ["report.update", "invitation.consider"] as const;
+export type OperationAuditAction = AnnouncementAuditAction | typeof COMMUNITY_AUDIT_ACTIONS[number];
 export type AuthFailureAction = "auth.login" | "auth.access_denied";
 
 /** Internal transport DTO. Never take this object from a form or request body. */
 export type ServerAuditEvent = {
-  action: AnnouncementAuditAction | AuthFailureAction | "auth.logout";
+  action: OperationAuditAction | AuthFailureAction | "auth.logout";
   outcome: "success" | "failure";
   correlationId: string;
   actorAuthId: string | null;

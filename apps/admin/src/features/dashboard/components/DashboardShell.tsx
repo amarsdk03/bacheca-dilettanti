@@ -11,6 +11,8 @@ import {AnnouncementDraftProvider} from "@/features/annunci/create/store";
 import {DashboardSidebar} from "./DashboardSidebar";
 import {DashboardThemeProvider} from "./DashboardThemeProvider";
 import {DashboardThemeToggle} from "./DashboardThemeToggle";
+import {HomeClock} from "./HomeClock";
+import {SidebarAnimator} from "./SidebarAnimator";
 import {DashboardPageTransition} from "./DashboardPageTransition";
 import {DASHBOARD_SECTIONS, isSectionActive} from "../sections";
 
@@ -19,15 +21,15 @@ export function DashboardShell({ children, actorId }: { children: ReactNode; act
   const currentSection = DASHBOARD_SECTIONS.find((section) => isSectionActive(pathname, section.href));
   return <DashboardThemeProvider><MotionConfig reducedMotion="user"><TooltipProvider><ExternalNavigationProvider><AnnouncementDraftProvider key={actorId} actorId={actorId}><UnsavedChangesProvider><SidebarProvider mobileBreakpoint={1024}>
     <a href="#dashboard-content" className="admin-skip-link sr-only focus:not-sr-only">Salta al contenuto</a>
-    <DashboardSidebar />
+    <SidebarAnimator /><DashboardSidebar />
     <SidebarInset className="min-w-0">
       <header className="admin-header">
-        <div className="flex min-w-0 items-center gap-3"><SidebarTrigger />{pathname === "/crea-annuncio" ?
+        <div className="flex min-w-0 items-center gap-3"><SidebarTrigger />{pathname === "/annunci/crea-annuncio" ?
           <nav aria-label="Percorso di navigazione" className="admin-create-breadcrumb"><ol>
             <li><GuardedLink href="/annunci" prefetch={false}>Annunci</GuardedLink></li>
             <li aria-hidden="true">/</li><li aria-current="page">Crea annuncio</li>
           </ol></nav> : <span className="min-w-0 text-sm font-medium">{currentSection?.title ?? "Dashboard amministrativa"}</span>}</div>
-        <DashboardThemeToggle />
+        <HomeClock /><div className="home-header-actions"><DashboardThemeToggle /></div>
       </header>
       <DashboardPageTransition>{children}</DashboardPageTransition>
     </SidebarInset>

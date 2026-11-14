@@ -1,3 +1,4 @@
+import {migrateCanonicalDraft} from "./canonical-draft";
 import type {createAnnouncementDraftStore, DraftData} from "./store";
 import {parseWhatsAppMessage, type WhatsAppExtraction, type WhatsAppProvenance} from "./whatsapp-parser";
 
@@ -19,7 +20,8 @@ export function hasWhatsAppEdits(state: DraftData, extraction: WhatsAppExtractio
   const keys = whatsappDraftKeys(state, extraction), draft = state.drafts[keys.draftKey];
   if (!draft) return false;
   const original = draft.provenance ? reextractSource(draft.provenance) : null;
-  return JSON.stringify(draft.values) !== JSON.stringify(original?.announcement ?? {}) ||
+  const originalCanonical = original?.target ? migrateCanonicalDraft({profileType:original.target.profileType,teamType:original.target.teamType??"Cerca giocatori",profile:original.profile,announcement:original.announcement}) : undefined;
+  return Boolean(draft.canonical && JSON.stringify(draft.canonical)!==JSON.stringify(originalCanonical)) || Boolean(Object.keys(draft.reviewDecisions??{}).length) || JSON.stringify(draft.values) !== JSON.stringify(original?.announcement ?? {}) ||
     state.whatsappAuthorMode === "unregistered" && JSON.stringify(state.profileDrafts[keys.profileKey] ?? {}) !== JSON.stringify(original?.profile ?? {});
 }
 export function applyWhatsAppExtraction(store: ReturnType<typeof createAnnouncementDraftStore>, extraction: WhatsAppExtraction, bindPending = false) {
@@ -34,7 +36,7 @@ export function applyWhatsAppExtraction(store: ReturnType<typeof createAnnouncem
   }
   const staged = bindPending && pending?.provenance && pending.provenance.rawText === extraction.provenance.rawText && pending.provenance.messageUrl === extraction.provenance.messageUrl ? pending : null;
   store.setState({dirty: true, issues: [], whatsappAnalysis: extraction, whatsappResult: extraction, whatsappApplied: true,
-    drafts: {...state.drafts, [keys.draftKey]: {...previous, values: staged?.values ?? extraction.announcement, provenance: extraction.provenance}},
+    drafts: {...state.drafts, [keys.draftKey]: {...previous, values: staged?.values ?? extraction.announcement, provenance: extraction.provenance, reviewDecisions:staged?.reviewDecisions ?? {}, canonical:staged?.canonical ?? migrateCanonicalDraft({profileType:extraction.target.profileType,teamType:extraction.target.teamType ?? "Cerca giocatori",profile:extraction.profile,announcement:extraction.announcement})}},
     ...(state.whatsappAuthorMode === "unregistered" ? {profileDrafts: {...state.profileDrafts, [keys.profileKey]: extraction.profile}} : {})});
 }
 export function whatsappSourceIsCurrent(state: DraftData, source?: WhatsAppProvenance) {

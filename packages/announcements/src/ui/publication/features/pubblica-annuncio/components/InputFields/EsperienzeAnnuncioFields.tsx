@@ -1,0 +1,189 @@
+import {type Dispatch, type SetStateAction} from "react";
+import {PlusIcon, Trash2} from "lucide-react";
+
+import {Button} from "../../../../components/ui/button";
+import {Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet} from "../../../../components/ui/field";
+import {Input} from "../../../../components/ui/input";
+import TeamProfileComboboxField from "../../../profilo/TeamProfileComboboxField";
+import OptionalLabel from "./OptionalLabel";
+import {RadioGroup, RadioGroupItem} from "../../../../components/ui/radio-group";
+import {STATO_ESPERIENZA_OPTIONS, type StatoEsperienza,} from "@bacheca/announcements/features/pubblica-annuncio/types/pubblicaAnnuncio";
+
+export type {StatoEsperienza} from "@bacheca/announcements/features/pubblica-annuncio/types/pubblicaAnnuncio";
+
+export type EsperienzaAnnuncio = {
+	id: string;
+	titolo: string;
+	ente: string;
+	periodoDa: string;
+	periodoA: string;
+	descrizione: string;
+	stato: StatoEsperienza;
+	squadraProfiloId: string | null;
+	squadraIstanzaId?: number | null;
+};
+
+export function createEsperienzaAnnuncio(): EsperienzaAnnuncio {
+	const id =
+		globalThis.crypto?.randomUUID?.() ??
+		`esperienza-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+	return {
+		id,
+		titolo: "",
+		ente: "",
+		periodoDa: "",
+		periodoA: "",
+		descrizione: "",
+		stato: "non-specificare",
+		squadraProfiloId: null,
+	};
+}
+
+type EsperienzeAnnuncioFieldsProps = {
+	esperienze: EsperienzaAnnuncio[];
+	setEsperienze: Dispatch<SetStateAction<EsperienzaAnnuncio[]>>;
+	idPrefix: string;
+	titolo?: string;
+	requireState?: boolean;
+	freeTextOrganization?: boolean;
+	error?: string;
+};
+
+export default function EsperienzeAnnuncioFields({
+	                                                 esperienze,
+	                                                 setEsperienze,
+	                                                 idPrefix,
+	                                                 titolo = "Qualifiche / Patentini",
+	                                                 requireState = false,
+	                                                 freeTextOrganization = false,
+	                                                 error,
+                                                 }: EsperienzeAnnuncioFieldsProps) {
+	const addEsperienza = () => {
+		setEsperienze((prev) => [...prev, createEsperienzaAnnuncio()]);
+	};
+
+	const updateEsperienza = <K extends keyof Omit<EsperienzaAnnuncio, "id">>(
+		id: string,
+		campo: K,
+		valore: EsperienzaAnnuncio[K]
+	) => {
+		setEsperienze((prev) =>
+			prev.map((esperienza) =>
+				esperienza.id === id ? {...esperienza, [campo]: valore} : esperienza
+			)
+		);
+	};
+
+	const removeEsperienza = (id: string) => {
+		setEsperienze((prev) => prev.filter((esperienza) => esperienza.id !== id));
+	};
+
+	return (
+		<FieldSet>
+			<div className="flex items-center justify-between gap-3">
+				<div className="flex flex-col items-start">
+					<FieldLegend variant="label" className="field-legend-title mb-0">{titolo} <OptionalLabel /></FieldLegend>
+					<FieldDescription>Licenze, patentini, incarichi o esperienze rilevanti.</FieldDescription>
+				</div>
+				<Button type="button" variant="outline" size="sm" onClick={addEsperienza}>
+					<PlusIcon data-icon="inline-start" />
+					Aggiungi
+				</Button>
+			</div>
+
+			{esperienze.length === 0 ? (
+				<div className="rounded-lg border border-dashed bg-background p-4 text-sm text-muted-foreground">
+					Nessuna esperienza inserita.
+				</div>
+			) : (
+				<div className="grid gap-4">
+					{esperienze.map((esperienza, index) => (
+						<div key={esperienza.id} className="rounded-lg border bg-background p-4">
+							<div className="mb-4 flex items-center justify-between gap-3">
+								<p className="text-base font-semibold">
+									Qualifica #{index + 1}
+								</p>
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon-sm"
+									onClick={() => removeEsperienza(esperienza.id)}
+									aria-label={`Rimuovi esperienza ${index + 1}`}
+								>
+									<Trash2 />
+								</Button>
+							</div>
+
+							<div className="grid gap-4 sm:grid-cols-2">
+								<Field>
+									<FieldLabel htmlFor={`${idPrefix}-esperienza-${esperienza.id}`}>
+										Qualifica / patentino / licenza <OptionalLabel />
+									</FieldLabel>
+									<Input
+										id={`${idPrefix}-esperienza-${esperienza.id}`}
+										value={esperienza.titolo}
+										onChange={(event) =>
+											updateEsperienza(esperienza.id, "titolo", event.target.value)
+										}
+										placeholder="Arbitro FIGC, preparatore atletico..."
+									/>
+								</Field>
+
+								<Field>
+									<FieldLabel htmlFor={`${idPrefix}-ente-${esperienza.id}`}>
+										Ente / società / organizzazione <OptionalLabel />
+									</FieldLabel>
+									{freeTextOrganization ? <Input
+										id={`${idPrefix}-ente-${esperienza.id}`}
+										value={esperienza.ente}
+										onChange={(event) => setEsperienze((previous) => previous.map((item) => item.id === esperienza.id
+											? {...item, ente: event.target.value, squadraProfiloId: null}
+											: item))}
+										placeholder="Inserisci il nome dell’ente"
+										maxLength={160}
+									/> : <TeamProfileComboboxField
+										id={`${idPrefix}-ente-${esperienza.id}`}
+										value={esperienza.ente}
+										profileId={esperienza.squadraProfiloId}
+										onValueChange={(value, profileId) => {
+											setEsperienze((previous) => previous.map((item) => item.id === esperienza.id
+												? {...item, ente: value, squadraProfiloId: profileId}
+												: item));
+										}}
+										placeholder="Cerca una società o inserisci un ente"
+									/>}
+								</Field>
+							</div>
+
+							<Field className="mt-4">
+								<FieldLabel>Stato {requireState ? <span aria-hidden="true" className="text-destructive">*</span> : <OptionalLabel />}</FieldLabel>
+								<RadioGroup
+									value={esperienza.stato}
+									onValueChange={(value) => updateEsperienza(esperienza.id, "stato", value as StatoEsperienza)}
+									className="flex flex-wrap items-center gap-x-5 gap-y-3"
+								>
+									{STATO_ESPERIENZA_OPTIONS.filter((option) => !requireState || option.value !== "non-specificare").map((opzione) => (
+										<Field key={opzione.value} orientation="horizontal" className="w-auto flex-none">
+											<RadioGroupItem
+												value={opzione.value}
+												id={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
+											/>
+											<FieldLabel
+												htmlFor={`${idPrefix}-stato-${esperienza.id}-${opzione.value}`}
+												className="font-normal"
+											>
+												{opzione.label}
+											</FieldLabel>
+										</Field>
+									))}
+								</RadioGroup>
+								{requireState && esperienza.stato === "non-specificare" && error && <FieldError>{error}</FieldError>}
+							</Field>
+						</div>
+					))}
+				</div>
+			)}
+		</FieldSet>
+	);
+}

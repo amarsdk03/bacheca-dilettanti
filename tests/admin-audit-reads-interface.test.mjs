@@ -84,10 +84,10 @@ test("actor labels prefer current email then stored app/Auth UUID and distinguis
   assert.equal(auditActorLabel({ authId: null, userId: null, email: null }), "Non identificato");
   assert.match(auditDate("2026-10-23T12:00:00.123456Z"), /14:00:00/);
 });
-test("actual UI renders three informative columns and detail action, escaped text, bounded explanation", () => {
+test("actual UI renders separate outcome and detail action, escaped text, bounded explanation", () => {
   const Workspace = uiLoader()(base + "components/AuditWorkspace.tsx").AuditWorkspace;
   const html = renderToStaticMarkup(React.createElement(Workspace, { initialQuery: parseAuditUrl(""), initialResult: { status: "ok", page: { items: [row], hasMore: false, nextCursor: null } } }));
-  assert.equal((html.match(/<th\s/g) ?? []).length, 4); assert.match(html, /Data e ora/); assert.match(html, /Amministratore/); assert.match(html, /Operazione/); assert.match(html, /Mostra dettagli/);
+  assert.equal((html.match(/<th\s/g) ?? []).length, 5); assert.match(html, /Data e ora/); assert.match(html, /Amministratore/); assert.match(html, /Operazione/); assert.match(html, /Esito/); assert.match(html, /Mostra dettagli/);
   assert.match(html, /&lt;script&gt;/); assert(!html.includes("<script>")); assert.match(html, /30 eventi/); assert.match(html, /Email attuali/); assert.match(html, /Europe\/Rome/);
   assert(!html.includes("Elimina")); assert(!html.includes("Esporta pagina")); assert(!html.includes("mailto:")); assert(!html.includes("<a "));
 });
@@ -123,5 +123,5 @@ test("transport uses no-store/same origin, rejects HTML and inconsistent status 
 });
 test("workspace wires BFcache, focus return, dialog name and read-only retention state", () => {
   const source = readFileSync(new URL("../apps/admin/src/features/audit/components/AuditWorkspace.tsx", import.meta.url), "utf8");
-  assert.match(source, /event.persisted/); assert.match(source, /initialFocus=\{panelTitle\}/); assert.match(source, /finalFocus=.*isConnected/); assert.match(source, /Evento non più disponibile/); assert.match(source, /Aggiorna elenco/);
+  assert.match(source, /event.persisted/); assert.match(source, /initialFocus=\{panelTitle\}/); assert.match(source, /finalFocus=.*isConnected/); assert.match(source, /Evento non più disponibile/); assert.match(source, /Aggiorna\s+elenco/);
 });

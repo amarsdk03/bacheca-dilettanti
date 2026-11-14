@@ -74,7 +74,6 @@ export default function ConfermaPubblicazione({result}: {result: PublishConfirma
 								{multipleAnnouncements && <p className="text-center text-sm text-muted-foreground">
 									{result.preview.statusInfo && <span className="mt-1 block">{result.preview.statusInfo}</span>}
 								</p>}
-								<AnnouncementViewLink id={result.preview.id} isListed={result.isListed} />
 							</div>}
 						</section>
 

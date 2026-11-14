@@ -38,6 +38,7 @@ import {
 	textValue
 } from "./prototype-model";
 import {parseWhatsAppMessage} from "./whatsapp-parser";
+import {unresolvedWhatsAppIssues} from "./whatsapp-review";
 
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const TEAM_SUBTYPES: Record<MockTeamType, TeamAnnouncementSubtype> = {"Cerca giocatori": "cerca-giocatore", "Cerca staff": "cerca-staff", "Cerca partite amichevoli": "cerca-partite-amichevoli", "Cerca sponsor": "cerca-sponsor"};
@@ -92,6 +93,16 @@ export function canonicalAnnouncement(type: MockProfileType, team: MockTeamType,
   return {drafts, subtype: type === "squadra" ? TEAM_SUBTYPES[team] : null};
 }
 export function creationPayload(input: CreationInput): PublishAnnouncementPayload {
+  if (input.version === 2 && input.canonical) {
+    const c = input.canonical, type = input.profileType;
+    const subtype = type === "squadra" ? TEAM_SUBTYPES[input.teamType] : null;
+    const databaseType = getDatabaseAnnouncementType(type, subtype), detail = getAnnouncementDetail(type, subtype, c.details);
+    if (!databaseType || !detail) throw new Error("INVALID_ANNOUNCEMENT_TYPE");
+    return {version:PUBLISH_PAYLOAD_VERSION,submissionId:input.submissionId,visibility:"gratuito",profileType:type,teamSubtype:subtype,
+      anonymousProfile:input.authorMode === "unregistered" ? {type,draft:c.profiles[type],locations:c.profileLocations[type],socialLinks:c.socialLinks[type]} : null,
+      profileUpdate:null,announcement:{type:databaseType,title:c.title,detail,locations:c.locations,contacts:c.contacts,extras:c.extras},
+      consents:{dataConfirmed:false,termsAccepted:false,privacyAccepted:false,newsletterSubscribed:false}};
+  }
   const {drafts, subtype} = canonicalAnnouncement(input.profileType, input.teamType, input.announcement);
   const socials = createProfileSocialLinks()[input.profileType];
   const platforms: Record<string, keyof typeof socials> = {"Sito web": "website", Instagram: "instagram", Facebook: "facebook", YouTube: "youtube", LinkedIn: "linkedin"};
@@ -110,9 +121,27 @@ const profileErrorKeys: Record<string, string> = {name: "name", category: "curre
 const announcementErrorKeys: Record<string, string> = {title: "title", email: "publicEmail", phone: "publicPhone", contacts: "publicEmail", contactRole: "contactRole", locations: "locations", professionalRole: "figures", servicePresentation: "content", mainRoles: "mainRoles", playerCategories: "categories", staffCategories: "categories", sports: "sports", staffTravel: "travel", requirements: "requirements", yearFrom: "yearFrom", yearTo: "yearTo", matchCategories: "opponentCategory", periodFrom: "dateFrom", periodTo: "dateTo", matchTimes: "timeFrom", matchTimeFrom: "timeFrom", matchTimeTo: "timeTo", monthlyCompensation: "compensation", sponsorSector: "sector", sponsorOffer: "offer", tournamentName: "eventName", tournamentYears: "yearFrom", tournamentTeams: "teams", tournamentCost: "cost", tournamentPrizes: "prizes", facilityCost: "hourlyCost", facilityAddress: "address", facilityHours: "hours", genericLink: "link"};
 export function validateCreation(input: CreationInput, existing?: AuthorProfile): FieldIssue[] {
   const issues: FieldIssue[] = [];
-  const add = (path: string, message: string) => { if (!issues.some(issue => issue.path === path)) issues.push({path, severity: "error", code: "INVALID_FIELD", message, tab: path.startsWith("profile.") ? "profile" : /\.(?:public|contactRole|link|image)/.test(path) ? "contacts" : path.startsWith("author.") ? "author" : path === "authorized" ? "review" : "announcement"}); };
+  const add = (path: string, message: string) => { if (!issues.some(issue => issue.path === path)) issues.push({path, severity: "error", code: "INVALID_FIELD", message, tab: path.startsWith("author.review.") ? "review" : path.startsWith("profile.") ? "profile" : /\.(?:public|contactRole|link|image)/.test(path) ? "contacts" : path.startsWith("author.") ? "author" : path === "authorized" ? "review" : "announcement"}); };
   if (!UUID.test(input.submissionId)) add("authorized", "L’invio non è inizializzato. Avvia una nuova bozza.");
   if (!input.authorized) add("authorized", "Operazione amministrativa non autorizzata.");
+  if (input.version === 2 && input.canonical) {
+    const type = input.profileType, c = input.canonical;
+    if (input.authorMode === "registered" && (!existing || existing.id !== input.profileId || existing.type !== type)) add("author.profileId","Seleziona un profilo attivo compatibile.");
+    if (input.authorMode === "unregistered" && ["servizi-consulenze","creators"].includes(type)) add("author.profileId","Per questa tipologia scegli un profilo esistente abilitato.");
+    if (input.referenceEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.referenceEmail)) add("author.email","Inserisci un indirizzo email valido.");
+    const profiles = {...c.profiles, ...(existing ? {[type]:existing.draft} : {})} as typeof c.profiles;
+    const profileLocations = {...c.profileLocations,...(existing ? {[type]:existing.locations} : {})};
+    for (const [key,message] of Object.entries(getProfileValidationErrors(type,profiles,profileLocations))) if (message) add("profile."+key,message);
+    for (const [key,message] of Object.entries(getAnnouncementValidationErrors(type,type === "squadra" ? TEAM_SUBTYPES[input.teamType] : null,c.details,c.locations,c.contacts,c.extras,c.title,input.authorMode === "registered"))) if (message) add("announcement."+key,message);
+    if (type === "servizi-consulenze" && existing?.allowedRegions && c.locations.some(row=>!existing.allowedRegions!.includes(row.regione))) add("announcement.locations","Una o più regioni non sono abilitate per questo profilo.");
+    if (input.provenance) {
+      const source=input.provenance, extraction=parseWhatsAppMessage(source.rawText,source.messageUrl,source.manualTarget,source.context);
+      if (extraction.blocked || extraction.target?.profileType!==type || type === "squadra" && extraction.target?.teamType!==input.teamType) add("author._form","Analizza il messaggio e risolvi la tipologia prima dell’invio.");
+      unresolvedWhatsAppIssues({...input,canonical:{...c,profiles,profileLocations}},extraction).forEach((issue,index)=>add("author.review."+index,issue.label+": "+issue.reason));
+    }
+    if (!issues.length) try {parsePublishPayload(creationPayload(input),input.authorMode === "registered","admin-attested");} catch(error) {add(error instanceof PublishPayloadError && error.step===2?"profile._form":"announcement._form",error instanceof Error?error.message:"Dati non validi.");}
+    return issues;
+  }
   if (input.provenance?.context) {
     const source = input.provenance;
     const extraction = parseWhatsAppMessage(source.rawText, source.messageUrl, source.manualTarget, source.context);
