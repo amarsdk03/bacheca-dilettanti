@@ -14,6 +14,7 @@ import {DashboardThemeToggle} from "./DashboardThemeToggle";
 import {HomeClock} from "./HomeClock";
 import {SidebarAnimator} from "./SidebarAnimator";
 import {DashboardPageTransition} from "./DashboardPageTransition";
+import {DashboardMobileNotice} from "./DashboardMobileNotice";
 import {DASHBOARD_SECTIONS, isSectionActive} from "../sections";
 
 export function DashboardShell({ children, actorId }: { children: ReactNode; actorId: string }) {
@@ -21,7 +22,7 @@ export function DashboardShell({ children, actorId }: { children: ReactNode; act
   const currentSection = DASHBOARD_SECTIONS.find((section) => isSectionActive(pathname, section.href));
   return <DashboardThemeProvider><MotionConfig reducedMotion="user"><TooltipProvider><ExternalNavigationProvider><AnnouncementDraftProvider key={actorId} actorId={actorId}><UnsavedChangesProvider><SidebarProvider mobileBreakpoint={1024}>
     <a href="#dashboard-content" className="admin-skip-link sr-only focus:not-sr-only">Salta al contenuto</a>
-    <SidebarAnimator /><DashboardSidebar />
+    <SidebarAnimator /><DashboardSidebar /><DashboardMobileNotice />
     <SidebarInset className="min-w-0">
       <header className="admin-header">
         <div className="flex min-w-0 items-center gap-3"><SidebarTrigger />{pathname === "/annunci/crea-annuncio" ?

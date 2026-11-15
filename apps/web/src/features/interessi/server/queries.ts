@@ -1,4 +1,5 @@
 import "server-only";
+import {isProfileHeld} from "@bacheca/announcements/features/profilo/server/profile-state";
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {PROFILE_OPTIONS, type ProfileType} from "@/features/profilo/profile-model";
 import {loadOwnedSubprofileIdentities} from "@/features/profilo/server/owned-subprofile-identities";
@@ -18,11 +19,12 @@ export async function getInterestContext(target: InterestTarget): Promise<Intere
 		let recipientProfileId = target.id;
 		if (target.kind === "annuncio") {
 			const {data, error} = await admin.from("annuncio").select("autore_annuncio")
-				.is("eliminato_il", null).eq("uuid", target.id).eq("stato_annuncio", "pubblicato").eq("nascosto", false).eq("privato", false).maybeSingle();
+				.is("eliminato_il", null).eq("profile_admin_hidden", false).eq("uuid", target.id).eq("stato_annuncio", "pubblicato").eq("nascosto", false).eq("privato", false).maybeSingle();
 			if (error) throw new Error("INTEREST_TARGET_UNAVAILABLE");
 			if (!data?.autore_annuncio) return {status: "unavailable"};
 			recipientProfileId = data.autore_annuncio;
 		} else {
+      if (await isProfileHeld(admin, target.id, target.profileType)) return {status: "unavailable"};
 			const {data, error} = await admin.from(INTEREST_PROFILE_TABLES[target.profileType]).select("id")
 				.eq("uuid_profilo", target.id).eq("nascosto", false).maybeSingle();
 			if (error) throw new Error("INTEREST_TARGET_UNAVAILABLE");

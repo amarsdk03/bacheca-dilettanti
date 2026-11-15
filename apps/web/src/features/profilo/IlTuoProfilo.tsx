@@ -531,7 +531,7 @@ function ProfileCard({
 					</div>
 				</div>
 				{
-					regionSuspended ? <Badge variant="outline"><EyeOffIcon data-icon="inline-start" aria-hidden="true" /> Sospeso</Badge> : profile.isPrimary ? (
+					profile.adminHidden ? <Badge variant="outline"><EyeOffIcon data-icon="inline-start" aria-hidden="true" /> Oscurato</Badge> : regionSuspended ? <Badge variant="outline"><EyeOffIcon data-icon="inline-start" aria-hidden="true" /> Sospeso</Badge> : profile.isPrimary ? (
 						<Badge variant="secondary" className="profile-dashboard-type-badge"><StarIcon data-icon="inline-start" aria-hidden="true" /> Principale</Badge>
 					) : (
 						<Badge variant="outline"><CheckIcon data-icon="inline-start" aria-hidden="true" /> Attivo</Badge>
@@ -540,6 +540,7 @@ function ProfileCard({
 			</CardHeader>
 			<CardContent className="flex flex-1 flex-col gap-5">
 				{regionSuspended && <Alert><InfoIcon aria-hidden="true" /><AlertDescription>{PROFESSIONAL_REGIONS_SUSPENDED_MESSAGE}</AlertDescription></Alert>}
+        {profile.adminHidden && <Alert><InfoIcon aria-hidden="true" /><AlertDescription>Profilo e annunci di questa tipologia sono oscurati dall’amministrazione.</AlertDescription></Alert>}
 				<p className="leading-6 text-muted-foreground">
 					{option?.description}
 				</p>
@@ -574,7 +575,7 @@ function ProfileCard({
 					)}
 				</div>
 				<div className="flex flex-wrap justify-end gap-2">
-					{!regionSuspended && <Tooltip>
+					{!regionSuspended && !profile.adminHidden && <Tooltip>
 						<TooltipTrigger render={<Link
 							href={`/dettagli-profilo?${new URLSearchParams({id: profile.profileId, type: profile.type})}`}
 							target="_blank"
@@ -854,7 +855,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 				</dl>
 			</CardContent>
 			<CardFooter className="flex flex-wrap justify-end gap-2">
-				{!announcement.regionSuspended && <AnnouncementViewLink id={announcement.id} isListed={isAnnouncementListed(announcement.moderationStatus, isHidden, announcement.isPrivate)} />}
+				{!announcement.regionSuspended && !announcement.adminHidden && <AnnouncementViewLink id={announcement.id} isListed={isAnnouncementListed(announcement.moderationStatus, isHidden, announcement.isPrivate)} />}
 				{paymentPending ? (
 					<Button render={<Link href={`/pubblica-annuncio/pagamento?id=${encodeURIComponent(announcement.id)}`} />} nativeButton={false} className="profile-dashboard-action" disabled={pending}>
 						Completa pagamento

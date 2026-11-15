@@ -1,5 +1,6 @@
 import {professionalAllowedRegions} from "@/features/profilo/professional-regions";
 import "server-only";
+import {stateForProfile} from "@bacheca/announcements/features/profilo/profile-state";
 import {normalizeTeamCategory} from "@/features/profilo/team-category-catalog";
 
 import {
@@ -44,7 +45,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 	const supabase = await createClient();
 	const {data: baseProfile, error: baseProfileError} = await supabase
 		.from("profilo")
-		.select("uuid")
+		.select("uuid, profile_type_state(profile_type,verified_at,admin_hidden)")
 		.eq("uuid_utente", utenteId)
 		.eq("nascosto", false)
 		.maybeSingle();
@@ -119,7 +120,7 @@ export async function getPublishProfileContext(utenteId: string): Promise<Publis
 		["creators", creator.data],
 	];
 	const enabledProfileTypes = activeRows.flatMap<ProfileType>(([type, row]) => (
-		row ? [type] : []
+		row && !stateForProfile(baseProfile.profile_type_state, type).hidden ? [type] : []
 	));
 
 	return {professionalRegions: professionalAllowedRegions(restrictedAccess?.find(row => row.profile_type === "servizi-consulenze")?.allowed_regions), profileId: baseProfile.uuid, enabledProfileTypes, authorizedRestrictedProfileTypes: (restrictedAccess ?? []).flatMap(({profile_type}) => profile_type === "servizi-consulenze" || profile_type === "creators" ? [profile_type] : []), drafts, locations, socialLinks};

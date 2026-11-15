@@ -17,7 +17,7 @@ In assenza delle RPC richieste, la Dashboard mostra un errore con possibilità d
 
 Ogni segnalazione conserva l’ID numerico storico e riceve un UUID amministrativo. Il dettaglio consente di salvare stato e nota interna (massimo mille caratteri), con controllo della versione. Una modifica concorrente o un esito incerto richiedono il ricaricamento prima di un altro tentativo.
 
-Stati: Aperta, In lavorazione, Risolta, Archiviata. Tutti possono essere modificati, inclusa la riapertura. Le vecchie segnalazioni diventano Aperte. Nessuna chiusura modifica automaticamente il contenuto: per gli annunci si riutilizzano capacità, controlli e dialog della moderazione esistente. Per i profili si mostrano i collegamenti alle tipologie effettivamente associate all’UUID: il modello storico della segnalazione non identifica il singolo sottoprofilo.
+Stati: Aperta, In lavorazione, Risolta, Archiviata. Tutti possono essere modificati, inclusa la riapertura. Le vecchie segnalazioni diventano Aperte. Nessuna chiusura modifica automaticamente il contenuto; la moderazione degli annunci si gestisce dalla pagina Annunci. Il pannello della segnalazione contiene informazioni, stato, nota interna e collegamenti al sito. Per i profili si mostrano i collegamenti alle tipologie effettivamente associate all’UUID: il modello storico della segnalazione non identifica il singolo sottoprofilo.
 
 Un segnalatore senza riferimento utente viene indicato come Non identificato: può essere anonimo oppure un account cancellato. Gli hash anonimi non vengono restituiti. La cancellazione del contenuto mantiene il precedente comportamento SQL di cancellazione a cascata delle sue segnalazioni; questo intervento non introduce una nuova conservazione.
 

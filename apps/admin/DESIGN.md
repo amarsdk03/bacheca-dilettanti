@@ -8,6 +8,8 @@ La Home, Annunci e Registro attività definiscono il riferimento visivo. Applica
 
 Stack: Next.js App Router, React, Tailwind 4, shadcn con Base UI, Lucide, Recharts. Riutilizzare i componenti presenti; mantenere autorizzazioni, funzionalità, dati e validazioni durante gli interventi esclusivamente visivi. Le funzionalità di Segnalazioni e Codici invito sono descritte in `docs/dashboard/integrazione/segnalazioni-codici-invito.md`.
 
+Utenti e Profili seguono le stesse tabelle, filtri URL e schede laterali. I dettagli degli utenti sono in sola consultazione; i profili hanno azioni confermate di verifica e oscuramento con registro attività. Il pulsante Crea profilo resta disabilitato. Regole e migrazioni in `docs/dashboard/integrazione/utenti-profili.md`.
+
 ## Font, gerarchia e densità
 
 - Inter per l’intera Dashboard, inclusi i titoli e le superfici temporanee; Roboto Mono per UUID, codici e dati tecnici.
@@ -39,6 +41,7 @@ Il tema persistente usa `bd-admin-theme`, con dark iniziale. Shell e `bd-admin-p
 
 - Mantenere i contenuti attuali della sidebar. La riduzione/espansione usa l’implementazione efficiente esistente, senza transizioni globali di layout.
 - Data e ora locale italiana al centro della navbar in ogni pagina; aggiornamento locale al secondo, senza API.
+- Sotto i 1024 px, mostrare il dialog informativo che consiglia PC o laptop. La chiusura esplicita viene ricordata nel browser per 24 ore; alla scadenza ricompare al successivo accesso o cambio pagina mobile. Allargare la viewport lo chiude senza memorizzare una scelta.
 - Tabelle dentro un contenitore con scorrimento orizzontale, mai con overflow dell’intera pagina. Intestazioni, colonne Totale e pulsanti di azione sono allineati a sinistra. Totale è sempre l’ultima colonna nei dati dei grafici.
 - Filtri con etichette concise, invio esplicito e ripristino. Usare Field/FieldGroup, InputGroup e componenti semantici presenti. Campi obbligatori con asterisco rosso; validazione con aria-invalid e descrizione associata.
 - Stato vuoto, caricamento, errore, disabilitato e conflitto devono risultare leggibili in entrambi i temi. Un pulsante disabilitato conserva sfondo e bordo riconoscibili.

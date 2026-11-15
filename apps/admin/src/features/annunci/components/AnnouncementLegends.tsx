@@ -4,7 +4,6 @@ import {Button} from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
-	DialogDescription,
 	DialogDismissButton,
 	DialogHeader,
 	DialogTitle,
@@ -35,7 +34,7 @@ export function AnnouncementLegend({kind}: { kind: "visibility" | "distribution"
 						</div>
 						<div>
 							<dt>Oscurato</dt>
-							<dd>Annuncio oscurato dall’amministrazione ed escluso dai risultati pubblici, indipendentemente
+							<dd>Annuncio oscurato dall’amministrazione, direttamente o tramite il profilo autore, ed escluso dai risultati pubblici, indipendentemente
 								dalla visibilità assegnata dall’utente.</dd>
 						</div>
 					</dl>

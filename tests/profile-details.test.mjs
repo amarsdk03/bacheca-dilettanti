@@ -587,6 +587,9 @@ test("all populated player social links use their brand icon, including website 
 
 function fixtureClient(results) {
 	const calls = [];
+  const types = ["giocatore", "squadra", "staff-sportivo", "arbitro", "torneo-evento", "campi-impianti-sportivi", "servizi-consulenze", "creators"];
+  const profileStates = () => types.map(profile_type => ({profile_type, verified_at: null, admin_hidden: false}));
+  const currentProfile = row => row && !Object.hasOwn(row, "profile_type_state") ? {...row, profile_type_state: profileStates()} : row;
 	return {
 		calls,
 		from(table) {
@@ -596,11 +599,32 @@ function fixtureClient(results) {
 			for (const method of ["select", "eq", "neq", "is", "not", "or", "in", "order", "limit", "range", "maybeSingle"]) {
 				query[method] = (...args) => {call.operations.push([method, ...args]); return query;};
 			}
-			query.then = (resolve, reject) => Promise.resolve(typeof results[table] === "function" ? results[table](call) : results[table] ?? {data: [], error: null, count: 0}).then(resolve, reject);
+			query.then = (resolve, reject) => Promise.resolve(typeof results[table] === "function" ? results[table](call) : results[table] ?? {data: [], error: null, count: 0}).then(result => {
+        if (table === "profilo") return {...result, data: Array.isArray(result.data) ? result.data.map(currentProfile) : currentProfile(result.data)};
+        if (table === "profile_type_state" && !results[table]) {
+          const ids = call.operations.find(([method, column]) => method === "in" && column === "profile_id")?.[2] ?? [];
+          return {...result, data: ids.flatMap(profile_id => profileStates().map(s => ({...s, profile_id})))};
+        }
+        return result;
+      }).then(resolve, reject);
 			return query;
 		},
 	};
 }
+
+test("profile verification and public access use the exact type, never the legacy account badge", async () => {
+  const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const states = [
+    {profile_type: "giocatore", verified_at: null, admin_hidden: false},
+    {profile_type: "arbitro", verified_at: "2026-11-15T10:00:00Z", admin_hidden: true},
+  ];
+  const client = fixtureClient({profilo: {data: {uuid: id, tipologia_principale: "giocatore", verificato_il: "2026-09-02T10:00:00Z", profile_type_state: states}, error: null},
+    profilo_giocatore: {data: player, error: null}, profilo_arbitro: {data: {...player, id: 8}, error: null}, media_profilo: {data: null, error: null}, annuncio: {data: [], count: 0, error: null}});
+  const {getProfileDetail} = sourceLoader({"@/lib/supabase/admin": {createAdminClient: () => client}})("apps/web/src/features/dettagli-profilo/server/profile-detail-query.ts");
+  const visible = await getProfileDetail(id, "giocatore");
+  assert.equal(visible.status, "ok"); assert.equal(visible.profile.officialVerified, false);
+  assert.equal((await getProfileDetail(id, "arbitro")).status, "not-found");
+});
 
 test("directory ranks completion then activity without reading followers or exposing ranking inputs", async () => {
 	const id = suffix => `${suffix.repeat(8)}-${suffix.repeat(4)}-4${suffix.repeat(3)}-8${suffix.repeat(3)}-${suffix.repeat(12)}`;
@@ -633,7 +657,7 @@ test("directory ranks completion then activity without reading followers or expo
 test("detail query preserves visibility filters and exposes age without birth parts", async () => {
 	const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 	const client = fixtureClient({
-		profilo: {data: {uuid: id, tipologia_principale: "giocatore", confermato_il: "2026-09-01T10:00:00Z", verificato_il: "2026-09-02T10:00:00Z"}, error: null},
+		profilo: {data: {uuid: id, tipologia_principale: "giocatore", confermato_il: "2026-09-01T10:00:00Z", profile_type_state: [{profile_type: "giocatore", verified_at: "2026-09-02T10:00:00Z", admin_hidden: false}]}, error: null},
 		profilo_giocatore: {data: player, error: null},
 		media_profilo: {data: null, error: null},
 		annuncio: {data: [], count: 7, error: null},

@@ -9,10 +9,11 @@ export type AuditActor = { authId: string | null; userId: string | null; email: 
 export type AuditSummary = { id: string; occurredAt: string; actor: AuditActor; action: AuditAction; outcome: "success" | "failure" };
 export type AuditPage = { items: AuditSummary[]; hasMore: boolean; nextCursor: string | null };
 export type AuditDetail = AuditSummary & {
-  resourceType: "session" | "announcement" | "announcement_export" | "report" | "invitation"; resourceId: string | null; correlationId: string;
+  resourceType: "session" | "announcement" | "announcement_export" | "report" | "invitation" | "profile"; resourceId: string | null; correlationId: string;
+  profileType?: string | null;
   reason: string | null; failureCode: string | null;
   noteChanged?: boolean | null;
-  changes: Partial<Record<"status" | "hidden" | "trashed" | "considered", { before: string | boolean | null; after: string | boolean }>>;
+  changes: Partial<Record<"status" | "hidden" | "trashed" | "considered" | "verified", { before: string | boolean | null; after: string | boolean }>>;
   export: { rowCount: number; columns: string[] | null; announcementIds: string[] | null } | null;
 };
 export type AuditFailure = { status: "invalid"; code: "INVALID_QUERY" | "INVALID_EVENT_ID" } |

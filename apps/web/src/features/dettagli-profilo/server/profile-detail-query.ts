@@ -1,4 +1,5 @@
 import "server-only";
+import {stateForProfile} from "@bacheca/announcements/features/profilo/profile-state";
 import {publicProfileName} from "@/features/profilo/profile-public-name";
 import {currentCategoryLabel} from "@/features/profilo/current-team";
 
@@ -391,7 +392,7 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 		// compute age; never return those parts, private identity, contacts or notes.
 		const baseProfilePromise = supabase
 			.from("profilo")
-			.select("uuid, link_foto_profilo, confermato_il, verificato_il, tipologia_principale")
+			.select("uuid, link_foto_profilo, confermato_il, profile_type_state(profile_type, verified_at, admin_hidden), tipologia_principale")
 			.eq("uuid", id)
 			.eq("nascosto", false)
 			.not("uuid_utente", "is", null)
@@ -433,7 +434,7 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			return {status: "error"};
 		}
 
-		if (!baseResult.data || contentResult.status === "not-found") {
+		if (!baseResult.data || stateForProfile(baseResult.data.profile_type_state, type).hidden || contentResult.status === "not-found") {
 			return {status: "not-found"};
 		}
 		if (type === "servizi-consulenze" && locationsResult.data?.length === 0) return {status: "not-found"};
@@ -483,7 +484,7 @@ export async function getProfileDetail(id: string, type: ProfileType): Promise<P
 			title: content.title ?? `Profilo ${typeLabel.toLocaleLowerCase("it-IT")}`,
 			imageUrl: resolvedProfileImageUrl(profileImages, id, type, cleanText(baseResult.data.link_foto_profilo)),
 			emailConfirmed: Boolean(baseResult.data.confermato_il),
-			officialVerified: Boolean(baseResult.data.verificato_il),
+			officialVerified: stateForProfile(baseResult.data.profile_type_state, type).verified,
 			primary: baseResult.data.tipologia_principale === type,
 			availabilityLabel: availabilityLabel(content.availability),
 			socialLinks: publicSocialLinks(socialLinksResult.data ?? []),

@@ -296,6 +296,14 @@
   & .admin-community-workspace .admin-filters-card { --card-spacing: 20px; }
   & .admin-community-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: end; }
   & .admin-community-search { grid-column: 1 / -1; }
+  & .admin-people-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px; align-items: end; }
+  & .admin-profiles-filters { grid-template-columns: minmax(0, 1fr); }
+  & .admin-profiles-filter-actions { align-self: end; }
+  & .admin-required { color: var(--destructive); }
+  & .admin-profile-type { color: var(--muted-foreground); font-size: 12px; margin-top: 4px; }
+  & .admin-associated-profiles { display: grid; gap: 14px; padding: 0; list-style: none; }
+  & .admin-associated-profiles li { display: grid; gap: 4px; }
+  & .admin-profile-field-value { white-space: pre-wrap; overflow-wrap: anywhere; }
   & .admin-invitation-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: center; }
   & .admin-community-table { min-width: 860px; }
   & .admin-community-table :is(th, td) { text-align: left; vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
@@ -308,8 +316,6 @@
   & .admin-code-copy [role="status"]:not(:empty) { flex-basis: 100%; }
   & .admin-community-sheet [data-slot="sheet-title"] { font-weight: 600; }
   & .admin-community-sheet [data-slot="textarea"] { min-height: 120px; resize: vertical; }
-  & .admin-content-disclosure > summary { cursor: pointer; padding-block: 12px; font-weight: 500; }
-  & .admin-content-disclosure > .admin-detail-stack { margin-top: 12px; }
   & :is(.font-heading, [data-slot="dialog-title"], [data-slot="sheet-title"], [data-slot="alert-dialog-title"]) { font-family: var(--font-sans); }
   & .admin-create-section [data-slot="card-title"] h2 { font-size: 17px; font-weight: 600; line-height: 24px; letter-spacing: -0.025em; }
   & .admin-create-section-number { background: var(--secondary); color: var(--muted-foreground); border-color: var(--border); }
@@ -331,10 +337,17 @@
 }
 @media (min-width: 768px) {
   [data-admin-scope] {
+    & .admin-profiles-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    & .admin-profiles-filter-actions { grid-column: span 2; justify-content: flex-end; }
     & .admin-community-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     & .admin-invitation-filters { grid-template-columns: minmax(280px, 2fr) minmax(220px, 1fr); }
+    & .admin-invitation-filters > .admin-invitation-pending { align-self: end; min-height: 40px; align-items: center; }
+    & .admin-invitation-sheet .admin-pagination { align-items: center; }
     & .admin-community-sheet[data-slot="sheet-content"][data-side="right"] { width: min(960px, 90vw); max-width: 90vw; }
   }
+}
+@media (min-width: 1024px) {
+  [data-admin-scope] .admin-profiles-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (max-width: 767px) {
   [data-admin-scope] {

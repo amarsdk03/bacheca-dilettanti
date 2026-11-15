@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 	const {data: announcement, error} = await admin
 		.from("annuncio")
 		.select("stato_annuncio, nascosto, privato, tipologia_annuncio, localita_annuncio(regione), media_annuncio(formato_media, link_media)")
-		.is("eliminato_il", null).eq("uuid", id)
+		.is("eliminato_il", null).eq("profile_admin_hidden", false).eq("uuid", id)
 		.maybeSingle();
 	if (error || !announcement) return new Response(null, {status: 404, headers: CACHE_HEADERS});
 	if (announcement.tipologia_annuncio === "annuncio_servizi_consulenze" && announcement.localita_annuncio.length === 0) return new Response(null, {status: 404, headers: CACHE_HEADERS});

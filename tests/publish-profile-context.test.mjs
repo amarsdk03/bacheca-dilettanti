@@ -60,7 +60,8 @@ function createSupabaseMock(rowsByTable) {
 }
 
 async function getEnabledProfileTypes(rowsByTable) {
-	const client = createSupabaseMock({profilo: [{uuid: "profile-1", uuid_utente: "user-1", nascosto: false}], ...rowsByTable});
+	const states = ["giocatore", "squadra", "staff-sportivo", "arbitro", "torneo-evento", "campi-impianti-sportivi", "servizi-consulenze", "creators"].map(profile_type => ({profile_type, verified_at: null, admin_hidden: false}));
+	const client = createSupabaseMock({profilo: [{uuid: "profile-1", uuid_utente: "user-1", nascosto: false, profile_type_state: states}], ...rowsByTable});
 	const load = sourceLoader({"@/lib/supabase/server": {createClient: async () => client}, "@/lib/supabase/admin": {createAdminClient: () => client}});
 	const {getPublishProfileContext} = load("apps/web/src/features/pubblica-annuncio/server/queries.ts");
 	const context = await getPublishProfileContext("user-1");

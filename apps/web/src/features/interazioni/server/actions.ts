@@ -56,7 +56,7 @@ export async function setAnnouncementSaved(announcementId: string, saved: boolea
 		if (saved) {
 			const {data, error} = await admin.from("annuncio").select("uuid")
 				.is("eliminato_il", null).eq("uuid", announcementId).eq("stato_annuncio", "pubblicato")
-				.eq("nascosto", false).eq("privato", false).maybeSingle();
+				.eq("nascosto", false).eq("privato", false).eq("profile_admin_hidden", false).maybeSingle();
 			if (error) return UNAVAILABLE;
 			if (!data) return {status: "error", message: "Questo annuncio non è più disponibile."};
 		}

@@ -1,5 +1,6 @@
 import {professionalAllowedRegions} from "@/features/profilo/professional-regions";
 import "server-only";
+import {stateForProfile} from "@bacheca/announcements/features/profilo/profile-state";
 import {normalizeProfessionalAvailability} from "@/features/profilo/professional-availability";
 import {normalizeTeamCategory} from "@/features/profilo/team-category-catalog";
 
@@ -141,6 +142,7 @@ function announcementQuery(supabase: SupabaseClient<Database>) {
 			livello_annuncio,
 			nascosto,
 			oscurato_da_admin,
+			profile_admin_hidden,
 			privato,
 			stato_annuncio,
 			info_stato_annuncio,
@@ -254,10 +256,10 @@ function toManagedAnnouncement(row: AnnouncementQueryRow): ManagedAnnouncement {
 		location: locationLabel(row),
 		createdAt: row.creato_il,
 		level: row.livello_annuncio,
-		visibility: row.nascosto === true || (row.tipologia_annuncio === "annuncio_servizi_consulenze" && row.localita_annuncio.length === 0) ? "hidden" : "visible",
+		visibility: row.nascosto === true || row.profile_admin_hidden || (row.tipologia_annuncio === "annuncio_servizi_consulenze" && row.localita_annuncio.length === 0) ? "hidden" : "visible",
 		isPrivate: row.privato !== false,
 		regionSuspended: row.tipologia_annuncio === "annuncio_servizi_consulenze" && row.localita_annuncio.length === 0,
-		adminHidden: row.oscurato_da_admin === true,
+		adminHidden: row.oscurato_da_admin === true || row.profile_admin_hidden,
 		moderationStatus: row.stato_annuncio,
 		moderationInfo: row.info_stato_annuncio,
 	};
@@ -349,7 +351,7 @@ export async function getProfileDashboardData(
 	queryFailed(invitationCountError, "invito");
 	const {data: baseProfile, error: baseProfileError} = await supabase
 		.from("profilo")
-		.select("uuid, tipologia_principale, link_foto_profilo")
+		.select("uuid, tipologia_principale, link_foto_profilo, profile_type_state(profile_type,verified_at,admin_hidden)")
 		.eq("uuid_utente", userId)
 		.eq("nascosto", false)
 		.maybeSingle();
@@ -477,6 +479,7 @@ export async function getProfileDashboardData(
 		return row ? [{
 			id: `${value}:${row.id}`,
 			profileId: baseProfile.uuid,
+			adminHidden: stateForProfile(baseProfile.profile_type_state, value).hidden,
 			type: value,
 			isPrimary: baseProfile.tipologia_principale === value,
 			imageUrl: resolvedProfileImageUrl(profileImages, baseProfile.uuid, value, mainImageUrl),

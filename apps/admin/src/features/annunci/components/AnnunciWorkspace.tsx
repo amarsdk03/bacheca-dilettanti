@@ -4,12 +4,12 @@ import {useEffect, useRef, useState, useSyncExternalStore} from "react";
 import {
 	ArrowLeft,
 	ArrowRight,
-	BookOpenText,
 	CircleAlert,
 	Download,
 	Ellipsis,
 	Info, ReceiptTextIcon,
 	RefreshCw,
+	RotateCcw,
 	Search,
 	X
 } from "lucide-react";
@@ -156,8 +156,8 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
                                 <FieldError id="annunci-search-error">{state.searchError}</FieldError>}
 						</Field>
 						<div className="admin-action-list"><Button type="submit" size="sm"
-						                                           disabled={Boolean(state.searchError)}>Cerca</Button><Button
-							variant="outline" size="sm" onClick={controller.reset}>Azzera filtri</Button></div>
+						                                           disabled={Boolean(state.searchError)}><Search data-icon="inline-start" aria-hidden="true"/>Filtra</Button><Button
+							variant="outline" size="sm" onClick={controller.reset}><RotateCcw data-icon="inline-start" aria-hidden="true"/>Azzera</Button></div>
 					</div>
 					<FilterSelect id="annunci-status" label="Stato" value={state.draft.status ?? "all"} items={[{
 						value: "all",
@@ -209,7 +209,7 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 					pagina.</p>
 					<div className="admin-action-list">{state.query.valid && state.query.cursor &&
                         <Button variant="outline" size="sm" onClick={controller.first}>Prima pagina</Button>}<Button
-						variant="outline" size="sm" onClick={controller.reset}>Azzera filtri</Button></div>
+						variant="outline" size="sm" onClick={controller.reset}><RotateCcw data-icon="inline-start" aria-hidden="true"/>Azzera</Button></div>
 				</AlertDescription></Alert> : result?.status === "unavailable" ?
 					<Failure title="Impossibile caricare gli annunci"
 					         description="Il servizio è temporaneamente non disponibile." retry={controller.refresh}
@@ -219,7 +219,7 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 							description={state.query.cursor ? "L’elenco potrebbe essere cambiato durante la consultazione." : "Gli annunci disponibili compariranno qui."}>
 							{state.query.cursor ?
 								<Button variant="outline" onClick={controller.first}>Prima pagina</Button> : filtered &&
-                                <Button variant="outline" onClick={controller.reset}>Azzera filtri</Button>}
+                                <Button variant="outline" onClick={controller.reset}><RotateCcw data-icon="inline-start" aria-hidden="true"/>Azzera</Button>}
 						</EmptyState> : <Table
 							className="admin-annunci-table"><TableCaption>{result.page.items.length} {result.page.items.length === 1 ? "annuncio in questa pagina" : "annunci in questa pagina"}.
 							Dal più recente; date in Europe/Rome.</TableCaption>

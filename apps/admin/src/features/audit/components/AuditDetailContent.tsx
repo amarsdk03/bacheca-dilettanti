@@ -19,7 +19,8 @@ export function AuditDetailContent({ detail: d }: { detail: AuditDetail }) {
       <Fact label="Tipo risorsa" value={d.resourceType} /><Fact label="UUID risorsa" value={d.resourceId} technical />
     </dl></section>
     <section className="admin-detail-section"><h3>Variazioni</h3>
-      {Object.keys(d.changes).length ? <dl className="admin-detail-stack">{Object.entries(d.changes).map(([key, change]) => <Fact key={key} label={{ status: "Stato", hidden: "Nascosto", trashed: "Nel cestino", considered: "Considerato" }[key]!}
+      {d.profileType && <p>Tipologia profilo: {d.profileType}</p>}
+      {Object.keys(d.changes).length ? <dl className="admin-detail-stack">{Object.entries(d.changes).map(([key, change]) => <Fact key={key} label={{ status: "Stato", hidden: "Nascosto", trashed: "Nel cestino", considered: "Considerato", verified: "Verificato" }[key]!}
         value={`${changeValue(change.before)} → ${changeValue(change.after)}`} technical />)}</dl> : <p>Nessuna variazione registrata per questo evento.</p>}
       {d.noteChanged && <p>Nota interna aggiornata. Il testo rimane nel dettaglio della segnalazione.</p>}
     </section>

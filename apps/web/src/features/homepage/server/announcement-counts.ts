@@ -12,7 +12,7 @@ export async function loadHomepageAnnouncementCounts(): Promise<HomepageAnnounce
 				const {count, error} = await client.from("annuncio")
 					.select("uuid", {count: "exact", head: true})
 					.in("tipologia_annuncio", getAnnouncementStorageTypes(parseAnnouncementDirectoryQuery({type: directoryType})))
-					.eq("stato_annuncio", "pubblicato").eq("nascosto", false).eq("privato", false)
+					.eq("stato_annuncio", "pubblicato").eq("nascosto", false).eq("privato", false).eq("profile_admin_hidden", false)
 					.is("eliminato_il", null);
 				if (!error && count !== null) counts[type] = count;
 			} catch {

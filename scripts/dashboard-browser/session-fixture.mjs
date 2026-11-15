@@ -4,6 +4,7 @@ import { createHomeFixture } from "./home-fixture.mjs";
 import { createAnnunciFixture, OPERATIONS } from "./annunci-fixture.mjs";
 import { createAuditFixture } from "./audit-fixture.mjs";
 import {createCommunityFixture} from "../../tests/helpers/admin-community-fixture.mjs";
+import {createPeopleFixture} from "../../tests/helpers/admin-people-fixture.mjs";
 
 export const FIXTURE_EMAIL = "admin@example.test";
 export const FIXTURE_PASSWORD = "Only-a-local-fixture-123";
@@ -15,13 +16,13 @@ const b64 = value => Buffer.from(JSON.stringify(value)).toString("base64url");
 /** A deliberately small HTTP double, not a Supabase server or SQL adapter.
  * It never persists request bodies, bearer tokens, keys or cookie values in logs.
  */
-export async function createSessionFixture({ home = false, annunci = false, registro = false, creation = false, community = false } = {}) {
+export async function createSessionFixture({ home = false, annunci = false, registro = false, creation = false, community = false, people = false } = {}) {
   if (home && annunci || registro && (home || annunci)) throw new Error("BROWSER_FIXTURE_SCENARIOS");
   const homeFixture = home || registro || creation ? createHomeFixture() : null;
   const annunciFixture = annunci ? createAnnunciFixture() : null;
   const auditFixture = registro ? createAuditFixture() : null;
-  const communityFixture = community ? await createCommunityFixture() : null;
-  if (communityFixture) {await communityFixture.reset(); await communityFixture.report(301, {profile: true}); await communityFixture.invitation();}
+  const communityFixture = people ? await createPeopleFixture() : community ? await createCommunityFixture() : null;
+  if (communityFixture) {await communityFixture.reset(); if (community) {await communityFixture.report(301, {profile: true}); await communityFixture.invitation();}}
   const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
   const kid = randomUUID(), secretKey = "sb_secret_browser_session_" + randomUUID().replaceAll("-", "");
   const jwk = { ...publicKey.export({ format: "jwk" }), kid, use: "sig", alg: "ES256" };
@@ -94,7 +95,7 @@ export async function createSessionFixture({ home = false, annunci = false, regi
       if (rpc === "admin_record_server_audit_v1") {
         counters.audit++;
         const allowedAuth = ["auth.login", "auth.logout", "auth.access_denied"].includes(body.p_action) && ["success", "failure"].includes(body.p_outcome);
-        const allowedOperationFailure = ((annunciFixture && [...OPERATIONS.map(operation => "announcement." + operation), "announcement.export"].includes(body.p_action)) || (communityFixture && ["report.update", "invitation.consider"].includes(body.p_action))) && body.p_outcome === "failure" && typeof body.p_failure_code === "string";
+        const allowedOperationFailure = ((annunciFixture && [...OPERATIONS.map(operation => "announcement." + operation), "announcement.export"].includes(body.p_action)) || (communityFixture && ["report.update", "invitation.consider", "profile.verify", "profile.unverify", "profile.hide", "profile.show"].includes(body.p_action))) && body.p_outcome === "failure" && typeof body.p_failure_code === "string";
         if (request.headers.apikey !== secretKey || token !== secretKey || !(allowedAuth || allowedOperationFailure)) { denied(); return; }
         const send = () => {
           if (auditUnavailable) { reply(503, { code: "TEST_AUDIT_UNAVAILABLE", message: "Synthetic audit unavailable" }); return; }
@@ -106,6 +107,11 @@ export async function createSessionFixture({ home = false, annunci = false, regi
       if (rpc === "admin_get_context_v1") { counters.context++; reply(200, [{ auth_user_uuid: AUTH_ID, utente_uuid: USER_ID }]); return; }
       if (communityFixture) {
         const args = {
+          ...(people ? {
+            admin_list_users_v1: [JSON.stringify(body.p_query ?? {})], admin_get_user_v1: [body.p_id],
+            admin_list_profiles_v1: [JSON.stringify(body.p_query ?? {})], admin_get_profile_v1: [body.p_id, body.p_type],
+            admin_moderate_profile_v1: [body.p_id, body.p_type, body.p_operation, body.p_version, body.p_reason],
+          } : {}),
           admin_list_reports_v1: [JSON.stringify(body.p_query ?? {})], admin_get_report_v1: [body.p_id],
           admin_update_report_v1: [body.p_id, body.p_status, body.p_note, body.p_version],
           admin_list_invitation_codes_v1: [JSON.stringify(body.p_query ?? {})],

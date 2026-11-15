@@ -1,6 +1,7 @@
 import {countDirectoryRegions} from "@/components/navigation/directory-region-counts";
 import {currentCategoryLabel} from "@/features/profilo/current-team";
 import "server-only";
+import {stateForProfile} from "@bacheca/announcements/features/profilo/profile-state";
 import {publicProfileName} from "@/features/profilo/profile-public-name";
 
 import {availabilityLabel} from "@/features/profilo/public-profile-display";
@@ -61,7 +62,7 @@ function profileDirectoryQuery(supabase: SupabaseClient<Database>, offset: numbe
 			tipologia_principale,
 			link_foto_profilo,
 			confermato_il,
-			verificato_il,
+			profile_type_state(profile_type, verified_at, admin_hidden),
 			ultima_modifica_il,
 			localita_profilo(id_sottoprofilo, sottoprofilo, regione, citta),
 			profilo_giocatore(squadra_attuale_id, squadra_attuale_profilo_id, squadra_attuale_nome, squadra_attuale_categoria, squadra_attuale_torneo, squadra_attuale_dal, nominativo_anonimo, id, nascosto, nome, cognome, giorno_nascita, mese_nascita, anno_nascita, disponibilita, presentazione, ruoli_sport, sport_principale, tipologie_sport, categoria_attuale, genere, nazionalita, altezza, peso, piede_principale, storico_carriera),
@@ -287,7 +288,7 @@ function createDirectoryProfile(
 		presentation,
 		imageUrl: resolvedProfileImageUrl(profileImages, row.uuid, type, cleanText(row.link_foto_profilo)),
 		emailConfirmed: Boolean(row.confermato_il),
-		officialVerified: Boolean(row.verificato_il),
+		officialVerified: stateForProfile(row.profile_type_state, type).verified,
 		updatedAt: row.ultima_modifica_il,
 		sport,
 		location,
@@ -428,7 +429,7 @@ function mapProfileRow(row: ProfileDirectoryQueryRow, profileImages: ReadonlyMap
 		}, profileImages));
 	}
 
-	return profiles;
+	return profiles.filter(profile => !stateForProfile(row.profile_type_state, profile.type).hidden);
 }
 
 

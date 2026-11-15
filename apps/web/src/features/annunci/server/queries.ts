@@ -6,6 +6,7 @@ import {
 	type TeamProfileReference
 } from "@/features/profilo/team-profile";
 import "server-only";
+import {stateForProfile} from "@bacheca/announcements/features/profilo/profile-state";
 import {loadAnnouncementAuthorProfile} from "./announcement-author-profile";
 import {buildAnnouncementDetailSections} from "../announcement-detail-sections";
 import {buildAnnouncementSummarySections} from "../announcement-summary";
@@ -122,7 +123,7 @@ function announcementContentQuery(
 			annuncio_servizi_consulenze(figura_professionale, specializzazione, presentazione_servizi, tipologie_sport, descrizione_aggiuntiva),
 			annuncio_creator(descrizione_post),
 			localita_annuncio(regione, citta)
-		`, options).is("eliminato_il", null);
+		`, options).is("eliminato_il", null).eq("profile_admin_hidden", false);
 }
 
 function publicAnnouncementQuery(
@@ -148,7 +149,7 @@ function officialAuthorQuery(supabase: SupabaseClient<Database>) {
 			uuid,
 			link_foto_profilo,
 			confermato_il,
-			verificato_il,
+			profile_type_state(profile_type, verified_at, admin_hidden),
 			profilo_giocatore(nominativo_anonimo, nascosto, nome, cognome, presentazione),
 			profilo_squadra(nominativo_anonimo, nascosto, nome_societa, presentazione),
 			profilo_staff_sportivo(nominativo_anonimo, nascosto, nome, cognome, presentazione),
@@ -387,6 +388,7 @@ function registeredAuthor(
 	profileType: ProfileType,
 	profileImages: ReadonlyMap<string, string>,
 ): AnnouncementAuthor | null {
+	if (stateForProfile(row.profile_type_state, profileType).hidden) return null;
 	if (profileType === "servizi-consulenze" && !row.localita_profilo.some(location => location.sottoprofilo === profileType)) return null;
 	const table = PROFILE_TABLE_BY_TYPE[profileType];
 	if (!table) return null;
@@ -417,7 +419,7 @@ function registeredAuthor(
 		title,
 		imageUrl: resolvedProfileImageUrl(profileImages, row.uuid, profileType, cleanText(row.link_foto_profilo, 2_000)),
 		emailConfirmed: Boolean(row.confermato_il),
-		officialVerified: Boolean(row.verificato_il),
+		officialVerified: stateForProfile(row.profile_type_state, profileType).verified,
 		presentation: cleanText(child.presentazione),
 	};
 }

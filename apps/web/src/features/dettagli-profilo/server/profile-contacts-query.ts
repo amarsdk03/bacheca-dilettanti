@@ -1,4 +1,5 @@
 import "server-only";
+import {isProfileHeld} from "@bacheca/announcements/features/profilo/server/profile-state";
 
 import {getAuthenticatedViewer} from "@/features/auth/server/queries";
 import {createAdminClient} from "@/lib/supabase/admin";
@@ -13,6 +14,7 @@ export async function getProfileContacts(id: string, type: ProfileType): Promise
 	if (type !== "servizi-consulenze" && type !== "creators") return null;
 	if (!await getAuthenticatedViewer()) return null;
 	const supabase = createAdminClient();
+  if (await isProfileHeld(supabase, id, type)) return null;
 	const {data: base, error: baseError} = await supabase.from("profilo")
 		.select("uuid").eq("uuid", id).eq("nascosto", false).not("uuid_utente", "is", null).maybeSingle();
 	if (baseError || !base) return null;

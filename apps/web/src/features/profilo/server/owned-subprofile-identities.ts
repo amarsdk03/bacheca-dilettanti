@@ -1,4 +1,5 @@
 import "server-only";
+import {stateForProfile} from "@bacheca/announcements/features/profilo/profile-state";
 
 import type {SupabaseClient} from "@supabase/supabase-js";
 import type {Database} from "@/server/supabase";
@@ -20,12 +21,13 @@ const DEFINITIONS = {
 
 /** Private identities for an already authenticated owner, never for public DTOs. */
 export async function loadOwnedSubprofileIdentities(client: SupabaseClient<Database>, userId: string, profileId: string): Promise<SubprofileSelectOption[]> {
-	const {data: owner, error} = await client.from("profilo").select("uuid, link_foto_profilo")
+	const {data: owner, error} = await client.from("profilo").select("uuid, link_foto_profilo, profile_type_state(profile_type,verified_at,admin_hidden)")
 		.eq("uuid", profileId).eq("uuid_utente", userId).eq("nascosto", false).maybeSingle();
 	if (error) throw error;
 	if (!owner) return [];
 	const images = await loadProfileImageUrlMap(client, [owner.uuid]);
 	const options = await Promise.all(PROFILE_OPTIONS.map(async ({value: type, label}) => {
+    if (stateForProfile(owner.profile_type_state, type).hidden) return null;
 		const definition = DEFINITIONS[type];
 		const {data, error} = await client.from(definition.table).select(definition.fields)
 			.eq("uuid_profilo", owner.uuid).eq("nascosto", false).maybeSingle();

@@ -1,4 +1,5 @@
 import "server-only";
+import {stateForProfile} from "../profile-state.ts";
 import {publicProfileName} from "@bacheca/announcements/features/profilo/profile-public-name";
 
 import type {SupabaseClient} from "@supabase/supabase-js";
@@ -49,7 +50,7 @@ export async function loadPublicTeamProfiles(
 		const [profilesResult, teamsResult] = await Promise.all([
 			supabase
 				.from("profilo")
-				.select("uuid, link_foto_profilo, localita_profilo(sottoprofilo, regione, citta)")
+					.select("uuid, link_foto_profilo, profile_type_state(profile_type,verified_at,admin_hidden), localita_profilo(sottoprofilo, regione, citta)")
 				.in("uuid", chunk)
 				.eq("nascosto", false)
 				.not("uuid_utente", "is", null),
@@ -74,6 +75,7 @@ export async function loadPublicTeamProfiles(
 	const order = new Map(ids.map((id, index) => [id, index]));
 
 	return profiles.flatMap((profile): PublicTeamProfile[] => {
+    if (stateForProfile(profile.profile_type_state, "squadra").hidden) return [];
 		const team = teamsById.get(profile.uuid);
 		if (!team) return [];
 		return [{
@@ -112,11 +114,11 @@ export async function searchPublicTournamentProfiles(supabase: SupabaseClient<Da
 	const query = normalizeTeamSearchQuery(rawQuery);
 	if (query.length < TEAM_PROFILE_SEARCH_MIN_LENGTH) return [];
 	const {data, error} = await supabase.from("profilo_torneo_evento")
-		.select("id, uuid_profilo, nome_organizzazione, profilo!inner(nascosto, uuid_utente)")
+		.select("id, uuid_profilo, nome_organizzazione, profilo!inner(nascosto, uuid_utente, profile_type_state(profile_type,verified_at,admin_hidden))")
 		.eq("nascosto", false).eq("profilo.nascosto", false).not("profilo.uuid_utente", "is", null)
 		.ilike("nome_organizzazione", `%${query}%`).order("nome_organizzazione").limit(TEAM_PROFILE_SEARCH_LIMIT);
 	if (error) throw error;
-	return (data ?? []).flatMap(row => row.nome_organizzazione?.trim() ? [{
+	return (data ?? []).flatMap(row => row.nome_organizzazione?.trim() && !stateForProfile(row.profilo.profile_type_state, "torneo-evento").hidden ? [{
 		profileId: row.uuid_profilo, subprofileId: row.id, name: row.nome_organizzazione.trim(),
 		anonymousName: false, imageUrl: null, location: null,
 	}] : []);

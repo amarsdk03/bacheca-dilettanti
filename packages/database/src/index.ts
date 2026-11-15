@@ -46,6 +46,7 @@ export type Database = {
           eliminato_il: string | null
           eliminato_da: string | null
           oscurato_da_admin: boolean
+          profile_admin_hidden: boolean
           autore_annuncio: string | null
           creato_da: string | null
           creato_il: string | null
@@ -69,6 +70,7 @@ export type Database = {
           eliminato_il?: string | null
           eliminato_da?: string | null
           oscurato_da_admin?: boolean
+          profile_admin_hidden?: boolean
           autore_annuncio?: string | null
           creato_da?: string | null
           creato_il?: string | null
@@ -92,6 +94,7 @@ export type Database = {
           eliminato_il?: string | null
           eliminato_da?: string | null
           oscurato_da_admin?: boolean
+          profile_admin_hidden?: boolean
           autore_annuncio?: string | null
           creato_da?: string | null
           creato_il?: string | null
@@ -983,6 +986,12 @@ export type Database = {
           },
         ]
       }
+      profile_type_state: {
+        Row: {profile_id: string; profile_type: string; verified_at: string | null; verification_revoked: boolean; admin_hidden: boolean; version: number; updated_at: string}
+        Insert: {profile_id: string; profile_type: string; verified_at?: string | null; verification_revoked?: boolean; admin_hidden?: boolean; version?: number; updated_at?: string}
+        Update: {verified_at?: string | null; verification_revoked?: boolean; admin_hidden?: boolean; version?: number; updated_at?: string}
+        Relationships: [{foreignKeyName: "profile_type_state_profile_id_fkey"; columns: ["profile_id"]; isOneToOne: false; referencedRelation: "profilo"; referencedColumns: ["uuid"]}]
+      }
       profilo: {
         Row: {
           confermato_il: string | null
@@ -1772,6 +1781,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_users_v1: {Args: {p_query?: Json}; Returns: Json}
+      admin_get_user_v1: {Args: {p_id: string}; Returns: Json}
+      admin_list_profiles_v1: {Args: {p_query?: Json}; Returns: Json}
+      admin_get_profile_v1: {Args: {p_id: string; p_type: string}; Returns: Json}
+      admin_moderate_profile_v1: {Args: {p_id: string; p_type: string; p_operation: string; p_version: number; p_reason?: string | null}; Returns: Json}
       set_profile_follow_v2: {
         Args: {p_user: string; p_target: string; p_target_type: string; p_source_type: string | null; p_followed: boolean}
         Returns: Json

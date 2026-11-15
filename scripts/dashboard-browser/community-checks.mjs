@@ -47,6 +47,7 @@ try {
   await cli(["navigate_page", pageId, "--url", origin + "/segnalazioni", "--timeout", "90000"]);
   await wait("() => document.querySelectorAll('main tbody tr').length===1 && !!document.querySelector('.home-clock')");
   assert.equal(await evaluate("() => getComputedStyle(document.querySelector('main')).fontFamily.includes('Inter')"), true);
+  assert(await evaluate("() => {const b=document.querySelector('main tbody button[aria-label=Dettagli]');return !!b?.querySelector('svg.lucide-settings') && b.textContent.trim()==='';}"));
   await click('button "Dettagli"'); await wait("() => !!document.querySelector('#report-note')");
   await cli(["fill", pageId, await uid('textbox "Nota interna"'), "Nota sintetica locale"]);
   await activate("#report-status"); await click('option "Risolta"'); await click('button "Salva modifiche"');

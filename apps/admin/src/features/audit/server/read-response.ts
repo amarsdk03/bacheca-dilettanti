@@ -36,12 +36,13 @@ export function parseAuditPage(value: unknown, query: AuditQuery): AuditPage {
 export function parseAuditDetail(value: unknown, id: string): AuditDetail {
   const summary = parseAuditSummary(value);
   if (!record(value) || summary.id !== id || !canonicalUuid(value.correlationId) || !nullableId(value.resourceId) ||
-    !["session", "announcement", "announcement_export", "report", "invitation"].includes(value.resourceType as string) ||
+    !["session", "announcement", "announcement_export", "report", "invitation", "profile"].includes(value.resourceType as string) ||
     !(value.reason === null || typeof value.reason === "string" && [...value.reason].length <= 1000) ||
     !(value.failureCode === null || AUDIT_FAILURE_CODES.includes(value.failureCode as never)) || !record(value.changes)) fail();
   const changes: AuditDetail["changes"] = {};
   if (value.noteChanged !== undefined && value.noteChanged !== null && typeof value.noteChanged !== "boolean") fail();
-  for (const key of ["status", "hidden", "trashed", "considered"] as const) {
+  if (value.profileType !== undefined && value.profileType !== null && !["giocatore", "squadra", "staff-sportivo", "arbitro", "torneo-evento", "campi-impianti-sportivi", "servizi-consulenze", "creators"].includes(value.profileType as string)) fail();
+  for (const key of ["status", "hidden", "trashed", "considered", "verified"] as const) {
     if (value.changes[key] === undefined) continue;
     const c = value.changes[key];
     const valid = (v: unknown, nullable: boolean) => (nullable && v === null) || (key === "status" ? typeof v === "string" && v.length <= 120 : typeof v === "boolean");
@@ -61,5 +62,6 @@ export function parseAuditDetail(value: unknown, id: string): AuditDetail {
   } else if (summary.action === "announcement.export" && summary.outcome === "success") fail();
   return { ...summary, resourceType: value.resourceType as AuditDetail["resourceType"], resourceId: value.resourceId as string | null,
     correlationId: value.correlationId, reason: value.reason as string | null, failureCode: value.failureCode as string | null, changes, export: exported,
+    ...(value.profileType === undefined ? {} : {profileType: value.profileType as string | null}),
     ...(value.noteChanged === undefined ? {} : {noteChanged: value.noteChanged as boolean | null}) };
 }

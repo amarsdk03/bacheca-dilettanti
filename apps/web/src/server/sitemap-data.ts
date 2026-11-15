@@ -1,4 +1,5 @@
 import "server-only";
+import {stateForProfile} from "@bacheca/announcements/features/profilo/profile-state";
 
 import type {ProfileType} from "@/features/profilo/profile-model";
 import {createAdminClient} from "@/lib/supabase/admin";
@@ -40,6 +41,7 @@ export async function loadSitemapProfiles(): Promise<SitemapProfileEntry[]> {
 			.from("profilo")
 			.select(`
 				uuid,
+				profile_type_state(profile_type,verified_at,admin_hidden),
 				ultima_modifica_il,
 				localita_profilo(sottoprofilo),
 				profilo_giocatore(id, nascosto),
@@ -62,6 +64,7 @@ export async function loadSitemapProfiles(): Promise<SitemapProfileEntry[]> {
 
 		for (const row of data ?? []) {
 			for (const [relation, type] of PROFILE_RELATIONS) {
+        if (stateForProfile(row.profile_type_state, type).hidden) continue;
 				if (type === "servizi-consulenze" && !row.localita_profilo.some(location => location.sottoprofilo === type)) continue;
 				if (!records(row[relation]).some((child) => child.nascosto === false)) continue;
 				entries.push({id: row.uuid, type, updatedAt: row.ultima_modifica_il});
@@ -84,6 +87,7 @@ export async function loadSitemapAnnouncements(): Promise<SitemapAnnouncementEnt
 			.eq("stato_annuncio", "pubblicato")
 			.eq("nascosto", false)
 			.eq("privato", false)
+			.eq("profile_admin_hidden", false)
 			.order("uuid", {ascending: true})
 			.range(start, start + BATCH_SIZE - 1);
 		if (error) {

@@ -4,7 +4,7 @@ import {canonicalUuid, exactKeys, record} from "./validation";
 export const MODERATION_OPERATIONS = ["approve", "reject", "hide", "show", "trash", "restore"] as const;
 export type ModerationOperation = typeof MODERATION_OPERATIONS[number];
 export type ModerationCapability = { allowed: boolean; reason: string | null };
-export type ModerationInfo = { adminHidden: boolean; capabilities: Record<ModerationOperation, ModerationCapability> };
+export type ModerationInfo = { adminHidden: boolean; profileHidden?: boolean; capabilities: Record<ModerationOperation, ModerationCapability> };
 export type ModerationInput = { id: string; operation: ModerationOperation; fingerprint: string; reason: string | null };
 export type ModerationResult = { status: "ok"; id: string; eventId: string; correlationId: string } |
   { status: "invalid" | "denied" | "not_found" | "conflict" | "unavailable"; correlationId: string } |
@@ -12,6 +12,7 @@ export type ModerationResult = { status: "ok"; id: string; eventId: string; corr
 
 export const MODERATION_LABELS: Record<ModerationOperation, string> = { trash: "Sposta nel cestino", restore: "Ripristina dal cestino", approve: "Approva", reject: "Rifiuta", hide: "Nascondi", show: "Ripristina visibilità" };
 export const MODERATION_REASONS: Record<string, string> = {
+  PROFILE_HIDDEN: "Il profilo autore è oscurato. Ripristinalo dalla pagina Profili.",
   TRASH_NOT_ENABLED: "Il cestino non è ancora abilitato in questo ambiente.", ALREADY_TRASHED: "L’annuncio è già nel cestino.",
   NOT_TRASHED: "L’annuncio non è nel cestino.", IN_TRASH: "Ripristina prima l’annuncio dal cestino.",
   REGIONS_NOT_ALLOWED: "Le regioni conservate non sono più abilitate per questo profilo professionale.",
@@ -44,7 +45,8 @@ export function parseModerationInfo(value: unknown): ModerationInfo {
       cap.allowed !== (cap.reason === null)) throw new Error("INVALID_MODERATION_CAPABILITIES");
     capabilities[operation] = { allowed: cap.allowed, reason: cap.reason as string | null };
   }
-  return { adminHidden: value.adminHidden, capabilities };
+  if (value.profileHidden !== undefined && typeof value.profileHidden !== "boolean") throw new Error("INVALID_MODERATION_CAPABILITIES");
+  return { adminHidden: value.adminHidden, ...(value.profileHidden === undefined ? {} : {profileHidden: value.profileHidden as boolean}), capabilities };
 }
 
 export function capability(detail: AnnouncementDetail, operation: ModerationOperation): ModerationCapability {
