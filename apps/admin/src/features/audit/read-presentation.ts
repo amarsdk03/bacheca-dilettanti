@@ -1,6 +1,7 @@
 import type {AuditAction, AuditActor} from "./read-contracts";
 
 export const AUDIT_LABELS: Record<AuditAction, string> = {
+  "distribution.save": "Distribuzione WhatsApp aggiornata", "distribution.channel_save": "Canale di distribuzione aggiornato",
   "profile.verify": "Profilo verificato", "profile.unverify": "Verifica profilo revocata", "profile.hide": "Profilo oscurato", "profile.show": "Visibilità profilo ripristinata",
   "report.update": "Segnalazione aggiornata", "invitation.consider": "Valutazione invito aggiornata",
   "auth.login": "Accesso", "auth.logout": "Logout", "auth.access_denied": "Accesso negato",

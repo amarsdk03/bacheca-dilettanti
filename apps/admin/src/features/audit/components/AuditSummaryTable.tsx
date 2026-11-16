@@ -17,7 +17,7 @@ export function AuditSummaryTable({ items, caption, onShowDetails, separateOutco
       <TableCell>{auditActorLabel(row.actor)}{row.actor.authId && !row.actor.userId && <p className="admin-audit-actor-note">Account verificato, senza identità Admin attestata</p>}</TableCell>
       <TableCell><div className="admin-audit-operation">{AUDIT_LABELS[row.action]}{!separateOutcome && <Badge variant={row.outcome === "failure" ? "danger" : "success"}>{row.outcome === "success" ? "Riuscita" : "Fallita"}</Badge>}</div></TableCell>
       {separateOutcome && <TableCell><Badge variant={row.outcome === "failure" ? "danger" : "success"}>{row.outcome === "success" ? "Riuscita" : "Fallita"}</Badge></TableCell>}
-      {onShowDetails && <TableCell><Button className="admin-audit-details-button" variant="ghost" size="sm" aria-label={`Mostra dettagli: ${row.id}`} onClick={event => onShowDetails(row.id, event.currentTarget)}><Eye data-icon="inline-start" aria-hidden="true" />Dettagli</Button></TableCell>}
+      {onShowDetails && <TableCell><Button className="admin-audit-details-button" variant="ghost" size="icon-sm" aria-label={`Mostra dettagli: ${row.id}`} onClick={event => onShowDetails(row.id, event.currentTarget)}><Eye aria-hidden="true" /></Button></TableCell>}
     </TableRow>)}</TableBody>
   </Table>;
 }

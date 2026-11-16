@@ -3,7 +3,18 @@ import {randomUUID} from "node:crypto";
 import type {Json} from "@bacheca/database";
 import {type ClaimsClient, verifySessionClaims} from "../../auth/server/session-claims";
 import {canonicalUuid} from "../../annunci/validation";
-import {type CommunityKind, type CommunityResult, parseCommunityQuery, parseCommunityPage, parseReport, parseInvitationCode, parseInvitationDetail, parseReportUpdate, parseInvitationUpdate, parseCommunityMutation} from "../contracts";
+import {
+	type CommunityKind,
+	type CommunityResult,
+	parseCommunityMutation,
+	parseCommunityPage,
+	parseCommunityQuery,
+	parseInvitationCode,
+	parseInvitationDetail,
+	parseInvitationUpdate,
+	parseReport,
+	parseReportUpdate
+} from "../contracts";
 
 export type CommunityRpc = "admin_list_reports_v1" | "admin_get_report_v1" | "admin_update_report_v1" | "admin_list_invitation_codes_v1" | "admin_get_invitation_code_v1" | "admin_consider_invitation_v1";
 type Client = ClaimsClient & {rpc(name: CommunityRpc, args: Record<string, Json>): PromiseLike<{data: unknown; error: unknown}>};

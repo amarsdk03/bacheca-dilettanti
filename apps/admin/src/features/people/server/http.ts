@@ -2,6 +2,7 @@ import "server-only";
 import type {PeopleKind} from "../contracts";
 import {parsePeopleUrl} from "../contracts";
 import {peopleService} from "./index";
+
 export async function peopleHttp(kind: PeopleKind, request: Request, id?: string) {
   const params = new URL(request.url).searchParams;
   const invalid = [...params.keys()].some(k => params.getAll(k).length !== 1);

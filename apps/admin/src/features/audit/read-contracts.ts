@@ -9,7 +9,7 @@ export type AuditActor = { authId: string | null; userId: string | null; email: 
 export type AuditSummary = { id: string; occurredAt: string; actor: AuditActor; action: AuditAction; outcome: "success" | "failure" };
 export type AuditPage = { items: AuditSummary[]; hasMore: boolean; nextCursor: string | null };
 export type AuditDetail = AuditSummary & {
-  resourceType: "session" | "announcement" | "announcement_export" | "report" | "invitation" | "profile"; resourceId: string | null; correlationId: string;
+  resourceType: "session" | "announcement" | "announcement_export" | "report" | "invitation" | "profile" | "distribution" | "distribution_channel"; resourceId: string | null; correlationId: string;
   profileType?: string | null;
   reason: string | null; failureCode: string | null;
   noteChanged?: boolean | null;

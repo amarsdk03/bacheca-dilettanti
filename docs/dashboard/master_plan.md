@@ -66,6 +66,11 @@ Per ogni migrazione o script da applicare indicare: percorso, ambiente destinata
 
 ## Struttura documentale
 
+Le idee discusse per le sezioni ancora segnaposto, inclusa la direzione di
+osservabilità/telemetria per Integrazioni, sono conservate negli
+[appunti sulle sezioni future](idee-sezioni-future.md). Sono note di prodotto,
+non nuovi step approvati della roadmap.
+
 Ogni step dispone di `steps/NN-nome.md`. Se richiede allegati propri, convertirlo in `steps/NN-nome/README.md`, aggiornando tutti i collegamenti; aggiungere nella cartella soltanto risorse pertinenti, per esempio `design.md`, contratti `.yaml` o istruzioni operative. Non creare allegati vuoti per anticipare necessità inesistenti.
 
 Le migrazioni eseguibili restano una sola volta in `supabase/migrations/`; gli script operativi seguono le convenzioni della repository. I documenti degli step li collegano senza duplicarli. I contratti TypeScript restano vicino alla feature; OpenAPI è richiesto solo se si introduce un'API HTTP che ne beneficia, non per ogni Server Action.
@@ -476,3 +481,14 @@ Il rilascio in produzione è distinto dalle prove e richiede istruzioni concrete
 | 2026-10-28 | Decisione di chiusura finale | Su richiesta esplicita dell'utente, sostituito il raggruppamento informale in cinque blocchi con una sola task finale dello step 16. Il prossimo procedi comprende tutti i residui obbligatori, correzioni, validazione del candidato e decisione di rilascio, senza un prompt per ciascun controllo. Nuova scheda chiusura-finale.md con baseline riutilizzabile, prerequisiti dichiarati, lista chiusa riferita a V01-V20 e separazione fra preparazione e operazioni dipendenti dal deploy. SQL non disponibile nei tool/IDE e progetti/host Vercel da confermare: domanda unica posta ora all'utente, senza richiesta di segreti. Nessun requisito obbligatorio omesso, nessun nuovo test applicativo o servizio modificato. IN03 resta Concluso; task finale preparata, non ancora eseguita. |
 
 | 2026-10-28 | Chiusura sviluppo approvata | Utente conferma ridistribuzione Web/Admin, accetta le ultime verifiche live e richiede test futuri solo locali. Scelta esplicita Chiusura sviluppo: attivazione cestino, Cron e prova restore restano operazioni manuali separate, non dichiarate eseguite. Aggiunti favicon e manifest Admin; controlli locali e risultati nella scheda finale. Stati 03–16 e M07 chiusi per lo sviluppo, nessun nuovo ciclo di verifiche live. |
+
+
+## Estensione approvata: Distribuzione (16 novembre 2026)
+
+Implementata `/distribuzione` con coda raggruppata, canali regionali/nazionali,
+condivisioni manuali e storico; editor condiviso con Annunci. Aggiunta la legenda
+Visibilità in Profili. [Specifica e rilascio](integrazione/distribuzione.md),
+migrazione `20261116130709_admin_distribution_workspace.sql` da applicare prima
+del deploy Admin. Verifiche solo locali; nessuna applicazione SQL remota.
+La chiusura del precedente sviluppo e le operazioni manuali separate restano
+invariate.

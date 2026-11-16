@@ -45,40 +45,34 @@ test("initial server result makes no client request or preview request", () => {
   const h = controller(); assert.deepEqual(h.state().list.result, empty);
   h.c.sync(""); assert.equal(h.lists.length, 0); assert.equal(h.details.length, 0);
 });
-test("search debounces, replaces history and resets cursor; submit flushes immediately", async (t) => {
-  t.mock.timers.enable({ apis: ["setTimeout"] });
-  const h = controller("cursor=YWJj");
-  h.c.setSearch("old"); t.mock.timers.tick(200); h.c.setSearch("new"); t.mock.timers.tick(349);
-  assert.equal(h.lists.length, 0); t.mock.timers.tick(1);
-  assert.deepEqual(h.history, [["/annunci?search=new", "replace"]]);
-  assert.equal(h.lists[0].query.cursor, null); assert(h.state().list.pending);
-  h.lists[0].resolve(empty); await flush(); assert(!h.state().list.pending);
-  h.c.setSearch("immediate"); h.c.submitSearch(); t.mock.timers.tick(400);
-  assert.equal(h.lists.length, 2); h.c.cancel();
-});
-test("debounced URL normalization preserves spaces while a user pauses between words", async (t) => {
-  t.mock.timers.enable({ apis: ["setTimeout"] }); const h = controller();
-  h.c.setSearch("sintetico "); t.mock.timers.tick(350);
-  assert.equal(h.state().draft.search, "sintetico ");
-  assert.equal(h.state().query.filters.search, "sintetico");
+test("search waits for submit, while selectors use only committed text", async (t) => {
+  t.mock.timers.enable({apis: ["setTimeout"]});
+  const h = controller("search=committed&cursor=YWJj");
+  h.c.setSearch("new draft "); t.mock.timers.tick(1000);
+  assert.equal(h.lists.length, 0); assert.equal(h.history.length, 0);
+  h.c.setFilter({status: "in_revisione"});
+  assert.equal(h.lists[0].query.filters.search, "committed");
+  assert.equal(h.lists[0].query.cursor, null);
+  assert.equal(h.state().draft.search, "new draft ");
   h.lists[0].resolve(empty); await flush();
-  h.c.setSearch(h.state().draft.search + "11"); t.mock.timers.tick(350);
-  assert.equal(h.state().query.filters.search, "sintetico 11");
-  h.lists[1].resolve(empty); await flush();
-  h.c.setSearch("sintetico 11 "); t.mock.timers.tick(350);
-  assert.equal(h.state().draft.search, "sintetico 11 "); assert.equal(h.lists.length, 2);
-  h.c.setFilter({ status: "in_revisione" }); assert.equal(h.state().draft.search, "sintetico 11"); h.c.cancel();
+  h.c.submitSearch();
+  assert.equal(h.lists[1].query.filters.search, "new draft");
+  assert.equal(h.lists[1].query.filters.status, "in_revisione");
+  h.c.cancel();
 });
+
 test("overlong search retains results and never schedules a request", (t) => {
   t.mock.timers.enable({ apis: ["setTimeout"] }); const h = controller();
   h.c.setSearch("😀".repeat(201)); t.mock.timers.tick(500); h.c.submitSearch();
   assert(h.state().searchError); assert.equal(h.lists.length, 0); assert.deepEqual(h.state().list.result, empty);
+  h.c.setFilter({status: "in_revisione"});
+  assert.equal(h.lists.length, 1); assert.equal(h.lists[0].query.filters.search, ""); assert.ok(h.state().searchError);
   h.c.reset(); assert.equal(h.state().searchError, null); assert.equal(h.state().draft.search, "");
 });
-test("filter applies latest typed search immediately and cancels its debounce", (t) => {
+test("filter applies immediately without committing pending search", (t) => {
   t.mock.timers.enable({ apis: ["setTimeout"] }); const h = controller("cursor=YWJj");
   h.c.setSearch("draft"); h.c.setFilter({ status: "in_revisione" }); t.mock.timers.tick(500);
-  assert.equal(h.lists.length, 1); assert.equal(h.lists[0].query.filters.search, "draft");
+  assert.equal(h.lists.length, 1); assert.equal(h.lists[0].query.filters.search, "");
   assert.equal(h.lists[0].query.cursor, null); assert.equal(h.history[0][1], "push"); h.c.cancel();
 });
 test("stale list success and stale denial cannot replace newer results or redirect", async () => {
@@ -132,7 +126,7 @@ test("cleanup aborts both request types and suppresses late updates", async () =
 });
 
 function uiLoader(overrides = {}) {
-  const dependencies = { react: React, "react/jsx-runtime": require("react/jsx-runtime"), "next/link": {__esModule:true,default:({href,children,...props})=>{delete props.prefetch;return React.createElement("a",{href,...props},children);}}, "./actions": {getWhatsAppExport(){throw new Error("Unexpected read");},saveWhatsAppExport(){throw new Error("Unexpected mutation");}}, "@/features/annunci/server/actions": { moderateAnnouncementAction() { throw new Error("Unexpected mutation"); } }, ...overrides };
+  const dependencies = { "@/features/distribution/components/DistributionDialog": {DistributionDialog(){throw new Error("Unexpected dialog render");}}, react: React, "react/jsx-runtime": require("react/jsx-runtime"), "next/link": {__esModule:true,default:({href,children,...props})=>{delete props.prefetch;return React.createElement("a",{href,...props},children);}}, "./actions": {getWhatsAppExport(){throw new Error("Unexpected read");},saveWhatsAppExport(){throw new Error("Unexpected mutation");}}, "@/features/annunci/server/actions": { moderateAnnouncementAction() { throw new Error("Unexpected mutation"); } }, ...overrides };
   for (const name of ["@base-ui/react/button", "@base-ui/react/input", "@base-ui/react/separator", "@base-ui/react/tooltip", "@base-ui/react/dialog", "@base-ui/react/alert-dialog", "@base-ui/react/select", "@base-ui/react/menu", "@base-ui/react/merge-props", "@base-ui/react/use-render", "class-variance-authority", "clsx", "tailwind-merge", "lucide-react"]) dependencies[name] = require(name);
   return adminServerLoader({ dependencies });
 }

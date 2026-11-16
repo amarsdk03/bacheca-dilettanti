@@ -6,7 +6,6 @@ import {ExternalNavigationProvider} from "@/components/navigation/ExternalNaviga
 import {buttonVariants} from "@/components/ui/button-variants";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import AnnouncementCard from "@/features/annunci/components/cards/AnnouncementCard";
-import AnnouncementViewLink from "@/features/annunci/AnnouncementViewLink";
 import AnnouncementPreviewCard from "@/features/pubblica-annuncio/components/AnnouncementPreviewCard";
 import type {PublishConfirmationResult} from "@/features/pubblica-annuncio/server/confirmation";
 import {cn} from "@/lib/utils";

@@ -1,11 +1,20 @@
 import {isValidIsoDate} from "@bacheca/announcements/features/pubblica-annuncio/publish-field-validation";
 import {REGIONI_ITALIANE} from "@bacheca/announcements/const/defaultConstants";
-import {PLAYER_PRIMARY_ROLES, PLAYER_SPECIFIC_ROLES_BY_PRIMARY} from "@bacheca/announcements/features/profilo/player-roles";
-import {CATEGORY_FILTER_OPTIONS, ANY_CATEGORY} from "@bacheca/announcements/features/pubblica-annuncio/types/category-catalog";
-import {STAFF_CATEGORY_FILTER_OPTIONS} from "@bacheca/announcements/features/pubblica-annuncio/types/staff-category-catalog";
+import {
+	PLAYER_PRIMARY_ROLES,
+	PLAYER_SPECIFIC_ROLES_BY_PRIMARY
+} from "@bacheca/announcements/features/profilo/player-roles";
+import {
+	ANY_CATEGORY,
+	CATEGORY_FILTER_OPTIONS
+} from "@bacheca/announcements/features/pubblica-annuncio/types/category-catalog";
+import {
+	STAFF_CATEGORY_FILTER_OPTIONS
+} from "@bacheca/announcements/features/pubblica-annuncio/types/staff-category-catalog";
 import {TEAM_CATEGORY_OPTIONS} from "@bacheca/announcements/features/profilo/team-category-catalog";
 import {FIGURA_PROFESSIONALE_OPTIONS} from "@bacheca/announcements/features/pubblica-annuncio/types/pubblicaAnnuncio";
 import type {MockProfileType, MockTeamType, MockValues} from "./prototype-model";
+import {publicationToday} from "./date-defaults";
 
 export interface WhatsAppTarget {id:string; label:string; profileType:MockProfileType; teamType?:MockTeamType}
 export const WHATSAPP_TARGETS: readonly WhatsAppTarget[] = [
@@ -21,14 +30,14 @@ export const WHATSAPP_TARGETS: readonly WhatsAppTarget[] = [
 ];
 export interface ExtractionItem {label:string; value:string}
 export interface ExtractionIssue extends ExtractionItem {id:string; code:string; scope:"source"|"profile"|"announcement"; reason:string; path?:string; candidates?:string[]}
-export interface WhatsAppImportContext {channelRegion:string; resolvedRegion?:string; resolvedRegions?:string[]}
+export interface WhatsAppImportContext {channelRegion:string; resolvedRegion?:string; resolvedRegions?:string[]; analyzedOn?:string}
 export interface WhatsAppProvenance {source:"whatsapp"; messageUrl:string; rawText:string; context?:WhatsAppImportContext; manualTarget?:string}
 export interface WhatsAppExtraction {
   target:WhatsAppTarget|null; profile:MockValues; announcement:MockValues; recognized:ExtractionItem[];
   issues:ExtractionIssue[]; unmapped:ExtractionItem[]; provenance:WhatsAppProvenance; blocked:boolean; regionConflict?:string[];
 }
 export const WHATSAPP_CONTENT_LIMIT=50_000;
-export const WHATSAPP_PARSER_VERSION=2;
+export const WHATSAPP_PARSER_VERSION=4;
 /** Stable change detector, not an authorization token or a signature. */
 export function importFingerprint(value:string):string {
  return [0x811c9dc5,0x9e3779b9,0x85ebca6b,0xc2b2ae35].map(seed=>{
@@ -43,7 +52,7 @@ const empty=(v:string)=>!v.trim()||/^(?:-|–|—|non indicat[oaie](?: ancora)?|
 const trim=(v:string)=>v.replace(/^[\s\u200B-\u200F\u2060\uFEFF*_[\]]+|[\s*_[\]]+$/g,"").trim();
 const aliases:Record<string,string[]>={
  zone:["zona","zona di ricerca","località","localita"],sport:["calcio","tipologia del campo","tipologia campo"],
- roles:["ruolo","ruoli","ruoli cercati"],birthYear:["anno","anno di nascita"],name:["nome","nome e cognome"],company:["società","nome società"],
+ roles:["ruolo","ruoli","ruoli cercati"],birthYear:["anno","anno di nascita"],age:["età","eta"],name:["nome","nome e cognome"],company:["società","nome società"],
  soughtCategory:["categoria cercata","categoria settore cercato"],category:["categoria","categorie","categoria squadra","categoria attuale"],history:["categorie precedenti","esperienze","esperienza"],
  contact:["contatto","contatti","contatti per prenotazioni","candidature"],requirements:["requisiti"],period:["periodo","data periodo"],availability:["disponibilità"],
  years:["annate età","categorie annate"],figure:["figura","figura cercata","ruolo cercato"],qualifications:["qualifiche"],travel:["spostamento","trasferta"],commitment:["impegno","impegno settimanale","disponibilità oraria"],
@@ -68,6 +77,14 @@ export function whatsappLinkError(value:string):string|null {
  try {const u=new URL(value.trim());if(u.protocol==="https:"&&!u.username&&!u.password&&!u.port&&(u.hostname==="wa.me"||u.hostname==="whatsapp.com"||u.hostname.endsWith(".whatsapp.com")))return null;}catch{}
  return "Inserisci un collegamento HTTPS di WhatsApp valido oppure lascia vuoto il campo.";
 }
+export function ageYearSuggestions(value: string, referenceDate = publicationToday()): string[] {
+ const match=/^(\d{1,3})(?:\s*anni)?$/i.exec(value.trim());
+ if(!match||!isValidIsoDate(referenceDate))return [];
+ const age=Number(match[1]),year=Number(referenceDate.slice(0,4));
+ if(age<14||age>125)return [];
+ return [year-age-1,year-age].filter(year=>year>=1900).map(String);
+}
+export const needsContactSelection = (extraction?: WhatsAppExtraction | null) => Boolean(extraction?.issues.some(issue=>["CONTACT_SELECTION","CONTACT_INVALID"].includes(issue.code)||issue.code==="DUPLICATE"&&issue.path==="announcement.publicPhone"));
 export function parseWhatsAppMessage(rawText:string,messageUrl="",manualTarget="",context?:WhatsAppImportContext):WhatsAppExtraction {
  const result:WhatsAppExtraction={target:null,profile:{},announcement:{},recognized:[],issues:[],unmapped:[],provenance:{source:"whatsapp",rawText,messageUrl:messageUrl.trim(),...(manualTarget?{manualTarget}:{}),...(context?{context}:{})},blocked:false};
  const issue=(label:string,value:string,reason:string,scope:ExtractionIssue["scope"]="announcement",field?:string,code="EXCEPTION",candidates?:string[])=>{
@@ -97,9 +114,11 @@ export function parseWhatsAppMessage(rawText:string,messageUrl="",manualTarget="
    if(active){const entry=fields.get(active)!;entry.values[entry.values.length-1]+="\n"+line;}else free.push(line);
  }
  const used=new Set<string>();
- const read=(key:string):string=>{const entry=fields.get(key);if(!entry)return "";const values=[...new Set(entry.values.map(trim))];if(values.length>1){issue(entry.label,values.join(" | "),"Valori duplicati discordanti: scegli quello corretto.","announcement",undefined,"DUPLICATE");used.add(key);return "";}return empty(values[0])?"":values[0];};
+ const duplicateFields:Record<string,["profile"|"announcement",string]>={zone:["announcement","locations"],contact:["announcement","publicPhone"],birthYear:["profile","birthDate"],age:["profile","birthDate"],name:["profile","name"],soughtCategory:["announcement","categories"],roles:[target.id==="player"?"profile":"announcement","mainRoles"]};
+ const read=(key:string):string=>{const entry=fields.get(key);if(!entry)return "";const values=[...new Set(entry.values.map(trim))];if(values.length>1){const [scope,field]=duplicateFields[key]??["announcement",undefined];issue(entry.label,values.join(" | "),"Valori duplicati discordanti: scegli quello corretto.",scope,field,"DUPLICATE");used.add(key);return "";}return empty(values[0])?"":values[0];};
  const put=(key:string,scope:"profile"|"announcement",field:string,value:MockValues[string])=>{result[scope][field]=value;used.add(key);result.recognized.push({label:fields.get(key)?.label??field,value:typeof value==="string"?value:JSON.stringify(value)});};
- const exception=(key:string,reason:string,scope:ExtractionIssue["scope"]="announcement",field?:string,candidates?:string[])=>{const value=read(key);if(value){issue(fields.get(key)?.label??key,value,reason,scope,field,"EXCEPTION",candidates);used.add(key);result.unmapped.push({label:fields.get(key)?.label??key,value});}};
+ const narrativeKeys=new Set(["zone","roles","soughtCategory","history","qualifications","years","prizes","cost","period","time","travel","figure"]);
+ const exception=(key:string,reason:string,scope:ExtractionIssue["scope"]="announcement",field?:string,candidates?:string[])=>{const value=read(key);if(value){issue(fields.get(key)?.label??key,value,reason,scope,field,"EXCEPTION",candidates);used.add(key);result.unmapped.push({label:fields.get(key)?.label??key,value});if(narrativeKeys.has(key))free.push((fields.get(key)?.label??key)+": "+value);}};
  const append=(key:string)=>{const value=read(key);if(value){free.push((fields.get(key)?.label??key)+": "+value);used.add(key);}};
  const zone=read("zone"),regionMatches=(s:string)=>REGIONS.filter(region=>(" "+norm(s)+" ").includes(" "+norm(region)+" "));
  const explicitRegions=regionMatches(zone),hashRegions=REGIONS.filter(region=>hashtags.some(line=>[...line.matchAll(/#([^\s#]+)/g)].some(m=>norm(m[1]).replace(/ /g,"")===norm(region).replace(/ /g,""))));
@@ -109,11 +128,14 @@ export function parseWhatsAppMessage(rawText:string,messageUrl="",manualTarget="
  if(selected&&(!selected.length||selected.some(region=>!candidates.includes(region)))){issue("Regioni da usare",selected.join(", "),"Scegli le regioni individuate nel messaggio o nel canale.","source","resolvedRegions");result.blocked=true;}
  const regions=selected?.length?selected:explicitRegions.length?explicitRegions:hashRegions.length?hashRegions:context&&REGIONS.includes(context.channelRegion)?[context.channelRegion]:[];
  if(regions.length){
-   const remainder=zone.split(/[,;/]+/).map(trim).filter(value=>value&&!REGIONS.some(region=>norm(region)===norm(value)));
+   const zoneParts=zone.split(/[,;/]+/).map(trim);
+   const narrative=zoneParts.filter(value=>/\b(?:cerco|valuto|disponib|fuori regione|anche fuori|tutta italia)\b/i.test(norm(value)));
+   const remainder=zoneParts.filter(value=>value&&!narrative.includes(value)&&!REGIONS.some(region=>norm(region)===norm(value)));
    const simple=regions.length===1&&remainder.length===1&&!/\be\b|\bdintorni\b|\bprovincia\b|\bcentro\b|\bnord\b|\bsud\b|\best\b|\bovest\b|\blimitrof|\bvaluto\b|\(/i.test(remainder[0])&&!/[-–]/.test(remainder[0]);
    const locs=regions.map(region=>({region,city:simple?remainder[0]:""}));
    if(target.id==="facility")Object.assign(result.announcement,locs[0]);else if(target.id!=="sponsor")result.announcement.locations=locs;
    used.add("zone");
+   if(narrative.length)free.push("Zona: "+zone);
    if(conflict&&!selected){result.regionConflict=candidates;issue("Zone di ricerca",zone||candidates.join(", "),"Il testo e il canale indicano regioni differenti: conferma tutte le zone corrette.","source","locations","REGION_CONFLICT",candidates);}
    if(zone&&!simple&&!REGIONS.some(region=>norm(region)===norm(zone))){issue("Zona",zone,"Zona composta o territoriale: verifica città/comuni e conserva i dettagli utili.","announcement","locations","LOCATION");}
    issue("Zona del profilo",zone||regions.join(", "),"La zona di ricerca non identifica residenza o sede: completa e conferma separatamente la località del profilo.","profile","locations","PROFILE_LOCATION");
@@ -145,13 +167,17 @@ export function parseWhatsAppMessage(rawText:string,messageUrl="",manualTarget="
    const feet=[...prose.matchAll(/\bpiede\s+(dx|destro|sx|sinistro|ambidestro)\b/gi)].map(m=>/^(dx|destro)$/i.test(m[1])?"Destro":/^(sx|sinistro)$/i.test(m[1])?"Sinistro":"Ambidestro");
    if(new Set(feet).size === 1)put("foot","profile","foot",feet[0]);
  }
- const birth=read("birthYear");if(birth){if(/^\d{4}$/.test(birth)&&Number(birth)>=1900&&Number(birth)<=new Date().getFullYear())put("birthYear","profile","birthYear",birth);exception("birthYear","Completa la data di nascita: mese e giorno non possono essere inventati.","profile","birthDate");}
+ const birth=read("birthYear");if(birth){if(/^\d{4}$/.test(birth)&&Number(birth)>=1900&&Number(birth)<=new Date().getFullYear()){put("birthYear","profile","birthYear",birth);}else exception("birthYear","Anno di nascita non riconosciuto: completa la data.","profile","birthDate");}
+ const age=read("age");if(age){used.add("age");free.push("Età indicata nel messaggio: "+age);if(["player","staff","referee"].includes(target.id))issue("Età",age,"Conferma l’anno di nascita nel profilo: l’età non identifica un anno certo.","profile","birthDate","AGE");}
  const primary=[...PLAYER_PRIMARY_ROLES],specific=Object.values(PLAYER_SPECIFIC_ROLES_BY_PRIMARY).flat();
  const roleAliases:Record<string,string>={"centrocampista difensivo":"Mediano","centrocampista difensivo mediano":"Mediano","centrocampista offensivo":"Trequartista","esterno dx":"Esterno destro","esterno sx":"Esterno sinistro","difensori centrali":"Difensore centrale","difensori":"Difensore","centrocampisti":"Centrocampista","attaccanti":"Attaccante","punta":"Punta centrale"};
  if(target.id==="player"||target.id==="team-player"){
    const raw=read("roles"),main:string[]=[],detail:string[]=[],unknown:string[]=[];
    const chunks=/^(tutti|qualsiasi)$/i.test(raw)?primary:raw.split(/[,;/\n]+|\s+(?:e|o)\s+/i).map(trim).filter(Boolean);
    for(const chunk of chunks){const normalized=roleAliases[norm(chunk)]??chunk;const s=specific.find(v=>norm(v)===norm(normalized)),p=primary.find(v=>norm(v)===norm(normalized));if(s){detail.push(s);const parent=Object.entries(PLAYER_SPECIFIC_ROLES_BY_PRIMARY).find(([,values])=>values.includes(s as never))?.[0];if(parent)main.push(parent);}else if(p)main.push(p);else {const broad=primary.find(v=>norm(chunk).startsWith(norm(v)+" "));if(broad)main.push(broad);unknown.push(chunk);}}
+   // Exact role names can also occur in prose; never infer sides or map box-to-box.
+   const prose=norm(raw+" "+(target.id==="player"?free.join(" "):""));
+   if(target.id==="player"&&!/\b(?:non|mai|tranne|eccetto)\b/.test(prose))for(const role of specific){if((" "+prose+" ").includes(" "+norm(role)+" ")){detail.push(role);const parent=Object.entries(PLAYER_SPECIFIC_ROLES_BY_PRIMARY).find(([,values])=>values.includes(role as never))?.[0];if(parent)main.push(parent);}}
    const scope=target.id==="player"?"profile":"announcement";
    if(main.length){put("roles",scope,"mainRoles",[...new Set(main)]);result[scope].specificRoles=[...new Set(detail)];}
    if(unknown.length)exception("roles","Uno o più ruoli sono descrittivi o ambigui: verifica le selezioni proposte.",scope,"mainRoles");
@@ -171,7 +197,7 @@ export function parseWhatsAppMessage(rawText:string,messageUrl="",manualTarget="
    else {
      const catalog=target.id==="player"?CATEGORY_FILTER_OPTIONS:STAFF_CATEGORY_FILTER_OPTIONS;
      const tokens=categoryRaw.split(/[,;/]+|\s+o\s+/i).map(norm).filter(Boolean);const matched:string[]=[],suggestions:string[]=[];
-     for(const token of tokens){const possible=catalog.filter(option=>{const label=norm(option.value.split("::").pop()??option.value);const group=norm(option.value.split("::")[0]);return (label===token||label.includes(token)&&token.length>=5)&&(!football.length||football.some(sport=>group.replace(/\ba\b/g,"").replace(/ +/g," ").includes(norm(sport))))&&(!gender||group.includes(gender));});if(possible.length===1)matched.push(possible[0].value);else suggestions.push(...possible.map(v=>v.value));}
+     for(const token of tokens){const eligible=catalog.filter(option=>{const group=norm(option.value.split("::")[0]);return (!football.length||football.some(sport=>group.replace(/\ba\b/g,"").replace(/ +/g," ").includes(norm(sport))))&&(!gender||group.includes(gender));});const exact=eligible.filter(option=>(option.value.split("::").pop()??option.value).split(/\s+[—–]\s+/).some(part=>norm(part)===token));const possible=exact.length?exact:eligible.filter(option=>{const label=norm(option.value.split("::").pop()??option.value);return label===token||label.includes(token)&&token.length>=5;});if(possible.length===1)matched.push(possible[0].value);else suggestions.push(...possible.map(v=>v.value));}
      if(matched.length)put("soughtCategory","announcement","categories",[...new Set(matched)]);
      if(matched.length!==tokens.length)exception("soughtCategory","Categoria composta, incompleta o ambigua: scegli le voci esatte del catalogo.","announcement","categories",[...new Set(suggestions)].slice(0,20));
    }
@@ -225,7 +251,9 @@ export function parseWhatsAppMessage(rawText:string,messageUrl="",manualTarget="
    const rawReferent=phones.reduce((s,p)=>s.replace(p,""),noEmails).trim();
    let residue=rawReferent.replace(/[\s,;/|–—-]/g,"");
    if(phones.length===1&&/^\(?Padre\)?$|^Mister$|^DirettoreAgonistica$/i.test(residue)){put("contact","announcement","contactRole",rawReferent.replace(/[()]/g,"").trim());residue="";}
-   if(emails.length>1||phones.length>1||residue||!emails.length&&!phones.length)exception("contact","Più recapiti, link, nomi o istruzioni: scegli i contatti pubblici e il referente senza identificare automaticamente l’autore.","announcement","publicPhone",[...emails,...phones]);
+   if(emails.length>1||phones.length>1)issue("Contatto",contact,"Scegli i recapiti pubblici tra quelli presenti nel messaggio.","announcement","publicPhone","CONTACT_SELECTION",[...emails,...phones]);
+   else if(!emails.length&&!phones.length&&(/@/.test(noLinks)||/\d{4,}/.test(noLinks)))issue("Contatto",contact,"Il recapito indicato non è valido: correggilo oppure scegli un contatto disponibile.","announcement","publicPhone","CONTACT_INVALID");
+   else if(residue||!emails.length&&!phones.length)exception("contact","Verifica le istruzioni di contatto e il referente. Non viene identificato automaticamente l’autore.","announcement","publicPhone",[...emails,...phones]);
  }
  if(["staff","referee","player"].includes(target.id)){
    exception("qualifications","Completa titolo, ente e stato della qualifica senza inventare dati.","profile","qualifications");
@@ -239,9 +267,9 @@ export function parseWhatsAppMessage(rawText:string,messageUrl="",manualTarget="
  }
  for(const key of ["commitment","field","search","venue","availability","notes","deadline","level"])append(key);
  for(const [key,entry]of fields){if(used.has(key)||empty(entry.values.join("\n")))continue;exception(key,"Informazione senza una conversione certa: verifica, conserva come testo o scarta esplicitamente.");}
- const description=free.filter(v=>!empty(v)).join("\n\n");
+ const description=[...new Set(free.filter(v=>!empty(v)))].join("\n\n");
  if(description.length<=5000&&description)result.announcement.description=description;
- else if(description){issue("Descrizione",description,"Oltre 5.000 caratteri: riduci il testo prima dell’invio.","announcement","description");result.unmapped.push({label:"Descrizione originale",value:description});}
+ else if(description){result.announcement.description=description;issue("Descrizione",description,"Oltre 5.000 caratteri: riduci il testo prima dell’invio.","announcement","description","DESCRIPTION_LIMIT");result.unmapped.push({label:"Descrizione originale",value:description});}
  if(hashtags.length)result.unmapped.push({label:"Hashtag originali",value:hashtags.join("\n")});
  return result;
 }

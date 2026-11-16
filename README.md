@@ -163,40 +163,6 @@ npm test
 
 I test locali non attestano Auth/PostgREST/Storage reali, concorrenza fra connessioni indipendenti o interazioni browser. Le evidenze e i limiti sono nella [matrice dashboard](docs/dashboard/steps/16-verifica-rilascio/matrice-verifiche.md). Non usare il database di produzione per prove o seed.
 
-Le future operazioni di migrazione, configurazione, attivazione e recupero sono
-nel [runbook dashboard](docs/dashboard/steps/16-verifica-rilascio/runbook-rilascio-recupero.md):
-è un documento preparato, non una richiesta di eseguire SQL o deploy adesso.
-
-Per le prove browser del solo login e degli ingressi anonimi Admin, su Windows
-con Chrome installato, seguire lo [step 16C](docs/dashboard/steps/16-verifica-rilascio/16c-browser-anonimo.md).
-`npm run test:browser:admin` è separato da `npm test`: avvia una copia isolata
-dell'app con servizio Auth sintetico e non richiede credenziali Supabase.
-La variante `npm run test:browser:admin:production` compila la copia con
-Turbopack e ripete i controlli anonimi con `next start`, verificando anche gli
-header HTML di produzione locale e gli asset client. Dettagli e limiti nello
-[step 16D](docs/dashboard/steps/16-verifica-rilascio/16d-produzione-locale.md).
-Il comando `npm run test:browser:admin:session` verifica shell e sessioni con
-Auth/RPC sintetici, SDK e guardie effettivi: dettagli nello
-[step 16E](docs/dashboard/steps/16-verifica-rilascio/16e-shell-sessione.md).
-
-Il comando `npm run test:browser:admin:home` esegue gli otto gruppi della Home
-autenticata su copia isolata con dati, errori e attese sintetici; non legge gli
-env originali e non usa servizi Supabase reali. Perimetro ed esiti nello
-[step 16F](docs/dashboard/steps/16-verifica-rilascio/16f-home.md).
-
-Il comando `npm run test:browser:admin:annunci` verifica Annunci con fixture
-locale opt-in, un solo Chrome dedicato e file CSV salvati nelle evidenze del
-test. Nessuna connessione Supabase reale; perimetro ed esiti nello
-[step 16G](docs/dashboard/steps/16-verifica-rilascio/16g-annunci.md).
-Le sessioni della fixture non sono account o sessioni del progetto Supabase.
-
-Il comando `npm run test:browser:admin:registro` verifica gli otto gruppi finali
-di Registro/chiusura locale su build Admin Turbopack e `next start`: filtri,
-cursori, dettagli, errori, mobile/sessione, chunk grafici falliti e osservazione
-BFcache. Usa soltanto il Chrome dedicato e servizi sintetici su loopback;
-non richiede Docker, env originali o migrazioni. Evidenze e limiti nello
-[step 16H](docs/dashboard/steps/16-verifica-rilascio/16h-chiusura-locale.md).
-
 ## Deploy della webapp dopo il trasferimento
 
 Nel progetto Vercel della webapp impostare **Root Directory** a `apps/web`, mantenendo l'installazione npm dal lockfile condiviso alla radice. Il preset Next.js può usare `npm run build` nella directory dell'app; per un'installazione personalizzata usare `npm ci` dalla root del monorepo. Abilitare l'inclusione dei file esterni alla Root Directory quando richiesta per le dipendenze del workspace. Verificare prima con una preview collegata esclusivamente a staging.
@@ -243,34 +209,18 @@ I tipi Supabase condivisi risiedono in `packages/database/src/index.ts`;
 tra gli alberi privati delle app. I pacchetti dominio/UI saranno estratti quando
 esistono moduli effettivamente richiesti da entrambe.
 
-Per il futuro deploy creare un **progetto Vercel separato** collegato alla stessa
-repository, Root Directory `apps/admin`, preset Next.js e build `npm run build`
-nella directory dell'app. Usare il lockfile npm della root e consentire i file
-esterni alla Root Directory per il pacchetto condiviso. Configurare le variabili
-Admin nel nuovo progetto: Preview esclusivamente su staging, Production sul
-progetto previsto al rilascio. Verificare la disponibilità dell'host desiderato;
-nessun progetto, dominio o deploy è stato creato da questo step. Configurazione
-Auth e redirect vanno verificati nell'ambiente destinatario secondo lo
-[step 05](docs/dashboard/steps/05-accesso-sessione.md). Struttura e configurazione
-iniziale: [02 — Scheletro Admin](docs/dashboard/steps/02-scheletro-admin.md).
-
-La prima fase dell'autorizzazione database è predisposta e verificata in PGlite,
-ma resta disabilitata finché la configurazione Auth e le prove su Supabase
-isolato non saranno concluse. Migrazione, template manuali e istruzioni:
-[03 — Autorizzazione database](docs/dashboard/steps/03-autorizzazione-database.md).
-
 # 2. Changelog
 
 ## Versioni future
 
 - Completamento del flusso operativo di pagamento e rimborso degli annunci prioritari.
-- Analitiche visualizzazione per aggiornamenti, profili e annunci
+- Analitiche complete per visite e visualizzazioni aggiornamenti, profili e annunci
 
 ---
 
-## Versione 1.0 - Deploy prima versione
+## Versione 1.0.0 - Prima versione webapp + dashboard
 
-Push effettuato il: 02/11/2026
+Push effettuato il: 16/11/2026
 
 ### Feature principali
 

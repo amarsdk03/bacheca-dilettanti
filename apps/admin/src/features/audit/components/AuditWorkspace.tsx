@@ -1,12 +1,12 @@
 "use client";
 import {useEffect, useRef, useState, useSyncExternalStore} from "react";
-import {ArrowLeft, ArrowRight, CircleAlert, Filter, RefreshCw, SquareDashedSearchIcon} from "lucide-react";
+import {ArrowLeft, ArrowRight, CircleAlert, RefreshCw, RotateCcw, Search, SquareDashedSearchIcon} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
+import {Field, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle} from "@/components/ui/sheet";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
@@ -75,7 +75,7 @@ export function AuditWorkspace({initialQuery, initialResult}: {
 		};
 	}, [controller]);
 	const result = state.list.result, detail = state.detail.result;
-	const set = (patch: Partial<AuditFilters>) => controller.draft(patch);
+	const set = (patch: Partial<AuditFilters>) => controller.filter(patch);
 	return <div className="admin-workspace admin-audit-workspace">
 		<Card className="admin-filters-card">
 			<CardContent>
@@ -83,27 +83,18 @@ export function AuditWorkspace({initialQuery, initialResult}: {
 					event.preventDefault();
 					controller.apply();
 				}} className="admin-filter-form">
-					<FieldGroup className="admin-audit-filters">
-						<Field><FieldLabel htmlFor="audit-from">Dal</FieldLabel><Input id="audit-from" type="date"
-						                                                               value={state.draft.from}
-						                                                               onChange={e => set({from: e.target.value})}/></Field>
-						<Field><FieldLabel htmlFor="audit-to">Al</FieldLabel><Input id="audit-to" type="date"
-						                                                            value={state.draft.to}
-						                                                            onChange={e => set({to: e.target.value})}/></Field>
-						<Field className="admin-audit-operator"><FieldLabel
+					<FieldGroup className="admin-audit-filters admin-standard-filters"><div className="admin-filter-search-row"><Field className="admin-audit-operator"><FieldLabel
 							htmlFor="audit-operator">Operatore</FieldLabel>
 							<InputGroup><InputGroupInput id="audit-operator" value={state.draft.operator}
-							                             onChange={e => set({operator: e.target.value})}
-							                             placeholder="Email o UUID"
-							                             aria-describedby="audit-operator-help"/>
+							                             onChange={e => controller.draft({operator: e.target.value})}
+							                             placeholder="Email o UUID admin"/>
 								<InputGroupAddon className="size-9" align="inline-end"><Tooltip><TooltipTrigger
 									render={<InputGroupButton className="size-9" aria-label="Mostra gli eventi senza identità"
 									                          onClick={() => set({operator: "unknown"})}>
 										<SquareDashedSearchIcon className="size-4" />
 									</InputGroupButton>}/><TooltipContent>Mostra
 									gli eventi senza identità</TooltipContent></Tooltip></InputGroupAddon>
-							</InputGroup><FieldDescription id="audit-operator-help">Lascia vuoto per tutti gli
-								operatori.</FieldDescription></Field>
+							</InputGroup></Field><div className="admin-action-list admin-filter-actions"><Button type="submit"><Search data-icon="inline-start" aria-hidden="true" />Filtra</Button><Button type="button" variant="outline" onClick={controller.reset}><RotateCcw data-icon="inline-start" aria-hidden="true" />Azzera</Button></div></div>
 						<Selector id="audit-action" label="Operazione" value={state.draft.action}
 						          items={[{value: "", label: "Tutte"}, ...AUDIT_ACTIONS.map(value => ({
 							          value,
@@ -115,10 +106,12 @@ export function AuditWorkspace({initialQuery, initialResult}: {
 							          label: "Riuscita"
 						          }, {value: "failure", label: "Fallita"}]}
 						          onChange={outcome => set({outcome: outcome as AuditFilters["outcome"]})}/>
-					</FieldGroup>{state.error && <FieldError role="alert">{state.error}</FieldError>}
-					<div className="admin-action-list"><Button type="submit"><Filter data-icon="inline-start"
-					                                                                 aria-hidden="true"/>Applica filtri</Button><Button
-						type="button" variant="outline" onClick={controller.reset}>Azzera filtri</Button></div>
+					<Field><FieldLabel htmlFor="audit-from">Dal</FieldLabel><Input id="audit-from" type="date"
+						                                                               value={state.draft.from}
+						                                                               onChange={e => set({from: e.target.value})}/></Field><Field><FieldLabel htmlFor="audit-to">Al</FieldLabel><Input id="audit-to" type="date"
+						                                                            value={state.draft.to}
+						                                                            onChange={e => set({to: e.target.value})}/></Field></FieldGroup>{state.error && <FieldError role="alert">{state.error}</FieldError>}
+
 				</form>
 			</CardContent>
 		</Card>

@@ -5,11 +5,20 @@ export const PROFILE_LABELS = {giocatore: "Giocatore", squadra: "Squadra", "staf
 export type ProfileType = keyof typeof PROFILE_LABELS;
 export type PeopleKind = "users" | "profiles";
 export const VISIBILITY = {public: "Pubblico", private: "Privato", obscured: "Oscurato"} as const;
-export type PeopleQuery = {search?: string; offset?: number; registration?: string; confirmation?: string; from?: string; to?: string; type?: string; region?: string; verification?: string; visibility?: string; ownership?: string; user?: string};
+export type PeopleQuery = {search?: string; offset?: number; registration?: string; confirmation?: string; from?: string; to?: string; type?: string; region?: string; verification?: string; visibility?: string; ownership?: string; user?: string; sort?: string; excludedDomains?: string};
+export const DEFAULT_EXCLUDED_DOMAINS = ["gmail.com", "icloud.com", "yahoo.com", "yahoo.it", "hotmail.com", "outlook.com", "outlook.it", "aol.com", "live.com", "live.it", "msn.com", "libero.it", "tiscali.it", "alice.it", "virgilio.it"];
+export function normalizeDomains(values: string[]): string[] {
+  if (values.length > 50) fail();
+  const domains = values.map(value => value.trim().toLowerCase()).filter(Boolean);
+  for (const domain of domains) {
+    if (domain.length > 253 || !domain.includes(".") || domain.split(".").some(label => !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label))) fail();
+  }
+  return [...new Set(domains)];
+}
 export type UserRow = {id: string; email: string | null; createdAt: string; registeredAt: string | null; confirmedAt: string | null; profileCount: number};
 export type ProfileRow = {id: string; profileId: string; type: ProfileType; name: string; userId: string | null; email: string | null; verifiedAt: string | null; adminHidden: boolean; version: number; visibility: keyof typeof VISIBILITY; locations: {region: string; city: string | null}[]};
 export type UserDetail = UserRow & {authId: string; phone: string | null; newsletter: boolean; newsletterUpdatedAt: string | null; legalAcceptedAt: string | null; termsVersion: string | null; privacyVersion: string | null; cookieVersion: string | null; profiles: ProfileRow[]};
-export type ProfileDetail = ProfileRow & {fields: Record<string, unknown>; announcementCount: number};
+export type ProfileDetail = ProfileRow & {fields: Record<string, unknown>; announcementCount: number; publicAnnouncementCount: number; followerCount: number};
 export const OPERATIONS = {verify: "Verifica profilo", unverify: "Revoca verifica", hide: "Oscura profilo", show: "Ripristina visibilità"} as const;
 export type ProfileOperation = keyof typeof OPERATIONS;
 export type ProfileMutation = {id: string; type: ProfileType; operation: ProfileOperation; version: number; reason: string | null};
@@ -23,7 +32,7 @@ const timestamp = (v: unknown): string | null => v === null ? null : typeof v ==
 export function profileType(v: unknown): ProfileType {return typeof v === "string" && Object.hasOwn(PROFILE_LABELS, v) ? v as ProfileType : fail();}
 export function parsePeopleQuery(kind: PeopleKind, v: unknown): PeopleQuery {
   if (!record(v)) fail();
-  const keys = kind === "users" ? ["search", "offset", "registration", "confirmation", "from", "to"] : ["search", "offset", "type", "region", "verification", "visibility", "ownership", "user"];
+  const keys = kind === "users" ? ["search", "offset", "registration", "confirmation", "from", "to", "excludedDomains"] : ["search", "offset", "type", "region", "verification", "visibility", "ownership", "user", "sort"];
   if (Object.keys(v).some(k => !keys.includes(k) || v[k] === null)) fail();
   const q: PeopleQuery = {search: text(v.search ?? "", 200).trim(), offset: count(v.offset ?? 0)};
   if (q.offset! > 999990 || q.offset! % 30 !== 0) fail();
@@ -32,6 +41,8 @@ export function parsePeopleQuery(kind: PeopleKind, v: unknown): PeopleQuery {
     const value = text(v[key] ?? "all"); if (!values.includes(value)) fail(); Object.assign(q, {[key]: value});
   }
   if (kind === "users") {
+    const domains = text(v.excludedDomains ?? "", 12700);
+    q.excludedDomains = domains ? normalizeDomains(domains.split(",")).join(",") : "";
     for (const key of ["from", "to"] as const) {
       const d = text(v[key] ?? "");
       if (d && (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d < "0001-01-01" || !Number.isFinite(Date.parse(d)) || new Date(d).toISOString().slice(0, 10) !== d)) fail();
@@ -39,6 +50,14 @@ export function parsePeopleQuery(kind: PeopleKind, v: unknown): PeopleQuery {
     }
     if (q.from && q.to && q.from > q.to) fail();
   } else {q.region = text(v.region ?? "", 100); q.user = text(v.user ?? "", 36); if (q.user && !canonicalUuid(q.user)) fail();}
+  if (kind === "profiles") {
+    q.sort = text(v.sort ?? "newest");
+    if (!["newest", "oldest", "announcements", "followers"].includes(q.sort)) fail();
+    if (q.user) {
+      if (q.search && q.search !== q.user) fail();
+      q.search = q.user; delete q.user;
+    }
+  }
   return q;
 }
 export function parsePeopleUrl(kind: PeopleKind, params: URLSearchParams) {
@@ -51,7 +70,7 @@ export function parsePeopleUrl(kind: PeopleKind, params: URLSearchParams) {
 }
 export function peopleHref(kind: PeopleKind, query: PeopleQuery) {
   const params = new URLSearchParams();
-  for (const [k, v] of Object.entries(query)) if (v !== "" && v !== "all" && v !== 0 && v !== undefined) params.set(k, String(v));
+  for (const [k, v] of Object.entries(query)) if (v !== "" && v !== "all" && v !== 0 && v !== undefined && !(k === "sort" && v === "newest")) params.set(k, String(v));
   return (kind === "users" ? "/utenti" : "/profili") + (params.size ? `?${params}` : "");
 }
 export function parseUser(v: unknown): UserRow {
@@ -77,7 +96,7 @@ export function parseUserDetail(v: unknown): UserDetail {
 }
 export function parseProfileDetail(v: unknown): ProfileDetail {
   if (!record(v) || !record(v.fields) || JSON.stringify(v.fields).length > 200000) fail();
-  return {...parseProfile(v), fields: v.fields, announcementCount: count(v.announcementCount)};
+  return {...parseProfile(v), fields: v.fields, announcementCount: count(v.announcementCount), publicAnnouncementCount: count(v.publicAnnouncementCount), followerCount: count(v.followerCount)};
 }
 export function parseProfileMutation(v: unknown): ProfileMutation {
   if (!record(v) || Object.keys(v).some(k => !["id", "type", "operation", "version", "reason"].includes(k)) || !Object.hasOwn(OPERATIONS, v.operation as string)) fail();

@@ -1,7 +1,7 @@
 "use client";
 import {startTransition, useRef, useState} from "react";
 import {useRouter} from "next/navigation";
-import {SettingsIcon, RefreshCw, Search, ExternalLink as ExternalLinkIcon} from "lucide-react";
+import {ExternalLink as ExternalLinkIcon, Eye, RefreshCw, RotateCcw, Search} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Alert, AlertDescription} from "@/components/ui/alert";
@@ -15,9 +15,18 @@ import {EmptyState} from "@/features/dashboard/components/ContentStates";
 import {PanelSkeleton, TableSkeleton} from "@/features/dashboard/components/ContentSkeletons";
 import {ExternalLink} from "@/features/navigation/ExternalNavigation";
 import {AnnouncementSiteLink} from "@/features/annunci/components/AnnouncementSiteLink";
-import {parseCommunityPage, parseReport, REPORT_STATES, type CommunityFailure, type CommunityQuery, type Report} from "../contracts";
+import {
+	type CommunityFailure,
+	type CommunityQuery,
+	parseCommunityPage,
+	parseCommunityQuery,
+	parseReport,
+	type Report,
+	REPORT_STATES
+} from "../contracts";
 import {updateReportAction} from "../server/actions";
 import {Choice, communityDate, Failure, Pagination, useCommunityRead} from "./CommunityControls";
+import {useFilterDraft} from "@/features/dashboard/useFilterDraft";
 import {DEFAULT_REPORT_FILTERS, reportsHref} from "../reports-url";
 
 const parsePage = (v: unknown) => parseCommunityPage(v, parseReport);
@@ -44,25 +53,27 @@ function ReportEditor({report, saved, reload, setSaving}: {report: Report; saved
 export function ReportsWorkspace({initialUrl}: {initialUrl: {valid: boolean; query: CommunityQuery}}) {
   const router = useRouter();
   const query = initialUrl.query;
-  const [draft, setDraft] = useState({...initialFilters, ...query});
+
   const [selected, setSelected] = useState<string | null>(null), [saving, setSaving] = useState(false), [notice, setNotice] = useState("");
   const trigger = useRef<HTMLElement | null>(null), heading = useRef<HTMLHeadingElement>(null);
   const list = useCommunityRead("reports", query, parsePage, initialUrl.valid ? undefined : null), detail = useCommunityRead("reports", {}, parseReport, selected);
-  const set = (patch: Partial<typeof initialFilters>) => setDraft(v => ({...v, ...patch}));
+  const filters = useFilterDraft(query, value => parseCommunityQuery("reports", value), reportsHref, list.refresh);
+  const draft = {...initialFilters, ...filters.draft};
+  const set = filters.filter;
   const report = detail.result?.status === "ok" ? detail.result.data : null;
   return <div className="admin-workspace admin-community-workspace">
-    <Card className="admin-filters-card"><CardContent><form className="admin-filter-form" onSubmit={e => {e.preventDefault(); const href = reportsHref({...draft, offset: 0}); router.push(href); if (href === window.location.pathname + window.location.search) list.refresh();}}><FieldGroup className="admin-community-filters">
-      <Field className="admin-community-search"><FieldLabel htmlFor="reports-search">Cerca</FieldLabel><Input id="reports-search" value={draft.search} maxLength={200} placeholder="ID contenuto, ID segnalazione o email segnalatore" onChange={e => set({search: e.target.value})} /></Field>
+    <Card className="admin-filters-card"><CardContent><form className="admin-filter-form" onSubmit={e => {e.preventDefault(); filters.submit();}}><FieldGroup className="admin-community-filters admin-standard-filters">
+      <div className="admin-filter-search-row"><Field><FieldLabel htmlFor="reports-search">Cerca segnalazione</FieldLabel><Input id="reports-search" value={draft.search} maxLength={200} placeholder="ID contenuto, ID segnalazione o email segnalatore" onChange={e => filters.search(e.target.value)} /></Field><div className="admin-action-list admin-filter-actions"><Button type="submit"><Search data-icon="inline-start" aria-hidden="true" />Filtra</Button><Button type="button" variant="outline" onClick={() => filters.reset(initialFilters)}><RotateCcw data-icon="inline-start" aria-hidden="true" />Azzera</Button></div></div>
       <Choice id="reports-state" label="Stato" value={draft.status} options={{active: "Aperte e in lavorazione", all: "Tutte", ...REPORT_STATES}} onChange={status => set({status})} />
       <Choice id="reports-target" label="Contenuto" value={draft.target} options={{all: "Tutti", annuncio: "Annunci", profilo: "Profili"}} onChange={target => set({target})} />
       <Field><FieldLabel htmlFor="reports-from">Dal</FieldLabel><Input type="date" id="reports-from" value={draft.from} onChange={e => set({from: e.target.value})} /></Field>
       <Field><FieldLabel htmlFor="reports-to">Al</FieldLabel><Input type="date" id="reports-to" value={draft.to} onChange={e => set({to: e.target.value})} /></Field>
-    </FieldGroup><div className="admin-action-list"><Button type="submit"><Search data-icon="inline-start" aria-hidden="true" />Filtra</Button><Button type="button" variant="outline" onClick={() => {setDraft(initialFilters); router.push(reportsHref(initialFilters));}}>Azzera</Button></div></form></CardContent></Card>
+    </FieldGroup>{filters.error && <p role="alert" className="admin-filter-error">{filters.error}</p>}</form></CardContent></Card>
     {notice && <Alert><AlertDescription role="status">{notice}</AlertDescription></Alert>}
     <Card className="admin-results-card"><CardHeader><div className="admin-workspace-toolbar"><CardTitle><h2 ref={heading} tabIndex={-1}>Segnalazioni</h2></CardTitle><Button variant="outline" disabled={list.pending} onClick={list.refresh}><RefreshCw data-icon="inline-start" aria-hidden="true" />Aggiorna</Button></div></CardHeader>
       <CardContent className="admin-results-body" aria-busy={list.pending}>{!initialUrl.valid ? <Failure result={{status: "invalid"}} retry={() => router.push(reportsHref(initialFilters))} /> : list.pending ? <TableSkeleton columns={6} /> : list.result?.status === "ok" ? <>
-        {list.result.data.items.length ? <Table className="admin-community-table" aria-label="Segnalazioni"><TableHeader><TableRow>{["Data", "Contenuto", "Segnalatore", "Motivazione", "Stato", "Azioni"].map(h => <TableHead key={h}>{h}</TableHead>)}</TableRow></TableHeader><TableBody>
-          {list.result.data.items.map(row => <TableRow key={row.id}><TableCell>{communityDate(row.createdAt)}<p className="admin-note">#{row.number}</p></TableCell><TableCell><strong>{row.title}</strong><p className="admin-note">{row.targetKind === "annuncio" ? "Annuncio" : "Profilo"}</p><p className="admin-technical-text">{row.targetId}</p></TableCell><TableCell>{row.reporterEmail ?? "Non identificato"}</TableCell><TableCell><p className="admin-report-reason">{row.reason || "Nessuna motivazione"}</p></TableCell><TableCell><ReportBadge state={row.status} /></TableCell><TableCell><Button variant="ghost" size="icon-sm" aria-label="Dettagli" title="Dettagli" onClick={e => {trigger.current = e.currentTarget; setNotice(""); setSelected(row.id); detail.refresh();}}><SettingsIcon aria-hidden="true" /></Button></TableCell></TableRow>)}
+        {list.result.data.items.length ? <Table className="admin-community-table" aria-label="Segnalazioni"><TableHeader><TableRow>{["Data", "Contenuto", "Segnalatore", "Motivazione", "Stato", "Dettagli"].map(h => <TableHead key={h}>{h}</TableHead>)}</TableRow></TableHeader><TableBody>
+          {list.result.data.items.map(row => <TableRow key={row.id}><TableCell>{communityDate(row.createdAt)}<p className="admin-note">#{row.number}</p></TableCell><TableCell><strong>{row.title}</strong><p className="admin-note">{row.targetKind === "annuncio" ? "Annuncio" : "Profilo"}</p><p className="admin-technical-text">{row.targetId}</p></TableCell><TableCell>{row.reporterEmail ?? "Non identificato"}</TableCell><TableCell><p className="admin-report-reason">{row.reason || "Nessuna motivazione"}</p></TableCell><TableCell><ReportBadge state={row.status} /></TableCell><TableCell><Button variant="ghost" size="icon-sm" aria-label="Dettagli" title="Dettagli" onClick={e => {trigger.current = e.currentTarget; setNotice(""); setSelected(row.id); detail.refresh();}}><Eye aria-hidden="true" /></Button></TableCell></TableRow>)}
         </TableBody></Table> : <EmptyState title="Nessuna segnalazione" description="Non ci sono segnalazioni corrispondenti ai filtri." />}
         <Pagination offset={query.offset ?? 0} more={list.result.data.hasMore} onChange={offset => router.push(reportsHref({...query, offset}))} />
       </> : list.result && <Failure result={list.result} retry={list.refresh} />}</CardContent>

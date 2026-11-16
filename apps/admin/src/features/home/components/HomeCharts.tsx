@@ -1,6 +1,6 @@
 "use client";
-import {useId, type ReactNode} from "react";
-import {ArrowDown, ArrowUp, TrendingUpIcon, ChartNoAxesCombinedIcon, Minus} from "lucide-react";
+import {type ReactNode, useId} from "react";
+import {ArrowDown, ArrowUp, ChartNoAxesCombinedIcon, Minus, TrendingUpIcon} from "lucide-react";
 import {Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis} from "recharts";
 import {ChartContainer, ChartTooltip, ChartTooltipContent} from "@/components/ui/chart";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
@@ -10,7 +10,7 @@ import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Table
 import {EmptyState} from "@/features/dashboard/components/ContentStates";
 import {type AvailableHomeChart, type ChartRow, distributionRows, monthLabel, primaryRows} from "../chart-presentation";
 import {homeCount} from "../presentation";
-import {homePeriod, type HomeAggregation, type HomeRange, type PeriodRow} from "../period";
+import {type HomeAggregation, homePeriod, type HomeRange, type PeriodRow} from "../period";
 import {splitHomeRows} from "../split-presentation";
 
 const config = {count: {label: "Totale", color: "var(--chart-1)"}};

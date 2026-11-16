@@ -23,6 +23,20 @@ function controller(search = "", result = empty) {
   });
   return { c, lists, details, history, redirects, state: c.getSnapshot };
 }
+
+test("audit selectors apply immediately without submitting an unfinished operator", () => {
+  const h = controller("operator=admin%40example.test&cursor=YWJj");
+  h.c.draft({operator: "unfinished"});
+  h.c.filter({outcome: "failure"});
+  assert.equal(h.lists[0].q.filters.operator, "admin@example.test");
+  assert.equal(h.lists[0].q.cursor, null);
+  assert.equal(h.state().draft.operator, "unfinished");
+  h.c.filter({operator: "unknown"});
+  assert.equal(h.lists[1].q.filters.operator, "unknown");
+  h.c.filter({from: "2026-11-16", to: "2026-11-15"});
+  assert.equal(h.lists.length, 2); assert.ok(h.state().error);
+  h.c.cancel();
+});
 function uiLoader(overrides = {}) {
   const dependencies = { react: React, "react/jsx-runtime": require("react/jsx-runtime"), ...overrides };
   for (const name of ["@base-ui/react/button", "@base-ui/react/input", "@base-ui/react/separator", "@base-ui/react/tooltip", "@base-ui/react/dialog", "@base-ui/react/select", "@base-ui/react/merge-props", "@base-ui/react/use-render", "class-variance-authority", "clsx", "tailwind-merge", "lucide-react"]) dependencies[name] = require(name);

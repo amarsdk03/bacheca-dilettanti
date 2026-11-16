@@ -437,10 +437,36 @@
 }
 
 .profile-dashboard {
+    --moderation-published: #166534;
+    --moderation-review: #854d0e;
+    --moderation-rejected: #b91c1c;
+    --moderation-payment: #9a3412;
+    --moderation-obscured: #6b21a8;
     --ring: var(--brand-indigo);
     --dashboard-tint: color-mix(in srgb, var(--brand-indigo) 7%, var(--card));
     --dashboard-accent-foreground: color-mix(in srgb, var(--brand-indigo) 72%, var(--foreground));
 }
+
+.dark .profile-dashboard {
+    --moderation-published: #86efac;
+    --moderation-review: #fde047;
+    --moderation-rejected: #fca5a5;
+    --moderation-payment: #fdba74;
+    --moderation-obscured: #d8b4fe;
+}
+
+.profile-dashboard .profile-moderation-status {
+    --moderation-color: var(--muted-foreground);
+    color: var(--moderation-color);
+    border-color: color-mix(in srgb, var(--moderation-color) 35%, var(--border));
+    background-color: color-mix(in srgb, var(--moderation-color) 10%, var(--card));
+}
+.profile-dashboard .profile-moderation-status[data-moderation-status="pubblicato"] { --moderation-color: var(--moderation-published); }
+.profile-dashboard .profile-moderation-status[data-moderation-status="in_revisione"] { --moderation-color: var(--moderation-review); }
+.profile-dashboard .profile-moderation-status[data-moderation-status="rifiutato"] { --moderation-color: var(--moderation-rejected); }
+.profile-dashboard .profile-moderation-status[data-moderation-status="in_attesa_pagamento"] { --moderation-color: var(--moderation-payment); }
+.profile-dashboard .profile-moderation-status[data-moderation-status="oscurato"] { --moderation-color: var(--moderation-obscured); }
+.profile-dashboard .profile-moderation-status > [data-slot="alert-description"] { color: inherit; }
 
 .profile-dashboard .profile-dashboard-card {
     --card-spacing: 1.25rem;

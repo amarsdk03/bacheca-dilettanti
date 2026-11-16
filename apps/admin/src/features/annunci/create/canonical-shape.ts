@@ -2,6 +2,7 @@ import {createProfileDrafts, createProfileLocations} from "@bacheca/announcement
 import {createProfileSocialLinks} from "@bacheca/announcements/features/profilo/profile-social-links";
 import {createAnnouncementDetailsDrafts} from "@bacheca/announcements/features/pubblica-annuncio/publish-model";
 import type {CanonicalDraft} from "./canonical-draft";
+
 const record=(v:unknown):v is Record<string,unknown>=>Boolean(v)&&typeof v==="object"&&!Array.isArray(v);
 function safe(v:unknown,depth=0):boolean {
  if(depth>12)return false;
@@ -18,6 +19,7 @@ function matches(value:unknown,template:unknown):boolean {
 }
 export function isCanonicalDraft(v:unknown):v is CanonicalDraft {
  if(!record(v)||!safe(v))return false;
+ if(v.automaticContacts !== undefined && (!record(v.automaticContacts)||Object.entries(v.automaticContacts).some(([key,value])=>!["email","phone"].includes(key)||typeof value !== "boolean")))return false;
  const locs=(x:unknown)=>Array.isArray(x)&&x.every(row=>record(row)&&typeof row.regione === "string"&&(row.citta === null||typeof row.citta === "string"));
  if(!locs(v.locations)||!record(v.profileLocations)||!Object.values(v.profileLocations).every(locs)||!record(v.contacts)||(v.contacts.contactRole !== undefined && typeof v.contacts.contactRole !== "string"))return false;
  return matches(v,{profiles:createProfileDrafts(),profileLocations:createProfileLocations(),socialLinks:createProfileSocialLinks(),details:createAnnouncementDetailsDrafts(),locations:[],contacts:{email:"",phone:""},extras:{genericLink:""},title:""});

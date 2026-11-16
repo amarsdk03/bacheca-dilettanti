@@ -1,5 +1,5 @@
 import type {HomeChart} from "./contracts";
-import {monthLabel, type ChartRow} from "./chart-presentation";
+import {type ChartRow, monthLabel} from "./chart-presentation";
 
 export type MonthlyHomeChart = Extract<HomeChart, { series: unknown }>;
 export type HomeAggregation = "monthly" | "quarterly" | "yearly";

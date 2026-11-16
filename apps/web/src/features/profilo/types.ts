@@ -6,6 +6,7 @@ import type {DashboardInteractions} from "@/features/interazioni/interaction-mod
 export type ProfileDashboardSection = "profilo" | "annunci" | "relazioni" | "salvati" | "impostazioni" | "info";
 
 export interface ManagedProfile {
+  officialVerified?: boolean;
   adminHidden?: boolean;
 	id: string;
 	profileId: string;

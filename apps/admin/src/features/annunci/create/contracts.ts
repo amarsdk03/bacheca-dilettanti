@@ -16,6 +16,7 @@ export interface CreationInput {
   profileType: MockProfileType; teamType: MockTeamType; profile: MockValues; announcement: MockValues;
   referenceEmail: string; authorized: boolean; provenance?: WhatsAppProvenance;
   approveImmediately?: boolean;
+  publicationDate?: string;
   canonical?: CanonicalDraft;
   reviewDecisions?: Record<string, ReviewDecision>;
   image?: {hash: string; mime: string; size: number} | null;

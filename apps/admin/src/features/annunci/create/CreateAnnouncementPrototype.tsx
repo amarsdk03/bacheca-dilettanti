@@ -17,43 +17,43 @@ import {FieldIssuesProvider, PrototypeSelect} from "./PrototypeFields";
 import {WhatsAppImport} from "./WhatsAppImport";
 import type {WhatsAppExtraction} from "./whatsapp-parser";
 import {
-  type MockProfileType,
-  type MockTeamType,
-  type MockValues,
-  PROFILE_OPTIONS,
-  profileLabel,
-  TEAM_OPTIONS,
-  textValue,
+	type MockProfileType,
+	type MockTeamType,
+	type MockValues,
+	PROFILE_OPTIONS,
+	profileLabel,
+	TEAM_OPTIONS,
+	textValue,
 } from "./prototype-model";
 
 import {Tabs} from "@base-ui/react/tabs";
 import {CREATE_TABS, type CreateTab, type CreationInput, type CreationResult, type FieldIssue} from "./contracts";
 import {type LocalDraft, useAnnouncementDraft, useDraftField, useOptionalAnnouncementDraft} from "./store";
-import {validateCreation} from "./domain";
+import {TEAM_SUBTYPES, validateCreation} from "./domain";
 import {getCreationCapabilities, getCreationReceipt, searchAnnouncementAuthors, submitAnnouncement} from "./actions";
-import {
-  applyWhatsAppExtraction,
-  hasWhatsAppEdits,
-  reextractSource,
-  whatsappSourceIsCurrent
-} from "./whatsapp-draft";
+import {applyWhatsAppExtraction, hasWhatsAppEdits, reextractSource, whatsappSourceIsCurrent} from "./whatsapp-draft";
 import {DisabledFieldsetContext} from "@bacheca/announcements/publication/components/ui/disabled-fieldset";
 import ProfileDetailsForm from "@bacheca/announcements/publication/features/profilo/ProfileDetailsForm";
-import AnnouncementDetailsForm from "@bacheca/announcements/publication/features/pubblica-annuncio/components/AnnouncementDetailsForm";
-import {migrateCanonicalDraft, type CanonicalDraft} from "./canonical-draft";
+import AnnouncementDetailsForm
+	from "@bacheca/announcements/publication/features/pubblica-annuncio/components/AnnouncementDetailsForm";
+import {type CanonicalDraft, migrateCanonicalDraft} from "./canonical-draft";
 import {getMinorContactNotice} from "@bacheca/announcements/features/pubblica-annuncio/minor-contact-notice";
-import {TEAM_SUBTYPES} from "./domain";
 import {WhatsAppReview} from "./WhatsAppReview";
 import {CreationPreview} from "./CreationPreview";
+import {publicationToday, withBirthYearDefaults} from "./date-defaults";
+import {prepareCreationInput} from "./input-defaults";
+import {editedContacts} from "./contact-defaults";
+import {recordReviewCorrections} from "./whatsapp-review";
+import {WhatsAppProfileAssist} from "./WhatsAppProfileAssist";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 
 const EMPTY_DRAFT: LocalDraft = {values: {}, image: null};
@@ -150,12 +150,21 @@ export function CreateAnnouncementPrototype() {
 
   const canonical = (() => {
     const c = draft.canonical ?? (type ? migrateCanonicalDraft({profileType:type,teamType,profile:profileValues,announcement:values}) : null);
-    if (!c || !type || !profile || authorMode !== "registered") return c;
-    return {...c,profiles:{...c.profiles,[type]:{...c.profiles[type],...profile.draft}},profileLocations:{...c.profileLocations,[type]:profile.locations}} as CanonicalDraft;
+    if (!c || !type) return c;
+    const prepared=prepareCreationInput({version:2,canonical:c,authorMode,profileType:type,teamType,profile:{},announcement:values,profileId:profile?.id??null,submissionId:"",authorized:true,referenceEmail:"",provenance:draft.provenance}).canonical!;
+    if(!profile||authorMode !== "registered")return prepared;
+    return {...prepared,profiles:{...prepared.profiles,[type]:{...prepared.profiles[type],...profile.draft}},profileLocations:{...prepared.profileLocations,[type]:profile.locations}} as CanonicalDraft;
   })();
   function updateCanonical(next: CanonicalDraft | ((previous:CanonicalDraft)=>CanonicalDraft)) {
     setDirty(true); setServerIssues([]);
-    setDrafts(previous=>({...previous,[draftKey]:{...(previous[draftKey]??EMPTY_DRAFT),canonical:typeof next === "function" ? next(previous[draftKey]?.canonical ?? canonical!) : next}}));
+    setDrafts(previous=>{
+      const current=input?prepareCreationInput({...input,canonical:previous[draftKey]?.canonical??canonical!}).canonical!:canonical!;
+      const changed=typeof next === "function" ? next(current) : next;
+      const prepared=input?prepareCreationInput({...input,canonical:changed}):null;
+      const updated=prepared?.canonical??changed;
+      const reviewDecisions=input&&prepared?recordReviewCorrections({...input,canonical:current},{...prepared,reviewDecisions:previous[draftKey]?.reviewDecisions}):previous[draftKey]?.reviewDecisions;
+      return {...previous,[draftKey]:{...(previous[draftKey]??EMPTY_DRAFT),canonical:updated,reviewDecisions}};
+    });
   }
   const users = authors;
   const isMinor = Boolean(type && canonical && getMinorContactNotice(type,canonical.profiles));
@@ -228,22 +237,24 @@ export function CreateAnnouncementPrototype() {
   const receipt = receipts[draftKey];
   const submissionId = submissionIds[draftKey] ?? "";
   const input: CreationInput | null = type && canonical ? {version: 2, canonical, reviewDecisions:draft.reviewDecisions, submissionId, authorMode, profileId: profile?.id ?? null, profileType: type, teamType,
-    profile: authorMode === "unregistered" ? profileValues : {}, announcement: values, referenceEmail: authorMode === "unregistered" ? authorEmail : "", authorized: true, approveImmediately, provenance: draft.provenance} : null;
+    profile: authorMode === "unregistered" ? profileValues : {}, announcement: values, publicationDate: textValue(values, "publicationDate"), referenceEmail: authorMode === "unregistered" ? authorEmail : "", authorized: true, approveImmediately, provenance: draft.provenance} : null;
   const errors = input && (attempted || Boolean(draft.provenance)) ? validateCreation(input, profile).filter(issue => attempted || issue.path !== "authorized") : [];
   const issues = [...errors, ...serverIssues.filter(issue => !errors.some(e => e.path === issue.path))];
+  const tabWarnings=(tab:CreateTab)=>issues.filter(issue=>issue.tab===tab&&issue.severity==="warning").map(issue=><Alert key={issue.path} variant="warning" role="note"><AlertDescription>{issue.message}</AlertDescription></Alert>);
+  const editorialContacts=canonical && Object.values(canonical.automaticContacts??{}).some(Boolean)?<Alert variant="info" role="note"><AlertDescription>Non sono disponibili recapiti dell’autore. Verranno pubblicati i contatti di Bacheca Dilettanti: {canonical.contacts.email} · {canonical.contacts.phone}.</AlertDescription></Alert>:null;
   const profilePanel = authorMode === "registered" ? <div className="admin-create-profile-recap"><strong>{profile?.name ?? "Seleziona un profilo nella tab Autore"}</strong><p>{profile?.facts}</p><p>{profile?.city} {profile?.region}</p><p>Dati del profilo in sola lettura.</p></div> : type && canonical ? <ProfileDetailsForm type={type} drafts={canonical.profiles} locations={canonical.profileLocations} socialLinks={canonical.socialLinks[type]}
-    onChange={(profileType,key,value)=>updateCanonical(previous=>({...previous,profiles:{...previous.profiles,[profileType]:{...previous.profiles[profileType],[key]:value}}}))}
+    onChange={(profileType,key,value)=>updateCanonical(previous=>({...previous,profiles:{...previous.profiles,[profileType]:withBirthYearDefaults(previous.profiles[profileType],key,value)}}))}
     onLocationsChange={(profileType,locations)=>updateCanonical(previous=>({...previous,profileLocations:{...previous.profileLocations,[profileType]:locations}}))}
     onSocialLinksChange={(platform,value)=>updateCanonical(previous=>({...previous,socialLinks:{...previous.socialLinks,[type]:{...previous.socialLinks[type],[platform]:value}}}))}
-    errors={Object.fromEntries(issues.filter(i=>i.path.startsWith("profile.")).map(i=>[i.path.slice(8),i.message]))} /> : <p>Seleziona prima autore e profilo.</p>;
+    errors={Object.fromEntries(issues.filter(i=>i.severity === "error"&&i.path.startsWith("profile.")).map(i=>[i.path.slice(8),i.message]))} /> : <p>Seleziona prima autore e profilo.</p>;
   const announcementForm = (section: "details" | "contacts") => type && canonical ? <AnnouncementDetailsForm section={section} profileType={type} registered={authorMode === "registered"} teamSubtype={TEAM_SUBTYPES[teamType]} showMinorContactNotice={isMinor}
     announcementTitle={canonical.title} onAnnouncementTitleChange={title=>updateCanonical({...canonical,title})}
     drafts={canonical.details} onDraftsChange={next=>updateCanonical(previous=>({...previous,details:typeof next === "function" ? next(previous.details) : next}))}
     locations={canonical.locations} onLocationsChange={locations=>updateCanonical({...canonical,locations})}
-    contacts={canonical.contacts} onContactsChange={next=>updateCanonical(previous=>({...previous,contacts:typeof next === "function" ? next(previous.contacts) : next}))}
+    contacts={canonical.contacts} onContactsChange={next=>updateCanonical(previous=>{const contacts=typeof next === "function" ? next(previous.contacts) : next;return {...previous,contacts,automaticContacts:editedContacts(previous.contacts,contacts,previous.automaticContacts)};})}
     extras={canonical.extras} onExtrasChange={next=>updateCanonical(previous=>({...previous,extras:typeof next === "function" ? next(previous.extras) : next}))}
     image={draft.image} onImageChange={image=>{setDirty(true);setDrafts(previous=>({...previous,[draftKey]:{...(previous[draftKey]??EMPTY_DRAFT),canonical,image,imageMeta:image?{name:image.name,size:image.size,type:image.type}:undefined}}));}}
-    errors={Object.fromEntries(issues.filter(i=>i.path.startsWith("announcement.")).map(i=>[i.path.slice(13),i.message]))}
+    errors={Object.fromEntries(issues.filter(i=>i.severity === "error"&&i.path.startsWith("announcement.")).map(i=>[i.path.slice(13),i.message]))}
     allowedRegions={profile?.allowedRegions} /> : <p>Seleziona prima autore e profilo.</p>;
   useEffect(() => {
     if (hydrated && ownerKey && !submissionIds[draftKey]) setSubmissionIds(previous=>({...previous,[draftKey]:crypto.randomUUID()}));
@@ -279,7 +290,7 @@ export function CreateAnnouncementPrototype() {
     if(!input){showIssues([{path:"author.profileId",severity:"error",code:"REQUIRED",message:"Seleziona autore e profilo.",tab:"author"}]);return;}
     const next=validateCreation(input,profile);
     if(!currentSource)next.unshift({path:"author._form",severity:"error",code:"WHATSAPP_STALE",message:"Analizza il messaggio aggiornato prima dell’invio.",tab:"author"});
-    if(next.length){showIssues(next);return;}
+    if(next.some(issue=>issue.severity === "error")){showIssues(next);return;}
     submittingRef.current=true;setBusy(true);
     try{
       const request={...input};
@@ -309,8 +320,10 @@ export function CreateAnnouncementPrototype() {
             {searchState&&authorMode==="registered"&&<p role="status">{searchState}</p>}
             {issues.filter(issue=>issue.tab==="author"&&!issue.path.startsWith("author.review.")).map(issue=><p key={issue.path} className="admin-create-error" role="alert">{issue.message}</p>)}
           </FieldGroup></FormSection></Tabs.Panel>
-          <Tabs.Panel value="profile"><FormSection id="create-profile-data" number="02" title="Profilo">{profilePanel}</FormSection></Tabs.Panel>
+          <Tabs.Panel value="profile"><FormSection id="create-profile-data" number="02" title="Profilo">{input&&<WhatsAppProfileAssist input={input} onChange={updateCanonical}/>} {tabWarnings("profile")}{profilePanel}{authorMode === "unregistered" && type && ["giocatore", "staff-sportivo", "arbitro"].includes(type) && <p className="admin-create-note">Se conosci solo l’anno di nascita, giorno e mese vengono impostati al 1° gennaio come data convenzionale. Puoi correggerli.</p>}</FormSection></Tabs.Panel>
           <Tabs.Panel value="announcement"><FormSection id="create-data" number="03" title="Annuncio">
+            {tabWarnings("announcement")}
+            <Field data-invalid={issues.some(issue=>issue.path==="announcement.publicationDate") || undefined}><FieldLabel htmlFor="create-publication-date">Data di pubblicazione</FieldLabel><Input id="create-publication-date" type="date" min="1900-01-01" max={publicationToday()} value={textValue(values,"publicationDate")} aria-invalid={issues.some(issue=>issue.path==="announcement.publicationDate")} aria-describedby="create-publication-date-help" onChange={event=>{const publicationDate=event.target.value;setDrafts(previous=>({...previous,[draftKey]:{...(previous[draftKey]??EMPTY_DRAFT),values:{...(previous[draftKey]?.values??{}),publicationDate}}}));setDirty(true);setServerIssues([]);}}/><FieldDescription id="create-publication-date-help">Lascia vuoto per usare la data corrente.</FieldDescription>{issues.filter(issue=>issue.path==="announcement.publicationDate").map(issue=><p key={issue.path} className="admin-create-error" role="alert">{issue.message}</p>)}</Field>
             {type==="squadra"&&mode!=="whatsapp"&&<Field><FieldLabel htmlFor="create-team-type">Tipo di annuncio</FieldLabel><PrototypeSelect id="create-team-type" required value={teamType} options={TEAM_OPTIONS.map(value=>({value,label:value}))} onChange={next=>{
               if(canonical){const nextKey=ownerKey+":"+next;setDrafts(previous=>({...previous,[nextKey]:{...(previous[nextKey]??EMPTY_DRAFT),canonical:previous[nextKey]?.canonical?{...previous[nextKey].canonical!,profiles:canonical.profiles,profileLocations:canonical.profileLocations,socialLinks:canonical.socialLinks}:canonical}}));}
               setTeamTypes(previous=>({...previous,[ownerKey]:next as MockTeamType}));setDirty(true);
@@ -318,17 +331,20 @@ export function CreateAnnouncementPrototype() {
             {announcementForm("details")}
           </FormSection></Tabs.Panel>
           <Tabs.Panel value="contacts"><FormSection id="create-contacts" number="04" title="Contatti e media">
+            {editorialContacts}{tabWarnings("contacts")}
             {announcementForm("contacts")}{draft.image&&<ImagePreview file={draft.image} />}
             {draft.imageMeta&&!draft.image&&<><p role="alert">Seleziona nuovamente {draft.imageMeta.name} oppure rimuovi l’immagine prima di inviare.</p><Button type="button" variant="outline" onClick={()=>setDrafts(previous=>({...previous,[draftKey]:{...draft,imageMeta:undefined}}))}>Rimuovi immagine</Button></>}
           </FormSection></Tabs.Panel>
           <Tabs.Panel value="review"><FormSection id="create-review" number="05" title="Riepilogo"><div className="admin-create-summary-content w-full">
+            {editorialContacts}
             {input?<CreationPreview input={input} profile={profile} image={draft.image} imageName={draft.imageMeta?.name}/>:<p>Seleziona autore e profilo.</p>}
+            <p>Data di pubblicazione: {input?.publicationDate ? input.publicationDate.split("-").reverse().join("/") : "Data corrente"}</p>
             {input?.provenance&&<WhatsAppReview input={input} onChange={(next,reviewDecisions)=>{setDirty(true);setDrafts(previous=>({...previous,[draftKey]:{...(previous[draftKey]??EMPTY_DRAFT),canonical:next,reviewDecisions}}));}} onEdit={changeTab}/>}
             {draft.provenance&&<details><summary>Fonte WhatsApp · privata</summary><p className="whitespace-pre-wrap">{draft.provenance.rawText}</p><p>{draft.provenance.messageUrl}</p>{reextractSource(draft.provenance).unmapped.map((item,index)=><p key={index}><strong>{item.label}:</strong> {item.value}</p>)}</details>}
             <Field orientation="horizontal"><Checkbox id="create-approve-immediately" checked={approveImmediately} disabled={busy||Boolean(receipt)||(!approveImmediately&&approvalAvailable!==true)||Boolean(result&&["unknown","conflict","consumed"].includes(result.status))} onCheckedChange={checked=>{setApproveImmediately(checked===true);setDirty(true);}}/><FieldLabel htmlFor="create-approve-immediately">Approva direttamente l’annuncio</FieldLabel></Field>
             {approvalAvailable===false&&<p className="admin-create-note">Approvazione diretta non disponibile. Verifica la migrazione del database.</p>}
             <p className="admin-create-note">{approveImmediately?"L’annuncio sarà pubblicato direttamente.":"L’annuncio sarà inviato in revisione."} Per più regioni verrà creata una pubblicazione per regione.</p>
-            {issues.length>0&&<ul>{issues.map((issue,index)=><li key={index}><button type="button" className="admin-create-error" onClick={()=>showIssues([issue])}>{issue.message}</button></li>)}</ul>}
+            {issues.some(issue=>issue.severity==="error")&&<ul>{issues.filter(issue=>issue.severity==="error").map((issue,index)=><li key={index}><button type="button" className="admin-create-error" onClick={()=>showIssues([issue])}>{issue.message}</button></li>)}</ul>}
           </div></FormSection></Tabs.Panel>
         </fieldset></DisabledFieldsetContext.Provider>
         <div className="admin-create-step-actions"><Button type="button" variant="outline" disabled={!currentIndex||busy} onClick={()=>changeTab(CREATE_TABS[currentIndex-1].value)}>Indietro</Button>

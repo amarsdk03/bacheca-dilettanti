@@ -48,6 +48,14 @@ export function createAuditController(query: AuditUrl, result: AuditListResult, 
     getSnapshot: () => state, getServerSnapshot: () => initial,
     subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; }, sync, cancel, close, open,
     draft(patch: Partial<AuditFilters>) { update({ draft: { ...state.draft, ...patch }, error: null }); },
+    filter(patch: Partial<AuditFilters>) {
+      const operator = state.draft.operator;
+      const next = {...state.draft, ...patch, operator: patch.operator ?? state.query.filters.operator};
+      try {
+        navigate(normalizeAuditFilters(next), null);
+        if (patch.operator === undefined) update({draft: {...state.draft, operator}});
+      } catch {update({draft: {...state.draft, ...patch}, error: "Controlla le date e i filtri inseriti."});}
+    },
     apply() { try { navigate(normalizeAuditFilters(state.draft), null); } catch { update({ error: "Controlla le date e inserisci un’email completa, un UUID oppure unknown per gli eventi non identificati." }); } },
     reset() { navigate(DEFAULT_AUDIT_FILTERS, null); }, first() { navigate(state.query.filters, null); },
     refresh() { sync(state.query.href.slice("/registro-attivita".length), true); },

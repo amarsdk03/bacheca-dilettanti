@@ -13,7 +13,8 @@ test("the Admin form and server share canonical validation for all six anonymous
   }
   const invalid=creationInput();invalid.profile.birthDate="2026-02-30";
   assert.ok(creationDomain.validateCreation(invalid).some(issue=>issue.path==="profile.birthDate"));
-  invalid.announcement.publicPhone="";assert.ok(creationDomain.validateCreation(invalid).some(issue=>issue.path==="announcement.publicEmail"));
+  invalid.announcement.publicPhone="";assert.equal(creationDomain.normalizeCreation({...invalid,profile:creationInput().profile}).contacts.email,"info@bachecadilettanti.it");
+  invalid.announcement.publicEmail="invalid@";assert.ok(creationDomain.validateCreation(invalid).some(issue=>issue.path==="announcement.publicEmail"));
 });
 test("authorization precedes processing; no storage or RPC is reached on a denied session",async()=>{
   const service=createAnnouncementCreation({session:async()=>{throw new Error("ADMIN_ACCESS_DENIED")},upload:async()=>assert.fail("upload")});
@@ -29,13 +30,14 @@ test("request validation rejects malformed persisted input, source links and res
 });
 test("creation sends normalized details, private provenance and an idempotency identifier",async()=>{
   const calls=[];
-  const service=createAnnouncementCreation({session:async()=>({actorId,rpc:async(name,args)=>{calls.push([name,args]);return {data:name.includes("get_")?null:receipt,error:null}}}),upload:async()=>assert.fail("unexpected upload")});
+  const service=createAnnouncementCreation({session:async()=>({actorId,rpc:async(name,args)=>{calls.push([name,args]);return {data:name.includes("get_")?null:name==="admin_resolve_whatsapp_import_channel_v1"?actorId:receipt,error:null}}}),upload:async()=>assert.fail("unexpected upload")});
   const input=creationInput();input.version=2;input.canonical=adminServerLoader()("apps/admin/src/features/annunci/create/canonical-draft.ts").migrateCanonicalDraft(input);
   input.provenance={source:"whatsapp",rawText:"🔵 GIOCATORE CERCA SQUADRA",messageUrl:"",context:{channelRegion:"Lombardia"}};
   const {reviewBinding}=adminServerLoader()("apps/admin/src/features/annunci/create/whatsapp-review.ts");input.reviewDecisions=Object.fromEntries(parseWhatsAppMessage(input.provenance.rawText,"","",input.provenance.context).issues.map(issue=>[issue.id,{action:"confirmed",binding:reviewBinding(input,issue)}]));
   assert.equal((await service.submit(input)).status,"ok");
   assert.equal(calls[0][0],"admin_get_announcement_submission_v1");
-  const payload=calls[1][1].p_payload;assert.equal(payload.source,"whatsapp");assert.equal(payload.original_text,input.provenance.rawText);assert.equal(payload.authorized,true);assert.equal(payload.profile_id,null);
+  assert.equal(calls[1][0],"admin_resolve_whatsapp_import_channel_v1");assert.equal(calls[2][0],"admin_create_announcement_v4");
+  const payload=calls[2][1].p_payload;assert.equal(payload.source,"whatsapp");assert.equal(payload.source_region,"Lombardia");assert.equal(payload.original_text,input.provenance.rawText);assert.equal(payload.authorized,true);assert.equal(payload.profile_id,null);
   assert.deepEqual(payload.detail.categorie_ricercate,["Qualsiasi"]);
 });
 test("image bytes are checked, deterministic uploads are reused, and uncertain RPC results are recoverable",async()=>{
@@ -54,7 +56,8 @@ test("WhatsApp recognizes the nine templates and keeps missing dates and conflic
   const targets=["player","team-player","staff","team-staff","match","sponsor","facility","event","team-staff"];
   headings.forEach((heading,i)=>assert.equal(parseWhatsAppMessage(`${heading}\n📍 Zona: Milano / Lombardia\n⚽ Calcio: 11\n📲 Contatto: test@example.test`).target?.id,targets[i]));
   const partial=parseWhatsAppMessage(`${headings[0]}\n📍 Zona: Milano / Lombardia\n⚽ Calcio: 11\n📅 Anno: 2004\n#Lazio`);
-  assert.ok(partial.issues.some(i=>i.path==="profile.birthDate"));
+  assert.ok(!partial.issues.some(i=>i.path==="profile.birthDate"));
+  assert.equal(partial.profile.birthYear,"2004");
   assert.ok(partial.issues.some(i=>i.code==="REGION_CONFLICT"));
   assert.equal(partial.profile.birthDate,undefined);assert.equal(partial.profile.region,undefined);
   assert.equal(parseWhatsAppMessage("Intestazione non nota").blocked,true);

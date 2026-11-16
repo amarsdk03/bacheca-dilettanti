@@ -2,6 +2,78 @@ import assert from "node:assert/strict";
 import {test} from "node:test";
 import {createPeopleFixture} from "./helpers/admin-people-fixture.mjs";
 import {listActor as actor, listId as id, listClaims} from "./helpers/admin-announcements-fixture.mjs";
+import {readFileSync} from "node:fs";
+
+test("domain exclusions are enforced before pagination and preserve users without email", async () => {
+  const h = await createPeopleFixture();
+  try {
+    await h.reset();
+    await h.db.exec(readFileSync(new URL("../supabase/migrations/20261116194901_admin_users_excluded_domains.sql", import.meta.url), "utf8"));
+    await h.db.query("update auth.users set email='AUTHOR@GMAIL.COM' where id=(select auth_user_uuid from public.utente where utente_uuid=$1)", [actor.authorId]);
+    assert.ok(!(await h.call("admin_list_users_v1", [{excludedDomains: "gmail.com"}])).items.some(u => u.id === actor.authorId));
+    assert.ok((await h.call("admin_list_users_v1", [{excludedDomains: "other.com"}])).items.some(u => u.id === actor.authorId));
+    assert.equal((await h.call("admin_get_user_v1", [actor.authorId])).id, actor.authorId);
+    await h.db.query("update auth.users set email='user@mail.gmail.com' where id=(select auth_user_uuid from public.utente where utente_uuid=$1)", [actor.authorId]);
+    assert.ok((await h.call("admin_list_users_v1", [{excludedDomains: "gmail.com"}])).items.some(u => u.id === actor.authorId));
+    await h.db.query("update auth.users set email=null where id=(select auth_user_uuid from public.utente where utente_uuid=$1)", [actor.authorId]);
+    await h.db.query("update public.utente set indirizzo_email=null where utente_uuid=$1", [actor.authorId]);
+    assert.ok((await h.call("admin_list_users_v1", [{excludedDomains: "gmail.com"}])).items.some(u => u.id === actor.authorId));
+    await assert.rejects(h.call("admin_list_users_v1", [{excludedDomains: "bad domain"}]));
+    await assert.rejects(h.call("admin_list_users_v1", [{excludedDomains: Array(51).fill("a.it").join(",")} ]));
+    await assert.rejects(h.callAs("anon", listClaims(), "select public.admin_list_users_v1('{}')"));
+    for (let n = 2000; n < 2064; n++) {
+      await h.db.query("insert into public.utente(utente_uuid,tipologia_utente,indirizzo_email,creato_il) values($1,'Utente',$2,now()+($3::text || ' seconds')::interval)", [id(n), n % 2 ? `x${n}@gmail.com` : `x${n}@other.test`, n]);
+    }
+    const first = await h.call("admin_list_users_v1", [{excludedDomains: "gmail.com"}]);
+    const second = await h.call("admin_list_users_v1", [{excludedDomains: "gmail.com", offset: 30}]);
+    assert.equal(first.items.length, 30); assert.equal(first.hasMore, true);
+    assert.ok(second.items.length > 0);
+    assert.ok([...first.items, ...second.items].every(u => !u.email?.toLowerCase().endsWith("@gmail.com")));
+    assert.equal(new Set([...first.items, ...second.items].map(u => u.id)).size, first.items.length + second.items.length);
+  } finally {await h.db.close();}
+});
+
+test("profile ranking counts public publications and exact-type followers before pagination", async () => {
+  const h = await createPeopleFixture();
+  try {
+    await h.reset();
+    const reportId = await h.report(301);
+    await h.db.query("update private.segnalazioni set stato='resolved' where admin_uuid=$1", [reportId]);
+    await h.report(301);
+    assert.equal((await h.call("admin_list_reports_v1", [{}])).items.length, 2);
+    assert.equal((await h.call("admin_list_reports_v1", [{status: "active"}])).items.length, 1);
+    await h.db.query("update public.profilo set creato_il='2026-01-01' where uuid=$1", [actor.profileId]);
+    await h.db.query("insert into public.profilo(uuid,creato_il) values($1,'2026-11-01')", [id(901)]);
+    await h.db.query("insert into public.profilo_giocatore(uuid_profilo,nome) values($1,'Nuovo')", [id(901)]);
+    for (const n of [310, 311, 312]) await h.insert(n, {status: "pubblicato"});
+    await h.db.query("update public.annuncio set gruppo_pubblicazione=$1 where uuid in ($2,$3)", [id(800), id(310), id(311)]);
+    await h.insert(313, {status: "pubblicato", private: true});
+    await h.insert(314, {status: "pubblicato", hidden: true});
+    await h.insert(315, {status: "rifiutato"});
+    await h.insert(316, {status: "pubblicato", type: "annuncio_squadra_cerca_staff"});
+    await h.db.query("insert into public.profilo_follow(uuid_profilo_follower,uuid_profilo_seguito,sottoprofilo_seguito,sottoprofilo_follower) values($1,$2,'squadra','giocatore')", [id(901), actor.profileId]);
+    let player = await h.call("admin_get_profile_v1", [actor.profileId, "giocatore"]);
+    const team = await h.call("admin_get_profile_v1", [actor.profileId, "squadra"]);
+    assert.equal(player.publicAnnouncementCount, 2); assert.equal(player.followerCount, 0);
+    assert.equal(team.publicAnnouncementCount, 1); assert.equal(team.followerCount, 1);
+    assert.equal((await h.call("admin_list_profiles_v1", [{sort: "announcements"}])).items[0].type, "giocatore");
+    assert.equal((await h.call("admin_list_profiles_v1", [{sort: "followers"}])).items[0].type, "squadra");
+    assert.equal((await h.call("admin_list_profiles_v1", [{sort: "newest", type: "giocatore"}])).items[0].profileId, id(901));
+    assert.equal((await h.call("admin_list_profiles_v1", [{sort: "oldest", type: "giocatore"}])).items[0].profileId, actor.profileId);
+    await h.call("admin_moderate_profile_v1", [actor.profileId, "giocatore", "hide", player.version, "Controllo"]);
+    player = await h.call("admin_get_profile_v1", [actor.profileId, "giocatore"]);
+    assert.equal(player.publicAnnouncementCount, 0);
+    await assert.rejects(h.call("admin_list_profiles_v1", [{sort: "invalid"}]));
+    await assert.rejects(h.callAs("authenticated", listClaims(), "select private.admin_profile_metrics_v1($1,'giocatore')", [actor.profileId]));
+    for (let n = 920; n < 952; n++) {
+      await h.db.query("insert into public.profilo(uuid) values($1)", [id(n)]);
+      await h.db.query("insert into public.profilo_giocatore(uuid_profilo) values($1)", [id(n)]);
+    }
+    const first = await h.call("admin_list_profiles_v1", [{sort: "followers"}]);
+    const second = await h.call("admin_list_profiles_v1", [{sort: "followers", offset: 30}]);
+    assert.equal(first.hasMore, true); assert.equal(new Set([...first.items, ...second.items].map(p => p.id)).size, first.items.length + second.items.length);
+  } finally {await h.db.close();}
+});
 
 test("profile migration follows creation/WhatsApp wrappers and preserves enrichment and visibility filters", async () => {
   const h = await createPeopleFixture({wrappedList: true});

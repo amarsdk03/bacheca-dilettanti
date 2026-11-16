@@ -3,6 +3,7 @@ import {createClient} from "@/lib/supabase/server";
 import {createPublicProfileLookupClient} from "@/lib/supabase/public-profile-lookup";
 import {verifyAdminContext} from "@/features/auth/server/context";
 import {searchPublicTournamentProfiles} from "@bacheca/announcements/features/profilo/server/public-team-profiles";
+
 export const dynamic = "force-dynamic";
 export async function GET(request:NextRequest) {
   const headers={"Cache-Control":"private, no-store"};

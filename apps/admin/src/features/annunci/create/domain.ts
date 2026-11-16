@@ -38,7 +38,9 @@ import {
 	textValue
 } from "./prototype-model";
 import {parseWhatsAppMessage} from "./whatsapp-parser";
-import {unresolvedWhatsAppIssues} from "./whatsapp-review";
+import {reviewSeverity, unresolvedWhatsAppIssues} from "./whatsapp-review";
+import {validPublicationDate} from "./date-defaults";
+import {prepareCreationInput} from "./input-defaults";
 
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const TEAM_SUBTYPES: Record<MockTeamType, TeamAnnouncementSubtype> = {"Cerca giocatori": "cerca-giocatore", "Cerca staff": "cerca-staff", "Cerca partite amichevoli": "cerca-partite-amichevoli", "Cerca sponsor": "cerca-sponsor"};
@@ -92,7 +94,8 @@ export function canonicalAnnouncement(type: MockProfileType, team: MockTeamType,
   if ("orari" in detail) detail.orari = rows(values, "hours").map(row => ({giorno: textValue(row, "day").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(), attivo: true, dalle: textValue(row, "from"), alle: textValue(row, "to")}));
   return {drafts, subtype: type === "squadra" ? TEAM_SUBTYPES[team] : null};
 }
-export function creationPayload(input: CreationInput): PublishAnnouncementPayload {
+export function creationPayload(raw: CreationInput): PublishAnnouncementPayload {
+  const input=prepareCreationInput(raw);
   if (input.version === 2 && input.canonical) {
     const c = input.canonical, type = input.profileType;
     const subtype = type === "squadra" ? TEAM_SUBTYPES[input.teamType] : null;
@@ -119,11 +122,13 @@ export function creationPayload(input: CreationInput): PublishAnnouncementPayloa
 
 const profileErrorKeys: Record<string, string> = {name: "name", category: "currentCategory", sports: "sports", mainRole: "mainRoles", birthYear: "birthDate", availability: "availability", gender: "gender", nationality: "nationality", professionalRole: "figures", qualificationState: "qualifications", email: "profileEmail", phone: "profilePhone", contacts: "profileEmail", startingCost: "startingCost", locations: "locations"};
 const announcementErrorKeys: Record<string, string> = {title: "title", email: "publicEmail", phone: "publicPhone", contacts: "publicEmail", contactRole: "contactRole", locations: "locations", professionalRole: "figures", servicePresentation: "content", mainRoles: "mainRoles", playerCategories: "categories", staffCategories: "categories", sports: "sports", staffTravel: "travel", requirements: "requirements", yearFrom: "yearFrom", yearTo: "yearTo", matchCategories: "opponentCategory", periodFrom: "dateFrom", periodTo: "dateTo", matchTimes: "timeFrom", matchTimeFrom: "timeFrom", matchTimeTo: "timeTo", monthlyCompensation: "compensation", sponsorSector: "sector", sponsorOffer: "offer", tournamentName: "eventName", tournamentYears: "yearFrom", tournamentTeams: "teams", tournamentCost: "cost", tournamentPrizes: "prizes", facilityCost: "hourlyCost", facilityAddress: "address", facilityHours: "hours", genericLink: "link"};
-export function validateCreation(input: CreationInput, existing?: AuthorProfile): FieldIssue[] {
+export function validateCreation(raw: CreationInput, existing?: AuthorProfile): FieldIssue[] {
+  const input=prepareCreationInput(raw);
   const issues: FieldIssue[] = [];
   const add = (path: string, message: string) => { if (!issues.some(issue => issue.path === path)) issues.push({path, severity: "error", code: "INVALID_FIELD", message, tab: path.startsWith("author.review.") ? "review" : path.startsWith("profile.") ? "profile" : /\.(?:public|contactRole|link|image)/.test(path) ? "contacts" : path.startsWith("author.") ? "author" : path === "authorized" ? "review" : "announcement"}); };
   if (!UUID.test(input.submissionId)) add("authorized", "L’invio non è inizializzato. Avvia una nuova bozza.");
   if (!input.authorized) add("authorized", "Operazione amministrativa non autorizzata.");
+  if (!validPublicationDate(input.publicationDate ?? "")) add("announcement.publicationDate", "Inserisci una data valida dal 1900 a oggi.");
   if (input.version === 2 && input.canonical) {
     const type = input.profileType, c = input.canonical;
     if (input.authorMode === "registered" && (!existing || existing.id !== input.profileId || existing.type !== type)) add("author.profileId","Seleziona un profilo attivo compatibile.");
@@ -137,9 +142,14 @@ export function validateCreation(input: CreationInput, existing?: AuthorProfile)
     if (input.provenance) {
       const source=input.provenance, extraction=parseWhatsAppMessage(source.rawText,source.messageUrl,source.manualTarget,source.context);
       if (extraction.blocked || extraction.target?.profileType!==type || type === "squadra" && extraction.target?.teamType!==input.teamType) add("author._form","Analizza il messaggio e risolvi la tipologia prima dell’invio.");
-      unresolvedWhatsAppIssues({...input,canonical:{...c,profiles,profileLocations}},extraction).forEach((issue,index)=>add("author.review."+index,issue.label+": "+issue.reason));
+      unresolvedWhatsAppIssues({...input,canonical:{...c,profiles,profileLocations}},extraction).forEach((issue,index)=>{
+        const severity=reviewSeverity(issue);
+        // Required-field errors retain priority over contextual import warnings.
+        const path=severity === "error" ? "author.review."+index : issue.path ?? "announcement.import."+index;
+        if(!issues.some(item=>item.path===path))issues.push({path,severity,code:issue.code,message:issue.label+": "+issue.reason,tab:severity === "error"?"review":issue.scope==="profile"?"profile":/public/.test(path)?"contacts":"announcement"});
+      });
     }
-    if (!issues.length) try {parsePublishPayload(creationPayload(input),input.authorMode === "registered","admin-attested");} catch(error) {add(error instanceof PublishPayloadError && error.step===2?"profile._form":"announcement._form",error instanceof Error?error.message:"Dati non validi.");}
+    if (!issues.some(issue=>issue.severity === "error")) try {parsePublishPayload(creationPayload(input),input.authorMode === "registered","admin-attested");} catch(error) {add(error instanceof PublishPayloadError && error.step===2?"profile._form":"announcement._form",error instanceof Error?error.message:"Dati non validi.");}
     return issues;
   }
   if (input.provenance?.context) {

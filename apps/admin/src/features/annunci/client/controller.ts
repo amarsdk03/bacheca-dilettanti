@@ -49,21 +49,20 @@ export function createAnnunciController(query: AnnunciUrl, result: AnnouncementL
   let state: AnnunciState = { query, draft: query.filters, searchError: null, list: { pending: false, result }, preview: closedPreview, canPrevious: false, moderation: null, exporting: { pending: false, result: null } };
   const initial = state, listeners = new Set<() => void>();
   let listAbort: AbortController | undefined, detailAbort: AbortController | undefined;
-  let listVersion = 0, detailVersion = 0, timer: ReturnType<typeof setTimeout> | undefined;
+  let listVersion = 0, detailVersion = 0;
   let moderationVersion = 0, moderationAbort: AbortController | undefined;
   let exportVersion = 0, exportAbort: AbortController | undefined;
   let trail: (string | null)[] = [query.cursor], trailIndex = 0;
   const update = (patch: Partial<AnnunciState>) => { state = { ...state, ...patch }; listeners.forEach((fn) => fn()); };
-  const clearTimer = () => { clearTimeout(timer); timer = undefined; };
   const closePreview = () => { detailVersion++; detailAbort?.abort(); update({ preview: closedPreview }); };
   const invalidateExport = () => { exportVersion++; exportAbort?.abort(); update({ exporting: { pending: false, result: null } }); };
-  const cancel = () => { clearTimer(); listVersion++; detailVersion++; moderationVersion++; exportVersion++; listAbort?.abort(); detailAbort?.abort(); moderationAbort?.abort(); exportAbort?.abort(); };
+  const cancel = () => { listVersion++; detailVersion++; moderationVersion++; exportVersion++; listAbort?.abort(); detailAbort?.abort(); moderationAbort?.abort(); exportAbort?.abort(); };
   const denied = () => { cancel(); update({ list: { pending: false, result: null }, preview: closedPreview, moderation: null, exporting: { pending: false, result: null } }); deps.denied(); };
   const sync = (search: string, force = false, keepPreview = false, draftSearch?: string) => {
     const next = parseAnnunciUrl(search);
     if (!force && next.key === state.query.key) return;
     invalidateExport();
-    clearTimer(); listVersion++; listAbort?.abort(); if (!keepPreview) closePreview();
+    listVersion++; listAbort?.abort(); if (!keepPreview) closePreview();
     if (JSON.stringify(next.filters) !== JSON.stringify(state.query.filters)) { trail = [next.cursor]; trailIndex = 0; }
     else {
       const index = trail.indexOf(next.cursor);
@@ -79,17 +78,13 @@ export function createAnnunciController(query: AnnunciUrl, result: AnnouncementL
     }).catch(() => { if (version === listVersion && !abort.signal.aborted) update({ list: { pending: false, result: unavailable() } }); });
   };
   const navigate = (filters: AnnouncementFilters, cursor: string | null, mode: "push" | "replace", draftSearch?: string) => {
-    clearTimer();
     const href = annunciHref(filters, cursor); deps.navigate(href, mode);
     if (parseAnnunciUrl(href.slice("/annunci".length)).key === state.query.key) {
       closePreview(); update({ draft: { ...normalizeFilters(filters), ...(draftSearch === undefined ? {} : { search: draftSearch }) }, searchError: null });
     } else sync(href.slice("/annunci".length), false, false, draftSearch);
   };
-  const apply = (mode: "push" | "replace", preserveSearch = false) => {
-    clearTimer();
-    // The query is canonical; the controlled input must retain a trailing space
-    // when the debounce fires between two words of a slowly typed search.
-    try { navigate(normalizeFilters(state.draft), null, mode, preserveSearch ? state.draft.search : undefined); }
+  const apply = (mode: "push" | "replace") => {
+    try { navigate(normalizeFilters(state.draft), null, mode); }
     catch { update({ searchError: "La ricerca può contenere al massimo 200 caratteri." }); }
   };
   const openPreview = (id: string) => {
@@ -103,7 +98,7 @@ export function createAnnunciController(query: AnnunciUrl, result: AnnouncementL
   };
   const beginModeration = (id: string, operation: ModerationOperation) => {
     if (state.moderation?.phase === "submitting" || state.exporting.pending) return;
-    clearTimer(); moderationVersion++; moderationAbort?.abort();
+    moderationVersion++; moderationAbort?.abort();
     const version = moderationVersion, abort = new AbortController(); moderationAbort = abort;
     const current = { id, operation, phase: "loading" as const, detail: null, reason: "", error: null, result: null };
     update({ moderation: current });
@@ -140,7 +135,7 @@ export function createAnnunciController(query: AnnunciUrl, result: AnnouncementL
   const exportPage = async () => {
     const current = state.list.result;
     if (!canExportAnnouncements(state) || current?.status !== "ok" || !deps.export || !deps.download) return;
-    clearTimer(); exportVersion++; const version = exportVersion;
+    exportVersion++; const version = exportVersion;
     const abort = new AbortController(); exportAbort = abort;
     const items = current.page.items;
     update({ exporting: { pending: true, result: null } });
@@ -165,12 +160,15 @@ export function createAnnunciController(query: AnnunciUrl, result: AnnouncementL
     retryPreview: () => { if (state.preview.id) openPreview(state.preview.id); },
     setSearch(search: string) {
       invalidateExport();
-      clearTimer(); const invalid = [...search.trim()].length > 200;
+      const invalid = [...search.trim()].length > 200;
       update({ draft: { ...state.draft, search }, searchError: invalid ? "La ricerca può contenere al massimo 200 caratteri." : null });
-      if (!invalid) timer = setTimeout(() => apply("replace", true), 350);
     },
     submitSearch: () => apply("replace"),
-    setFilter(patch: Partial<AnnouncementFilters>) { update({ draft: { ...state.draft, ...patch } }); apply("push"); },
+    setFilter(patch: Partial<AnnouncementFilters>) {
+      const search = state.draft.search;
+      navigate(normalizeFilters({...state.query.filters, ...patch}), null, "push", search);
+      update({searchError: [...search.trim()].length > 200 ? "La ricerca può contenere al massimo 200 caratteri." : null});
+    },
     reset: () => navigate({ search: "", status: null, type: null, visibility: "all", trash: "exclude" }, null, "push"),
     first: () => navigate(state.query.filters, null, "push"),
     previous() { if (trailIndex > 0) navigate(state.query.filters, trail[trailIndex - 1], "push"); },

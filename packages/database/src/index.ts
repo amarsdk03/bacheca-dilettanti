@@ -1781,6 +1781,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_distribution_read_v1: { Args: { p_operation: string; p_query?: Json }; Returns: Json }
+      admin_distribution_write_v1: { Args: { p_operation: string; p_input: Json }; Returns: Json }
       admin_list_users_v1: {Args: {p_query?: Json}; Returns: Json}
       admin_get_user_v1: {Args: {p_id: string}; Returns: Json}
       admin_list_profiles_v1: {Args: {p_query?: Json}; Returns: Json}
@@ -1860,6 +1862,9 @@ export type Database = {
       admin_get_announcement_whatsapp_v1: { Args: { p_id: string }; Returns: Json }
       admin_get_creation_capabilities_v1: { Args: Record<PropertyKey, never>; Returns: boolean }
       admin_create_announcement_v2: { Args: { p_submission: string; p_payload: Json }; Returns: Json }
+      admin_create_announcement_v3: { Args: { p_submission: string; p_payload: Json }; Returns: Json }
+      admin_create_announcement_v4: { Args: { p_submission: string; p_payload: Json }; Returns: Json }
+      admin_resolve_whatsapp_import_channel_v1: { Args: { p_region: string }; Returns: string }
       admin_save_announcement_whatsapp_v1: { Args: { p_id: string; p_text: string; p_url: string; p_template_version: string; p_version: number; p_fingerprint: string }; Returns: Json }
       admin_create_announcement_v1: {
         Args: { p_submission: string; p_payload: Json }

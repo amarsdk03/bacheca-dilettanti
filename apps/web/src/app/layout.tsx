@@ -48,6 +48,38 @@ export default function RootLayout(
 			lang="it"
 			className={`${interFont.variable} ${oswaldFont.variable} ${latoFont.variable} font-sans`}
 		>
+			<head>
+				<Script id="google-tag-init" strategy="beforeInteractive">
+					{`
+						window.dataLayer = window.dataLayer || [];
+						function gtag(){dataLayer.push(arguments);}
+						gtag('consent', 'default', {
+							analytics_storage: 'denied',
+							ad_storage: 'denied',
+							ad_user_data: 'denied',
+							ad_personalization: 'denied',
+							wait_for_update: 500
+						});
+						gtag('js', new Date());
+					`}
+				</Script>
+				<Script
+					type="text/javascript"
+					src="https://app.legalblink.it/api/scripts/cmp/loader.js"
+					data-license-id="6a96dd034295910029c0bcd2"
+					data-blocking-mode="auto"
+					data-consent-mode="true"
+					data-tcf-enabled="true"
+					strategy="beforeInteractive"
+					style={{"height": "50vh"}}
+				/>
+				<Script
+					id="google-tag-manager"
+					async
+					src="https://www.googletagmanager.com/gtm.js?id=GTM-56N8B5LQ"
+					strategy="beforeInteractive"
+				/>
+			</head>
 			<body className="min-h-full flex flex-col">
 				<JsonLd data={websiteStructuredData} />
 				<TooltipProvider>
@@ -59,16 +91,6 @@ export default function RootLayout(
 				</Suspense>
 				<Analytics />
 				<SpeedInsights />
-				<Script
-					type="text/javascript"
-					src="https://app.legalblink.it/api/scripts/cmp/loader.js"
-					data-license-id="6a96dd034295910029c0bcd2"
-					data-blocking-mode="auto"
-					data-consent-mode="true"
-					data-tcf-enabled="true"
-					strategy="afterInteractive"
-					style={{"height": "50vh"}}
-				/>
 			</body>
 		</html>
 	);

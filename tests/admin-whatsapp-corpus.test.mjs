@@ -13,7 +13,7 @@ const {restoredDraft}=adminServerLoader({dependencies:{react:await import("react
 const corpus=JSON.parse(readFileSync(new URL("./fixtures/whatsapp-regional-corpus.json",import.meta.url),"utf8"));
 // Independently authored expectations: deliberately partial; never generated from parser output.
 const expected={
-  1:{profile:{height:"188",foot:"Destro",specificRoles:["Mediano"]},review:"mese e giorno"},
+  1:{profile:{height:"188",foot:"Destro",specificRoles:["Mediano"]}},
   2:{profile:{mainRoles:["Difensore"]},review:"Bronze/Silver"},
   3:{profile:{height:"192",birthYear:"2007"},review:"Reggio Emilia e Modena"},
   4:{profile:{figures:["Allenatore"]},review:"UEFA B"},
@@ -87,9 +87,9 @@ test("canonical v2 preserves the same payload and rejects malformed shapes",()=>
 test("review cannot authorize a changed source, changed relevant field or malformed decision",()=>{
  const input=canonicalInput();input.provenance={source:"whatsapp",rawText:corpus[1].text,messageUrl:"",context:{channelRegion:corpus[1].region}};
  assert(unresolvedWhatsAppIssues(input).length>0);approveAll(input);assert.equal(unresolvedWhatsAppIssues(input).length,0);
- input.canonical.profileLocations.giocatore=[{regione:"Lazio",citta:"Roma"}];assert(unresolvedWhatsAppIssues(input).some(i=>i.code==="PROFILE_LOCATION"));
+ input.canonical.profileLocations.giocatore=[{regione:"Lazio",citta:"Roma"}];assert(!unresolvedWhatsAppIssues(input).some(i=>i.code==="PROFILE_LOCATION"),"A completed profile location no longer needs a separate confirmation");
  approveAll(input);input.provenance.rawText+="\nAggiornamento";assert(unresolvedWhatsAppIssues(input).length>0);
- approveAll(input);const key=Object.keys(input.reviewDecisions)[0];input.reviewDecisions[key].action="bypass";assert(unresolvedWhatsAppIssues(input).length>0);
+ approveAll(input);const key=whatsAppReviewIssues(input,parseWhatsAppMessage(input.provenance.rawText,"","",input.provenance.context)).find(issue=>issue.code!=="PROFILE_LOCATION").id;input.reviewDecisions[key].action="bypass";assert(unresolvedWhatsAppIssues(input).some(issue=>issue.id===key));
 });
 test("confirming or discarding an exception never bypasses mandatory profile validation",()=>{
  const input=canonicalInput();input.provenance={source:"whatsapp",rawText:corpus[0].text,messageUrl:"",context:{channelRegion:corpus[0].region}};

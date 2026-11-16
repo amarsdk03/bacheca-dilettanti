@@ -480,6 +480,7 @@ export async function getProfileDashboardData(
 			id: `${value}:${row.id}`,
 			profileId: baseProfile.uuid,
 			adminHidden: stateForProfile(baseProfile.profile_type_state, value).hidden,
+			officialVerified: stateForProfile(baseProfile.profile_type_state, value).verified,
 			type: value,
 			isPrimary: baseProfile.tipologia_principale === value,
 			imageUrl: resolvedProfileImageUrl(profileImages, baseProfile.uuid, value, mainImageUrl),

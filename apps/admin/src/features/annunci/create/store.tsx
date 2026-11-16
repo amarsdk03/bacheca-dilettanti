@@ -4,8 +4,9 @@ import {createContext, type ReactNode, type SetStateAction, useCallback, useCont
 import {createStore, useStore} from "zustand";
 import {createJSONStorage, persist} from "zustand/middleware";
 import type {MockAuthorMode, MockProfileType, MockTeamType, MockValues} from "./prototype-model";
-import {isCanonicalDraft} from "./canonical-shape";
 import {REGIONS} from "./prototype-model";
+import {isCanonicalDraft} from "./canonical-shape";
+import {validPublicationDate} from "./date-defaults";
 import type {WhatsAppExtraction, WhatsAppProvenance} from "./whatsapp-parser";
 import type {
 	AnnouncementAuthor,
@@ -60,7 +61,7 @@ export function restoredDraft(value: unknown): Partial<DraftData> {
     const imageMeta = typeof meta.name === "string" && typeof meta.size === "number" && meta.size > 0 && typeof meta.type === "string" ? {name: meta.name, size: meta.size, type: meta.type} : undefined;
     const context = records(source.context);
     const provenance = source.source === "whatsapp" && typeof source.rawText === "string" && source.rawText.length <= 50_000 && typeof source.messageUrl === "string" ? {source: "whatsapp" as const, rawText: source.rawText, messageUrl: source.messageUrl,
-      ...(REGIONS.includes(String(context.channelRegion)) ? {context: {channelRegion: String(context.channelRegion), ...(REGIONS.includes(String(context.resolvedRegion)) ? {resolvedRegion: String(context.resolvedRegion)} : {}), ...(Array.isArray(context.resolvedRegions) && context.resolvedRegions.every(v=>REGIONS.includes(String(v))) ? {resolvedRegions:context.resolvedRegions as string[]} : {})}} : {}),
+      ...(REGIONS.includes(String(context.channelRegion)) ? {context: {channelRegion: String(context.channelRegion), ...(typeof context.analyzedOn === "string" && context.analyzedOn && validPublicationDate(context.analyzedOn) ? {analyzedOn:context.analyzedOn} : {}), ...(REGIONS.includes(String(context.resolvedRegion)) ? {resolvedRegion: String(context.resolvedRegion)} : {}), ...(Array.isArray(context.resolvedRegions) && context.resolvedRegions.every(v=>REGIONS.includes(String(v))) ? {resolvedRegions:context.resolvedRegions as string[]} : {})}} : {}),
       ...(typeof source.manualTarget === "string" ? {manualTarget: source.manualTarget} : {})} : undefined;
     const canonical = isCanonicalDraft(draft.canonical) ? draft.canonical : undefined;
     const reviewDecisions = Object.fromEntries(Object.entries(records(draft.reviewDecisions)).filter(([,v])=>{const d=records(v);return ["confirmed","corrected","text","discarded"].includes(String(d.action)) && typeof d.binding === "string" && d.binding.length <= 200_000;}));

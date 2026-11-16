@@ -3,7 +3,15 @@
 import {useEffect, useRef, useState, useSyncExternalStore} from "react";
 import {usePathname} from "next/navigation";
 import {Button} from "@/components/ui/button";
-import {Dialog, DialogContent, DialogDescription, DialogDismissButton, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogDismissButton,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle
+} from "@/components/ui/dialog";
 import {useIsMobile} from "@/hooks/use-mobile";
 import {createMobileNoticeStore} from "../mobile-notice";
 

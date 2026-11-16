@@ -10,7 +10,7 @@ import {createSessionFixture, FIXTURE_EMAIL, FIXTURE_PASSWORD} from "./session-f
 import {launchAnnunciBrowser} from "./annunci-cdp.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const fixture = await createSessionFixture({people: true}), workspace = prepareWorkspace(root), env = isolatedEnv(process.env, fixture.origin);
+const fixture = await createSessionFixture({people: true, annunci: true}), workspace = prepareWorkspace(root), env = isolatedEnv(process.env, fixture.origin);
 env.SUPABASE_SECRET_KEY = fixture.secretKey;
 const toolDir = join(root, "node_modules/.cache/dashboard-browser-tools/node_modules/chrome-devtools-mcp"), tool = join(toolDir, "build/src/bin/chrome-devtools.js");
 const chrome = ["C:/Program Files/Google/Chrome/Application/chrome.exe", "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"].find(existsSync);
@@ -18,7 +18,7 @@ const session = randomUUID(), log = createWriteStream(join(workspace.evidence, "
 const cli = async args => {const out = await command(process.execPath, [tool, ...args, "--sessionId", session], {cwd: workspace.run, env, timeout: 90000}); if (/^Error:/m.test(out)) throw new Error(out); return out;};
 const probe = createServer(); await new Promise(r => probe.listen(0, "127.0.0.1", r)); const port = probe.address().port; await new Promise(r => probe.close(r));
 const origin = "http://127.0.0.1:" + port;
-let next, browser, started = false, failure;
+let next, browser, pageId, started = false, failure;
 const record = name => {checks.push(name); console.log("PASS " + name);};
 try {
   console.log("Isolated people checks: " + workspace.run);
@@ -34,7 +34,7 @@ try {
   record("anonymous-access-and-private-cache");
   browser = await launchAnnunciBrowser({toolDir, chrome, workspace, env});
   await cli(["start", "--browserUrl", browser.browserUrl, "--workspace", workspace.run, "--usageStatistics", "false", "--fileNavigations", "false"]); started = true;
-  const created = await cli(["new_page", origin + "/accesso", "--timeout", "90000"]), pageId = /(?:^|\n)(\d+):[^\n]*\[selected\]/m.exec(created)?.[1]; assert(pageId, created);
+  const created = await cli(["new_page", origin + "/accesso", "--timeout", "90000"]); pageId = /(?:^|\n)(\d+):[^\n]*\[selected\]/m.exec(created)?.[1]; assert(pageId, created);
   const evaluate = async script => {const out = await cli(["evaluate_script", script, "--pageId", pageId]); const m = /```json\s*([\s\S]*?)```/.exec(out); assert(m, out); return JSON.parse(m[1]);};
   const wait = async script => {for (let i = 0; i < 40; i++) {try {if (await evaluate(script)) return; if (await evaluate("() => document.body.textContent.includes('Operazione non verificabile')")) throw new Error("Browser received an unavailable response");} catch (e) {if (!/Execution context was destroyed|Cannot find context/.test(e.message)) throw e;} await new Promise(r => setTimeout(r, 150));} throw new Error("WAIT: " + script);};
   const uid = async label => {const snapshot = await cli(["take_snapshot", pageId]); const line = snapshot.split("\n").find(v => v.includes(label)); const id = /uid=([\w-]+)/.exec(line ?? "")?.[1]; assert(id, label + "\n" + snapshot); return id;};
@@ -61,6 +61,7 @@ try {
   await wait("() => !document.querySelector('[data-slot=sheet-content]')");
   record("users-real-list-detail-and-keyboard-close");
   await cli(["fill",pageId,await uid('textbox "Cerca utente"'),"author-secret@example.test"]);
+  assert(await evaluate("() => !location.search.includes('search=')"));
   await click('button "Filtra"');
   await wait("() => location.search.includes('search=') && document.querySelectorAll('main tbody tr').length===1");
   await cli(["navigate_page",pageId,"--type","reload"]);
@@ -70,7 +71,8 @@ try {
   await cli(["navigate_page",pageId,"--url",origin+"/profili?type=giocatore","--timeout","90000"]);
   await wait("() => document.querySelectorAll('main tbody tr').length===1");
   assert(await evaluate("() => [...document.querySelectorAll('main button')].some(b=>b.disabled && b.textContent.includes('Crea profilo'))"));
-  await click('button "Gestisci profilo"');
+  await activate("main tbody button");
+  await click('menuitem "Info complete"');
   await wait("() => document.querySelector('[data-slot=sheet-content]')?.textContent.includes('Verifica profilo')");
   await click('button "Verifica profilo"');
   await wait("() => !!document.querySelector('[data-slot=alert-dialog-content]')");
@@ -88,6 +90,38 @@ try {
   await cli(["press_key",pageId,"Escape"]); await wait("() => !document.querySelector('[data-slot=sheet-content]')");
   await click('button "Passa al tema chiaro"');
   await cli(["take_screenshot",pageId,"--filePath",join(workspace.evidence,"profiles-light.png")]);
+  await cli(["fill",pageId,await uid('textbox "Cerca profilo"'),"pending text"]);
+  await activate("#profiles-sort"); await click('option "Pi\u00f9 follower"');
+  await wait("() => location.search.includes('sort=followers') && document.querySelector('#profiles-search')?.value==='pending text'");
+  assert(await evaluate("() => !location.search.includes('search=') && document.querySelectorAll('main tbody tr').length===1"));
+  await cli(["take_screenshot",pageId,"--filePath",join(workspace.evidence,"filters-profiles.png")]);
+  record("immediate-profile-sort-preserves-pending-search");
+  await cli(["navigate_page",pageId,"--url",origin+"/profili?user=eeeeeeee-eeee-4eee-8eee-000000000102","--timeout","90000"]);
+  await wait("() => document.querySelector('#profiles-search')?.value==='eeeeeeee-eeee-4eee-8eee-000000000102' && document.querySelectorAll('main tbody tr').length===8");
+  assert(await evaluate("() => !document.body.textContent.includes('Profili dell')"));
+  await cli(["navigate_page",pageId,"--url",origin+"/segnalazioni","--timeout","90000"]);
+  await wait("() => document.body.textContent.includes('Nessuna segnalazione')");
+  assert(await evaluate("() => document.querySelector('#reports-state')?.textContent.includes('Tutte')"));
+  await activate("#reports-state"); await click('option "Aperte e in lavorazione"');
+  await wait("() => location.search.includes('status=active')");
+  await cli(["navigate_page",pageId,"--url",origin+"/codici-invito","--timeout","90000"]);
+  await wait("() => !!document.querySelector('#codes-pending') && document.querySelector('main [aria-busy]')?.getAttribute('aria-busy')==='false'");
+  await activate("#codes-pending"); await click('option "Da valutare"');
+  await wait("() => location.search.includes('pending=true')");
+  await cli(["navigate_page",pageId,"--type","reload"]);
+  await wait("() => document.querySelector('#codes-pending')?.textContent.includes('Da valutare')");
+  record("reports-default-and-invitations-shareable-filters");
+  await cli(["navigate_page",pageId,"--url",origin+"/annunci","--timeout","90000"]);
+  await wait("() => !!document.querySelector('#annunci-search') && document.querySelectorAll('main tbody tr').length>0");
+  await cli(["fill",pageId,await uid('textbox "Cerca annuncio"'),"pending announcement"]);
+  assert(await evaluate("() => !location.search.includes('search=')"));
+  await activate("main tbody button"); await click('menuitem "Info complete"');
+  await wait("() => document.querySelector('[data-slot=sheet-content]')?.textContent.includes('Azioni principali')");
+  assert(await evaluate("() => document.querySelector('[data-slot=sheet-content] .admin-detail-section h3')?.textContent==='Azioni principali'"));
+  await cli(["press_key",pageId,"Escape"]);
+  record("announcement-manual-search-and-primary-actions");
+  await cli(["navigate_page",pageId,"--url",origin+"/profili","--timeout","90000"]);
+  await wait("() => document.querySelectorAll('main tbody tr').length===8");
   await cli(["emulate",pageId,"--viewport","390x844x1"]);
   assert(await evaluate("() => !document.body.textContent.includes('Meglio su uno schermo più grande')"));
   assert(await evaluate("() => document.documentElement.scrollWidth<=innerWidth+1"));
@@ -98,7 +132,7 @@ try {
   writeFileSync(join(workspace.evidence, "console.txt"), messages);
   assert(!/hydration failed|hydration mismatch|did not match|uncaught|recoverable error|nativeButton/i.test(messages), messages);
   record("keyboard-focus-and-no-hydration-errors");
-} catch (error) {failure = error.message; throw error;}
+} catch (error) {failure = error.message; if (started && pageId) {try {writeFileSync(join(workspace.evidence, "failure-snapshot.txt"), await cli(["take_snapshot", pageId])); await cli(["take_screenshot", pageId, "--filePath", join(workspace.evidence, "failure.png")]);} catch {}} throw error;}
 finally {
   const cleanup = [];
   for (const action of [() => started ? cli(["stop"]) : Promise.resolve(), () => browser?.close(), () => stopChild(next), () => fixture.close()]) {try {await action();} catch (e) {cleanup.push(e.message);}}

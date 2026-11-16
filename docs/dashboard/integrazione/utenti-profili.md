@@ -6,6 +6,9 @@ Applicare le migrazioni precedenti (incluse gestione segnalazioni/inviti e corre
 
 1. `20261115112211_profile_type_verification_and_holds.sql`
 2. `20261115112325_admin_users_and_profiles.sql`
+3. `20261116120439_admin_directory_sort_and_filter_defaults.sql`
+
+Se le prime due sono già applicate, eseguire **solo la terza**, prima di distribuire questo aggiornamento Admin. La terza aggiunge ordinamento e metriche dei profili e imposta Tutte come stato iniziale delle segnalazioni, senza ripetere il reset delle verifiche.
 
 Distribuire **prima Web, poi Admin**. Le azioni di oscuramento vanno utilizzate solo dopo aver distribuito Web: anche le letture server con chiave tecnica devono applicare il nuovo vincolo. Le migrazioni sono preparate e verificate localmente, non applicate automaticamente a progetti remoti.
 
@@ -19,7 +22,11 @@ La prima migrazione azzera intenzionalmente tutte le verifiche esistenti, inclus
 
 `/utenti` elenca gli account `Utente` di `public.utente`, anche senza registrazione completa o senza profili. Non include record Auth privi del corrispondente account applicativo. Filtri: registrazione (`registrato_il`), conferma email (Auth), email corrente/telefono/UUID e date di creazione inclusive in Europe/Rome. Il dettaglio è in sola consultazione: contatti, consensi, date e profili associati. Nessuna modifica a identità, consensi, ruoli o credenziali.
 
-`/profili` identifica ogni profilo con UUID del contenitore e tipologia. Include le otto tipologie reali degli utenti ordinari e quelle senza account, come gli autori di annunci importati. Non crea righe per contenitori senza sottoprofili. Ricerca per nome/email/UUID; filtri per tipologia, regione (anche Estero), verifica, visibilità e presenza di account. Il parametro `user` restringe ai profili dell’utente collegato. I dati specifici sono consultabili nel pannello laterale. “Crea profilo” è disabilitato; la pagina di creazione è fuori perimetro.
+`/profili` identifica ogni profilo con UUID del contenitore e tipologia. Include le otto tipologie reali degli utenti ordinari e quelle senza account, come gli autori di annunci importati. Non crea righe per contenitori senza sottoprofili. Ricerca per nome/email/UUID; filtri per tipologia, regione (anche Estero), verifica, visibilità e presenza di account. “Apri profili” usa `search=UUID_utente`: il vincolo compare nel campo di ricerca. I vecchi link con `user` popolano lo stesso campo; combinazioni contraddittorie con una ricerca diversa vengono rifiutate. I dati specifici sono consultabili nel pannello laterale. “Crea profilo” è disabilitato; la pagina di creazione è fuori perimetro.
+
+Ordinamento `sort`: `newest` (predefinito), `oldest`, `announcements`, `followers`. Data usa `profilo.creato_il`, come prima. Ordinamento e paginazione avvengono nel database con spareggio stabile per data, UUID e tipologia. `publicAnnouncementCount` conta le pubblicazioni della specifica tipologia attualmente pubbliche secondo i vincoli del sito, deduplicando `gruppo_pubblicazione`; `followerCount` conta le relazioni indirizzate a quel sottoprofilo. Entrambi appaiono all’inizio del dettaglio. `announcementCount` conserva il significato precedente di annunci collegati non cestinati.
+
+Tutte le directory applicano subito select/date e sincronizzano l’URL. Il testo di ricerca si applica soltanto con Filtra/Invio: cambiare un select conserva il testo in bozza ma usa la ricerca già confermata. Azzera ripristina tutti i filtri e la prima pagina. Codici invito espone `search`, `pending=true` e `offset` nell’URL; Segnalazioni senza stato esplicito mostra Tutte, mentre il collegamento dalla home mantiene `status=active`.
 
 Entrambe usano filtri/paginazione nell’URL, trenta righe per pagina e richieste private/no-store. API: `/api/utenti`, `/api/utenti/[id]`, `/api/profili`, `/api/profili/[id]?type=...`. Le proiezioni non restituiscono token, password o metadata Auth arbitrari.
 

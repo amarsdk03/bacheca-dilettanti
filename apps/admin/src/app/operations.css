@@ -1,10 +1,13 @@
 [data-admin-scope] {
   & .admin-menu-moderation { display: flex; gap: 4px; }
   & .admin-menu-moderation [data-slot="dropdown-menu-item"] { flex: 1; justify-content: center; padding: 8px; background: var(--background); }
-  & .admin-menu-moderation [data-moderation="approve"] { color: var(--admin-success-foreground); }
+  & .admin-menu-moderation :is([data-moderation="approve"], [data-moderation="verify"]) { color: var(--admin-success-foreground); }
+  & .admin-menu-moderation [data-moderation="unverify"] { color: var(--destructive); }
   & .admin-menu-moderation [data-moderation="hide"], & .admin-menu-moderation [data-moderation="show"] { color: var(--admin-warning-foreground); }
-  & .admin-menu-moderation [data-moderation="approve"]:is(:hover, :focus-visible) { background: var(--admin-success); }
-  & .admin-menu-moderation [data-moderation="hide"]:is(:hover, :focus-visible), & .admin-menu-moderation [data-moderation="show"]:is(:hover, :focus-visible) { background: var(--admin-warning); }
+  & .admin-menu-moderation :is([data-moderation="approve"], [data-moderation="verify"]):is(:hover, :focus-visible, [data-highlighted]) { background: var(--admin-success); color: var(--admin-success-foreground); }
+  & .admin-menu-moderation :is([data-moderation="hide"], [data-moderation="show"]):is(:hover, :focus-visible, [data-highlighted]) { background: var(--admin-warning); color: var(--admin-warning-foreground); }
+  & .admin-menu-moderation [data-moderation] svg { color: inherit; }
+  & .admin-menu-moderation [data-moderation="unverify"]:is(:hover, :focus-visible, [data-highlighted]) { background: color-mix(in srgb, var(--destructive) 15%, var(--background)); color: var(--destructive); }
   & .admin-menu-moderation [data-moderation="reject"]:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--destructive) 15%, var(--background)); }
   & .admin-menu-moderation [data-slot="dropdown-menu-item"]:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
   & .admin-create-tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
@@ -44,7 +47,7 @@
   & .admin-announcement-title { margin-bottom: 4px; font-weight: 500; }
   & .admin-announcement-type { margin-top: 4px; color: var(--muted-foreground); font-size: 12px; line-height: 16px; }
   & .admin-annunci-table [data-slot="table-cell"]:first-child .admin-technical-text { margin-top: 4px; }
-  & .admin-row-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 4px; }
+  & .admin-row-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; }
   & .admin-badge-list { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
   & .admin-badge-row { display: flex; min-width: 0; flex-wrap: wrap; gap: 8px; }
   & .admin-technical-text { font-family: var(--font-mono); color: var(--admin-text-tertiary); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; }
@@ -307,9 +310,11 @@
   & .admin-invitation-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: center; }
   & .admin-community-table { min-width: 860px; }
   & .admin-community-table :is(th, td) { text-align: left; vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
+  & .admin-community-table th { vertical-align: middle; }
   & .admin-community-table th { min-width: 110px; }
   & .admin-community-table td { padding-block: 16px; max-width: 320px; }
   & .admin-community-table th:nth-child(2) { min-width: 210px; }
+  & :is(.admin-annunci-table, .admin-community-table, .admin-audit-workspace .admin-audit-summary-table[data-has-details="true"]) :is(th, td):last-child { text-align: center; }
   & .admin-report-reason { max-width: 32ch; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   & .admin-code-copy { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   & .admin-code-copy code { white-space: nowrap; font-size: 12px; }
@@ -354,4 +359,40 @@
     & .admin-community-filters { grid-template-columns: minmax(0, 1fr); }
     & .admin-community-workspace .admin-filters-card { --card-spacing: 18px; }
   }
+}
+
+/* Shared directory filter layout: a full search row, followed by controls. */
+[data-admin-scope] {
+  & .admin-standard-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: end; }
+  & .admin-filter-search-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; grid-column: 1 / -1; min-width: 0; }
+  & .admin-filter-search-row > [data-slot="field"] { flex: 1 1 280px; min-width: 0; }
+  & .admin-filter-actions { flex-shrink: 0; justify-content: flex-end; align-self: end; }
+  & .admin-filter-error { color: var(--destructive); font-size: 13px; }
+}
+@media (min-width: 768px) {
+  [data-admin-scope] {
+    & .admin-standard-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    & .admin-invitation-filters.admin-standard-filters { grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr) auto; }
+  }
+}
+@media (min-width: 1024px) {
+  [data-admin-scope] {
+    & .admin-standard-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    & .admin-profiles-filters.admin-standard-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    & .admin-invitation-filters.admin-standard-filters { grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr) auto; }
+    & .admin-audit-filters.admin-standard-filters > [data-slot="field"] { grid-column: auto; }
+  }
+}
+
+[data-admin-scope] {
+  & .admin-distribution-dialog[data-slot="dialog-content"] { width: min(760px, calc(100vw - 32px)); max-width: 760px; }
+  & .admin-distribution-dialog [data-slot="textarea"] { min-height: 260px; resize: vertical; }
+  & .admin-distribution-destinations { display: flex; flex-direction: column; gap: 10px; }
+  & .admin-distribution-destinations > div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  & .admin-distribution-status-note { margin-top: 6px; }
+  & .admin-distribution-history { margin-top: 16px; font-size: 13px; }
+  & .admin-distribution-history > details { margin-top: 12px; padding: 12px; background: var(--muted); border-radius: 6px; }
+  & .admin-distribution-message { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 12px; }
+  & .admin-distribution-workspace [data-slot="table-head"]:first-child { min-width: 64px; }
+  & .admin-distribution-workspace [data-slot="table-cell"] [data-slot="checkbox"] { margin-block: 4px; }
 }

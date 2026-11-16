@@ -36,7 +36,7 @@ export function parseAuditPage(value: unknown, query: AuditQuery): AuditPage {
 export function parseAuditDetail(value: unknown, id: string): AuditDetail {
   const summary = parseAuditSummary(value);
   if (!record(value) || summary.id !== id || !canonicalUuid(value.correlationId) || !nullableId(value.resourceId) ||
-    !["session", "announcement", "announcement_export", "report", "invitation", "profile"].includes(value.resourceType as string) ||
+    !["session", "announcement", "announcement_export", "report", "invitation", "profile", "distribution", "distribution_channel"].includes(value.resourceType as string) ||
     !(value.reason === null || typeof value.reason === "string" && [...value.reason].length <= 1000) ||
     !(value.failureCode === null || AUDIT_FAILURE_CODES.includes(value.failureCode as never)) || !record(value.changes)) fail();
   const changes: AuditDetail["changes"] = {};

@@ -64,6 +64,7 @@ import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {Progress, ProgressLabel, ProgressValue} from "@/components/ui/progress";
 import GradientBackground from "@/components/styling/GradientBackground";
 import ProfileSectionNavigation from "@/components/navigation/ProfileSectionNavigation";
+import {useProfileDashboardSection} from "@/features/profilo/useProfileDashboardSection";
 import {CONTACT_EMAIL} from "@/const/contactConstants";
 import {announcementOption} from "@/features/annunci/announcement-model";
 import {requestCurrentUserPasswordReset, signOut} from "@/features/auth/server/actions";
@@ -82,6 +83,7 @@ import ProfilePngIcon, {getProfileAccent} from "@/features/profilo/ProfilePngIco
 import {INITIAL_AUTH_STATE, type ViewerDTO} from "@/features/auth/types";
 import ProfileEditorDialog from "@/features/profilo/ProfileEditorDialog";
 import ProfileImageEditor from "@/features/profilo/ProfileImageEditor";
+import {OfficialVerificationIcon} from "@/features/profilo/ProfileVerificationStatus";
 import {
 	removeAnnouncement,
 	removeProfile,
@@ -204,7 +206,17 @@ const FAQ_GROUPS = [
 			{
 				value: "announcement-review",
 				question: "Cosa succede dopo aver inviato un annuncio?",
-				answer: "L’annuncio viene inviato gratuitamente in revisione. Puoi controllarne lo stato nella sezione I tuoi annunci. Comparirà nella bacheca pubblica dopo l’approvazione.",
+				answer: "L’annuncio viene inviato gratuitamente in revisione. Nella sezione I tuoi annunci trovi lo stato e le eventuali note di moderazione. Comparirà nella bacheca pubblica dopo l’approvazione, purché non sia nascosto, privato, sospeso o oscurato dall’amministrazione.",
+			},
+			{
+				value: "announcement-moderation-colors",
+				question: "Cosa indicano i colori dello stato e delle note?",
+				answer: "Verde indica Pubblicato, giallo In revisione, rosso Non approvato e arancione Pagamento da completare per eventuali bozze prioritarie precedenti. Il viola identifica un annuncio oscurato dall’amministrazione e la relativa nota. L’oscuramento è distinto dalla revisione: un annuncio può risultare approvato ma essere oscurato. Leggi sempre anche l’etichetta e l’eventuale motivazione.",
+			},
+			{
+				value: "announcement-regional-publication",
+				question: "Cosa succede se scelgo più regioni di ricerca?",
+				answer: "La pubblicazione crea un annuncio separato per ciascuna regione selezionata. Prima dell’invio e nella conferma trovi un riepilogo unico con le zone di ricerca e il numero di annunci creati. Nella tua area personale puoi poi gestire i singoli annunci. La ricerca sponsor della Squadra prevede invece un solo annuncio.",
 			},
 			{
 				value: "announcement-profile-update",
@@ -234,7 +246,12 @@ const FAQ_GROUPS = [
 			{
 				value: "announcement-visibility",
 				question: "Cosa succede quando nascondo un annuncio?",
-				answer: "L’annuncio resta nella tua area personale e viene escluso dalla bacheca e dalle ricerche. Il link resta consultabile, ma i recapiti sono visibili solo agli utenti autenticati. Puoi mostrarlo nuovamente in qualsiasi momento.",
+				answer: "L’annuncio resta nella tua area personale e viene escluso dalla bacheca e dalle ricerche. Nasconderlo tu stesso non equivale all’oscuramento amministrativo: il link resta consultabile secondo le regole di accesso e i recapiti richiedono l’autenticazione. Puoi usare Mostra per renderlo nuovamente visibile se non è sospeso o oscurato; la presenza in bacheca richiede comunque l’approvazione e un annuncio non privato.",
+			},
+			{
+				value: "announcement-admin-hidden",
+				question: "Cosa significa Annuncio oscurato?",
+				answer: "L’amministrazione ha oscurato l’annuncio oppure il sottoprofilo a cui appartiene. Il comando Mostra non è disponibile e l’annuncio non compare nelle ricerche pubbliche. Consulta l’eventuale nota di moderazione; per chiarimenti contatta lo staff dalla pagina Contatti. L’oscuramento di un sottoprofilo coinvolge anche i suoi annunci.",
 			},
 		],
 	},
@@ -246,7 +263,7 @@ const FAQ_GROUPS = [
 			{
 				value: "search-filters",
 				question: "Come cerco annunci e profili adatti a me?",
-				answer: "Apri Annunci o Profili, cerca per parole chiave e seleziona una tipologia. Il pulsante Filtri apre le opzioni dedicate a quella tipologia, per esempio regione, ruolo o tipologia calcio. I filtri specifici richiedono una sola tipologia selezionata. Negli annunci Giocatore puoi filtrare anche per genere, categorie ricercate e intervallo di annate.",
+				answer: "Apri Annunci o Profili e cerca per parole chiave. Il selettore Regioni permette di combinare più regioni italiane e l’opzione Estero, anche senza scegliere una tipologia o scegliendone più di una. Senza selezioni territoriali la ricerca comprende tutte le località. Il pulsante Filtri apre le opzioni specifiche quando selezioni una sola tipologia. Negli annunci Giocatore puoi filtrare anche per genere, categorie ricercate e intervallo di annate.",
 			},
 			{
 				value: "saved-announcements",
@@ -298,7 +315,7 @@ const FAQ_GROUPS = [
 			{
 				value: "profile-verification",
 				question: "Cosa distingue Utente registrato da Profilo verificato ufficialmente?",
-				answer: "Il badge Utente registrato indica che l’indirizzo email dell’account è stato verificato. La spunta di verifica ufficiale è un riconoscimento distinto, assegnato dall’amministrazione, e non si ottiene automaticamente registrandosi o completando il profilo.",
+				answer: "Il badge Utente registrato indica che l’indirizzo email dell’account è stato verificato. La spunta blu indica invece la verifica ufficiale della singola tipologia di sottoprofilo, gestita dall’amministrazione: non si estende automaticamente agli altri sottoprofili e non si ottiene semplicemente registrandosi o completando i dati. Puoi vederla accanto alla tipologia nella sezione Il tuo profilo e nelle viste pubbliche.",
 			},
 			{
 				value: "account-removal",
@@ -340,10 +357,6 @@ interface IlTuoProfiloProps {
 	initialSection: ProfileDashboardSection;
 }
 
-function isDashboardSection(value: string | null): value is ProfileDashboardSection {
-	return DASHBOARD_ITEMS.some((item) => item.value === value);
-}
-
 function isAnnouncementFilter(value: string): value is AnnouncementFilter {
 	return value === "all" || value === "visible" || value === "hidden";
 }
@@ -360,14 +373,6 @@ function moderationLabel(value: string | null) {
 	if (value === "pubblicato") return "Pubblicato";
 	if (value === "rifiutato") return "Non approvato";
 	return value ? value.replaceAll("_", " ") : "Stato non disponibile";
-}
-
-function moderationVariant(value: string | null): "default" | "secondary" | "destructive" | "outline" {
-	if (value === "pubblicato") return "default";
-	if (value === "rifiutato") return "destructive";
-	if (value === "in_revisione") return "secondary";
-	if (value === "in_attesa_pagamento") return "outline";
-	return "outline";
 }
 
 function LogoutButton() {
@@ -524,7 +529,7 @@ function ProfileCard({
 						avatarClassName="size-12"
 					/>
 					<div className="min-w-0">
-						<CardTitle className="wrap-anywhere">{option?.label}</CardTitle>
+						<CardTitle className="flex items-center gap-1.5 wrap-anywhere"><span>{option?.label}</span><OfficialVerificationIcon officialVerified={profile.officialVerified === true} /></CardTitle>
 						{isRestrictedProfileType(profile.type) && <Badge variant="outline" className="mt-1">
                             <LockIcon /> Accesso limitato
 						</Badge>}
@@ -821,7 +826,8 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 							<Badge variant="secondary" className="profile-dashboard-type-badge">{announcement.profileType === "squadra" ? "Squadra" : announcement.type}</Badge>
 							{announcement.profileType !== "squadra" && <Badge variant="outline">{announcement.subtype}</Badge>}
 							{announcement.regionSuspended && <Badge variant="outline">Sospeso</Badge>}
-							<Badge variant={moderationVariant(announcement.moderationStatus)}>{moderationLabel(announcement.moderationStatus)}</Badge>
+							{announcement.adminHidden && <Badge variant="outline" className="profile-moderation-status" data-moderation-status="oscurato"><EyeOffIcon data-icon="inline-start" aria-hidden="true" />Annuncio oscurato</Badge>}
+							<Badge variant="outline" className="profile-moderation-status" data-moderation-status={announcement.moderationStatus ?? "unknown"}>{moderationLabel(announcement.moderationStatus)}</Badge>
 							{announcement.level === "prioritario" && <Badge variant="secondary"><StarIcon data-icon="inline-start" aria-hidden="true" /> Prioritario</Badge>}
 						</div>
 						<CardTitle className={`wrap-anywhere${announcement.title.startsWith("Ricerca ") ? " uppercase" : ""}`}>{announcement.title}</CardTitle>
@@ -832,7 +838,7 @@ function AnnouncementCard({announcement, onToggleVisibility, onRemove}: {
 				<p className="wrap-anywhere leading-6 text-muted-foreground">{announcement.description}</p>
 				{announcement.regionSuspended && <Alert><InfoIcon aria-hidden="true" /><AlertDescription>{PROFESSIONAL_REGIONS_SUSPENDED_MESSAGE}</AlertDescription></Alert>}
 				{announcement.moderationInfo && (
-					<Alert>
+					<Alert className="profile-moderation-status" data-moderation-status={announcement.adminHidden ? "oscurato" : announcement.moderationStatus ?? "unknown"}>
 						<InfoIcon aria-hidden="true" />
 						<AlertTitle>Nota di moderazione</AlertTitle>
 						<AlertDescription className="wrap-anywhere">{announcement.moderationInfo}</AlertDescription>
@@ -1128,7 +1134,7 @@ export default function IlTuoProfilo({
 	initialSection,
 }: IlTuoProfiloProps) {
 	const {mainImageUrl, hasMainImage, profiles, drafts, locations, socialLinks, announcements} = data;
-	const [section, setSection] = useState<ProfileDashboardSection>(initialSection);
+	const [section, setSection] = useProfileDashboardSection(initialSection);
 	const [editor, setEditor] = useState<ProfileEditorState | null>(null);
 
 	const handleSaveProfile = (payload: ProfileEditorSavePayload) => saveProfile(payload);
@@ -1159,7 +1165,7 @@ export default function IlTuoProfilo({
 				<Tabs
 					orientation="horizontal"
 					value={section}
-					onValueChange={(value) => isDashboardSection(value) && setSection(value)}
+					onValueChange={setSection}
 					className="min-w-0 gap-6 sm:gap-8"
 				>
 					<DashboardNavigation section={section} />

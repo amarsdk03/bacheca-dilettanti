@@ -1,10 +1,9 @@
 "use client";
 import {startTransition, useRef, useState} from "react";
 import {useRouter} from "next/navigation";
-import {BookOpenText, Check, RefreshCw, Search, Undo2} from "lucide-react";
+import {Check, Eye, RefreshCw, RotateCcw, Search, Undo2} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
-import {Checkbox} from "@/components/ui/checkbox";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Field, FieldGroup, FieldLabel} from "@/components/ui/field";
@@ -26,25 +25,30 @@ import {
 	type CommunityQuery,
 	type Invitation,
 	parseCommunityPage,
+	parseCommunityQuery,
 	parseInvitationCode,
 	parseInvitationDetail
 } from "../contracts";
 import {considerInvitationAction} from "../server/actions";
-import {communityDate, CopyCode, Failure, Pagination, useCommunityRead} from "./CommunityControls";
+import {Choice, communityDate, CopyCode, Failure, Pagination, useCommunityRead} from "./CommunityControls";
+import {useFilterDraft} from "@/features/dashboard/useFilterDraft";
+import {invitationsHref} from "../reports-url";
 
 const parsePage = (v: unknown) => parseCommunityPage(v, parseInvitationCode);
 const initialFilters = {search: "", pending: false};
 
-export function InvitationCodesWorkspace() {
+export function InvitationCodesWorkspace({initialUrl}: {initialUrl: {valid: boolean; query: CommunityQuery}}) {
 	const router = useRouter();
-	const [draft, setDraft] = useState(initialFilters), [query, setQuery] = useState<CommunityQuery>(initialFilters);
+	const query = initialUrl.query;
 	const [selected, setSelected] = useState<string | null>(null), [offset, setOffset] = useState(0);
 	const [confirm, setConfirm] = useState<Invitation | null>(null), [busy, setBusy] = useState(false), [notice, setNotice] = useState("");
 	const [failure, setFailure] = useState<CommunityFailure | null>(null);
 	const trigger = useRef<HTMLElement | null>(null), confirmTrigger = useRef<HTMLElement | null>(null),
 		heading = useRef<HTMLHeadingElement>(null), cancel = useRef<HTMLButtonElement>(null);
-	const list = useCommunityRead("invitations", query, parsePage),
+	const list = useCommunityRead("invitations", query, parsePage, initialUrl.valid ? undefined : null),
 		detail = useCommunityRead("invitations", {offset}, parseInvitationDetail, selected);
+	const filters = useFilterDraft(query, value => parseCommunityQuery("invitations", value), invitationsHref, list.refresh);
+  const draft = filters.draft;
 	const data = detail.result?.status === "ok" ? detail.result.data : null;
 	const submit = async () => {
 		if (!confirm || busy || failure) return;
@@ -69,34 +73,13 @@ export function InvitationCodesWorkspace() {
 	};
 	return <div className="admin-workspace admin-community-workspace">
 		<Card className="admin-filters-card"><CardContent>
-			<form className="admin-filter-form" onSubmit={e => {
-				e.preventDefault();
-				setQuery({...draft, offset: 0});
-				list.refresh();
-			}}><FieldGroup className="admin-invitation-filters">
-				<Field><FieldLabel htmlFor="codes-search">Cerca invitante o codice</FieldLabel><Input id="codes-search"
-				                                                                                      placeholder="Email, UUID o codice invito"
-				                                                                                      maxLength={200}
-				                                                                                      value={draft.search}
-				                                                                                      onChange={e => setDraft(v => ({
-					                                                                                      ...v,
-					                                                                                      search: e.target.value
-				                                                                                      }))}/></Field>
-				<Field orientation="horizontal" className="admin-invitation-pending"><Checkbox id="codes-pending" checked={draft.pending}
-				                                          onCheckedChange={pending => setDraft(v => ({
-					                                          ...v,
-					                                          pending: pending
-				                                          }))}/><FieldLabel htmlFor="codes-pending">Con inviti da
-					valutare</FieldLabel></Field>
-			</FieldGroup>
-				<div className="admin-action-list"><Button type="submit"><Search data-icon="inline-start"
-				                                                                 aria-hidden="true"/>Filtra</Button><Button
-					type="button" variant="outline" onClick={() => {
-					setDraft(initialFilters);
-					setQuery(initialFilters);
-					list.refresh();
-				}}>Azzera</Button></div>
-			</form>
+      <form className="admin-filter-form" onSubmit={e => {e.preventDefault(); filters.submit();}}>
+        <FieldGroup className="admin-invitation-filters admin-standard-filters">
+          <Field><FieldLabel htmlFor="codes-search">Cerca invitante o codice</FieldLabel><Input id="codes-search" placeholder="Email, UUID o codice invito" maxLength={200} value={draft.search ?? ""} onChange={e => filters.search(e.target.value)} /></Field>
+          <Choice id="codes-pending" label="Inviti" value={draft.pending ? "pending" : "all"} options={{all: "Tutti", pending: "Da valutare"}} onChange={v => filters.filter({pending: v === "pending"})} />
+          <div className="admin-action-list admin-filter-actions"><Button type="submit"><Search data-icon="inline-start" aria-hidden="true" />Filtra</Button><Button type="button" variant="outline" onClick={() => filters.reset(initialFilters)}><RotateCcw data-icon="inline-start" aria-hidden="true" />Azzera</Button></div>
+        </FieldGroup>{filters.error && <p role="alert" className="admin-filter-error">{filters.error}</p>}
+      </form>
 		</CardContent></Card>
 		{notice && <Alert><AlertDescription role="status">{notice}</AlertDescription></Alert>}
 		<Card className="admin-results-card"><CardHeader>
@@ -104,9 +87,9 @@ export function InvitationCodesWorkspace() {
 			</CardTitle><Button variant="outline" disabled={list.pending} onClick={list.refresh}><RefreshCw
 				data-icon="inline-start" aria-hidden="true"/>Aggiorna</Button></div>
 		</CardHeader><CardContent className="admin-results-body" aria-busy={list.pending}>
-			{list.pending ? <TableSkeleton columns={5}/> : list.result?.status === "ok" ? <>
+			{!initialUrl.valid ? <Failure result={{status: "invalid"}} retry={() => filters.reset(initialFilters)} /> : list.pending ? <TableSkeleton columns={5}/> : list.result?.status === "ok" ? <>
 				{list.result.data.items.length ? <Table className="admin-community-table"
-				                                        aria-label="Codici invito"><TableHeader><TableRow>{["Invitante", "Codice invito", "Confermati", "Da valutare", "Azioni"].map(h =>
+				                                        aria-label="Codici invito"><TableHeader><TableRow>{["Invitante", "Codice invito", "Confermati", "Da valutare", "Dettagli"].map(h =>
 					<TableHead
 						key={h}>{h}</TableHead>)}</TableRow></TableHeader><TableBody>{list.result.data.items.map(row =>
 					<TableRow key={row.id}>
@@ -114,17 +97,17 @@ export function InvitationCodesWorkspace() {
 							className="admin-technical-text">{row.id}</p></TableCell><TableCell><CopyCode
 						code={row.code}/></TableCell><TableCell>{row.total}</TableCell><TableCell><Badge
 						variant={row.pending ? "warning" : "neutral"}>{row.pending}</Badge></TableCell><TableCell><Button
-						variant="ghost" size="sm" onClick={e => {
+						variant="ghost" size="icon-sm" aria-label="Dettagli codice invito" title="Dettagli codice invito" onClick={e => {
 						trigger.current = e.currentTarget;
 						setSelected(row.id);
 						setOffset(0);
 						setNotice("");
 						detail.refresh();
-					}}><BookOpenText data-icon="inline-start" aria-hidden="true"/>Dettagli</Button></TableCell>
+					}}><Eye aria-hidden="true"/></Button></TableCell>
 					</TableRow>)}</TableBody></Table> : <EmptyState title="Nessun codice trovato"
 				                                                    description="Non ci sono codici personali corrispondenti ai filtri."/>}
 				<Pagination offset={query.offset ?? 0} more={list.result.data.hasMore}
-				            onChange={offset => setQuery(v => ({...v, offset}))}/>
+				            onChange={offset => router.push(invitationsHref({...query, offset}), {scroll: false})}/>
 			</> : list.result && <Failure result={list.result} retry={list.refresh}/>}
 		</CardContent></Card>
 		<Sheet open={!!selected} onOpenChange={open => {

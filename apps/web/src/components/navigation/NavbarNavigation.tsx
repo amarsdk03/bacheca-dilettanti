@@ -28,6 +28,7 @@ import {ANNOUNCEMENT_DIRECTORY_OPTIONS} from "@/features/annunci/announcement-mo
 import {isLimitedProfileType, PROFILE_OPTIONS, type ProfileType,} from "@/features/profilo/profile-model";
 import {cn} from "@/lib/utils";
 import {ViewerDTO} from "@/features/auth/types";
+import {PROFILE_DIRECTORY_COMING_SOON} from "@/features/profili/profile-directory-availability";
 
 interface NavbarNavigationProps {
 	authenticated: boolean;
@@ -185,7 +186,7 @@ export default function NavbarNavigation({authenticated, backToHome, display}: N
 					</DropdownMenuGroup>
 				</DesktopDropdown>
 
-				<DesktopDropdown label="Profili" rootHref="/profili">
+				{!PROFILE_DIRECTORY_COMING_SOON && <DesktopDropdown label="Profili" rootHref="/profili">
 					<DropdownMenuGroup>
 						<DropdownMenuLabel className="px-2 pb-1 pt-1.5 font-bold uppercase tracking-[0.14em]">
 							Scopri i profili
@@ -221,7 +222,7 @@ export default function NavbarNavigation({authenticated, backToHome, display}: N
 							);
 						})}
 					</DropdownMenuGroup>
-				</DesktopDropdown>
+				</DesktopDropdown>}
 
 				<Link
 					href="/partner"
@@ -305,6 +306,7 @@ export default function NavbarNavigation({authenticated, backToHome, display}: N
 										);
 									})}
 
+									{!PROFILE_DIRECTORY_COMING_SOON && <>
 									<div className="my-4 h-px bg-black/10" />
 									<p className="px-3 pb-2 text-xs font-bold uppercase tracking-[0.14em] text-[#111111]/50">Profili</p>
 									<MobileLink href="/profili" active={profilesRootActive} onNavigate={() => setMobileMenuOpen(false)}>
@@ -325,6 +327,7 @@ export default function NavbarNavigation({authenticated, backToHome, display}: N
 										);
 									})}
 
+									</>}
 									<div className="my-4 h-px bg-black/10" />
 									<MobileLink href="/aggiornamenti" active={isPathActive(pathname, "/aggiornamenti")} onNavigate={() => setMobileMenuOpen(false)}>
 										Aggiornamenti

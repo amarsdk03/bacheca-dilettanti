@@ -1,10 +1,25 @@
-import {createProfileDrafts, createProfileLocations, type ProfileDrafts, type ProfileLocations} from "@bacheca/announcements/features/profilo/profile-model";
-import {createProfileSocialLinks, type ProfileSocialLinksByType} from "@bacheca/announcements/features/profilo/profile-social-links";
-import {createAnnouncementDetailsDrafts, type AnnouncementDetailsDrafts, type AnnouncementContacts, type AnnouncementExtras} from "@bacheca/announcements/features/pubblica-annuncio/publish-model";
 import type {ProfileLocationDraft} from "@bacheca/announcements/features/profilo/profile-model";
+import {
+	createProfileDrafts,
+	createProfileLocations,
+	type ProfileDrafts,
+	type ProfileLocations
+} from "@bacheca/announcements/features/profilo/profile-model";
+import {
+	createProfileSocialLinks,
+	type ProfileSocialLinksByType
+} from "@bacheca/announcements/features/profilo/profile-social-links";
+import {
+	type AnnouncementContacts,
+	type AnnouncementDetailsDrafts,
+	type AnnouncementExtras,
+	createAnnouncementDetailsDrafts
+} from "@bacheca/announcements/features/pubblica-annuncio/publish-model";
 import type {CreationInput} from "./contracts";
 import {textValue} from "./prototype-model";
 import {canonicalAnnouncement, canonicalProfile, locations, rows} from "./domain";
+import {withBirthYearDefaults} from "./date-defaults";
+import type {AutomaticContacts} from "./contact-defaults";
 
 /** The same state and controls as Web. Legacy values are read only during migration/import. */
 export interface CanonicalDraft {
@@ -16,14 +31,15 @@ export interface CanonicalDraft {
   contacts: AnnouncementContacts;
   extras: AnnouncementExtras;
   title: string;
+  automaticContacts?: AutomaticContacts;
 }
 export function migrateCanonicalDraft(input: Pick<CreationInput, "profileType" | "teamType" | "profile" | "announcement">): CanonicalDraft {
   const profiles = createProfileDrafts(), profileLocations = createProfileLocations(), socialLinks = createProfileSocialLinks();
   const type = input.profileType;
   profiles[type] = canonicalProfile(type, input.profile) as never;
-  // A known year must survive even when the original message has no complete date.
+  // Admin convention: missing day/month default to January 1 for year-only sources.
   if (["giocatore", "staff-sportivo", "arbitro"].includes(type) && textValue(input.profile,"birthYear")) {
-    Object.assign(profiles[type], {anno_nascita: textValue(input.profile,"birthYear")});
+    profiles[type] = withBirthYearDefaults(profiles[type], "anno_nascita", textValue(input.profile,"birthYear")) as never;
   }
   profileLocations[type] = locations(input.profile);
   const platforms = {"Sito web":"website", Instagram:"instagram", Facebook:"facebook", YouTube:"youtube", LinkedIn:"linkedin"} as const;

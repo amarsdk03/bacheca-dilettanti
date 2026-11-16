@@ -4,6 +4,8 @@ import { createHomeFixture } from "./home-fixture.mjs";
 import { createAnnunciFixture, OPERATIONS } from "./annunci-fixture.mjs";
 import { createAuditFixture } from "./audit-fixture.mjs";
 import {createCommunityFixture} from "../../tests/helpers/admin-community-fixture.mjs";
+import {createDistributionFixture} from "../../tests/helpers/admin-distribution-fixture.mjs";
+import {listId} from "../../tests/helpers/admin-announcements-fixture.mjs";
 import {createPeopleFixture} from "../../tests/helpers/admin-people-fixture.mjs";
 
 export const FIXTURE_EMAIL = "admin@example.test";
@@ -16,13 +18,17 @@ const b64 = value => Buffer.from(JSON.stringify(value)).toString("base64url");
 /** A deliberately small HTTP double, not a Supabase server or SQL adapter.
  * It never persists request bodies, bearer tokens, keys or cookie values in logs.
  */
-export async function createSessionFixture({ home = false, annunci = false, registro = false, creation = false, community = false, people = false } = {}) {
+export async function createSessionFixture({ home = false, annunci = false, registro = false, creation = false, community = false, people = false, distribution = false } = {}) {
   if (home && annunci || registro && (home || annunci)) throw new Error("BROWSER_FIXTURE_SCENARIOS");
   const homeFixture = home || registro || creation ? createHomeFixture() : null;
   const annunciFixture = annunci ? createAnnunciFixture() : null;
   const auditFixture = registro ? createAuditFixture() : null;
-  const communityFixture = people ? await createPeopleFixture() : community ? await createCommunityFixture() : null;
+  const communityFixture = distribution ? await createDistributionFixture() : people ? await createPeopleFixture() : community ? await createCommunityFixture() : null;
   if (communityFixture) {await communityFixture.reset(); if (community) {await communityFixture.report(301, {profile: true}); await communityFixture.invitation();}}
+  if (distribution) for (const [n,region] of [[740,"Lombardia"],[741,"Lombardia"],[742,"Lazio"]]) {
+    await communityFixture.insert(n,{status:"pubblicato",title:`Annuncio distribuzione ${n}`});
+    await communityFixture.db.query("insert into public.localita_annuncio(uuid_annuncio,regione,citta) values($1,$2,'Localit\u00e0 sintetica')",[listId(n),region]);
+  }
   const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
   const kid = randomUUID(), secretKey = "sb_secret_browser_session_" + randomUUID().replaceAll("-", "");
   const jwk = { ...publicKey.export({ format: "jwk" }), kid, use: "sig", alg: "ES256" };
@@ -95,7 +101,7 @@ export async function createSessionFixture({ home = false, annunci = false, regi
       if (rpc === "admin_record_server_audit_v1") {
         counters.audit++;
         const allowedAuth = ["auth.login", "auth.logout", "auth.access_denied"].includes(body.p_action) && ["success", "failure"].includes(body.p_outcome);
-        const allowedOperationFailure = ((annunciFixture && [...OPERATIONS.map(operation => "announcement." + operation), "announcement.export"].includes(body.p_action)) || (communityFixture && ["report.update", "invitation.consider", "profile.verify", "profile.unverify", "profile.hide", "profile.show"].includes(body.p_action))) && body.p_outcome === "failure" && typeof body.p_failure_code === "string";
+        const allowedOperationFailure = ((annunciFixture && [...OPERATIONS.map(operation => "announcement." + operation), "announcement.export"].includes(body.p_action)) || (communityFixture && ["report.update", "invitation.consider", "profile.verify", "profile.unverify", "profile.hide", "profile.show", "distribution.save", "distribution.channel_save"].includes(body.p_action))) && body.p_outcome === "failure" && typeof body.p_failure_code === "string";
         if (request.headers.apikey !== secretKey || token !== secretKey || !(allowedAuth || allowedOperationFailure)) { denied(); return; }
         const send = () => {
           if (auditUnavailable) { reply(503, { code: "TEST_AUDIT_UNAVAILABLE", message: "Synthetic audit unavailable" }); return; }
@@ -107,7 +113,13 @@ export async function createSessionFixture({ home = false, annunci = false, regi
       if (rpc === "admin_get_context_v1") { counters.context++; reply(200, [{ auth_user_uuid: AUTH_ID, utente_uuid: USER_ID }]); return; }
       if (communityFixture) {
         const args = {
-          ...(people ? {
+          ...(distribution ? {
+            admin_distribution_read_v1: [body.p_operation,JSON.stringify(body.p_query??{})],
+            admin_distribution_write_v1: [body.p_operation,JSON.stringify(body.p_input??{})],
+            admin_list_announcements_v1: [JSON.stringify(body.p_query??{})],
+            admin_get_announcement_v1: [body.p_id],
+          } : {}),
+          ...(people || distribution ? {
             admin_list_users_v1: [JSON.stringify(body.p_query ?? {})], admin_get_user_v1: [body.p_id],
             admin_list_profiles_v1: [JSON.stringify(body.p_query ?? {})], admin_get_profile_v1: [body.p_id, body.p_type],
             admin_moderate_profile_v1: [body.p_id, body.p_type, body.p_operation, body.p_version, body.p_reason],

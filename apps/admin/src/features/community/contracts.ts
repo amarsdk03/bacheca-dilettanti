@@ -32,7 +32,7 @@ export function parseCommunityQuery(kind: CommunityKind, value: unknown): Commun
   const q: CommunityQuery = {search: text(value.search ?? "", 200).trim(), offset: count(value.offset ?? 0)};
   if (q.offset! > 1000000) invalid();
   if (kind === "reports") {
-    q.status = text(value.status ?? "active"); q.target = text(value.target ?? "all");
+    q.status = text(value.status ?? "all"); q.target = text(value.target ?? "all");
     if (!["active", "all", ...Object.keys(REPORT_STATES)].includes(q.status) || !["all", "annuncio", "profilo"].includes(q.target)) invalid();
     for (const key of ["from", "to"] as const) {
       const v = text(value[key] ?? "");

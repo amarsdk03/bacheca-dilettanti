@@ -3,8 +3,16 @@ import {test} from "node:test";
 import {adminServerLoader} from "./helpers/admin-server-loader.mjs";
 const load = adminServerLoader();
 const {createPeopleService} = load("apps/admin/src/features/people/server/service.ts");
-const {parsePeopleUrl, peopleHref, parseProfile, parseUserDetail, parseProfileMutation} = load("apps/admin/src/features/people/contracts.ts");
+const {parsePeopleUrl, peopleHref, parseProfile, parseUserDetail, parseProfileMutation, normalizeDomains} = load("apps/admin/src/features/people/contracts.ts");
 const id = "aaaaaaaa-aaaa-4aaa-8aaa-000000000001", at = "2026-11-15T12:00:00Z";
+test("excluded domains normalize and survive navigation while invalid or excessive lists are rejected", () => {
+  assert.deepEqual(normalizeDomains([" Gmail.com ", "gmail.com", "", "outlook.it"]), ["gmail.com", "outlook.it"]);
+  const query = parsePeopleUrl("users", new URLSearchParams({excludedDomains: "GMAIL.COM,outlook.it", offset: "30"}));
+  assert.equal(query.valid, true); assert.equal(query.query.excludedDomains, "gmail.com,outlook.it");
+  assert.equal(parsePeopleUrl("users", new URL(peopleHref("users", query.query), "http://localhost").searchParams).query.excludedDomains, "gmail.com,outlook.it");
+  for (const domains of ["@gmail.com", "http://gmail.com", "-bad.com", "example", "x".repeat(64) + ".com", Array(51).fill("a.it").join(",")]) assert.equal(parsePeopleUrl("users", new URLSearchParams({excludedDomains: domains})).valid, false, domains);
+  assert.equal(parsePeopleUrl("profiles", new URLSearchParams({excludedDomains: "gmail.com"})).valid, false);
+});
 const profile = {id: id + ":giocatore", profileId: id, type: "giocatore", name: "Mario", userId: id, email: "mario@example.test", verifiedAt: null, adminHidden: false, version: 0, visibility: "public", locations: []};
 function harness({data = {items: [], hasMore: false}, error = null, claims = {sub: id, session_id: id, role: "authenticated", exp: Date.now() / 1000 + 1000}} = {}) {
   const calls = [], failures = [], logs = [];
@@ -12,9 +20,9 @@ function harness({data = {items: [], hasMore: false}, error = null, claims = {su
   return {service, calls, failures, logs};
 }
 test("URL filters round-trip and reject duplicates, unknown keys and malformed dates/offsets", () => {
-  const query = {search: "mario@example.test", type: "squadra", user: id, visibility: "obscured", offset: 30};
+  const query = {search: id, type: "squadra", sort: "followers", visibility: "obscured", offset: 30};
   const href = peopleHref("profiles", query), parsed = parsePeopleUrl("profiles", new URL(href, "http://localhost").searchParams);
-  assert.equal(parsed.valid, true); assert.equal(parsed.query.user, id); assert.equal(parsed.query.offset, 30);
+  assert.equal(parsed.valid, true); assert.equal(parsed.query.search, id); assert.equal(parsed.query.offset, 30);
   for (const q of ["offset=1", "offset=-30", "offset=", "offset=030", "offset=1000020", "visibility=public&visibility=private", "type=bad", "unknown=1", "user=bad"]) assert.equal(parsePeopleUrl("profiles", new URLSearchParams(q)).valid, false, q);
   for (const q of ["from=2026-02-30", "from=2026-11-15&to=2026-11-14", "registration=admin"]) assert.equal(parsePeopleUrl("users", new URLSearchParams(q)).valid, false);
 });
@@ -34,8 +42,8 @@ test("reads check claims, sanitize failures and project profile data", async () 
   for (const [error, status] of [[{code: "42501", message: "DENIED"}, "denied"], [{code: "42501", message: "ADMIN_SESSION_POLICY_UNVERIFIED"}, "unavailable"], [{code: "22023"}, "invalid"], [{code: "XX000", message: "private"}, "unavailable"]]) {
     const r = await harness({error}).service.list("users", {}); assert.equal(r.status, status); assert.ok(!JSON.stringify(r).includes("private"));
   }
-  assert.equal((await harness({data: {...profile, fields: {}, announcementCount: 0}}).service.detail("profiles", id, "giocatore")).status, "ok");
-  assert.equal((await harness({data: {...profile, profileId: id.replace(/1$/, "2"), fields: {}, announcementCount: 0}}).service.detail("profiles", id, "giocatore")).status, "unavailable");
+  assert.equal((await harness({data: {...profile, fields: {}, announcementCount: 0, publicAnnouncementCount: 0, followerCount: 0}}).service.detail("profiles", id, "giocatore")).status, "ok");
+  assert.equal((await harness({data: {...profile, profileId: id.replace(/1$/, "2"), fields: {}, announcementCount: 0, publicAnnouncementCount: 0, followerCount: 0}}).service.detail("profiles", id, "giocatore")).status, "unavailable");
   assert.equal((await harness({data: null}).service.detail("users", id)).status, "not_found");
 });
 test("user detail requires consistent ownership and omits arbitrary Auth data", () => {

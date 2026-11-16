@@ -5,6 +5,8 @@ import {isCanonicalDraft} from "./canonical-shape";
 import {normalizeCreation, UUID, validateCreation} from "./domain";
 import {PROFILE_OPTIONS, REGIONS, TEAM_OPTIONS} from "./prototype-model";
 import {WHATSAPP_TARGETS, whatsappLinkError} from "./whatsapp-parser";
+import {prepareCreationInput} from "./input-defaults";
+import {validPublicationDate} from "./date-defaults";
 import type {AnnouncementAuthor, AuthorProfile, CreationInput, CreationReceipt, CreationResult} from "./contracts";
 
 export type CreationRpc = (name: string, args: Record<string, Json>) => PromiseLike<{data: unknown; error: unknown}>;
@@ -38,6 +40,7 @@ export function validCreationInput(raw: unknown): raw is CreationInput {
   if (raw.version === 2 && !isCanonicalDraft(raw.canonical)) return false;
   if (raw.reviewDecisions !== undefined && (!record(raw.reviewDecisions) || !Object.values(raw.reviewDecisions).every(d=>record(d)&&["confirmed","corrected","text","discarded"].includes(String(d.action))&&typeof d.binding === "string"))) return false;
   if (raw.approveImmediately !== undefined && typeof raw.approveImmediately !== "boolean") return false;
+  if (raw.publicationDate !== undefined && (typeof raw.publicationDate !== "string" || raw.publicationDate.length > 10)) return false;
   const values = (v: Record<string, unknown>, depth = 0): boolean => depth < 8 && Object.entries(v).every(([k, item]) => !["__proto__", "constructor", "prototype"].includes(k) && (typeof item === "string" || Array.isArray(item) && item.length <= 100 && item.every(x => typeof x === "string" || record(x) && values(x, depth + 1))));
   if (!values(raw.profile) || !values(raw.announcement) || !(raw.profileId === null || typeof raw.profileId === "string")) return false;
   if (raw.provenance !== undefined && (!record(raw.provenance) || raw.provenance.source !== "whatsapp" || typeof raw.provenance.rawText !== "string" || !raw.provenance.rawText.trim() || raw.provenance.rawText.length > 50_000 || typeof raw.provenance.messageUrl !== "string" || raw.provenance.messageUrl.length > 2048 || whatsappLinkError(raw.provenance.messageUrl))) return false;
@@ -47,6 +50,7 @@ export function validCreationInput(raw: unknown): raw is CreationInput {
     if (context !== undefined && (!record(context) || typeof context.channelRegion !== "string" || !REGIONS.includes(context.channelRegion) || context.resolvedRegion !== undefined && (typeof context.resolvedRegion !== "string" || !REGIONS.includes(context.resolvedRegion)))) return false;
     if (record(context) && context.resolvedRegions !== undefined && (!Array.isArray(context.resolvedRegions) || !context.resolvedRegions.length || !context.resolvedRegions.every(v=>typeof v === "string" && REGIONS.includes(v)))) return false;
     if (manualTarget !== undefined && !WHATSAPP_TARGETS.some(target => target.id === manualTarget)) return false;
+    if(record(context)&&context.analyzedOn !== undefined && (typeof context.analyzedOn !== "string" || !context.analyzedOn || !validPublicationDate(context.analyzedOn))) return false;
   }
   return raw.image == null || record(raw.image) && typeof raw.image.hash === "string" && /^[a-f0-9]{64}$/.test(raw.image.hash) && ["image/jpeg", "image/png", "image/webp"].includes(String(raw.image.mime)) && typeof raw.image.size === "number" && raw.image.size > 0 && raw.image.size <= 5 * 1024 * 1024;
 }
@@ -75,13 +79,16 @@ export function createAnnouncementCreation(deps: CreationDependencies) {
       try {
         const {actorId, rpc} = await deps.session();
         if (!validCreationInput(raw)) return {status: "invalid", issues: [{path: "author._form", severity: "error", code: "INVALID_INPUT", tab: "author", message: "La compilazione non è valida. Controlla i dati inseriti."}]};
-        const input = raw; let existing: AuthorProfile | undefined;
+        const input = prepareCreationInput(raw); let existing: AuthorProfile | undefined;
+        const sourceLink=input.provenance?.messageUrl.trim()??"";
+        const confirmImport=Boolean(input.provenance&&!sourceLink);
+        const channelIssue=():CreationResult=>({status:"invalid",issues:[{path:"author.sourceChannel",severity:"error",code:"SOURCE_CHANNEL_UNAVAILABLE",tab:"author",message:"Il canale WhatsApp della regione selezionata non esiste ancora o non è attivo. Se esistono più canali attivi per la regione, occorre correggere la configurazione."}]});
         if (input.authorMode === "registered") {
           const owner = input.profileId?.split(":")[0] ?? "";
           const {data, error} = await rpc("admin_search_announcement_authors_v1", {p_query: owner}); if (error) throw error;
           existing = parseAuthors(data).flatMap(a => a.profiles).find(p => p.id === input.profileId);
         }
-        const issues = validateCreation(input, existing); if (issues.length) return {status: "invalid", issues};
+        const issues = validateCreation(input, existing); if (issues.some(issue=>issue.severity === "error")) return {status: "invalid", issues};
         const normalized = normalizeCreation(input);
         const extras: Record<string, Json> = {generic_link: normalized.extras.genericLink};
         if (bytes) {
@@ -95,19 +102,31 @@ export function createAnnouncementCreation(deps: CreationDependencies) {
         // upload. The create RPC still compares the canonical payload hash.
         const previous = await rpc("admin_get_announcement_submission_v1", {p_submission: input.submissionId});
         if (previous.error) throw previous.error;
+        if(confirmImport&&!previous.data){
+          const channel=await rpc("admin_resolve_whatsapp_import_channel_v1",{p_region:input.provenance!.context!.channelRegion});
+          if(channel.error){
+            const failure=channel.error as {message?:string;code?:string};
+            if(failure.message==="ADMIN_CREATION_SOURCE_CHANNEL_UNAVAILABLE")return channelIssue();
+            return {status:failure.code==="42501"?"denied":"unavailable"};
+          }
+          if(typeof channel.data!=="string"||!UUID.test(channel.data))return {status:"unavailable"};
+        }
         if (input.image && !previous.data) {
           if (!bytes) return {status: "invalid", issues: [{path: "announcement.image", severity: "error", code: "RESELECT_IMAGE", tab: "contacts", message: "Seleziona di nuovo l’immagine oppure rimuovila."}]};
           await deps.upload(path!, bytes, input.image.mime);
         }
-        const payload = {...(input.approveImmediately ? {approve_immediately: true} : {}), author_mode: input.authorMode, profile_id: input.profileId?.split(":")[0] ?? null,
+        const payload = {...(confirmImport ? {source_region:input.provenance!.context!.channelRegion} : {}), ...(input.publicationDate ? {publication_date: input.publicationDate} : {}), ...(input.approveImmediately ? {approve_immediately: true} : {}), author_mode: input.authorMode, profile_id: input.profileId?.split(":")[0] ?? null,
           profile_type: input.profileType, profile_draft: normalized.profileDraft, profile_locations: normalized.profileLocations,
           profile_social_links: normalized.profileSocialLinks, announcement_type: normalized.announcementType,
           announcement_title: normalized.announcementTitle, detail: normalized.detail, announcement_locations: normalized.announcementLocations,
           contacts: normalized.contacts, extras, authorized: true, source: input.provenance ? "whatsapp" : "manual",
-          original_text: input.provenance?.rawText ?? null, message_url: input.provenance?.messageUrl ? new URL(input.provenance.messageUrl).href : null, reference_email: input.referenceEmail || null};
-        const {data, error} = await rpc(input.approveImmediately ? "admin_create_announcement_v2" : "admin_create_announcement_v1", {p_submission: input.submissionId, p_payload: payload as unknown as Json});
+          original_text: input.provenance?.rawText ?? null, message_url: sourceLink ? new URL(sourceLink).href : null, reference_email: input.referenceEmail || null};
+        const {data, error} = await rpc(confirmImport ? "admin_create_announcement_v4" : input.publicationDate ? "admin_create_announcement_v3" : input.approveImmediately ? "admin_create_announcement_v2" : "admin_create_announcement_v1", {p_submission: input.submissionId, p_payload: payload as unknown as Json});
         if (error) {
           const failure = error as {message?: string; code?: string};
+          if ((confirmImport||input.publicationDate) && failure.code === "PGRST202") return {status: "unavailable"};
+          if (failure.message === "ADMIN_CREATION_SOURCE_CHANNEL_UNAVAILABLE") return channelIssue();
+          if (failure.message === "ADMIN_CREATION_DATE_INVALID") return {status: "invalid", issues: [{path: "announcement.publicationDate", severity: "error", code: "INVALID_FIELD", tab: "announcement", message: "Inserisci una data valida dal 1900 a oggi."}]};
           if (failure.message === "ADMIN_CREATION_CONFLICT") return {status: "conflict"};
           if (failure.code === "42501" && failure.message !== "ADMIN_SESSION_POLICY_UNVERIFIED") return {status: "denied"};
           if (failure.code === "22023") return {status: "invalid", issues: [{path: "announcement._form", severity: "error", code: "DATABASE_VALIDATION", tab: "announcement", message: "Il profilo o l’annuncio non soddisfano i requisiti attuali. Ricontrolla i dati e l’autore."}]};

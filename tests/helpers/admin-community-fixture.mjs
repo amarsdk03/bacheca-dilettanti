@@ -2,8 +2,8 @@ import {readFileSync} from "node:fs";
 import {createAuditReadsFixture} from "./admin-audit-reads-fixture.mjs";
 import {listActor, listClaims, listId} from "./admin-announcements-fixture.mjs";
 const read = name => readFileSync(new URL(`../../supabase/migrations/${name}.sql`, import.meta.url), "utf8");
-export async function createCommunityFixture() {
-  const h = await createAuditReadsFixture();
+export async function createCommunityFixture({base} = {}) {
+  const h = base ?? await createAuditReadsFixture();
   try {
     const reports = read("20260917124241_segnalazioni");
     await h.db.exec(reports.slice(reports.indexOf("create table private.segnalazioni"), reports.indexOf("create or replace function public.submit_segnalazione_v1")));

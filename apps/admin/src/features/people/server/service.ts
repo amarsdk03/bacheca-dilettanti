@@ -4,7 +4,18 @@ import type {Json} from "@bacheca/database";
 import {type ClaimsClient, verifySessionClaims} from "../../auth/server/session-claims";
 import {canonicalUuid} from "../../annunci/validation";
 import type {CommunityResult} from "../../community/contracts";
-import {type PeopleKind, parsePeopleQuery, parsePeoplePage, parseUser, parseProfile, parseUserDetail, parseProfileDetail, profileType, parseProfileMutation, parsePeopleMutation} from "../contracts";
+import {
+	parsePeopleMutation,
+	parsePeoplePage,
+	parsePeopleQuery,
+	parseProfile,
+	parseProfileDetail,
+	parseProfileMutation,
+	parseUser,
+	parseUserDetail,
+	type PeopleKind,
+	profileType
+} from "../contracts";
 
 export type PeopleRpc = "admin_list_users_v1" | "admin_get_user_v1" | "admin_list_profiles_v1" | "admin_get_profile_v1" | "admin_moderate_profile_v1";
 type Client = ClaimsClient & {rpc(name: PeopleRpc, args: Record<string, Json>): PromiseLike<{data: unknown; error: unknown}>};

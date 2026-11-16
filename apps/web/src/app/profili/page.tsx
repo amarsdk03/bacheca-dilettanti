@@ -6,6 +6,8 @@ import Footer from "@/components/navigation/Footer";
 import Navbar from "@/components/navigation/Navbar";
 import {NavbarSkeleton} from "@/components/loading/PageSkeletons";
 import Profili from "@/features/profili/Profili";
+import ProfiliComingSoon from "@/features/profili/ProfiliComingSoon";
+import {PROFILE_DIRECTORY_COMING_SOON} from "@/features/profili/profile-directory-availability";
 import {
 	buildProfilesHref,
 	getProfileFilterEntries,
@@ -21,6 +23,15 @@ interface ProfiliPageProps {
 }
 
 export async function generateMetadata({searchParams}: ProfiliPageProps): Promise<Metadata> {
+	if (PROFILE_DIRECTORY_COMING_SOON) {
+		return dynamicMetadata({
+			title: "Profili · Presto in arrivo",
+			description: "Le otto directory del calcio dilettantistico saranno nuovamente disponibili a breve: giocatori, squadre, staff, arbitri, eventi, impianti, servizi e creators.",
+			canonicalPath: "/profili",
+			openGraphPath: "/profili",
+		});
+	}
+
 	const query = parseProfileDirectoryQuery(await searchParams);
 	const typeLabels = query.types.map((type) =>
 		PROFILE_OPTIONS.find(({value}) => value === type)?.label ?? type,
@@ -49,6 +60,16 @@ export async function generateMetadata({searchParams}: ProfiliPageProps): Promis
 }
 
 export default async function ProfiliPage({searchParams}: ProfiliPageProps) {
+	if (PROFILE_DIRECTORY_COMING_SOON) {
+		return (
+			<>
+				<Suspense fallback={<NavbarSkeleton />}><Navbar /></Suspense>
+				<ProfiliComingSoon />
+				<Footer />
+			</>
+		);
+	}
+
 	const parsed = parseProfileDirectoryQuery(await searchParams);
 	const query = {...parsed, sortSeed: parsed.sortSeed ?? randomUUID().replaceAll("-", "")};
 	const result = getProfileDirectory(query);

@@ -1,0 +1,3 @@
+import {distributionService} from "@/features/distribution/server";
+
+export async function GET(request:Request,{params}:{params:Promise<{id:string}>}){const{id}=await params,p=new URL(request.url).searchParams;const valid=[...p.keys()].every(k=>["channelId","recordId"].includes(k)&&p.getAll(k).length===1);const result=valid?await distributionService().detail({announcementId:id,...Object.fromEntries(p)}):{status:"invalid" as const};return Response.json(result,{status:{ok:200,invalid:400,denied:403,not_found:404,not_allowed:409,conflict:409,unavailable:503,source_exists:409,confirmation_required:409}[result.status],headers:{"Cache-Control":"private, no-store, max-age=0",Vary:"Cookie"}});}

@@ -51,6 +51,7 @@ import {
 } from "@/features/pubblica-annuncio/publish-model";
 import {normalizeFacilityOpeningHours} from "@/features/pubblica-annuncio/publish-field-validation";
 import {getAnnouncementImageError} from "@/features/pubblica-annuncio/types/announcementExtras";
+import {getMinorContactNotice} from "@bacheca/announcements/features/pubblica-annuncio/minor-contact-notice";
 
 interface PubblicaAnnuncioProps {
 	authenticated: boolean;
@@ -58,8 +59,6 @@ interface PubblicaAnnuncioProps {
 	initialEmail: string;
 	profileContext: PublishProfileContext | null;
 }
-
-import {getMinorContactNotice} from "@bacheca/announcements/features/pubblica-annuncio/minor-contact-notice";
 
 function PublishStepTab({value, locked, reason, resetKey, children}: {
 	value: string;

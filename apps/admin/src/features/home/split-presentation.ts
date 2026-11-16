@@ -1,6 +1,6 @@
 import type {AvailableHomeChart, ChartRow} from "./chart-presentation";
 import {distributionRows} from "./chart-presentation";
-import {homeBucketKey, resolveHomeRange, type HomeAggregation, type HomeRange} from "./period";
+import {type HomeAggregation, homeBucketKey, type HomeRange, resolveHomeRange} from "./period";
 
 import {categoryColor} from "./chart-colors";
 

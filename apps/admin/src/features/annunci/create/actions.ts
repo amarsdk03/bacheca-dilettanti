@@ -41,7 +41,7 @@ export async function submitAnnouncement(form: FormData) {
     return {status: "invalid" as const, issues: [{path: "announcement.image", severity: "error" as const, code: "INVALID_IMAGE", tab: "contacts" as const, message: "L’immagine supera 5 MB."}]};
   }
   const result = await service().submit(input, image instanceof File && image.size ? new Uint8Array(await image.arrayBuffer()) : undefined);
-  if (result.status === "ok") {revalidatePath("/annunci"); revalidatePath("/registro-attivita");}
+  if (result.status === "ok") {revalidatePath("/annunci"); revalidatePath("/registro-attivita"); revalidatePath("/distribuzione");}
   else await createAdminAuditService().recordOperationFailure({action: "announcement.create", code: result.status === "invalid" ? "VALIDATION_FAILED" : result.status === "denied" ? "ACCESS_DENIED" : result.status === "conflict" || result.status === "consumed" ? "STATE_CONFLICT" : "OPERATION_FAILED"});
   return result;
 }

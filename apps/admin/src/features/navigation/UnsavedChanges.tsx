@@ -18,6 +18,7 @@ import {useAnnouncementDraft} from "@/features/annunci/create/store";
 type ExitRequest = {action: () => void; source: HTMLElement | null};
 type ExitGuard = {
   setDirty: (dirty: boolean) => void;
+  setTransientDirty: (dirty: boolean) => void;
   confirmExit: (action: () => void, source?: HTMLElement | null) => boolean;
 };
 const ExitGuardContext = createContext<ExitGuard | null>(null);
@@ -27,25 +28,29 @@ export function UnsavedChangesProvider({children}: {children: ReactNode}) {
   const pathname = usePathname();
   const storageError = useAnnouncementDraft(state => state.storageError);
   const dirtyRef = useRef(false);
+  const transientRef = useRef(false);
   const pendingRef = useRef<ExitRequest | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const [transientOpen, setTransientOpen] = useState(false);
   const setDirty = useCallback((dirty: boolean) => { dirtyRef.current = dirty; }, []);
+  const setTransientDirty = useCallback((dirty: boolean) => { transientRef.current = dirty; }, []);
   const confirmExit = useCallback((action: () => void, source: HTMLElement | null = null) => {
-    if (pathname !== "/annunci/crea-annuncio" || !dirtyRef.current) return false;
+    if (!transientRef.current && (pathname !== "/annunci/crea-annuncio" || !dirtyRef.current)) return false;
+    setTransientOpen(transientRef.current);
     pendingRef.current = {action, source};
     setOpen(true);
     return true;
   }, [pathname]);
 
-  return <ExitGuardContext.Provider value={{setDirty, confirmExit}}>
+  return <ExitGuardContext.Provider value={{setDirty, setTransientDirty, confirmExit}}>
     {children}
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogContent className="admin-unsaved-dialog" initialFocus={cancelRef}
         finalFocus={() => pendingRef.current?.source?.isConnected ? pendingRef.current.source : null}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Lasciare la compilazione?</AlertDialogTitle>
-          <AlertDialogDescription>{storageError ? "La bozza resta in memoria, ma il ripristino dopo una ricarica non è disponibile." : "La bozza resta salvata in questa scheda. Uscendo dall’account verrà eliminata."}</AlertDialogDescription>
+          <AlertDialogTitle>{transientOpen ? "Modifiche non salvate!" : "Lasciare la compilazione?"}</AlertDialogTitle>
+          <AlertDialogDescription>{transientOpen ? "Uscendo perderai le modifiche non salvate." : storageError ? "La bozza resta in memoria, ma il ripristino dopo una ricarica non è disponibile." : "La bozza resta salvata in questa scheda. Uscendo dall’account verrà eliminata."}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel ref={cancelRef}>Continua a modificare</AlertDialogCancel>
@@ -53,6 +58,7 @@ export function UnsavedChangesProvider({children}: {children: ReactNode}) {
             const pending = pendingRef.current;
             pendingRef.current = null;
             dirtyRef.current = false;
+            transientRef.current = false;
             setOpen(false);
             pending?.action();
           }}>Esci</AlertDialogAction>

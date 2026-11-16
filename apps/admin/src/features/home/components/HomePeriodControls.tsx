@@ -7,7 +7,13 @@ import {Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger} fr
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {monthLabel} from "../chart-presentation";
-import {recentHomeRange, resolveHomeRange, type HomeAggregation, type HomeRange, type MonthlyHomeChart} from "../period";
+import {
+	type HomeAggregation,
+	type HomeRange,
+	type MonthlyHomeChart,
+	recentHomeRange,
+	resolveHomeRange
+} from "../period";
 
 export function HomePeriodControls({ chart, range, aggregation, onRange, onAggregation }: {
   chart: MonthlyHomeChart | null; range: HomeRange | null; aggregation: HomeAggregation;

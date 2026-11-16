@@ -10,7 +10,7 @@ test("report filters and pagination survive a shareable URL", () => {
 });
 test("active means open and in progress and is explicit in the URL", () => {
   assert.equal(reportsHref({status: "active"}), "/segnalazioni?status=active");
-  assert.equal(parseReportsUrl(new URLSearchParams()).query.status, "active");
+  assert.equal(parseReportsUrl(new URLSearchParams()).query.status, "all");
 });
 test("invalid or duplicate filters do not silently select another view", () => {
   for (const value of ["status=unknown", "status=open&status=all", "offset=1", "offset=-1", "from=2026-02-30", "extra=x"]) assert.equal(parseReportsUrl(new URLSearchParams(value)).valid, false);

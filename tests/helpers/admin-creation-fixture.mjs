@@ -12,7 +12,9 @@ export async function createCreationFixture() {
     // Complete the synthetic schema from the shared database types. Behaviors
     // below use the actual SQL functions; no remote services or credentials.
     const schema = readFileSync(new URL("../../packages/database/src/index.ts", import.meta.url), "utf8");
-    const tables = new Map([...schema.matchAll(/^      (\w+): \{\s*Row: \{([\s\S]*?)^        \}/gm)].map(m => [m[1],m[2]]));
+    // Skip compact one-line Row declarations; otherwise their match consumes
+    // the following table and silently drops its schema from this fixture.
+    const tables = new Map([...schema.matchAll(/^      (\w+): \{\s*Row: \{\r?\n([\s\S]*?)^        \}/gm)].map(m => [m[1],m[2]]));
     for (const [table, body] of tables) {
       if (!/^profilo(?:_|$)/.test(table) || ["profilo_follow", "profilo_professionista_studente"].includes(table)) continue;
       const exists = (await db.query("select to_regclass($1) as tab",["public."+table])).rows[0].tab; if (!exists) continue;

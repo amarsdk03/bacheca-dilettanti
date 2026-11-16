@@ -1,0 +1,49 @@
+import {canonicalUuid, record} from "../annunci/validation";
+import {ADMIN_ANNOUNCEMENT_TYPES} from "../annunci/contracts";
+import {REGIONI_ITALIANE} from "@bacheca/announcements/const/defaultConstants";
+
+export const REGIONS = REGIONI_ITALIANE.map(r => r.nome).sort((a,b) => a.localeCompare(b,"it"));
+export const STATES = {unprepared: "Da preparare", draft: "Bozza pronta", published: "Pubblicato", stale: "Da aggiornare", source: "Già all’origine", unassigned: "Da assegnare", unavailable: "Non più pubblico"} as const;
+export type DistributionState = keyof typeof STATES;
+export type View = "queue" | "publications" | "channels";
+export type Query = {view: View; search: string; channel: string; region: string; type: string; state: string; from: string; to: string; offset: number};
+export type Channel = {id: string; name: string; url: string; region: string | null; active: boolean; version: number};
+export type Publication = {id: string; announcementId: string | null; publicationKey: string; channelId: string | null; channelName: string | null; channelActive: boolean; title: string; text: string; url: string; templateVersion: string; sourceHash: string | null; confirmed: boolean; manual: boolean; superseded: boolean; version: number; postedAt: string | null; updatedAt: string; updatedBy: string | null; state: DistributionState};
+export type QueueItem = {id: string; announcementId: string; title: string; type: string; createdAt: string | null; origin: string; regions: string[]; unassigned: boolean; destinations: {channelId: string; name: string; state: DistributionState; recordId: string | null}[]};
+export type Page<T> = {items: T[]; hasMore: boolean};
+export type FailureStatus = "invalid" | "denied" | "not_found" | "not_allowed" | "conflict" | "unavailable" | "source_exists" | "confirmation_required";
+export type Result<T> = {status: "ok"; data: T} | {status: FailureStatus; correlationId?: string};
+export type DetailInput = {announcementId?: string; channelId?: string; recordId?: string};
+export type SaveInput = {requestId: string; announcementId: string; channelId: string; recordId?: string; text: string; url: string; manual: boolean; templateVersion: string; sourceHash: string; version: number; repost: boolean; revoke: boolean};
+export type ChannelInput = {requestId: string; id?: string; name: string; url: string; region: string | null; active: boolean; version: number};
+function fail(): never {throw Error("INVALID_DISTRIBUTION_DATA");}
+const text = (v: unknown, max = 1000): string => typeof v === "string" && v.length <= max ? v : fail();
+const nullable = (v: unknown, max = 1000) => v === null ? null : text(v,max);
+const uuid = (v: unknown): string => canonicalUuid(v) ? v : fail();
+const number = (v: unknown): number => typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 2147483646 ? v : fail();
+const bool = (v: unknown): boolean => typeof v === "boolean" ? v : fail();
+const time = (v: unknown): string => typeof v === "string" && /^\d{4}-\d\d-\d\dT/.test(v) && Number.isFinite(Date.parse(v)) ? v : fail();
+const state = (v: unknown): DistributionState => typeof v === "string" && Object.hasOwn(STATES,v) ? v as DistributionState : fail();
+function only(v: Record<string,unknown>, keys: string[]) {if (Object.keys(v).some(k => !keys.includes(k))) fail();}
+export function parseQuery(value: unknown): Query {
+  if (!record(value)) fail(); only(value,["view","search","channel","region","type","state","from","to","offset"]);
+  const view = value.view ?? "queue"; if (!["queue","publications","channels"].includes(String(view))) fail();
+  const q: Query = {view: view as View, search: text(value.search ?? "",200).trim(), channel: text(value.channel ?? ""), region: text(value.region ?? ""), type: text(value.type ?? ""), state: text(value.state ?? (view === "queue" ? "pending" : "all")), from: text(value.from ?? ""), to: text(value.to ?? ""), offset: number(value.offset ?? 0)};
+  if (q.offset > 999990 || q.offset % 30 || q.channel && !canonicalUuid(q.channel) || q.region && !REGIONS.includes(q.region) || q.type && !ADMIN_ANNOUNCEMENT_TYPES.includes(q.type as never)) fail();
+  if (!(view === "channels" ? ["all","active","archived"] : view === "queue" ? ["pending","all",...Object.keys(STATES)] : ["all",...Object.keys(STATES)]).includes(q.state)) fail();
+  for (const key of ["from","to"] as const) {const d = q[key]; if (d && (!/^\d{4}-\d\d-\d\d$/.test(d) || d < "0001-01-01" || !Number.isFinite(Date.parse(d)) || new Date(d).toISOString().slice(0,10) !== d)) fail();}
+  if (q.from && q.to && q.from > q.to) fail(); return q;
+}
+export function parseUrl(params: URLSearchParams) {
+  try {if ([...params.keys()].some(k => params.getAll(k).length !== 1)) fail(); const raw: Record<string,unknown> = Object.fromEntries(params); if (params.has("offset")) {if (!/^(0|[1-9]\d*)$/.test(params.get("offset")!)) fail(); raw.offset = Number(params.get("offset"));} return {valid:true,query:parseQuery(raw)};} catch {return {valid:false,query:parseQuery({})};}
+}
+export function distributionHref(q: Query) {const p = new URLSearchParams(); for (const [k,v] of Object.entries(q)) if (v !== "" && v !== 0 && !(k === "view" && v === "queue") && !(k === "state" && v === (q.view === "queue" ? "pending" : "all"))) p.set(k,String(v)); return "/distribuzione" + (p.size ? `?${p}` : "");}
+export function channelKey(value: string) {try {const u = new URL(value); if (u.protocol !== "https:" || u.username || u.password || u.port || u.search || u.hash || !["www.whatsapp.com","whatsapp.com"].includes(u.hostname)) return null; return /^\/channel\/([A-Za-z0-9_-]{5,200})\/?$/.exec(u.pathname)?.[1] ?? null;} catch {return null;}}
+export function messageLinkError(value: string, channel: Channel | undefined) {if (!value.trim()) return null; try {const u = new URL(value.trim()); if (!channel || !["whatsapp.com","www.whatsapp.com"].includes(u.hostname) || u.protocol !== "https:" || u.username || u.password || u.port || u.search || u.hash || !new RegExp(`^/channel/${channelKey(channel.url)}/[A-Za-z0-9_-]+/?$`).test(u.pathname)) throw Error(); return null;} catch {return "Il link inserito non corrisponde al link del Canale WhatsApp selezionato";}}
+export function parseChannel(v: unknown): Channel {if (!record(v)) fail(); const c = {id:uuid(v.id),name:text(v.name,120),url:text(v.url,2048),region:nullable(v.region,100),active:bool(v.active),version:number(v.version)}; if (!channelKey(c.url) || c.region && !REGIONS.includes(c.region)) fail(); return c;}
+export function parsePublication(v: unknown): Publication {if (!record(v)) fail(); return {id:uuid(v.id),announcementId:v.announcementId === null ? null : uuid(v.announcementId),publicationKey:text(v.publicationKey,100),channelId:v.channelId === null ? null : uuid(v.channelId),channelName:nullable(v.channelName,120),channelActive:bool(v.channelActive),title:text(v.title,1000),text:text(v.text,50000),url:text(v.url,2048),templateVersion:text(v.templateVersion,120),sourceHash:nullable(v.sourceHash,64),confirmed:bool(v.confirmed),manual:bool(v.manual),superseded:bool(v.superseded),version:number(v.version),postedAt:v.postedAt === null ? null : time(v.postedAt),updatedAt:time(v.updatedAt),updatedBy:nullable(v.updatedBy,320),state:state(v.state)};}
+export function parseQueueItem(v: unknown): QueueItem {if (!record(v) || !Array.isArray(v.regions) || !Array.isArray(v.destinations) || v.destinations.length>200) fail(); return {id:text(v.id,100),announcementId:uuid(v.announcementId),title:text(v.title,1000),type:text(v.type,100),createdAt:v.createdAt === null ? null : time(v.createdAt),origin:text(v.origin,30),regions:v.regions.map(r=>text(r,100)),unassigned:bool(v.unassigned),destinations:v.destinations.map(d=>{if(!record(d)) fail(); return {channelId:uuid(d.channelId),name:text(d.name,120),state:state(d.state),recordId:d.recordId===null?null:uuid(d.recordId)};})};}
+export function parsePage<T extends {id:string}>(v: unknown, parse: (v:unknown)=>T): Page<T> {if (!record(v) || !Array.isArray(v.items) || v.items.length>30 || typeof v.hasMore!=="boolean" || v.hasMore && v.items.length!==30) fail(); const items=v.items.map(parse); if(new Set(items.map(x=>x.id)).size!==items.length) fail(); return {items,hasMore:v.hasMore};}
+export function parseDetailInput(v: unknown): DetailInput {if (!record(v)) fail(); only(v,["announcementId","recordId","channelId"]); const out:DetailInput={}; for(const k of ["announcementId","recordId","channelId"] as const) if(v[k]!==undefined) out[k]=uuid(v[k]); if(!out.announcementId&&!out.recordId) fail(); return out;}
+export function parseSave(v: unknown): SaveInput {if(!record(v)) fail(); only(v,["requestId","announcementId","channelId","recordId","text","url","manual","templateVersion","sourceHash","version","repost","revoke"]); const input:SaveInput={requestId:uuid(v.requestId),announcementId:uuid(v.announcementId),channelId:uuid(v.channelId),text:text(v.text,50000),url:text(v.url,2048),manual:bool(v.manual),templateVersion:text(v.templateVersion,120),sourceHash:text(v.sourceHash,64),version:number(v.version),repost:bool(v.repost),revoke:bool(v.revoke)}; if(v.recordId!==undefined) input.recordId=uuid(v.recordId); if(!input.text.trim()||!/^\d{4}-\d{2}-v\d{1,4}$/.test(input.templateVersion)||!/^[a-f0-9]{64}$/.test(input.sourceHash)) fail(); if(input.manual) input.url=""; return input;}
+export function parseChannelInput(v: unknown): ChannelInput {if(!record(v)) fail(); only(v,["requestId","id","name","url","region","active","version"]); const key=channelKey(text(v.url,2048)); if(!key) fail(); const out:ChannelInput={requestId:uuid(v.requestId),name:text(v.name,120).trim(),url:"https://www.whatsapp.com/channel/"+key,region:nullable(v.region,100),active:bool(v.active),version:number(v.version)}; if(!out.name||out.region&&!REGIONS.includes(out.region))fail();if(v.id!==undefined)out.id=uuid(v.id);return out;}

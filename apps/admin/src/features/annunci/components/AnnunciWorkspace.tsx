@@ -7,7 +7,8 @@ import {
 	CircleAlert,
 	Download,
 	Ellipsis,
-	Info, ReceiptTextIcon,
+	Info,
+	ReceiptTextIcon,
 	RefreshCw,
 	RotateCcw,
 	Search,
@@ -59,7 +60,7 @@ import {AnnouncementLegend} from "./AnnouncementLegends";
 import {ModerationDialog} from "./ModerationDialog";
 import {moderateAnnouncementAction} from "@/features/annunci/server/actions";
 import {WhatsAppExportDialog} from "../whatsapp/WhatsAppExportDialog";
-import {canPrepareWhatsApp, whatsappLabel} from "../whatsapp/model";
+import {whatsappLabel} from "../whatsapp/model";
 import {MODERATION_LABELS, type ModerationOperation} from "../moderation";
 
 function FilterSelect({id, label, value, items, onChange}: {
@@ -137,19 +138,17 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 			}}>
 				<FieldGroup className="admin-annunci-filters">
 					<div className="admin-search-row">
-						<Field data-invalid={Boolean(state.searchError)}><FieldLabel htmlFor="annunci-search">Cerca per
-							titolo personalizzato o UUID</FieldLabel>
+						<Field data-invalid={Boolean(state.searchError)}><FieldLabel htmlFor="annunci-search">Cerca annuncio</FieldLabel>
 							<InputGroup><InputGroupAddon><Search aria-hidden="true"/></InputGroupAddon><InputGroupInput
 								id="annunci-search" value={state.draft.search}
 								onChange={(event) => controller.setSearch(event.target.value)}
 								aria-invalid={Boolean(state.searchError)}
 								aria-describedby={state.searchError ? "annunci-search-error" : undefined}
-								placeholder="Titolo o UUID"/>
+								placeholder="Titolo annuncio o UUID annuncio"/>
 								{state.draft.search &&
                                     <InputGroupAddon align="inline-end"><InputGroupButton aria-label="Svuota ricerca"
                                                                                           onClick={() => {
 										                                                      controller.setSearch("");
-										                                                      controller.submitSearch();
 									                                                      }}><X
                                         aria-hidden="true"/></InputGroupButton></InputGroupAddon>}
 							</InputGroup>{state.searchError &&
@@ -279,7 +278,7 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 											<DropdownMenuGroup>
 												<DropdownMenuLabel>Distribuzione</DropdownMenuLabel>
 												<DropdownMenuItem
-													disabled={mutating || !canPrepareWhatsApp(row)}
+													disabled={mutating || row.whatsappAvailable !== true || row.trashed || row.hidden !== false || row.private !== false || !row.status}
 													onClick={() => {
 														whatsappTrigger.current = document.getElementById(`annunci-menu-${row.id}`);
 														setWhatsappId(row.id);
@@ -323,17 +322,17 @@ export function AnnunciWorkspace({initialQuery, initialResult}: {
 					e informazioni amministrative dell’annuncio.</SheetDescription></SheetHeader>
 				<div className="admin-detail-body">
 					{preview.pending ? <PanelSkeleton/> : preview.result?.status === "ok" ? <>
-						<div className="admin-preview-toolbar"><AnnouncementSiteLink
+						<section className="admin-detail-section"><h3>Azioni principali</h3><div className="admin-preview-toolbar"><AnnouncementSiteLink
 							id={preview.result.detail.summary.id}
 							trashed={preview.result.detail.summary.trashed}/><Button variant="ghost" size="sm"
 						                                                             disabled={mutating}
 						                                                             onClick={controller.retryPreview}><RefreshCw
 							data-icon="inline-start" aria-hidden="true"/>Ricarica</Button></div>
-						<AnnouncementDetailContent detail={preview.result.detail}/><ModerateActions
+						<ModerateActions
 						detail={preview.result.detail} disabled={mutating} onChoose={(operation, trigger) => {
 						moderationTrigger.current = trigger;
 						controller.beginModeration(preview.id!, operation);
-					}}/></> : preview.result?.status === "not_found" ?
+					}}/></section><AnnouncementDetailContent detail={preview.result.detail}/></> : preview.result?.status === "not_found" ?
 						<EmptyState title="Annuncio non più disponibile"
 						            description="L’annuncio potrebbe essere stato rimosso."><Button variant="outline"
 						                                                                            onClick={controller.refresh}>Aggiorna</Button></EmptyState> : preview.result?.status === "invalid" ?

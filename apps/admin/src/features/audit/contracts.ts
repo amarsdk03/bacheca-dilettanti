@@ -9,7 +9,7 @@ export const ANNOUNCEMENT_AUDIT_ACTIONS = [
   "announcement.trash", "announcement.restore", "announcement.export", "announcement.create", "announcement.whatsapp_export",
 ] as const;
 export type AnnouncementAuditAction = typeof ANNOUNCEMENT_AUDIT_ACTIONS[number];
-export const COMMUNITY_AUDIT_ACTIONS = ["report.update", "invitation.consider", "profile.verify", "profile.unverify", "profile.hide", "profile.show"] as const;
+export const COMMUNITY_AUDIT_ACTIONS = ["distribution.save", "distribution.channel_save", "report.update", "invitation.consider", "profile.verify", "profile.unverify", "profile.hide", "profile.show"] as const;
 export type OperationAuditAction = AnnouncementAuditAction | typeof COMMUNITY_AUDIT_ACTIONS[number];
 export type AuthFailureAction = "auth.login" | "auth.access_denied";
 

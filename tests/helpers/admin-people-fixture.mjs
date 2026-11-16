@@ -7,8 +7,8 @@ function installedFunction(sql, name) {
   if (start < 0) throw Error(`Missing fixture function ${name}`);
   const end = sql.indexOf("$$;", start); return sql.slice(start, end + 3);
 }
-export async function createPeopleFixture({apply = true, wrappedList = false} = {}) {
-  const h = await createCommunityFixture();
+export async function createPeopleFixture({apply = true, wrappedList = false, baseFixture} = {}) {
+  const h = await createCommunityFixture({base: baseFixture});
   try {
     await h.db.exec("grant usage on schema auth to anon,authenticated");
     await h.db.exec(`alter table public.utente add column if not exists creato_il timestamptz not null default now(), add column if not exists num_telefono text,
@@ -39,6 +39,7 @@ export async function createPeopleFixture({apply = true, wrappedList = false} = 
     const migrate = async () => {
       await h.db.exec(read("20261115112211_profile_type_verification_and_holds"));
       await h.db.exec(read("20261115112325_admin_users_and_profiles"));
+      await h.db.exec(read("20261116120439_admin_directory_sort_and_filter_defaults"));
     };
     if (apply) await migrate();
     return {...h, migrate, async reset() {
